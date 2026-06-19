@@ -1,0 +1,44 @@
+# Local configuration and secrets
+.env
+.env.*
+!.env.example
+.secrets/
+
+# Local learner data and generated artifacts
+data/
+local_data/
+instance/
+artifacts/
+generated/
+uploads/
+exports/
+*.db
+*.sqlite
+*.sqlite3
+*.db-journal
+*.sqlite-journal
+
+# Generated media
+*.mp3
+*.wav
+*.ogg
+*.m4a
+
+# Runtime and tooling
+node_modules/
+.venv/
+venv/
+__pycache__/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.next/
+dist/
+build/
+coverage/
+
+# OS/editor noise
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
