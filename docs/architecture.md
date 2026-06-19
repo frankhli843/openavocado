@@ -33,4 +33,6 @@ Do not commit:
 
 ## Completion Semantics
 
-Open decision: lesson completion should likely be hybrid. The system tracks whether required evidence exists, then asks the learner to confirm completion before triggering the next lesson generation task.
+Lesson completion is manual only. Autosave records all progress continuously, but the system must not infer completion from audio progress, interactive usage, code execution, or assessment submission.
+
+The learner explicitly clicks a completion button. That button marks the lesson complete and triggers the next-lesson generation task.
