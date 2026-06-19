@@ -20,16 +20,30 @@ Do not commit:
 - Local deployment configuration.
 - Credentials or API keys.
 
+## Application Stack
+
+AvocadoCore should use Next.js, React, and TypeScript.
+
+## Multi-User Model
+
+AvocadoCore is multi-user from day one. The data model should separate account/user identity from learner profile and learning progress.
+
+Core records should be scoped so multiple users can have their own subjects, goals, lessons, attempts, mastery signals, tags, generated artifacts, and progress history. Even if a deployment starts with one learner, the schema should not assume a single global learner.
+
 ## First Data Model Sketch
 
-- `learners`: generic learner profile, local-only unless explicitly exported.
+- `users`: account or local user identity.
+- `learner_profiles`: learner preferences and profile data.
 - `subjects`: subject title, description, goals, status.
 - `diagnostics`: initial level checks and answers.
 - `lessons`: generated lesson plans and status.
 - `lesson_activities`: audio, visualization, reading, code, and assessment blocks.
 - `attempts`: learner interaction history and answer/code attempts.
 - `mastery_signals`: strengths, weak spots, misconceptions, and confidence.
-- `next_lesson_tasks`: Dora task links and generation state.
+- `tags`: concepts, curriculum areas, lesson types, misconceptions, and review topics.
+- `progress_points`: time-series data for mastery, confidence, assessment results, code/test results, and review cadence.
+- `generated_artifacts`: durable generated assets, including audio metadata.
+- `next_lesson_jobs`: next-lesson generation links, adapter metadata, and generation state.
 
 ## Completion Semantics
 
@@ -62,6 +76,26 @@ The code editor is part of lesson progress and must autosave:
 - run timestamps
 
 Autosaved code state does not imply lesson completion. Manual completion is still the only completion trigger.
+
+## Audio Storage
+
+Generated audio is a permanent runtime artifact, not a disposable cache. The transcript or source script should remain available, but the generated audio file should also be stored durably.
+
+Audio files must not be committed to git. Store them in runtime storage and keep database metadata such as provider, voice, duration, content hash, file path or object key, generated timestamp, and source lesson/script version.
+
+## Mastery, Tags, and Progress Graphs
+
+Subjects should expose mastery tracking, tagging, and graphs over time.
+
+The app should track tags for concepts, misconceptions, review topics, curriculum areas, and lesson types. Progress graphs should show mastery movement, assessment performance, code/test outcomes, confidence, review frequency, and weak spots over time.
+
+These signals should be visible in the subject dashboard and available to the lesson generator.
+
+## Lesson Generator Skill
+
+Lesson generation should be a reusable skill that any agent can leverage to build lesson content for a particular page or lesson slot in the AvocadoCore framework.
+
+The app should provide a structured page/lesson contract. The skill should return structured lesson content, including audio script, interactive spec, Python/code exercise, tests, assessment, tags, mastery targets, and metadata.
 
 ## Completion Hooks
 
