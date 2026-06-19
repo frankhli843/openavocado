@@ -1,8 +1,8 @@
-# Doramon Learning
+# AvocadoCore
 
 Reusable adaptive learning dashboard and skill design.
 
-Doramon Learning is intended to help a learner move from familiarity to competence to mastery across technical and non-technical subjects. It will use structured lesson history, assessments, code exercises, and review signals to generate the next lesson.
+AvocadoCore is intended to help a learner move from familiarity to competence to mastery across technical and non-technical subjects. It will use structured lesson history, assessments, code exercises, and review signals to generate the next lesson.
 
 ## Principles
 
@@ -28,4 +28,4 @@ Runtime data belongs in gitignored folders such as `data/`, `local_data/`, or `i
 
 ## Project Notes
 
-Frank's OpenClaw workspace tracks planning context in `knowledge/projects/doramon_learning_dev.md`.
+Frank's OpenClaw workspace tracks planning context in `knowledge/projects/avocadocore_dev.md`.
