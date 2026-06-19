@@ -42,3 +42,14 @@ coverage/
 Thumbs.db
 .idea/
 .vscode/
+
+# Next.js specifics
+.vercel
+next-env.d.ts
+*.tsbuildinfo
+out/
+.pnpm-store/
+
+# Runtime audio/artifacts
+runtime_artifacts/
+audio/
