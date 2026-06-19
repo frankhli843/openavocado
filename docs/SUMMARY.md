@@ -1,0 +1,163 @@
+# AvocadoCore MVP — Summary
+
+**Project:** AvocadoCore Adaptive Learning Platform
+**Repo:** [frankhli843/avocadocore](https://github.com/frankhli843/avocadocore)
+**Commit:** ea4aa3c
+**Date:** 2026-06-19
+
+---
+
+## What Was Built
+
+AvocadoCore is a reusable, multi-user adaptive learning platform. This document captures the full MVP implementation.
+
+### Stack
+- **Framework:** Next.js 15 (App Router) + TypeScript
+- **Database:** SQLite via better-sqlite3 (15-table multi-user schema)
+- **Styling:** Tailwind CSS v3
+- **Charts:** Recharts
+- **Python sandbox:** Pyodide/WASM (browser-side)
+- **Tests:** Vitest (14 passing)
+
+---
+
+## Database Schema (15 tables)
+
+| Table | Purpose |
+|-------|---------|
+| users | Auth identities |
+| learner_profiles | Per-user learning profile |
+| subjects | Learning subjects per learner |
+| diagnostics | Subject diagnostic Q&A |
+| lessons | Lessons with status lifecycle |
+| lesson_activities | Core + supplementary activities |
+| attempts | Activity attempt history |
+| mastery_signals | Strength/weak-spot/misconception signals |
+| tags | Concept/curriculum tags |
+| lesson_tags, subject_tags | Join tables |
+| progress_points | Metric time-series (mastery, assessment_score) |
+| generated_artifacts | Audio/image artifact metadata |
+| next_lesson_jobs | Completion hook job queue |
+| lesson_autosave | Per-activity draft state (debounced autosave) |
+
+**Key design:** `lesson_autosave.activity_id` uses sentinel value `0` (not NULL) for lesson-level saves, enabling a UNIQUE constraint on `(lesson_id, learner_id, activity_id)`.
+
+---
+
+## Features
+
+### Subject Dashboard
+- Lists all subjects with lesson count, mastery %, assessment %, completion %
+- Active vs. Other section grouping
+- Each card links to the full-page subject workspace
+
+### Subject Workspace
+Four tabs:
+1. **Lessons** — ordered list with status indicators (completed/in progress/queued)
+2. **Mastery** — mastery signals grouped by type (strength, weak spot, misconception, review needed, ready to advance)
+3. **Progress** — Recharts line chart for mastery/assessment_score over time
+4. **Goals** — inline editable subject goals saved via PATCH /api/subjects/[id]
+
+### Lesson Workspace
+- Sticky top bar with save status ("Saved" / "Saving...") and "Mark Complete" button
+- Activities rendered in order: Audio → Interactive → Python Practice → Assessment
+- **AudioSection:** renders TTS script + metadata (provider, voice, duration) and persistent transcript
+- **InteractiveSection:** renders interactive widget spec description (placeholder for embed)
+- **PythonSection:** Pyodide/WASM editor with test runner — shows test pass/fail per test case
+- **AssessmentSection:** free-text and numeric question fields
+
+### Autosave
+- Debounced 1200ms on every content change (code, assessment answers, test results)
+- POSTs to `/api/autosave` which upserts `lesson_autosave` — never touches `lessons.status`
+- Save status displayed in top bar
+
+### Lesson Completion
+- Only triggered by "Mark Complete" button → POST `/api/complete-lesson`
+- Marks lesson `completed`, records a `progress_point`, dispatches the configured completion adapter
+- Inserts a row in `next_lesson_jobs` for the configured adapter
+
+---
+
+## Completion Hook Adapters
+
+Controlled by `AVOCADOCORE_COMPLETION_ADAPTER` environment variable:
+
+| Adapter | Behavior |
+|---------|---------|
+| `noop` (default) | Logs the event, no side effects |
+| `local-queue` | Writes to `next_lesson_jobs` DB table |
+| `webhook` | POSTs JSON to `AVOCADOCORE_WEBHOOK_URL` |
+| `dora-task` | POSTs to `AVOCADOCORE_DORA_ENDPOINT`, creates a Doramon next-lesson generation task |
+
+---
+
+## Lesson Generator Skill Contract
+
+`src/lib/lesson-generator/contract.ts` defines a stable adapter interface:
+
+```typescript
+interface LessonGeneratorAdapter {
+  name: string;
+  generate(context: LessonGeneratorContext): Promise<GeneratorResult>;
+}
+
+type GeneratorResult =
+  | { status: "ready"; content: GeneratedLessonContent }
+  | { status: "pending"; ref: string; estimated_ready_at?: string }
+  | { status: "error"; error: string };
+```
+
+Implementations (CLI, REST, Dora task) are deployment-specific and live outside this repo.
+
+---
+
+## Browser Python Sandbox
+
+`src/lib/python-sandbox.ts` defines the `PythonExecutor` interface:
+- `stubExecutor`: returned before Pyodide loads; shows "Loading Python..." state
+- `createPyodideExecutor(pyodide)`: wraps Pyodide for code + test execution
+
+Tests defined in activity content JSON run via `pyodide.runPython(test.assert)`.
+
+**CDN loading:** Pyodide is loaded via `new Function("url", "return import(url)")` to bypass TypeScript's module resolution restriction on CDN URLs.
+
+---
+
+## Tests (14 passing)
+
+- Multi-user isolation (users/subjects can't cross-read)
+- Lesson lifecycle (queued → in_progress → completed)
+- Status constraint enforcement
+- Autosave upsert (multiple saves don't create duplicate rows)
+- Autosave never marks completion (lesson.status is unchanged after autosave)
+- Manual completion semantics
+- Noop adapter (returns ok: true, no side effects)
+- Webhook adapter (fails gracefully when no URL configured)
+- Python sandbox stub (returns "not yet loaded" error when Pyodide hasn't initialized)
+- Debounce cancel (cancelled debounce does not call the callback)
+
+---
+
+## Local Development
+
+```bash
+mkdir -p data
+NODE_OPTIONS="--localstorage-file=/tmp/avocado-ls.json" pnpm dev --port 3456
+```
+
+**Note:** Node.js 25 exposes a built-in `localStorage` global that conflicts with Next.js SSR. The `--localstorage-file` flag provides a backing store so `localStorage.getItem()` works in the server-side render context.
+
+---
+
+## Key Files
+
+| Path | Description |
+|------|-------------|
+| `src/db/schema.sql` | Full 15-table schema with CREATE TABLE IF NOT EXISTS |
+| `src/db/connection.ts` | SQLite singleton, auto-applies schema, uses `process.cwd()` for schema path |
+| `src/db/seed.ts` | Synthetic seed data: user alex_learner, 2 subjects, lessons, activities, autosave state |
+| `src/types/index.ts` | All domain types + skill contract types |
+| `src/lib/python-sandbox.ts` | PythonExecutor interface + Pyodide adapter + stub |
+| `src/lib/lesson-generator/contract.ts` | LessonGeneratorAdapter interface + buildGeneratorContext + validateGeneratedContent |
+| `src/lib/adapters/` | noop, local-queue, webhook, dora-task adapters |
+| `src/test/schema.test.ts` | 14 Vitest tests |
