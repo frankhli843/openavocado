@@ -48,6 +48,21 @@ Lessons should be adaptable, but every normal lesson keeps the same core section
 
 The lesson generator may add optional sections, such as reading, flashcards, worked examples, case studies, projects, debates, diagrams, or references. Optional sections should extend the core lesson, not replace it. Code practice should appear even for non-technical subjects by turning the subject into an executable model or metaphor.
 
+## Python Sandbox
+
+Python execution should be browser-based by default, using Pyodide/WebAssembly or an equivalent browser sandbox. Server-side execution can be added later as an optional adapter for heavier libraries or long-running workloads, but the portable baseline should not require it.
+
+The code editor is part of lesson progress and must autosave:
+
+- source code drafts
+- run output
+- test results
+- runtime errors
+- edit timestamps
+- run timestamps
+
+Autosaved code state does not imply lesson completion. Manual completion is still the only completion trigger.
+
 ## Completion Hooks
 
 Next-lesson generation should be driven through a configurable completion hook, not hardcoded to one automation system.
