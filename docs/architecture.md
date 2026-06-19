@@ -43,10 +43,10 @@ Lessons should be adaptable, but every normal lesson keeps the same core section
 
 - `audio`: primary teaching session and comprehensive explanation.
 - `interactive`: visualization, dashboard, simulation, or other concept manipulation.
-- `practice_code`: practice exercise, preferably runnable and testable when the subject supports it.
+- `practice_code`: Python practice exercise for every subject, using code to model concepts, rules, systems, decisions, simulations, or tests.
 - `assessment`: freeform questions or tasks used to evaluate understanding.
 
-The lesson generator may add optional sections, such as reading, flashcards, worked examples, case studies, projects, debates, diagrams, or references. Optional sections should extend the core lesson, not replace it. If a subject cannot reasonably support code or interactive work, the generated lesson should record why.
+The lesson generator may add optional sections, such as reading, flashcards, worked examples, case studies, projects, debates, diagrams, or references. Optional sections should extend the core lesson, not replace it. Code practice should appear even for non-technical subjects by turning the subject into an executable model or metaphor.
 
 ## Completion Hooks
 
