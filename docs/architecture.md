@@ -37,6 +37,17 @@ Lesson completion is manual only. Autosave records all progress continuously, bu
 
 The learner explicitly clicks a completion button. That button marks the lesson complete and triggers the next-lesson generation task.
 
+## Lesson Structure
+
+Lessons should be adaptable, but every normal lesson keeps the same core sections:
+
+- `audio`: primary teaching session and comprehensive explanation.
+- `interactive`: visualization, dashboard, simulation, or other concept manipulation.
+- `practice_code`: practice exercise, preferably runnable and testable when the subject supports it.
+- `assessment`: freeform questions or tasks used to evaluate understanding.
+
+The lesson generator may add optional sections, such as reading, flashcards, worked examples, case studies, projects, debates, diagrams, or references. Optional sections should extend the core lesson, not replace it. If a subject cannot reasonably support code or interactive work, the generated lesson should record why.
+
 ## Completion Hooks
 
 Next-lesson generation should be driven through a configurable completion hook, not hardcoded to one automation system.
