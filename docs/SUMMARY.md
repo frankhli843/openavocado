@@ -161,3 +161,54 @@ NODE_OPTIONS="--localstorage-file=/tmp/avocado-ls.json" pnpm dev --port 3456
 | `src/lib/lesson-generator/contract.ts` | LessonGeneratorAdapter interface + buildGeneratorContext + validateGeneratedContent |
 | `src/lib/adapters/` | noop, local-queue, webhook, dora-task adapters |
 | `src/test/schema.test.ts` | 14 Vitest tests |
+
+---
+
+## Screenshots
+
+All screenshots use synthetic seed data only (learner "Alex"); no personal or generated private data is committed.
+
+### Subject Dashboard
+
+The first screen is the application experience: a learner dashboard listing subjects with lesson counts, mastery %, assessment %, and completion progress.
+
+![Subject dashboard](screenshots/dashboard.png)
+
+### Subject Workspace
+
+Full-page subject view with Lessons / Mastery / Progress / Goals tabs. Lessons show status, goals, and concept tags.
+
+![Subject workspace](screenshots/subject-workspace.png)
+
+### Lesson Workspace
+
+A normal lesson with all four required core sections — Audio (teaching session + transcript), Interactive concept work, Python practice (browser code runner with per-test pass/fail), and Assessment. The sticky top bar shows autosave status and the manual "Mark Complete" button, with a banner clarifying that progress saves automatically and completion is manual only.
+
+![Lesson workspace](screenshots/lesson-workspace.png)
+
+---
+
+## Verification (QA pass — 2026-06-19)
+
+| Check | Result |
+|-------|--------|
+| `pnpm test` (Vitest) | 14/14 passing |
+| `pnpm build` | Clean — 7 routes compiled |
+| `git ls-files` privacy scan | No DB / audio / `.env` / secrets / Discord IDs tracked; runtime `data/*.db` gitignored |
+| Autosave vs completion (live API) | `POST /api/autosave` left lesson `in_progress`; only `POST /api/complete-lesson` set `completed` + dispatched adapter + wrote `next_lesson_jobs` |
+| UI render | Dashboard, subject workspace, and lesson workspace all render with seed data (screenshots above) |
+| Multi-user schema | `users` → `learner_profiles` → `subjects` identity separation; no single-user hardcoding |
+| Reusability / privacy | `dora-task` adapter is env-configurable (`AVOCADOCORE_DORA_*`), no hardcoded personal IDs |
+
+### Run locally
+
+```bash
+cd code/avocadocore
+pnpm install
+mkdir -p data
+NODE_OPTIONS="--localstorage-file=/tmp/avocado-ls.json" pnpm db:migrate --seed
+NODE_OPTIONS="--localstorage-file=/tmp/avocado-ls.json" pnpm dev --port 3456
+# open http://localhost:3456
+```
+
+> Node.js 25 exposes a built-in `localStorage` global that conflicts with Next.js SSR; the `--localstorage-file` flag supplies a backing store. On Node 20–22 the flag is unnecessary.
