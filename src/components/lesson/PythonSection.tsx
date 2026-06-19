@@ -191,7 +191,7 @@ export function PythonSection({
                     }`}
                   >
                     <span>
-                      {result === "pass" ? "&#10003;" : result === "fail" ? "&#10007;" : "&#9675;"}
+                      {result === "pass" ? "✓" : result === "fail" ? "✗" : "○"}
                     </span>
                     <span>{test.description}</span>
                   </div>

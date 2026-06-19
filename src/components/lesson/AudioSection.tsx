@@ -75,14 +75,14 @@ export function AudioSection({ activity, artifact }: AudioSectionProps) {
 
 function SectionIcon({ type }: { type: string }) {
   const icons: Record<string, string> = {
-    audio: "&#127911;",
-    interactive: "&#129531;",
-    practice_code: "&#128187;",
-    assessment: "&#128221;",
+    audio: "\u{1F3A7}",
+    interactive: "\u{1F9E9}",
+    practice_code: "\u{1F4BB}",
+    assessment: "\u{1F4DD}",
   };
   return (
     <span className="text-xl" aria-hidden="true">
-      {icons[type] ?? "&#9679;"}
+      {icons[type] ?? "●"}
     </span>
   );
 }
