@@ -225,6 +225,8 @@ CREATE TABLE IF NOT EXISTS lesson_autosave (
   runtime_errors  TEXT,   -- JSON
   -- Assessment state
   assessment_answers TEXT, -- JSON: {question_id: answer}
+  -- Interactive widget state (control values), keyed to the interactive activity_id
+  widget_state    TEXT,   -- JSON: {control_id: number}
   -- Timestamps
   last_edited_at  TEXT,
   last_run_at     TEXT,

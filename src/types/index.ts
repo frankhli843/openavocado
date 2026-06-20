@@ -1,5 +1,18 @@
 // ─── Core domain types for AvocadoCore ───────────────────────────────────────
 
+// Interactive widget schema types live in src/lib/widgets and are re-exported
+// here so the generator contract and consumers have a single import surface.
+export type {
+  WidgetSpec,
+  DeclarativeWidgetSpec,
+  RegisteredWidgetSpec,
+  WidgetControl,
+  WidgetOutput,
+  WidgetChart,
+  OutputFormat,
+} from "@/lib/widgets/schema";
+
+
 export type LevelName = "familiarity" | "competence" | "mastery";
 export type SubjectStatus = "active" | "paused" | "completed" | "archived";
 export type LessonStatus = "queued" | "in_progress" | "completed" | "skipped";
@@ -164,6 +177,7 @@ export interface LessonAutosave {
   test_results: string | null; // JSON
   runtime_errors: string | null; // JSON
   assessment_answers: string | null; // JSON
+  widget_state: string | null; // JSON: {control_id: number}
   last_edited_at: string | null;
   last_run_at: string | null;
   saved_at: string;

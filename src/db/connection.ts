@@ -32,7 +32,26 @@ export function getDb(): Database.Database {
   const schema = readFileSync(schemaPath, "utf-8");
   _db.exec(schema);
 
+  applyAdditiveMigrations(_db);
+
   return _db;
+}
+
+/**
+ * Idempotent additive migrations for columns introduced after the initial
+ * schema. `CREATE TABLE IF NOT EXISTS` never adds columns to existing tables,
+ * so new optional columns are applied here. Each ALTER is guarded by a column
+ * existence check, so this is safe to run on every connection.
+ */
+function applyAdditiveMigrations(db: Database.Database): void {
+  const hasColumn = (table: string, column: string): boolean => {
+    const cols = db.prepare(`PRAGMA table_info(${table})`).all() as Array<{ name: string }>;
+    return cols.some((c) => c.name === column);
+  };
+
+  if (!hasColumn("lesson_autosave", "widget_state")) {
+    db.exec("ALTER TABLE lesson_autosave ADD COLUMN widget_state TEXT");
+  }
 }
 
 /** Close the DB (for tests / graceful shutdown). */

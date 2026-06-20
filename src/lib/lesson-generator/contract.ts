@@ -16,6 +16,26 @@
  */
 
 import type { LessonGeneratorContext, GeneratedLessonContent, ActivityType } from "@/types";
+import { validateWidgetSpec, WIDGET_SCHEMA_VERSION } from "@/lib/widgets/schema";
+import { REGISTERED_WIDGETS } from "@/lib/widgets/registry";
+
+export { WIDGET_SCHEMA_VERSION };
+
+/**
+ * Widget spec authoring guidance for lesson generators.
+ *
+ * An `interactive` activity's `content` MUST be a WidgetSpec:
+ *   - schema_version: "1.x"
+ *   - widget_type: "declarative" or a registered type ({@link REGISTERED_WIDGETS})
+ *   - instructions: learner-facing description of what to do
+ *   - declarative widgets: controls[], outputs[] (safe formulas), optional panels[]/chart
+ *   - registered widgets: typed params (never code)
+ *
+ * Arbitrary AI-authored React/JS is NOT accepted. Custom widgets are expressed
+ * declaratively or added to the reviewed registry — never executed from generated code.
+ */
+export const WIDGET_AUTHORING_NOTE =
+  "interactive.content must be a WidgetSpec (declarative or registered). No raw code.";
 
 /**
  * A lesson generator adapter.
@@ -112,6 +132,18 @@ export function validateGeneratedContent(
   // Code section required for every subject (even non-technical)
   if (!coreActivities.includes("practice_code")) {
     errors.push("practice_code section is required for every subject");
+  }
+
+  // Interactive activities must carry a valid, safe widget spec.
+  const knownWidgetTypes = REGISTERED_WIDGETS.map((w) => w.type);
+  for (const [i, activity] of content.activities.entries()) {
+    if (activity.activity_type !== "interactive") continue;
+    const result = validateWidgetSpec(activity.content, knownWidgetTypes);
+    if (!result.valid) {
+      for (const e of result.errors) {
+        errors.push(`interactive activity[${i}] (${activity.title ?? "untitled"}): ${e}`);
+      }
+    }
   }
 
   return { valid: errors.length === 0, errors };

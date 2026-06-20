@@ -125,10 +125,44 @@ export function seedDatabase(): void {
      VALUES (?, 'interactive', 1, 2, ?, ?)`
   ).run(
     lesson1Id,
-    "Visualization: Venn Diagrams and Conditional Probability",
+    "Bayes' Theorem: The Base-Rate Trap",
     JSON.stringify({
-      spec: "interactive-venn",
-      description: "Interactive Venn diagram showing how conditioning on B changes the sample space.",
+      schema_version: "1.0",
+      widget_type: "declarative",
+      title: "Bayes' Theorem: The Base-Rate Trap",
+      instructions:
+        "A positive medical test feels alarming, but the chance you actually have the disease depends on how rare it is. Adjust the disease prevalence and the test's sensitivity and specificity, then watch how P(disease | positive) changes.",
+      controls: [
+        { type: "slider", id: "prior", label: "Disease prevalence (prior)", min: 0.001, max: 0.2, step: 0.001, default: 0.01, format: "percent" },
+        { type: "slider", id: "sensitivity", label: "Test sensitivity  P(+ | disease)", min: 0.5, max: 1, step: 0.01, default: 0.95, format: "percent" },
+        { type: "slider", id: "specificity", label: "Test specificity  P(- | healthy)", min: 0.5, max: 1, step: 0.01, default: 0.9, format: "percent" },
+      ],
+      outputs: [
+        { id: "prior_p", label: "Prior P(disease)", formula: "prior", format: "percent", precision: 2 },
+        {
+          id: "posterior",
+          label: "P(disease | positive)",
+          formula: "(prior*sensitivity)/((prior*sensitivity)+((1-prior)*(1-specificity)))",
+          format: "percent",
+          precision: 1,
+        },
+        { id: "false_alarm", label: "False-positive rate", formula: "1 - specificity", format: "percent", precision: 1 },
+      ],
+      chart: {
+        type: "bar",
+        title: "Probability of disease: before vs. after a positive test",
+        bars: [
+          { label: "Prior", ref: "prior_p", color: "#94a3b8" },
+          { label: "After +test", ref: "posterior", color: "#2563eb" },
+        ],
+      },
+      panels: [
+        {
+          title: "Why is it so low?",
+          template:
+            "Even with a {{sensitivity}} sensitive test, a positive result implies only about {{posterior}} chance of disease when the condition is rare ({{prior_p}} prior). Most positives are false alarms drawn from the large healthy population — the base-rate fallacy.",
+        },
+      ],
     })
   );
 
@@ -292,6 +326,73 @@ total = 1000
   ).lastInsertRowid as number;
 
   if (supplyTagId) db.prepare("INSERT OR IGNORE INTO lesson_tags (lesson_id, tag_id) VALUES (?, ?)").run(econLesson1Id, supplyTagId);
+
+  // Core activities for the econ lesson — demonstrates the supply-demand widget.
+  db.prepare(
+    `INSERT INTO lesson_activities (lesson_id, activity_type, is_core, sequence_order, title, content)
+     VALUES (?, 'audio', 1, 1, ?, ?)`
+  ).run(
+    econLesson1Id,
+    "Audio: How Markets Find a Price",
+    JSON.stringify({
+      script:
+        "A market price is not set by anyone in particular. It emerges where the quantity buyers want equals the quantity sellers offer...",
+      duration_hint: 540,
+    })
+  );
+
+  db.prepare(
+    `INSERT INTO lesson_activities (lesson_id, activity_type, is_core, sequence_order, title, content)
+     VALUES (?, 'interactive', 1, 2, ?, ?)`
+  ).run(
+    econLesson1Id,
+    "Market Equilibrium Simulator",
+    JSON.stringify({
+      schema_version: "1.0",
+      widget_type: "supply-demand",
+      title: "Market Equilibrium Simulator",
+      instructions:
+        "Shift the supply and demand curves or add a per-unit tax, and watch the equilibrium price and quantity move. The black dot marks where supply meets demand.",
+      params: { demandIntercept: 100, demandSlope: 1.5, supplyIntercept: 0, supplySlope: 2, priceMax: 60 },
+    })
+  );
+
+  db.prepare(
+    `INSERT INTO lesson_activities (lesson_id, activity_type, is_core, sequence_order, title, content)
+     VALUES (?, 'practice_code', 1, 3, ?, ?)`
+  ).run(
+    econLesson1Id,
+    "Python: Solve for Market Equilibrium",
+    JSON.stringify({
+      language: "python",
+      starter_code: `# Demand:  Qd = 100 - 1.5 * P
+# Supply:  Qs = 2 * P
+# Find the equilibrium price P where Qd == Qs, then the quantity.
+
+# p_star = ?
+# q_star = ?
+`,
+      tests: [
+        { id: "t1", description: "Equilibrium price ~ 28.57", assert: "abs(p_star - (100 / 3.5)) < 0.01" },
+        { id: "t2", description: "Equilibrium quantity ~ 57.14", assert: "abs(q_star - (2 * (100 / 3.5))) < 0.01" },
+      ],
+    })
+  );
+
+  db.prepare(
+    `INSERT INTO lesson_activities (lesson_id, activity_type, is_core, sequence_order, title, content)
+     VALUES (?, 'assessment', 1, 4, ?, ?)`
+  ).run(
+    econLesson1Id,
+    "Assessment: Supply, Demand, and Taxes",
+    JSON.stringify({
+      questions: [
+        { id: "q1", text: "In your own words, what does the equilibrium price represent?", type: "free_text" },
+        { id: "q2", text: "If a per-unit tax is added, what happens to the price buyers pay and the quantity traded? Why?", type: "free_text" },
+        { id: "q3", text: "Who bears more of a tax when demand is very inelastic (steep): buyers or sellers?", type: "free_text" },
+      ],
+    })
+  );
 
   // Next lesson job (queued after lesson 1 completion)
   db.prepare(

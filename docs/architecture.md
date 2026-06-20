@@ -62,6 +62,20 @@ Lessons should be adaptable, but every normal lesson keeps the same core section
 
 The lesson generator may add optional sections, such as reading, flashcards, worked examples, case studies, projects, debates, diagrams, or references. Optional sections should extend the core lesson, not replace it. Code practice should appear even for non-technical subjects by turning the subject into an executable model or metaphor.
 
+## Interactive Widget System
+
+Interactive activities use a typed `WidgetSpec` contract stored as JSON in `lesson_activities.content`. Two widget kinds are supported:
+
+**Declarative widgets** (`widget_type: "declarative"`) are fully data-driven. The lesson generator emits controls (sliders, toggles, segmented selectors), derived outputs (computed via a sandboxed expression evaluator), an optional chart (bar or curve), and explanatory panels with template interpolation. No executable code is embedded — the spec is a declarative description only. Key files: `src/lib/widgets/schema.ts`, `compute.ts`, `expression.ts`.
+
+**Registered widgets** are hand-written React components with known, safe behaviour. The lesson generator emits a typed `widget_type` string and a `params` object; the component registry dispatches to the correct renderer. Key file: `src/lib/widgets/registry.ts`. Current registered types: `supply-demand` (market equilibrium simulator with SVG curve chart).
+
+Widget state (control values) is autosaved per activity to `lesson_autosave.widget_state` on a 1-second debounce and restored on page load. Autosave never triggers lesson completion — that path is manual-only.
+
+The expression evaluator (`src/lib/widgets/expression.ts`) is a no-eval recursive-descent parser supporting arithmetic, comparisons, logical operators, ternary expressions, and a whitelist of safe math functions. It rejects unknown identifiers, property access, function calls outside the whitelist, and any assignment syntax. Validation errors fail loudly rather than silently.
+
+Widget rendering is gated by `validateWidgetSpec` which checks schema version, required fields, control references in formulas, and known types. Invalid or unrecognised specs display a clear amber error state rather than a blank section.
+
 ## Python Sandbox
 
 Python execution should be browser-based by default, using Pyodide/WebAssembly or an equivalent browser sandbox. Server-side execution can be added later as an optional adapter for heavier libraries or long-running workloads, but the portable baseline should not require it.

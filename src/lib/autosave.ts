@@ -17,6 +17,7 @@ export interface AutosavePayload {
   test_results?: Record<string, string>;
   runtime_errors?: unknown[];
   assessment_answers?: Record<string, string>;
+  widget_state?: Record<string, number>;
   last_edited_at?: string;
   last_run_at?: string;
 }

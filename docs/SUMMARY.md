@@ -2,8 +2,8 @@
 
 **Project:** AvocadoCore Adaptive Learning Platform
 **Repo:** [frankhli843/avocadocore](https://github.com/frankhli843/avocadocore)
-**Commit:** ea4aa3c
-**Date:** 2026-06-19
+**Commit:** ea4aa3c (MVP) + interactive widget system (2026-06-20)
+**Date:** 2026-06-20
 
 ---
 
@@ -17,7 +17,7 @@ AvocadoCore is a reusable, multi-user adaptive learning platform. This document 
 - **Styling:** Tailwind CSS v3
 - **Charts:** Recharts
 - **Python sandbox:** Pyodide/WASM (browser-side)
-- **Tests:** Vitest (14 passing)
+- **Tests:** Vitest (41 passing)
 
 ---
 
@@ -62,9 +62,21 @@ Four tabs:
 - Sticky top bar with save status ("Saved" / "Saving...") and "Mark Complete" button
 - Activities rendered in order: Audio → Interactive → Python Practice → Assessment
 - **AudioSection:** renders TTS script + metadata (provider, voice, duration) and persistent transcript
-- **InteractiveSection:** renders interactive widget spec description (placeholder for embed)
+- **InteractiveSection:** dispatches to the widget system — renders live interactive controls or a clear error state if the spec is invalid
 - **PythonSection:** Pyodide/WASM editor with test runner — shows test pass/fail per test case
 - **AssessmentSection:** free-text and numeric question fields
+
+### Interactive Widget System
+
+Interactive activities are driven by a typed `WidgetSpec` JSON contract. Two kinds:
+
+**Declarative widgets** (`widget_type: "declarative"`) are generated from a data spec: controls (sliders, toggles, segmented selectors), derived outputs computed via a sandboxed expression evaluator, optional bar or curve charts, and explanatory panels with template interpolation. No executable code is embedded.
+
+**Registered widgets** are hand-written components dispatched by `widget_type` string. Currently: `supply-demand` (market equilibrium simulator with SVG supply/demand curves, live equilibrium computation, and tax incidence).
+
+Widget state (control values) autosaves per-activity to `lesson_autosave.widget_state` and restores on load. Interaction never triggers lesson completion.
+
+The expression evaluator (`src/lib/widgets/expression.ts`) is a no-eval recursive-descent parser with a whitelist of safe math functions and loud rejection of unknown calls, property access, and assignment syntax.
 
 ### Autosave
 - Debounced 1200ms on every content change (code, assessment answers, test results)
@@ -123,7 +135,7 @@ Tests defined in activity content JSON run via `pyodide.runPython(test.assert)`.
 
 ---
 
-## Tests (14 passing)
+## Tests (41 passing)
 
 - Multi-user isolation (users/subjects can't cross-read)
 - Lesson lifecycle (queued → in_progress → completed)
@@ -135,6 +147,11 @@ Tests defined in activity content JSON run via `pyodide.runPython(test.assert)`.
 - Webhook adapter (fails gracefully when no URL configured)
 - Python sandbox stub (returns "not yet loaded" error when Pyodide hasn't initialized)
 - Debounce cancel (cancelled debounce does not call the callback)
+- Safe expression evaluator: arithmetic, comparisons, logical, ternary, whitelisted math functions
+- Expression evaluator rejects: `process.exit`, assignment operators, member access, template literals, unknown identifiers
+- Widget schema validation: missing version, missing type, missing instructions, bad control references, unsafe formulas, unsupported registered types
+- Widget compute: ordered dependency evaluation, template interpolation, curve sampling, formatValue formatting
+- DeclarativeWidget live recompute on slider change + initialState restore (jsdom tests)
 
 ---
 
@@ -160,7 +177,18 @@ NODE_OPTIONS="--localstorage-file=/tmp/avocado-ls.json" pnpm dev --port 3456
 | `src/lib/python-sandbox.ts` | PythonExecutor interface + Pyodide adapter + stub |
 | `src/lib/lesson-generator/contract.ts` | LessonGeneratorAdapter interface + buildGeneratorContext + validateGeneratedContent |
 | `src/lib/adapters/` | noop, local-queue, webhook, dora-task adapters |
-| `src/test/schema.test.ts` | 14 Vitest tests |
+| `src/lib/widgets/schema.ts` | WidgetSpec types + validateWidgetSpec + formatValue |
+| `src/lib/widgets/expression.ts` | No-eval recursive-descent safe expression evaluator |
+| `src/lib/widgets/compute.ts` | Ordered output evaluation, template interpolation, curve sampling |
+| `src/lib/widgets/registry.ts` | Registered widget type list |
+| `src/components/lesson/widgets/WidgetHost.tsx` | Dispatcher: declarative vs registered vs error state |
+| `src/components/lesson/widgets/DeclarativeWidget.tsx` | Generic data-driven widget renderer |
+| `src/components/lesson/widgets/SupplyDemandWidget.tsx` | Market equilibrium registered widget |
+| `src/components/lesson/widgets/Controls.tsx` | Slider, Toggle, Segmented control primitives |
+| `src/components/lesson/widgets/Charts.tsx` | SVG BarChart and CurveChart |
+| `src/test/schema.test.ts` | 14 Vitest schema tests |
+| `src/test/widgets.test.ts` | 24 Vitest widget evaluator/schema/compute tests |
+| `src/test/widget-renderer.test.tsx` | 3 jsdom widget render/interaction tests |
 
 ---
 
@@ -188,17 +216,23 @@ A normal lesson with all four required core sections — Audio (teaching session
 
 ---
 
-## Verification (QA pass — 2026-06-19)
+## Verification (QA pass — 2026-06-20)
 
 | Check | Result |
 |-------|--------|
-| `pnpm test` (Vitest) | 14/14 passing |
-| `pnpm build` | Clean — 7 routes compiled |
+| `pnpm test` (Vitest) | 41/41 passing |
+| `pnpm exec tsc --noEmit` | Clean |
+| `pnpm lint` | No warnings or errors |
 | `git ls-files` privacy scan | No DB / audio / `.env` / secrets / Discord IDs tracked; runtime `data/*.db` gitignored |
-| Autosave vs completion (live API) | `POST /api/autosave` left lesson `in_progress`; only `POST /api/complete-lesson` set `completed` + dispatched adapter + wrote `next_lesson_jobs` |
-| UI render | Dashboard, subject workspace, and lesson workspace all render with seed data (screenshots above) |
+| Autosave vs completion (live API) | `POST /api/autosave` left lessons unchanged; only `POST /api/complete-lesson` triggers completion |
+| Widget autosave (live DB) | `lesson_autosave.widget_state` correctly saved slider values for both widget types after interaction |
+| Widget no-complete invariant | Lesson 3 remained `queued`/`in_progress` after all widget interactions; lesson 1 `completed` unchanged |
+| Bayes widget live | Sliders rendered, outputs updated (prior slider moved 10.1%→9.8%, posterior 51.6%→50.8%), chart redrawn |
+| Supply-demand widget live | Sliders rendered, $15 tax shifted equilibrium $28.57→$37.14, quantity 57.1→44.3, tax revenue $664 shown |
+| Autosave restore | Supply-demand page reload restored saved tax=15 from `widget_state` |
+| React error check | No `setState during render` warnings after fix to `update()` in both widget components |
+| UI render | Dashboard, subject workspace, and lesson workspace all render with seed data |
 | Multi-user schema | `users` → `learner_profiles` → `subjects` identity separation; no single-user hardcoding |
-| Reusability / privacy | `dora-task` adapter is env-configurable (`AVOCADOCORE_DORA_*`), no hardcoded personal IDs |
 
 ### Run locally
 

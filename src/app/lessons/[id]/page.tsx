@@ -33,6 +33,7 @@ export default function LessonPage({ params }: { params: Promise<{ id: string }>
   const [codeDraft, setCodeDraft] = useState<string>("");
   const [runOutput, setRunOutput] = useState<string>("");
   const [testResults, setTestResults] = useState<Record<string, string>>({});
+  const [widgetState, setWidgetState] = useState<Record<string, number>>({});
 
   useEffect(() => {
     async function load() {
@@ -50,6 +51,21 @@ export default function LessonPage({ params }: { params: Promise<{ id: string }>
           if (latest.test_results) setTestResults(JSON.parse(latest.test_results));
           if (latest.assessment_answers) setAssessmentAnswers(JSON.parse(latest.assessment_answers));
           setLastSavedAt(latest.saved_at);
+        }
+
+        // Restore interactive widget state (scoped to the interactive activity row)
+        const interactive = json.activities.find((a) => a.activity_type === "interactive");
+        if (interactive) {
+          const widgetRow = json.autosave.find(
+            (r) => r.activity_id === interactive.id && r.widget_state
+          );
+          if (widgetRow?.widget_state) {
+            try {
+              setWidgetState(JSON.parse(widgetRow.widget_state) as Record<string, number>);
+            } catch {
+              /* ignore malformed widget state */
+            }
+          }
         }
       } catch (e) {
         setError(e instanceof Error ? e.message : "Failed to load");
@@ -85,6 +101,31 @@ export default function LessonPage({ params }: { params: Promise<{ id: string }>
       learner_id: LEARNER_ID,
       activity_id: codeActivity?.id,
       ...patch,
+      last_edited_at: new Date().toISOString(),
+    });
+  }
+
+  // Widget state autosaves under its own activity row, so it never collides with
+  // the code/assessment row. Like all autosave, it never marks the lesson complete.
+  const [debouncedWidgetSave] = debounce(
+    async (payload: Parameters<typeof postAutosave>[0]) => {
+      setSaveStatus("saving");
+      await postAutosave(payload);
+      const now = new Date().toISOString();
+      setLastSavedAt(now);
+      setSaveStatus("saved");
+    },
+    1200
+  );
+
+  function triggerWidgetAutosave(activityId: number, state: Record<string, number>) {
+    if (!data) return;
+    setWidgetState(state);
+    debouncedWidgetSave({
+      lesson_id: data.lesson.id,
+      learner_id: LEARNER_ID,
+      activity_id: activityId,
+      widget_state: state,
       last_edited_at: new Date().toISOString(),
     });
   }
@@ -255,7 +296,14 @@ export default function LessonPage({ params }: { params: Promise<{ id: string }>
             );
           }
           if (activity.activity_type === "interactive") {
-            return <InteractiveSection key={activity.id} activity={activity} />;
+            return (
+              <InteractiveSection
+                key={activity.id}
+                activity={activity}
+                initialState={widgetState}
+                onStateChange={(s) => triggerWidgetAutosave(activity.id, s.controls)}
+              />
+            );
           }
           if (activity.activity_type === "practice_code") {
             return (

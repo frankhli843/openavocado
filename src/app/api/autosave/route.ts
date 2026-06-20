@@ -18,6 +18,7 @@ export async function POST(request: Request) {
       test_results,
       runtime_errors,
       assessment_answers,
+      widget_state,
       last_edited_at,
       last_run_at,
     } = body;
@@ -35,14 +36,15 @@ export async function POST(request: Request) {
     db.prepare(
       `INSERT INTO lesson_autosave
          (lesson_id, learner_id, activity_id, code_draft, run_output, test_results,
-          runtime_errors, assessment_answers, last_edited_at, last_run_at, saved_at)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, datetime('now'))
+          runtime_errors, assessment_answers, widget_state, last_edited_at, last_run_at, saved_at)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, datetime('now'))
        ON CONFLICT (lesson_id, learner_id, activity_id) DO UPDATE SET
          code_draft        = COALESCE(excluded.code_draft, code_draft),
          run_output        = COALESCE(excluded.run_output, run_output),
          test_results      = COALESCE(excluded.test_results, test_results),
          runtime_errors    = COALESCE(excluded.runtime_errors, runtime_errors),
          assessment_answers = COALESCE(excluded.assessment_answers, assessment_answers),
+         widget_state      = COALESCE(excluded.widget_state, widget_state),
          last_edited_at    = COALESCE(excluded.last_edited_at, last_edited_at),
          last_run_at       = COALESCE(excluded.last_run_at, last_run_at),
          saved_at          = datetime('now')`
@@ -55,6 +57,7 @@ export async function POST(request: Request) {
       test_results ? JSON.stringify(test_results) : null,
       runtime_errors ? JSON.stringify(runtime_errors) : null,
       assessment_answers ? JSON.stringify(assessment_answers) : null,
+      widget_state ? JSON.stringify(widget_state) : null,
       last_edited_at ?? null,
       last_run_at ?? null
     );
