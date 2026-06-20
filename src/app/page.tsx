@@ -75,25 +75,25 @@ export default function DashboardPage() {
     <div className="min-h-screen bg-white">
       {/* Top nav */}
       <nav className="sticky top-0 z-10 bg-white border-b border-gray-200">
-        <div className="max-w-5xl mx-auto px-6 h-12 flex items-center gap-6">
+        <div className="max-w-5xl mx-auto px-4 sm:px-6 h-12 flex items-center gap-2 sm:gap-6">
           <Logo size={20} />
-          <div className="flex gap-1 ml-4">
+          <div className="flex gap-1">
             <NavTab href="/" active>Subjects</NavTab>
             <NavTab href="/progress">Progress</NavTab>
           </div>
-          <div className="ml-auto">
+          <div className="ml-auto flex-shrink-0">
             <button
               onClick={() => setShowCreateForm(true)}
-              className="flex items-center gap-1.5 px-3.5 py-1.5 text-sm font-medium bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+              className="flex items-center gap-1.5 px-3 sm:px-3.5 py-1.5 text-sm font-medium bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
             >
               <span className="text-lg leading-none">+</span>
-              <span>New subject</span>
+              <span className="hidden sm:inline">New subject</span>
             </button>
           </div>
         </div>
       </nav>
 
-      <div className="max-w-5xl mx-auto px-6 py-8">
+      <div className="max-w-5xl mx-auto px-4 sm:px-6 py-8">
         {/* Learner context */}
         <LearnerHeader name={learnerName} />
 
@@ -174,16 +174,20 @@ export default function DashboardPage() {
         )}
       </div>
 
-      {/* Create subject modal */}
+      {/* Create subject modal — bottom sheet on mobile, centered on desktop */}
       {showCreateForm && (
         <div
-          className="fixed inset-0 z-50 flex items-start justify-center bg-black/40 px-4 pt-16 pb-8 overflow-y-auto"
+          className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/40 sm:px-4 sm:py-8"
           onClick={(e) => {
             if (e.target === e.currentTarget) setShowCreateForm(false);
           }}
         >
-          <div className="bg-white rounded-xl shadow-xl max-w-xl w-full p-6 my-auto">
-            <div className="flex items-center justify-between mb-6">
+          <div
+            className="w-full sm:max-w-xl max-h-[90vh] flex flex-col bg-white rounded-t-2xl sm:rounded-xl shadow-xl"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Header — stays visible while form scrolls */}
+            <div className="flex items-center justify-between px-5 py-4 sm:px-6 border-b border-gray-100 flex-shrink-0">
               <h2 className="text-base font-semibold text-gray-900">Create a new subject</h2>
               <button
                 onClick={() => setShowCreateForm(false)}
@@ -193,11 +197,14 @@ export default function DashboardPage() {
                 &#10005;
               </button>
             </div>
-            <SubjectForm
-              learnerId={learnerId}
-              onSave={handleSubjectCreated}
-              onCancel={() => setShowCreateForm(false)}
-            />
+            {/* Scrollable form body */}
+            <div className="overflow-y-auto px-5 py-5 sm:px-6">
+              <SubjectForm
+                learnerId={learnerId}
+                onSave={handleSubjectCreated}
+                onCancel={() => setShowCreateForm(false)}
+              />
+            </div>
           </div>
         </div>
       )}
