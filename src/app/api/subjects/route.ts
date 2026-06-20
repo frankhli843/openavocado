@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { getDb } from "@/db/connection";
 import { seedDatabase } from "@/db/seed";
+import { computeSubjectMastery } from "@/lib/mastery";
 import type { SubjectSummary } from "@/types";
 
 /** GET /api/subjects — list all subjects for a learner */
@@ -38,6 +39,12 @@ export async function GET(request: Request) {
          ORDER BY s.updated_at DESC`
       )
       .all(learnerId) as SubjectSummary[];
+
+    // Attach a computed mastery summary to each subject so cards can show a
+    // score + trend at a glance.
+    for (const s of subjects) {
+      s.mastery = computeSubjectMastery(db, s.id, learnerId);
+    }
 
     return NextResponse.json({ subjects, learner_id: learnerId });
   } catch (err) {

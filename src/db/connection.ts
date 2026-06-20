@@ -52,6 +52,64 @@ function applyAdditiveMigrations(db: Database.Database): void {
   if (!hasColumn("lesson_autosave", "widget_state")) {
     db.exec("ALTER TABLE lesson_autosave ADD COLUMN widget_state TEXT");
   }
+
+  // Reversible subject archive: track when a subject was archived.
+  if (!hasColumn("subjects", "archived_at")) {
+    db.exec("ALTER TABLE subjects ADD COLUMN archived_at TEXT");
+  }
+
+  // The lesson_activities.activity_type CHECK constraint cannot be ALTERed in
+  // SQLite. When an older DB predates the 'media' activity type, rebuild the
+  // table inside a transaction, preserving every row and id. This is the
+  // standard, non-destructive SQLite table rebuild and is idempotent: the guard
+  // checks the stored table SQL for the 'media' value before doing anything.
+  migrateActivityTypeCheck(db);
+}
+
+function migrateActivityTypeCheck(db: Database.Database): void {
+  const row = db
+    .prepare("SELECT sql FROM sqlite_master WHERE type='table' AND name='lesson_activities'")
+    .get() as { sql: string } | undefined;
+  if (!row || /'media'/.test(row.sql)) return; // already allows 'media'
+
+  const fkWasOn = (db.pragma("foreign_keys", { simple: true }) as number) === 1;
+  if (fkWasOn) db.pragma("foreign_keys = OFF");
+  try {
+    const rebuild = db.transaction(() => {
+      db.exec(`
+        CREATE TABLE lesson_activities__new (
+          id              INTEGER PRIMARY KEY AUTOINCREMENT,
+          lesson_id       INTEGER NOT NULL REFERENCES lessons(id) ON DELETE CASCADE,
+          activity_type   TEXT    NOT NULL CHECK (activity_type IN (
+                            'audio', 'reading', 'media', 'interactive',
+                            'practice_code', 'assessment',
+                            'flashcards', 'case_study', 'diagram',
+                            'project', 'debate', 'reference'
+                          )),
+          is_core         INTEGER NOT NULL DEFAULT 1 CHECK (is_core IN (0, 1)),
+          sequence_order  INTEGER NOT NULL DEFAULT 0,
+          title           TEXT,
+          content         TEXT,
+          created_at      TEXT    NOT NULL DEFAULT (datetime('now')),
+          updated_at      TEXT    NOT NULL DEFAULT (datetime('now'))
+        );
+      `);
+      db.exec(
+        `INSERT INTO lesson_activities__new
+           (id, lesson_id, activity_type, is_core, sequence_order, title, content, created_at, updated_at)
+         SELECT id, lesson_id, activity_type, is_core, sequence_order, title, content, created_at, updated_at
+         FROM lesson_activities;`
+      );
+      db.exec("DROP TABLE lesson_activities;");
+      db.exec("ALTER TABLE lesson_activities__new RENAME TO lesson_activities;");
+      db.exec(
+        "CREATE INDEX IF NOT EXISTS idx_lesson_activities_lesson_id ON lesson_activities(lesson_id);"
+      );
+    });
+    rebuild();
+  } finally {
+    if (fkWasOn) db.pragma("foreign_keys = ON");
+  }
 }
 
 /** Close the DB (for tests / graceful shutdown). */

@@ -9,8 +9,23 @@ export type {
   WidgetControl,
   WidgetOutput,
   WidgetChart,
+  TableChartSpec,
+  TreeChartSpec,
+  TreeNodeSpec,
   OutputFormat,
 } from "@/lib/widgets/schema";
+
+// Non-interactive lesson content schemas (written text, media, scaffolded code).
+export type {
+  ReadingBlock,
+  ReadingContent,
+  MediaProvider,
+  MediaEmbed,
+  MediaContent,
+  CodeTest,
+  CodeHint,
+  PracticeCodeContent,
+} from "@/lib/lesson-content/schema";
 
 
 export type LevelName = "familiarity" | "competence" | "mastery";
@@ -19,10 +34,11 @@ export type LessonStatus = "queued" | "in_progress" | "completed" | "skipped";
 
 export type ActivityType =
   | "audio"
+  | "reading"
+  | "media"
   | "interactive"
   | "practice_code"
   | "assessment"
-  | "reading"
   | "flashcards"
   | "case_study"
   | "diagram"
@@ -76,8 +92,33 @@ export interface Subject {
   status: SubjectStatus;
   goals: string | null;
   current_level: LevelName;
+  archived_at: string | null;
   created_at: string;
   updated_at: string;
+}
+
+/** Computed per-subject mastery summary (not a DB row). */
+export interface SubjectMastery {
+  /** 0–100 mastery score. */
+  score: number | null;
+  /** Where the score came from, for the explanatory panel. */
+  source: "progress_points" | "mastery_signals" | "none";
+  /** Direction of recent movement. */
+  trend: "up" | "down" | "flat" | "unknown";
+  /** Change vs the previous reading, in score points. */
+  delta: number | null;
+  /** Recent score history for a sparkline (oldest→newest). */
+  history: number[];
+  /** Plain-language explanation of what the score means. */
+  explanation: string;
+  /** Counts of qualitative signals backing the score. */
+  signal_counts: {
+    strength: number;
+    weak_spot: number;
+    misconception: number;
+    review_needed: number;
+    ready_to_advance: number;
+  };
 }
 
 export interface Lesson {
@@ -207,6 +248,8 @@ export interface SubjectSummary extends Subject {
   latest_mastery: number | null;
   latest_assessment_score: number | null;
   learner_display_name: string;
+  /** Computed per-subject mastery summary (score, trend, explanation). */
+  mastery?: SubjectMastery;
 }
 
 export interface LessonDetail extends Lesson {

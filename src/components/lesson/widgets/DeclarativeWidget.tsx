@@ -8,12 +8,20 @@
  * No code is executed; everything is computed from the typed spec.
  */
 import { useMemo, useState } from "react";
-import type { DeclarativeWidgetSpec } from "@/lib/widgets/schema";
-import { initialControlValues } from "@/lib/widgets/schema";
+import type { DeclarativeWidgetSpec, WidgetChart, TreeNodeSpec } from "@/lib/widgets/schema";
+import { initialControlValues, formatValue } from "@/lib/widgets/schema";
 import { computeOutputs, renderTemplate, sampleCurve } from "@/lib/widgets/compute";
 import { evaluate } from "@/lib/widgets/expression";
 import { Slider, Toggle, Segmented } from "./Controls";
-import { BarChart, CurveChart, type BarDatum, type CurveSeries } from "./Charts";
+import {
+  BarChart,
+  CurveChart,
+  FrequencyTable,
+  TreeDiagram,
+  type BarDatum,
+  type CurveSeries,
+  type TreeNodeData,
+} from "./Charts";
 
 export interface WidgetStateChange {
   controls: Record<string, number>;
@@ -52,6 +60,11 @@ export function DeclarativeWidget({
 
   const formatMap = useMemo(() => buildFormatMap(spec), [spec]);
 
+  const allCharts = useMemo<WidgetChart[]>(
+    () => [...(spec.chart ? [spec.chart] : []), ...(spec.charts ?? [])],
+    [spec.chart, spec.charts]
+  );
+
   return (
     <div className="space-y-5">
       {/* Controls */}
@@ -84,8 +97,14 @@ export function DeclarativeWidget({
         </div>
       )}
 
-      {/* Chart */}
-      {spec.chart && <ChartView spec={spec} scope={scope} />}
+      {/* Charts — a single `chart` plus any number of `charts` perspectives */}
+      {allCharts.length > 0 && (
+        <div className="space-y-5">
+          {allCharts.map((chart, i) => (
+            <ChartView key={i} chart={chart} spec={spec} scope={scope} />
+          ))}
+        </div>
+      )}
 
       {/* Explanatory panels */}
       {spec.panels?.map((p, i) => (
@@ -119,8 +138,23 @@ function buildFormatMap(spec: DeclarativeWidgetSpec): Record<string, FormatInfo>
   return m;
 }
 
-function ChartView({ spec, scope }: { spec: DeclarativeWidgetSpec; scope: Record<string, number> }) {
-  const chart = spec.chart!;
+function ChartView({
+  chart,
+  spec,
+  scope,
+}: {
+  chart: WidgetChart;
+  spec: DeclarativeWidgetSpec;
+  scope: Record<string, number>;
+}) {
+  const title = chart.title;
+  const Frame = ({ children }: { children: React.ReactNode }) => (
+    <figure className="m-0">
+      {title && <figcaption className="text-xs font-medium text-gray-500 mb-1">{title}</figcaption>}
+      {children}
+    </figure>
+  );
+
   if (chart.type === "bar") {
     const formatMap = buildFormatMap(spec);
     const data: BarDatum[] = chart.bars.map((b) => ({
@@ -130,12 +164,43 @@ function ChartView({ spec, scope }: { spec: DeclarativeWidgetSpec; scope: Record
       format: formatMap[b.ref]?.format,
       precision: formatMap[b.ref]?.precision,
     }));
-    return (
-      <figure className="m-0">
-        {chart.title && <figcaption className="text-xs font-medium text-gray-500 mb-1">{chart.title}</figcaption>}
-        <BarChart data={data} max={chart.max} />
-      </figure>
-    );
+    return <Frame><BarChart data={data} max={chart.max} /></Frame>;
+  }
+
+  if (chart.type === "table") {
+    const rows = chart.rows.map((r) => ({
+      label: r.label,
+      cells: r.cells.map((cell) => {
+        let v = 0;
+        try {
+          v = evaluate(cell.formula, scope);
+        } catch {
+          return "—";
+        }
+        return formatValue(v, cell.format, cell.precision);
+      }),
+    }));
+    return <Frame><FrequencyTable headers={chart.headers} rows={rows} caption={chart.caption} /></Frame>;
+  }
+
+  if (chart.type === "tree") {
+    const build = (node: TreeNodeSpec): TreeNodeData => {
+      let value: string | undefined;
+      if (node.valueFormula) {
+        try {
+          value = formatValue(evaluate(node.valueFormula, scope), node.format, node.precision);
+        } catch {
+          value = "—";
+        }
+      }
+      return {
+        label: node.label,
+        value,
+        color: node.color,
+        children: node.children?.map(build),
+      };
+    };
+    return <Frame><TreeDiagram root={build(chart.root)} caption={chart.caption} /></Frame>;
   }
 
   // curve
@@ -162,10 +227,5 @@ function ChartView({ spec, scope }: { spec: DeclarativeWidgetSpec; scope: Record
       marker = undefined;
     }
   }
-  return (
-    <figure className="m-0">
-      {chart.title && <figcaption className="text-xs font-medium text-gray-500 mb-1">{chart.title}</figcaption>}
-      <CurveChart series={series} marker={marker} xLabel={chart.x.label} yLabel={chart.yLabel} />
-    </figure>
-  );
+  return <Frame><CurveChart series={series} marker={marker} xLabel={chart.x.label} yLabel={chart.yLabel} /></Frame>;
 }

@@ -162,3 +162,109 @@ export function CurveChart({
     </div>
   );
 }
+
+// ─── Frequency table ─────────────────────────────────────────────────────────
+
+export interface FrequencyTableData {
+  headers: string[];
+  rows: Array<{ label: string; cells: string[] }>;
+  caption?: string;
+}
+
+/**
+ * A responsive frequency/contingency table. Cells are pre-formatted strings.
+ * On a narrow viewport the table scrolls inside its own container only, so it
+ * never forces page-level horizontal scrolling.
+ */
+export function FrequencyTable({ headers, rows, caption }: FrequencyTableData) {
+  return (
+    <div className="overflow-x-auto -mx-1 px-1">
+      <table className="w-full text-sm border-collapse">
+        <thead>
+          <tr>
+            {headers.map((h, i) => (
+              <th
+                key={i}
+                className={`border-b border-gray-200 py-2 px-2.5 font-semibold text-gray-600 ${
+                  i === 0 ? "text-left" : "text-right tabular-nums"
+                }`}
+              >
+                {h}
+              </th>
+            ))}
+          </tr>
+        </thead>
+        <tbody>
+          {rows.map((r, ri) => (
+            <tr key={ri} className="odd:bg-gray-50/50">
+              <td className="py-2 px-2.5 font-medium text-gray-700">{r.label}</td>
+              {r.cells.map((cell, ci) => (
+                <td key={ci} className="py-2 px-2.5 text-right tabular-nums text-gray-800">
+                  {cell}
+                </td>
+              ))}
+            </tr>
+          ))}
+        </tbody>
+      </table>
+      {caption && <p className="mt-2 text-xs text-gray-500">{caption}</p>}
+    </div>
+  );
+}
+
+// ─── Tree / flow diagram ─────────────────────────────────────────────────────
+
+export interface TreeNodeData {
+  label: string;
+  value?: string;
+  color?: string;
+  children?: TreeNodeData[];
+}
+
+/**
+ * A compact top-down tree/flow diagram (e.g. a population split for Bayes).
+ * Pure CSS/flex layout so it reflows on mobile and never overflows the page.
+ */
+export function TreeDiagram({ root, caption }: { root: TreeNodeData; caption?: string }) {
+  return (
+    <div className="overflow-x-auto -mx-1 px-1">
+      <div className="flex flex-col items-center min-w-fit">
+        <TreeNodeView node={root} depth={0} />
+      </div>
+      {caption && <p className="mt-2 text-xs text-gray-500 text-center">{caption}</p>}
+    </div>
+  );
+}
+
+function TreeNodeView({ node, depth }: { node: TreeNodeData; depth: number }) {
+  const hasChildren = node.children && node.children.length > 0;
+  const color = node.color ?? PALETTE[depth % PALETTE.length];
+  return (
+    <div className="flex flex-col items-center">
+      <div
+        className="rounded-lg border px-3 py-1.5 text-center bg-white"
+        style={{ borderColor: color }}
+      >
+        <div className="text-xs font-medium text-gray-700">{node.label}</div>
+        {node.value !== undefined && (
+          <div className="text-sm font-semibold tabular-nums" style={{ color }}>
+            {node.value}
+          </div>
+        )}
+      </div>
+      {hasChildren && (
+        <>
+          <div className="w-px h-3 bg-gray-300" />
+          <div className="flex items-start gap-4">
+            {node.children!.map((child, i) => (
+              <div key={i} className="flex flex-col items-center">
+                <div className="w-px h-3 bg-gray-300" />
+                <TreeNodeView node={child} depth={depth + 1} />
+              </div>
+            ))}
+          </div>
+        </>
+      )}
+    </div>
+  );
+}

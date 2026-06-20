@@ -214,9 +214,32 @@ function baseContent(interactiveContent: Record<string, unknown>): GeneratedLess
     tags: [],
     activities: [
       { activity_type: "audio", is_core: true, sequence_order: 1, title: "a", content: {} },
-      { activity_type: "interactive", is_core: true, sequence_order: 2, title: "i", content: interactiveContent },
-      { activity_type: "practice_code", is_core: true, sequence_order: 3, title: "c", content: {} },
-      { activity_type: "assessment", is_core: true, sequence_order: 4, title: "s", content: {} },
+      {
+        activity_type: "reading",
+        is_core: true,
+        sequence_order: 2,
+        title: "r",
+        content: {
+          blocks: [
+            { type: "heading", text: "Idea" },
+            { type: "paragraph", text: "A real paragraph of teaching text that explains the concept." },
+            { type: "definition", term: "Term", definition: "A clear definition." },
+          ],
+          summary: "Short review.",
+        },
+      },
+      { activity_type: "interactive", is_core: true, sequence_order: 3, title: "i", content: interactiveContent },
+      {
+        activity_type: "practice_code",
+        is_core: true,
+        sequence_order: 4,
+        title: "c",
+        content: {
+          prompt: "Do the thing.",
+          tests: [{ id: "t1", description: "works", assert: "x == 1" }],
+        },
+      },
+      { activity_type: "assessment", is_core: true, sequence_order: 5, title: "s", content: {} },
     ],
     mastery_targets: [],
     metadata: { generator: "t", generator_version: "1", generated_at: "now", source_context_summary: "x" },

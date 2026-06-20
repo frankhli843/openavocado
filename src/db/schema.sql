@@ -40,6 +40,7 @@ CREATE TABLE IF NOT EXISTS subjects (
   status          TEXT    NOT NULL DEFAULT 'active' CHECK (status IN ('active', 'paused', 'completed', 'archived')),
   goals           TEXT,   -- editable long-form goals text
   current_level   TEXT    NOT NULL DEFAULT 'familiarity' CHECK (current_level IN ('familiarity', 'competence', 'mastery')),
+  archived_at     TEXT,   -- set when a subject is archived (reversible); NULL when active
   created_at      TEXT    NOT NULL DEFAULT (datetime('now')),
   updated_at      TEXT    NOT NULL DEFAULT (datetime('now'))
 );
@@ -85,8 +86,9 @@ CREATE TABLE IF NOT EXISTS lesson_activities (
   id              INTEGER PRIMARY KEY AUTOINCREMENT,
   lesson_id       INTEGER NOT NULL REFERENCES lessons(id) ON DELETE CASCADE,
   activity_type   TEXT    NOT NULL CHECK (activity_type IN (
-                    'audio', 'interactive', 'practice_code', 'assessment',
-                    'reading', 'flashcards', 'case_study', 'diagram',
+                    'audio', 'reading', 'media', 'interactive',
+                    'practice_code', 'assessment',
+                    'flashcards', 'case_study', 'diagram',
                     'project', 'debate', 'reference'
                   )),
   is_core         INTEGER NOT NULL DEFAULT 1 CHECK (is_core IN (0, 1)),

@@ -18,6 +18,11 @@
 import type { LessonGeneratorContext, GeneratedLessonContent, ActivityType } from "@/types";
 import { validateWidgetSpec, WIDGET_SCHEMA_VERSION } from "@/lib/widgets/schema";
 import { REGISTERED_WIDGETS } from "@/lib/widgets/registry";
+import {
+  validateReadingContent,
+  validateMediaContent,
+  validatePracticeCodeContent,
+} from "@/lib/lesson-content/schema";
 
 export { WIDGET_SCHEMA_VERSION };
 
@@ -118,7 +123,15 @@ export function validateGeneratedContent(
     errors.push("Missing goals");
   }
 
-  const coreRequired: ActivityType[] = ["audio", "interactive", "practice_code", "assessment"];
+  // Every normal lesson must teach in writing as well as audio, so `reading`
+  // joins the required core sections.
+  const coreRequired: ActivityType[] = [
+    "audio",
+    "reading",
+    "interactive",
+    "practice_code",
+    "assessment",
+  ];
   const coreActivities = content.activities
     .filter((a) => a.is_core)
     .map((a) => a.activity_type);
@@ -134,14 +147,39 @@ export function validateGeneratedContent(
     errors.push("practice_code section is required for every subject");
   }
 
-  // Interactive activities must carry a valid, safe widget spec.
   const knownWidgetTypes = REGISTERED_WIDGETS.map((w) => w.type);
   for (const [i, activity] of content.activities.entries()) {
-    if (activity.activity_type !== "interactive") continue;
-    const result = validateWidgetSpec(activity.content, knownWidgetTypes);
-    if (!result.valid) {
-      for (const e of result.errors) {
-        errors.push(`interactive activity[${i}] (${activity.title ?? "untitled"}): ${e}`);
+    const label = `activity[${i}] (${activity.title ?? "untitled"})`;
+
+    // Interactive activities must carry a valid, safe widget spec.
+    if (activity.activity_type === "interactive") {
+      const result = validateWidgetSpec(activity.content, knownWidgetTypes);
+      if (!result.valid) {
+        for (const e of result.errors) errors.push(`interactive ${label}: ${e}`);
+      }
+    }
+
+    // Written text must be substantive teaching content, not an empty shell.
+    if (activity.activity_type === "reading") {
+      const result = validateReadingContent(activity.content);
+      if (!result.valid) {
+        for (const e of result.errors) errors.push(`reading ${label}: ${e}`);
+      }
+    }
+
+    // Media embeds must be safe (resolvable YouTube ids) with reason + fallback.
+    if (activity.activity_type === "media") {
+      const result = validateMediaContent(activity.content);
+      if (!result.valid) {
+        for (const e of result.errors) errors.push(`media ${label}: ${e}`);
+      }
+    }
+
+    // Code exercises must be scaffolded submissions, never an exposed answer.
+    if (activity.activity_type === "practice_code") {
+      const result = validatePracticeCodeContent(activity.content);
+      if (!result.valid) {
+        for (const e of result.errors) errors.push(`practice_code ${label}: ${e}`);
       }
     }
   }

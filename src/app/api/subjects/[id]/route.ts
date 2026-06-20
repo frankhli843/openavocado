@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { getDb } from "@/db/connection";
+import { computeSubjectMastery } from "@/lib/mastery";
 import type { Subject, Lesson, MasterySignal, ProgressPoint } from "@/types";
 
 /** GET /api/subjects/:id — full subject detail with lessons, mastery, progress */
@@ -46,11 +47,14 @@ export async function GET(
       )
       .all(subjectId);
 
+    const mastery = computeSubjectMastery(db, subjectId, subject.learner_id);
+
     return NextResponse.json({
       subject,
       lessons,
       mastery_signals,
       progress_points,
+      mastery,
       tags,
     });
   } catch (err) {
@@ -81,6 +85,16 @@ export async function PATCH(
       if (key in body) {
         updates.push(`${key} = ?`);
         values.push(body[key]);
+      }
+    }
+
+    // Keep archived_at in sync with status. Archiving is reversible and never
+    // deletes lessons, attempts, mastery, or progress — only the flag changes.
+    if ("status" in body) {
+      if (body.status === "archived") {
+        updates.push("archived_at = datetime('now')");
+      } else {
+        updates.push("archived_at = NULL");
       }
     }
 

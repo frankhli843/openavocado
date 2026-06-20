@@ -91,7 +91,43 @@ export interface CurveChartSpec {
   yLabel?: string;
 }
 
-export type WidgetChart = BarChartSpec | CurveChartSpec;
+/** A cell whose value is computed from a sandboxed formula over the live scope. */
+export interface TableCell {
+  formula: string;
+  format?: OutputFormat;
+  precision?: number;
+}
+
+/** A frequency-table view: a labelled grid of live-computed cells. */
+export interface TableChartSpec {
+  type: "table";
+  title?: string;
+  /** Column headers (the first column is the row label column). */
+  headers: string[];
+  rows: Array<{ label: string; cells: TableCell[] }>;
+  /** Optional caption under the table. */
+  caption?: string;
+}
+
+export interface TreeNodeSpec {
+  label: string;
+  /** Optional live value shown in the node, computed from the scope. */
+  valueFormula?: string;
+  format?: OutputFormat;
+  precision?: number;
+  color?: string;
+  children?: TreeNodeSpec[];
+}
+
+/** A tree/flow view: a population split or decision flow with live counts. */
+export interface TreeChartSpec {
+  type: "tree";
+  title?: string;
+  root: TreeNodeSpec;
+  caption?: string;
+}
+
+export type WidgetChart = BarChartSpec | CurveChartSpec | TableChartSpec | TreeChartSpec;
 
 export interface DeclarativeWidgetSpec {
   schema_version: string;
@@ -101,7 +137,13 @@ export interface DeclarativeWidgetSpec {
   controls: WidgetControl[];
   outputs: WidgetOutput[];
   panels?: WidgetPanel[];
+  /** A single chart (legacy/simple form). */
   chart?: WidgetChart;
+  /**
+   * Multiple charts for the same controls — lets one widget show several
+   * visual perspectives on the same concept (e.g. bar + frequency table + tree).
+   */
+  charts?: WidgetChart[];
 }
 
 export interface RegisteredWidgetSpec {
@@ -285,10 +327,23 @@ function validateDeclarative(s: Record<string, unknown>, errors: string[]): void
     }
   }
 
-  // chart references
+  // chart references — both the single `chart` and the plural `charts`
   const allIds = new Set([...knownIds, ...outputIds]);
   if (s.chart && typeof s.chart === "object") {
     validateChart(s.chart as Record<string, unknown>, allIds, errors);
+  }
+  if (s.charts !== undefined) {
+    if (!Array.isArray(s.charts)) {
+      errors.push("charts must be an array");
+    } else {
+      for (const [i, ch] of s.charts.entries()) {
+        if (!ch || typeof ch !== "object") {
+          errors.push(`charts[${i}] must be an object`);
+          continue;
+        }
+        validateChart(ch as Record<string, unknown>, allIds, errors);
+      }
+    }
   }
 
   // panel templates: referenced {{ids}} should resolve
@@ -357,8 +412,86 @@ function validateChart(
         errors.push(`curve "${String(curve.label)}" has invalid formula: ${msg}`);
       }
     }
+  } else if (chart.type === "table") {
+    if (!Array.isArray(chart.headers) || chart.headers.length === 0) {
+      errors.push("table chart needs a non-empty headers array");
+    }
+    if (!Array.isArray(chart.rows) || chart.rows.length === 0) {
+      errors.push("table chart needs a non-empty rows array");
+      return;
+    }
+    for (const [ri, r] of chart.rows.entries()) {
+      const row = r as Record<string, unknown>;
+      if (typeof row?.label !== "string") {
+        errors.push(`table row[${ri}] missing label`);
+      }
+      if (!Array.isArray(row?.cells)) {
+        errors.push(`table row[${ri}] missing cells array`);
+        continue;
+      }
+      for (const [ci, cell] of row.cells.entries()) {
+        const cl = cell as Record<string, unknown>;
+        validateChartFormula(cl?.formula, allIds, `table row[${ri}] cell[${ci}]`, errors);
+      }
+    }
+  } else if (chart.type === "tree") {
+    if (!chart.root || typeof chart.root !== "object") {
+      errors.push("tree chart needs a root node");
+      return;
+    }
+    validateTreeNode(chart.root as Record<string, unknown>, allIds, "tree root", errors, 0);
   } else {
     errors.push(`Unsupported chart type "${String(chart.type)}"`);
+  }
+}
+
+/** Validate a single optional formula string references only known ids. */
+function validateChartFormula(
+  formula: unknown,
+  allIds: Set<string>,
+  where: string,
+  errors: string[]
+): void {
+  if (typeof formula !== "string" || !formula.trim()) {
+    errors.push(`${where} missing formula`);
+    return;
+  }
+  try {
+    const refs = collectIdentifiers(parseExpression(formula));
+    for (const ref of refs) {
+      if (!allIds.has(ref)) errors.push(`${where} references unknown id "${ref}"`);
+    }
+  } catch (e) {
+    const msg = e instanceof ExpressionError ? e.message : String(e);
+    errors.push(`${where} has invalid formula: ${msg}`);
+  }
+}
+
+function validateTreeNode(
+  node: Record<string, unknown>,
+  allIds: Set<string>,
+  where: string,
+  errors: string[],
+  depth: number
+): void {
+  if (depth > 6) {
+    errors.push(`${where} tree is too deep (max 6 levels)`);
+    return;
+  }
+  if (typeof node.label !== "string" || !node.label.trim()) {
+    errors.push(`${where} missing label`);
+  }
+  if (node.valueFormula !== undefined) {
+    validateChartFormula(node.valueFormula, allIds, `${where} valueFormula`, errors);
+  }
+  if (node.children !== undefined) {
+    if (!Array.isArray(node.children)) {
+      errors.push(`${where} children must be an array`);
+    } else {
+      node.children.forEach((child, i) =>
+        validateTreeNode(child as Record<string, unknown>, allIds, `${where} > child[${i}]`, errors, depth + 1)
+      );
+    }
   }
 }
 

@@ -4,6 +4,8 @@ import { useEffect, useState, use } from "react";
 import Link from "next/link";
 import type { Lesson, LessonActivity, LessonAutosave, GeneratedArtifact } from "@/types";
 import { AudioSection } from "@/components/lesson/AudioSection";
+import { ReadingSection } from "@/components/lesson/ReadingSection";
+import { MediaSection } from "@/components/lesson/MediaSection";
 import { InteractiveSection } from "@/components/lesson/InteractiveSection";
 import { PythonSection } from "@/components/lesson/PythonSection";
 import { AssessmentSection } from "@/components/lesson/AssessmentSection";
@@ -16,7 +18,9 @@ interface LessonData {
   artifacts: GeneratedArtifact[];
 }
 
-const ACTIVITY_ORDER = ["audio", "interactive", "practice_code", "assessment"];
+// Canonical section order. Multiple `interactive` activities keep their relative
+// (stable-sorted) order, so a lesson can show several visualization perspectives.
+const ACTIVITY_ORDER = ["audio", "reading", "media", "interactive", "practice_code", "assessment"];
 
 const LEARNER_ID = 1; // TODO: replace with auth session
 
@@ -33,7 +37,9 @@ export default function LessonPage({ params }: { params: Promise<{ id: string }>
   const [codeDraft, setCodeDraft] = useState<string>("");
   const [runOutput, setRunOutput] = useState<string>("");
   const [testResults, setTestResults] = useState<Record<string, string>>({});
-  const [widgetState, setWidgetState] = useState<Record<string, number>>({});
+  // Widget state is keyed per interactive activity id so a lesson with several
+  // visualizations restores each one independently.
+  const [widgetStates, setWidgetStates] = useState<Record<number, Record<string, number>>>({});
 
   useEffect(() => {
     async function load() {
@@ -53,20 +59,21 @@ export default function LessonPage({ params }: { params: Promise<{ id: string }>
           setLastSavedAt(latest.saved_at);
         }
 
-        // Restore interactive widget state (scoped to the interactive activity row)
-        const interactive = json.activities.find((a) => a.activity_type === "interactive");
-        if (interactive) {
-          const widgetRow = json.autosave.find(
-            (r) => r.activity_id === interactive.id && r.widget_state
-          );
+        // Restore each interactive widget's state, scoped to its own activity row,
+        // so multiple visualizations in one lesson restore independently.
+        const restored: Record<number, Record<string, number>> = {};
+        for (const act of json.activities) {
+          if (act.activity_type !== "interactive") continue;
+          const widgetRow = json.autosave.find((r) => r.activity_id === act.id && r.widget_state);
           if (widgetRow?.widget_state) {
             try {
-              setWidgetState(JSON.parse(widgetRow.widget_state) as Record<string, number>);
+              restored[act.id] = JSON.parse(widgetRow.widget_state) as Record<string, number>;
             } catch {
               /* ignore malformed widget state */
             }
           }
         }
+        setWidgetStates(restored);
       } catch (e) {
         setError(e instanceof Error ? e.message : "Failed to load");
       } finally {
@@ -120,7 +127,7 @@ export default function LessonPage({ params }: { params: Promise<{ id: string }>
 
   function triggerWidgetAutosave(activityId: number, state: Record<string, number>) {
     if (!data) return;
-    setWidgetState(state);
+    setWidgetStates((prev) => ({ ...prev, [activityId]: state }));
     debouncedWidgetSave({
       lesson_id: data.lesson.id,
       learner_id: LEARNER_ID,
@@ -295,12 +302,18 @@ export default function LessonPage({ params }: { params: Promise<{ id: string }>
               />
             );
           }
+          if (activity.activity_type === "reading") {
+            return <ReadingSection key={activity.id} activity={activity} />;
+          }
+          if (activity.activity_type === "media") {
+            return <MediaSection key={activity.id} activity={activity} />;
+          }
           if (activity.activity_type === "interactive") {
             return (
               <InteractiveSection
                 key={activity.id}
                 activity={activity}
-                initialState={widgetState}
+                initialState={widgetStates[activity.id]}
                 onStateChange={(s) => triggerWidgetAutosave(activity.id, s.controls)}
               />
             );
@@ -310,6 +323,7 @@ export default function LessonPage({ params }: { params: Promise<{ id: string }>
               <PythonSection
                 key={activity.id}
                 activity={activity}
+                learnerId={LEARNER_ID}
                 initialCode={codeDraft}
                 initialOutput={runOutput}
                 initialTests={testResults}

@@ -66,7 +66,7 @@ The lesson generator may add optional sections, such as reading, flashcards, wor
 
 Interactive activities use a typed `WidgetSpec` contract stored as JSON in `lesson_activities.content`. Two widget kinds are supported:
 
-**Declarative widgets** (`widget_type: "declarative"`) are fully data-driven. The lesson generator emits controls (sliders, toggles, segmented selectors), derived outputs (computed via a sandboxed expression evaluator), an optional chart (bar or curve), and explanatory panels with template interpolation. No executable code is embedded — the spec is a declarative description only. Key files: `src/lib/widgets/schema.ts`, `compute.ts`, `expression.ts`.
+**Declarative widgets** (`widget_type: "declarative"`) are fully data-driven. The lesson generator emits controls (sliders, toggles, segmented selectors), derived outputs (computed via a sandboxed expression evaluator), explanatory panels with template interpolation, and one or more charts. A widget may carry a single `chart` and/or a `charts: []` array so the **same controls can drive several visual perspectives at once**. Chart types: `bar`, `curve`, `table` (a frequency/contingency grid of live-computed cells), and `tree` (a population-split / flow diagram with live counts). No executable code is embedded — the spec is a declarative description only. Key files: `src/lib/widgets/schema.ts`, `compute.ts`, `expression.ts`, `src/components/lesson/widgets/Charts.tsx`.
 
 **Registered widgets** are hand-written React components with known, safe behaviour. The lesson generator emits a typed `widget_type` string and a `params` object; the component registry dispatches to the correct renderer. Key file: `src/lib/widgets/registry.ts`. Current registered types: `supply-demand` (market equilibrium simulator with SVG curve chart).
 
@@ -74,7 +74,21 @@ Widget state (control values) is autosaved per activity to `lesson_autosave.widg
 
 The expression evaluator (`src/lib/widgets/expression.ts`) is a no-eval recursive-descent parser supporting arithmetic, comparisons, logical operators, ternary expressions, and a whitelist of safe math functions. It rejects unknown identifiers, property access, function calls outside the whitelist, and any assignment syntax. Validation errors fail loudly rather than silently.
 
-Widget rendering is gated by `validateWidgetSpec` which checks schema version, required fields, control references in formulas, and known types. Invalid or unrecognised specs display a clear amber error state rather than a blank section.
+Widget rendering is gated by `validateWidgetSpec` which checks schema version, required fields, control references in formulas (including `table` cell and `tree` node formulas), and known types. Invalid or unrecognised specs display a clear amber error state rather than a blank section.
+
+Multiple visualizations per lesson are supported two ways, which compose: (1) several `interactive` activities in one lesson — each restores its own widget state independently, keyed by activity id in `lesson_autosave`; (2) several charts in one declarative widget via `charts: []`. The seeded Bayes lesson demonstrates both.
+
+## Written Text, Media, and Scaffolded Code
+
+Non-interactive lesson content has its own typed schemas and validators in `src/lib/lesson-content/schema.ts`. A lesson is not audio-only; written text is a required core section.
+
+**Written text (`reading`)** is first-class teaching content rendered by `ReadingSection`. Its `content` is `{ intro?, blocks[], summary? }` where each block is a `heading`, `paragraph`, `definition`, `example` (worked example), `callout` (`info`/`warning`/`insight`), or `list`. `validateReadingContent` requires at least two substantive text blocks, so an empty shell or a bare transcript dump fails validation.
+
+**Media (`media`)** is rendered by `MediaSection`. Its `content` is `{ embeds[] }` where each embed has `provider: "youtube"`, a `video_id` or `url`, plus `title`, `reason`, `fallback_text`, and optional `start`. Security boundary: the iframe is **always** built from a validated 11-character video id via the privacy-enhanced `youtube-nocookie.com` domain (`buildYouTubeEmbedUrl`). A raw, generator-supplied URL is never injected into an iframe; `extractYouTubeId` whitelists YouTube hosts and rejects other domains and non-http(s) schemes. If a video cannot resolve or fails to load, the section degrades to the fallback text plus a "Watch on YouTube" link — it never breaks the page.
+
+**Scaffolded code (`practice_code`)** is a real submission exercise rendered by `PythonSection`. Its `content` carries `prompt`, `starter_code`, `constraints[]`, `guided_steps[]`, progressive `hints[]` (level 1 conceptual, 2 structural, 3 syntax — revealed one at a time), public `tests[]`, and `hidden_tests[]` (run on submit; assertions never shown, only a pass/fail count). Pedagogical boundary: `validatePracticeCodeContent` **rejects** any exposed-answer field (`solution`, `answer`, `solution_code`, `reference_solution`, `completed_code`). The learner must write and submit code; the completed answer is never shown inline. Run checks public tests; Submit runs public + hidden tests, and a passing submission posts to `/api/code-submission`, which records an immutable attempt and a `ready_to_advance` mastery signal — but never completes the lesson.
+
+The generator contract (`validateGeneratedContent` in `src/lib/lesson-generator/contract.ts`) ties these together: it requires the core sections including `reading`, and validates every reading, media, and practice_code activity. A bad generated lesson fails loudly with specific errors rather than producing a polished-looking but pedagogically useless page. See `docs/lesson-authoring-guide.md` for the full quality bar.
 
 ## Python Sandbox
 
@@ -104,6 +118,12 @@ Subjects should expose mastery tracking, tagging, and graphs over time.
 The app should track tags for concepts, misconceptions, review topics, curriculum areas, and lesson types. Progress graphs should show mastery movement, assessment performance, code/test outcomes, confidence, review frequency, and weak spots over time.
 
 These signals should be visible in the subject dashboard and available to the lesson generator.
+
+**Per-subject mastery score.** `src/lib/mastery.ts` `computeSubjectMastery(db, subjectId, learnerId)` produces a single 0–100 score plus the context to interpret it: its `source` (latest `mastery` progress point, else averaged `mastery_signals` confidence, else none), `trend`/`delta` from the last two readings, a `history` sparkline, qualitative `signal_counts`, and a plain-language `explanation`. It is multi-user safe (scoped by both subject and learner). The score surfaces as a compact badge on subject cards (`MasteryScore`) and as a detailed panel in the subject Mastery tab (`MasterySummary`). Both subject API routes attach the summary.
+
+## Subject Archive
+
+Subjects support reversible archive/restore. Archiving sets `subjects.status = 'archived'` and stamps `archived_at`; restoring sets status back to `active` and clears `archived_at` (handled in `PATCH /api/subjects/:id`). Archiving never deletes lessons, activities, attempts, autosave, mastery signals, progress points, or generated artifacts — only the flag changes. The dashboard hides archived subjects from the active grid and lists them under a collapsible Archived section with a Restore action; the subject detail header also offers archive/restore with clear feedback. The `archived_at` column is added by a guarded additive migration in `src/db/connection.ts`.
 
 ## Lesson Generator Skill
 

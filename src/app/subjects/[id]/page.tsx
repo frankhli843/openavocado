@@ -3,9 +3,10 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { use } from "react";
-import type { Subject, Lesson, MasterySignal, ProgressPoint } from "@/types";
+import type { Subject, Lesson, MasterySignal, ProgressPoint, SubjectMastery } from "@/types";
 import { LessonList } from "@/components/LessonList";
 import { MasteryPanel } from "@/components/MasteryPanel";
+import { MasterySummary } from "@/components/MasterySummary";
 import { ProgressChart } from "@/components/ProgressChart";
 import { GoalsEditor } from "@/components/GoalsEditor";
 
@@ -14,6 +15,7 @@ interface SubjectData {
   lessons: Lesson[];
   mastery_signals: MasterySignal[];
   progress_points: ProgressPoint[];
+  mastery?: SubjectMastery;
   tags: Array<{ id: number; name: string; tag_type: string }>;
 }
 
@@ -25,22 +27,51 @@ export default function SubjectPage({ params }: { params: Promise<{ id: string }
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<TabId>("lessons");
+  const [archiveBusy, setArchiveBusy] = useState(false);
+  const [notice, setNotice] = useState<string | null>(null);
+
+  async function load() {
+    try {
+      const res = await fetch(`/api/subjects/${id}`);
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      const json = (await res.json()) as SubjectData;
+      setData(json);
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Failed to load");
+    } finally {
+      setLoading(false);
+    }
+  }
 
   useEffect(() => {
-    async function load() {
-      try {
-        const res = await fetch(`/api/subjects/${id}`);
-        if (!res.ok) throw new Error(`HTTP ${res.status}`);
-        const json = (await res.json()) as SubjectData;
-        setData(json);
-      } catch (e) {
-        setError(e instanceof Error ? e.message : "Failed to load");
-      } finally {
-        setLoading(false);
-      }
-    }
     load();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [id]);
+
+  async function toggleArchive() {
+    if (!data) return;
+    const archiving = data.subject.status !== "archived";
+    setArchiveBusy(true);
+    setNotice(null);
+    try {
+      const res = await fetch(`/api/subjects/${id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ status: archiving ? "archived" : "active" }),
+      });
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      await load();
+      setNotice(
+        archiving
+          ? "Subject archived. Lessons, assessments, and progress are preserved — restore anytime."
+          : "Subject restored to active learning."
+      );
+    } catch (e) {
+      setNotice(e instanceof Error ? `Action failed: ${e.message}` : "Action failed");
+    } finally {
+      setArchiveBusy(false);
+    }
+  }
 
   if (loading) {
     return (
@@ -134,6 +165,30 @@ export default function SubjectPage({ params }: { params: Promise<{ id: string }
           </div>
         </div>
 
+        {/* Archive state + action */}
+        <div className="flex items-center justify-between gap-3 mb-4">
+          {subject.status === "archived" ? (
+            <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-600">
+              <span aria-hidden="true">&#128230;</span> Archived — hidden from active learning, nothing deleted
+            </span>
+          ) : (
+            <span />
+          )}
+          <button
+            onClick={toggleArchive}
+            disabled={archiveBusy}
+            className="shrink-0 text-sm font-medium text-gray-500 hover:text-gray-800 disabled:opacity-40 transition-colors px-2 py-1"
+          >
+            {archiveBusy ? "Working…" : subject.status === "archived" ? "Restore subject" : "Archive subject"}
+          </button>
+        </div>
+
+        {notice && (
+          <div className="mb-4 p-3 bg-blue-50 border border-blue-100 rounded-lg text-blue-700 text-sm">
+            {notice}
+          </div>
+        )}
+
         {/* Tags */}
         {tags.length > 0 && (
           <div className="flex flex-wrap gap-1.5 mb-6">
@@ -158,7 +213,10 @@ export default function SubjectPage({ params }: { params: Promise<{ id: string }
             />
           )}
           {activeTab === "mastery" && (
-            <MasteryPanel signals={mastery_signals} />
+            <>
+              <MasterySummary mastery={data.mastery} />
+              <MasteryPanel signals={mastery_signals} />
+            </>
           )}
           {activeTab === "progress" && (
             <ProgressChart points={progress_points} />

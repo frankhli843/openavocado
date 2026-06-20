@@ -9,15 +9,31 @@
 
 ## What Was Built
 
-AvocadoCore is a reusable, multi-user adaptive learning platform. This document captures the full MVP implementation.
+AvocadoCore is a reusable, multi-user adaptive learning platform. This document captures the full MVP implementation plus the 2026-06-20 richer-lessons upgrade.
 
 ### Stack
 - **Framework:** Next.js 15 (App Router) + TypeScript
 - **Database:** SQLite via better-sqlite3 (15-table multi-user schema)
 - **Styling:** Tailwind CSS v3
-- **Charts:** Recharts
+- **Charts:** Recharts + dependency-free SVG (bar/curve/table/tree)
 - **Python sandbox:** Pyodide/WASM (browser-side)
-- **Tests:** Vitest (41 passing)
+- **Tests:** Vitest (65 passing)
+
+---
+
+## Richer Lessons Upgrade (2026-06-20)
+
+A second pass made lessons no longer audio-only and turned code exercises into genuine submissions. New capabilities:
+
+- **Written lesson text** (`reading`): first-class teaching content — headings, definitions, worked examples, callouts, lists, and a review summary — usable independently of the audio (`ReadingSection`, `validateReadingContent`). Required core section.
+- **Safe embedded media** (`media`): YouTube embeds built only from a validated 11-char video id via `youtube-nocookie.com`; raw URLs / non-YouTube hosts are rejected. Each embed carries a reason + fallback text and degrades gracefully to a link when blocked (`MediaSection`, `validateMediaContent`).
+- **Multiple visualizations per lesson**: a declarative widget can drive several charts (`charts: []`) — new `table` (frequency grid) and `tree` (population split) chart types join `bar`/`curve` — and a lesson can hold several `interactive` activities, each restoring its own state. The seeded Bayes lesson shows a base-rate simulator driving a bar chart, a frequency table, and a population tree from one slider set, plus a second posterior-vs-prevalence widget.
+- **Scaffolded code submission** (`PythonSection` rewrite): task prompt, constraints, guided steps, progressive hints (conceptual → structural → syntax), starter code, Run vs Submit, public tests, hidden tests (count only), and pass/fail feedback. The final answer is never shown inline; `validatePracticeCodeContent` rejects any exposed-answer field. A passing submission records a `ready_to_advance` mastery signal via `/api/code-submission` but never completes the lesson.
+- **Reversible subject archive**: archive/restore from the dashboard and subject header; archived subjects leave the active grid but keep all lessons, attempts, mastery, and progress (`archived_at` flag, guarded migration).
+- **Per-subject mastery score**: `computeSubjectMastery` yields a 0–100 score with trend, sparkline, signal counts, and a plain-language explanation, shown on subject cards (`MasteryScore`) and the Mastery tab (`MasterySummary`).
+- **Branding**: an on-brand AvocadoCore avocado favicon (`src/app/icon.svg`) and header logo (`Logo`). (A prior logo asset exists in Google Drive; it should replace this when Drive OAuth is restored — both accounts were `invalid_grant` at build time.)
+
+The durable quality bar for future lesson-generation agents is documented in `docs/lesson-authoring-guide.md` and enforced by `validateGeneratedContent`.
 
 ---
 
@@ -135,7 +151,10 @@ Tests defined in activity content JSON run via `pyodide.runPython(test.assert)`.
 
 ---
 
-## Tests (41 passing)
+## Tests (65 passing)
+
+The richer-lessons upgrade added `src/test/lesson-content.test.ts` (reading/media/code-answer-hiding validation, YouTube host restriction, table/tree chart validation, generator-contract rules) and `src/test/mastery.test.ts` (score sources, trend, learner scoping). Earlier coverage:
+
 
 - Multi-user isolation (users/subjects can't cross-read)
 - Lesson lifecycle (queued → in_progress → completed)
@@ -194,29 +213,67 @@ NODE_OPTIONS="--localstorage-file=/tmp/avocado-ls.json" pnpm dev --port 3456
 
 ## Screenshots
 
-All screenshots use synthetic seed data only (learner "Alex"); no personal or generated private data is committed.
+All screenshots use synthetic seed data only (learner "Alex"); no personal or generated private data is committed. Captured via headless Chrome against the seeded dev server; every page reported `horizontalOverflowPx=0` (no page-level horizontal scroll, including at 390px).
 
-### Subject Dashboard
+### Dashboard (mastery + archive)
 
-The first screen is the application experience: a learner dashboard listing subjects with lesson counts, mastery %, assessment %, and completion progress.
+Subject cards show a mastery score with trend and sparkline, plus an Archive action. Archived subjects collapse into their own section with a Restore action.
 
-![Subject dashboard](screenshots/dashboard.png)
+![Dashboard](screenshots/dashboard.png)
+![Dashboard — archived section expanded](screenshots/dashboard-archived.png)
 
-### Subject Workspace
+### Written text + media
 
-Full-page subject view with Lessons / Mastery / Progress / Goals tabs. Lessons show status, goals, and concept tags.
+The flagship Bayes lesson: first-class written teaching text (definition, worked example, callout, list) alongside a privacy-enhanced YouTube embed that degrades to a link if blocked.
 
-![Subject workspace](screenshots/subject-workspace.png)
+![Lesson — written text plus media](screenshots/lesson-text-media.png)
 
-### Lesson Workspace
+### Multiple visualizations for one concept
 
-A normal lesson with all four required core sections — Audio (teaching session + transcript), Interactive concept work, Python practice (browser code runner with per-test pass/fail), and Assessment. The sticky top bar shows autosave status and the manual "Mark Complete" button, with a banner clarifying that progress saves automatically and completion is manual only.
+One declarative widget, one slider set, three live views — a bar chart, a frequency table, and a population tree — plus an explanatory panel.
 
-![Lesson workspace](screenshots/lesson-workspace.png)
+![Lesson — multiple visualization blocks](screenshots/lesson-multiviz.png)
+
+### Code submission workflow
+
+Before submit: task, constraints, guided steps, progressive hints (0/3), starter code with no answer, public tests pending, and "3 hidden tests · run on submit". After submit: hints revealed, all public + hidden tests green, and "Solution accepted" — the lesson stays in progress (manual completion only).
+
+![Code exercise — before submit](screenshots/lesson-code-before.png)
+![Code exercise — after submit](screenshots/lesson-code-after.png)
+
+### Per-subject mastery
+
+The Mastery tab leads with a score dial, sparkline, trend explanation, and signal counts. (The "Ready to advance" signal here is the recorded code submission.)
+
+![Subject — mastery summary](screenshots/subject-mastery.png)
+
+### Mobile (390px)
+
+No page-level horizontal scrolling; outputs and visualizations reflow.
+
+![Mobile dashboard](screenshots/mobile-dashboard.png)
+![Mobile — multiple visualizations](screenshots/mobile-multiviz.png)
 
 ---
 
-## Verification (QA pass — 2026-06-20)
+## Verification (richer-lessons pass — 2026-06-20)
+
+| Check | Result |
+|-------|--------|
+| `pnpm test` (Vitest) | 65/65 passing |
+| `pnpm exec tsc --noEmit` | Clean |
+| `pnpm lint` | No warnings or errors |
+| `pnpm build` | Compiles; `/icon.svg` route emitted |
+| Written text + media (browser) | Reading blocks render; YouTube embed loads from `youtube-nocookie.com`; fallback link present |
+| Multiple visualizations (browser) | Bayes widget shows bar + frequency table + tree from one slider set; second posterior-curve widget; no horizontal scroll |
+| Code submission (browser) | Run/Submit/hints work; Pyodide executed; 3 public + 3 hidden tests passed; "Solution accepted"; answer never shown inline |
+| No auto-completion (live API) | Lesson 2 stayed `in_progress` after audio/reading/media/widget/code interaction + a passing submission |
+| Code submission → mastery (live) | Passing submit recorded a `ready_to_advance` signal; lesson not completed |
+| Archive round-trip (live API) | Restore set `status=active`/`archived_at=NULL`; re-archive set `status=archived`/`archived_at` stamped; no data deleted |
+| Per-subject mastery (live API) | Scores computed (60 up, 33 up); archived subject reports no mastery data |
+| Mobile 390px | `horizontalOverflowPx=0` on dashboard and multi-viz |
+
+### MVP verification (prior pass — 2026-06-20)
 
 | Check | Result |
 |-------|--------|
