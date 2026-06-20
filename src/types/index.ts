@@ -30,7 +30,7 @@ export type {
 
 export type LevelName = "familiarity" | "competence" | "mastery";
 export type SubjectStatus = "active" | "paused" | "completed" | "archived";
-export type LessonStatus = "queued" | "in_progress" | "completed" | "skipped";
+export type LessonStatus = "queued" | "in_progress" | "completed" | "skipped" | "discarded";
 
 export type ActivityType =
   | "audio"
@@ -91,10 +91,27 @@ export interface Subject {
   description: string | null;
   status: SubjectStatus;
   goals: string | null;
+  /** Learner notes for lesson-generation agents: preferred style, constraints, context, emphasis. */
+  criteria: string | null;
   current_level: LevelName;
   archived_at: string | null;
   created_at: string;
   updated_at: string;
+}
+
+/** Persistent AI workpad per subject+learner — stored in DB, never committed. */
+export interface SubjectWorkpad {
+  id: number;
+  subject_id: number;
+  learner_id: number;
+  /** Full markdown content of the living workpad document. */
+  content: string;
+  /** Monotonically incrementing on each update. */
+  version: number;
+  last_updated_by: string | null;
+  last_updated_for: "lesson_completion" | "lesson_discard" | "manual" | null;
+  updated_at: string;
+  created_at: string;
 }
 
 /** Computed per-subject mastery summary (not a DB row). */
@@ -132,6 +149,10 @@ export interface Lesson {
   tags: string | null;  // JSON string
   started_at: string | null;
   completed_at: string | null;
+  /** Set when the learner discards this incomplete lesson. NULL for active/completed lessons. */
+  discarded_at: string | null;
+  /** Learner's reason for discarding — passed to the replacement lesson generator. */
+  discard_reason: string | null;
   generated_by: string | null;
   generator_version: string | null;
   source_context: string | null; // JSON string
@@ -228,6 +249,8 @@ export interface NextLessonJob {
   id: number;
   subject_id: number;
   completed_lesson_id: number | null;
+  discarded_lesson_id: number | null;
+  trigger_event: "lesson.completed" | "lesson.discarded";
   adapter: CompletionAdapter;
   status: "pending" | "dispatched" | "completed" | "failed";
   payload: string | null; // JSON
@@ -270,6 +293,8 @@ export interface LessonGeneratorContext {
     title: string;
     description: string | null;
     goals: string | null;
+    /** Learner criteria / notes for lesson generator. Included so agents know the learner's preferences. */
+    criteria: string | null;
     current_level: LevelName;
   };
   learner: {
@@ -364,6 +389,60 @@ export interface LessonCompletedEvent {
 export interface CompletionHookAdapter {
   name: CompletionAdapter;
   dispatch(event: LessonCompletedEvent, config?: Record<string, unknown>): Promise<{
+    ok: boolean;
+    ref?: string;
+    error?: string;
+  }>;
+}
+
+// ─── Lesson Discard / Regeneration Hook Contract ─────────────────────────────
+
+/**
+ * Payload emitted when a learner discards an incomplete lesson.
+ * Distinct from lesson.completed: discarding is not mastery, must not advance
+ * the learner's level, and requests a replacement lesson be generated.
+ */
+export interface LessonDiscardedEvent {
+  event: "lesson.discarded";
+  learner_id: number;
+  subject_id: number;
+  subject_title: string;
+  subject_description: string | null;
+  subject_goals: string | null;
+  /** Learner criteria for lesson generation — critical for replacement lesson quality. */
+  subject_criteria: string | null;
+  discarded_lesson_id: number;
+  discarded_lesson_title: string;
+  discarded_lesson_status: LessonStatus;
+  /** Learner's reason for discarding, if provided. Pass to lesson generator. */
+  discard_reason: string | null;
+  /** Current mastery summary (not advanced by this discard). */
+  mastery_score: number | null;
+  /** Completed lesson summaries for context (most recent first). */
+  completed_lessons: Array<{
+    title: string;
+    completed_at: string;
+  }>;
+  /** Recent mastery signals — helps generator choose what to fix next. */
+  mastery_signals: Array<{
+    signal_type: SignalType;
+    concept: string;
+    detail: string | null;
+  }>;
+  /** Current workpad summary, if available. Passed to help the generator. */
+  workpad_summary: string | null;
+  discarded_at: string;
+}
+
+/**
+ * A regeneration hook adapter.
+ * Receives a lesson.discarded event and triggers replacement lesson generation.
+ * Generic adapters (noop, local-queue, webhook) are available; the dora-task
+ * adapter creates a Doramon next-lesson task that explicitly considers criteria.
+ */
+export interface RegenerationHookAdapter {
+  name: CompletionAdapter; // reuses same adapter name set
+  dispatch(event: LessonDiscardedEvent, config?: Record<string, unknown>): Promise<{
     ok: boolean;
     ref?: string;
     error?: string;

@@ -76,6 +76,7 @@ export function buildGeneratorContext(params: {
     title: string;
     description: string | null;
     goals: string | null;
+    criteria: string | null;
     current_level: "familiarity" | "competence" | "mastery";
   };
   learner: {

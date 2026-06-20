@@ -39,6 +39,7 @@ CREATE TABLE IF NOT EXISTS subjects (
   description     TEXT,
   status          TEXT    NOT NULL DEFAULT 'active' CHECK (status IN ('active', 'paused', 'completed', 'archived')),
   goals           TEXT,   -- editable long-form goals text
+  criteria        TEXT,   -- learner notes for the lesson generator: what to optimize for, preferred style, constraints, context
   current_level   TEXT    NOT NULL DEFAULT 'familiarity' CHECK (current_level IN ('familiarity', 'competence', 'mastery')),
   archived_at     TEXT,   -- set when a subject is archived (reversible); NULL when active
   created_at      TEXT    NOT NULL DEFAULT (datetime('now')),
@@ -63,13 +64,16 @@ CREATE TABLE IF NOT EXISTS lessons (
   subject_id      INTEGER NOT NULL REFERENCES subjects(id) ON DELETE CASCADE,
   title           TEXT    NOT NULL,
   description     TEXT,
-  status          TEXT    NOT NULL DEFAULT 'queued' CHECK (status IN ('queued', 'in_progress', 'completed', 'skipped')),
+  status          TEXT    NOT NULL DEFAULT 'queued' CHECK (status IN ('queued', 'in_progress', 'completed', 'skipped', 'discarded')),
   sequence_number INTEGER NOT NULL DEFAULT 0,
   goals           TEXT,   -- JSON array of lesson goals
   tags            TEXT,   -- JSON array of tag strings
   -- Completion tracking
   started_at      TEXT,
   completed_at    TEXT,
+  -- Discard tracking (soft-delete for incomplete lessons)
+  discarded_at    TEXT,   -- set when learner discards an incomplete lesson; NULL otherwise
+  discard_reason  TEXT,   -- optional learner note on why they discarded this lesson
   -- Generator metadata
   generated_by    TEXT,   -- agent/skill identifier
   generator_version TEXT,
@@ -199,15 +203,37 @@ CREATE TABLE IF NOT EXISTS next_lesson_jobs (
   id              INTEGER PRIMARY KEY AUTOINCREMENT,
   subject_id      INTEGER NOT NULL REFERENCES subjects(id) ON DELETE CASCADE,
   completed_lesson_id INTEGER REFERENCES lessons(id) ON DELETE SET NULL,
+  discarded_lesson_id INTEGER REFERENCES lessons(id) ON DELETE SET NULL, -- set when triggered by a discard
+  trigger_event   TEXT    NOT NULL DEFAULT 'lesson.completed' CHECK (trigger_event IN ('lesson.completed', 'lesson.discarded')),
   adapter         TEXT    NOT NULL DEFAULT 'noop', -- 'dora-task', 'webhook', 'local-queue', 'noop'
   status          TEXT    NOT NULL DEFAULT 'pending' CHECK (status IN ('pending', 'dispatched', 'completed', 'failed')),
-  payload         TEXT,   -- JSON: the lesson.completed event payload
+  payload         TEXT,   -- JSON: the event payload (lesson.completed or lesson.discarded)
   adapter_ref     TEXT,   -- external reference (dora task id, webhook delivery id, etc.)
   error           TEXT,
   dispatched_at   TEXT,
   completed_at    TEXT,
   created_at      TEXT    NOT NULL DEFAULT (datetime('now')),
   updated_at      TEXT    NOT NULL DEFAULT (datetime('now'))
+);
+
+-- ─── SUBJECT WORKPADS ───────────────────────────────────────────────────────
+-- Living AI markdown documents maintained per subject, per learner.
+-- Stores research findings, learner progress, misconceptions, current plan,
+-- next-lesson direction, and decisions made. Updated each time a lesson is
+-- completed or an incomplete lesson is discarded.
+-- Private learner data — stored in gitignored runtime DB, not committed.
+
+CREATE TABLE IF NOT EXISTS subject_workpads (
+  id              INTEGER PRIMARY KEY AUTOINCREMENT,
+  subject_id      INTEGER NOT NULL REFERENCES subjects(id) ON DELETE CASCADE,
+  learner_id      INTEGER NOT NULL REFERENCES learner_profiles(id) ON DELETE CASCADE,
+  content         TEXT    NOT NULL DEFAULT '', -- Markdown content
+  version         INTEGER NOT NULL DEFAULT 1,  -- monotonically incrementing on each update
+  last_updated_by TEXT,   -- agent/skill identifier that performed the last update
+  last_updated_for TEXT   CHECK (last_updated_for IN ('lesson_completion', 'lesson_discard', 'manual', NULL)),
+  updated_at      TEXT    NOT NULL DEFAULT (datetime('now')),
+  created_at      TEXT    NOT NULL DEFAULT (datetime('now')),
+  UNIQUE (subject_id, learner_id)
 );
 
 -- ─── LESSON AUTOSAVE ───────────────────────────────────────────────────────────
@@ -250,3 +276,4 @@ CREATE INDEX IF NOT EXISTS idx_progress_points_recorded_at ON progress_points(re
 CREATE INDEX IF NOT EXISTS idx_generated_artifacts_lesson_id ON generated_artifacts(lesson_id);
 CREATE INDEX IF NOT EXISTS idx_next_lesson_jobs_subject_id ON next_lesson_jobs(subject_id);
 CREATE INDEX IF NOT EXISTS idx_lesson_autosave_lesson_learner ON lesson_autosave(lesson_id, learner_id);
+CREATE INDEX IF NOT EXISTS idx_subject_workpads_subject_learner ON subject_workpads(subject_id, learner_id);

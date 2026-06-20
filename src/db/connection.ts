@@ -58,12 +58,119 @@ function applyAdditiveMigrations(db: Database.Database): void {
     db.exec("ALTER TABLE subjects ADD COLUMN archived_at TEXT");
   }
 
+  // Learner criteria / notes for lesson generator (subject-level).
+  if (!hasColumn("subjects", "criteria")) {
+    db.exec("ALTER TABLE subjects ADD COLUMN criteria TEXT");
+  }
+
+  // Soft-delete tracking for discarded incomplete lessons.
+  if (!hasColumn("lessons", "discarded_at")) {
+    db.exec("ALTER TABLE lessons ADD COLUMN discarded_at TEXT");
+  }
+  if (!hasColumn("lessons", "discard_reason")) {
+    db.exec("ALTER TABLE lessons ADD COLUMN discard_reason TEXT");
+  }
+
+  // Discard trigger for next_lesson_jobs and the discarded lesson reference.
+  if (!hasColumn("next_lesson_jobs", "trigger_event")) {
+    db.exec(
+      "ALTER TABLE next_lesson_jobs ADD COLUMN trigger_event TEXT NOT NULL DEFAULT 'lesson.completed'"
+    );
+  }
+  if (!hasColumn("next_lesson_jobs", "discarded_lesson_id")) {
+    db.exec("ALTER TABLE next_lesson_jobs ADD COLUMN discarded_lesson_id INTEGER");
+  }
+
+  // The lessons.status CHECK constraint cannot be ALTERed in SQLite.
+  // When an older DB predates the 'discarded' status value, rebuild the table
+  // preserving every row. Same non-destructive pattern as migrateActivityTypeCheck.
+  migrateLessonStatusCheck(db);
+
   // The lesson_activities.activity_type CHECK constraint cannot be ALTERed in
   // SQLite. When an older DB predates the 'media' activity type, rebuild the
   // table inside a transaction, preserving every row and id. This is the
   // standard, non-destructive SQLite table rebuild and is idempotent: the guard
   // checks the stored table SQL for the 'media' value before doing anything.
   migrateActivityTypeCheck(db);
+
+  // Ensure subject_workpads table exists (added after initial schema).
+  // CREATE TABLE IF NOT EXISTS in schema.sql handles fresh installs; this
+  // also runs on existing DBs where schema.sql was already applied without it.
+  db.exec(`
+    CREATE TABLE IF NOT EXISTS subject_workpads (
+      id              INTEGER PRIMARY KEY AUTOINCREMENT,
+      subject_id      INTEGER NOT NULL REFERENCES subjects(id) ON DELETE CASCADE,
+      learner_id      INTEGER NOT NULL REFERENCES learner_profiles(id) ON DELETE CASCADE,
+      content         TEXT    NOT NULL DEFAULT '',
+      version         INTEGER NOT NULL DEFAULT 1,
+      last_updated_by TEXT,
+      last_updated_for TEXT,
+      updated_at      TEXT    NOT NULL DEFAULT (datetime('now')),
+      created_at      TEXT    NOT NULL DEFAULT (datetime('now')),
+      UNIQUE (subject_id, learner_id)
+    )
+  `);
+  db.exec(
+    "CREATE INDEX IF NOT EXISTS idx_subject_workpads_subject_learner ON subject_workpads(subject_id, learner_id)"
+  );
+}
+
+/**
+ * Rebuild the lessons table when it predates the 'discarded' status value.
+ * SQLite cannot ALTER CHECK constraints, so we use the same table-rebuild
+ * pattern as migrateActivityTypeCheck. Idempotent: guards on the stored SQL.
+ */
+function migrateLessonStatusCheck(db: Database.Database): void {
+  const row = db
+    .prepare("SELECT sql FROM sqlite_master WHERE type='table' AND name='lessons'")
+    .get() as { sql: string } | undefined;
+  if (!row || /'discarded'/.test(row.sql)) return; // already allows 'discarded'
+
+  const fkWasOn = (db.pragma("foreign_keys", { simple: true }) as number) === 1;
+  if (fkWasOn) db.pragma("foreign_keys = OFF");
+  try {
+    const rebuild = db.transaction(() => {
+      db.exec(`
+        CREATE TABLE lessons__new (
+          id              INTEGER PRIMARY KEY AUTOINCREMENT,
+          subject_id      INTEGER NOT NULL REFERENCES subjects(id) ON DELETE CASCADE,
+          title           TEXT    NOT NULL,
+          description     TEXT,
+          status          TEXT    NOT NULL DEFAULT 'queued' CHECK (status IN ('queued', 'in_progress', 'completed', 'skipped', 'discarded')),
+          sequence_number INTEGER NOT NULL DEFAULT 0,
+          goals           TEXT,
+          tags            TEXT,
+          started_at      TEXT,
+          completed_at    TEXT,
+          discarded_at    TEXT,
+          discard_reason  TEXT,
+          generated_by    TEXT,
+          generator_version TEXT,
+          source_context  TEXT,
+          created_at      TEXT    NOT NULL DEFAULT (datetime('now')),
+          updated_at      TEXT    NOT NULL DEFAULT (datetime('now'))
+        );
+      `);
+      db.exec(`
+        INSERT INTO lessons__new
+          (id, subject_id, title, description, status, sequence_number, goals, tags,
+           started_at, completed_at, discarded_at, discard_reason,
+           generated_by, generator_version, source_context, created_at, updated_at)
+        SELECT id, subject_id, title, description, status, sequence_number, goals, tags,
+               started_at, completed_at,
+               NULL AS discarded_at, NULL AS discard_reason,
+               generated_by, generator_version, source_context, created_at, updated_at
+        FROM lessons;
+      `);
+      db.exec("DROP TABLE lessons;");
+      db.exec("ALTER TABLE lessons__new RENAME TO lessons;");
+      db.exec("CREATE INDEX IF NOT EXISTS idx_lessons_subject_id ON lessons(subject_id);");
+      db.exec("CREATE INDEX IF NOT EXISTS idx_lessons_status ON lessons(status);");
+    });
+    rebuild();
+  } finally {
+    if (fkWasOn) db.pragma("foreign_keys = ON");
+  }
 }
 
 function migrateActivityTypeCheck(db: Database.Database): void {

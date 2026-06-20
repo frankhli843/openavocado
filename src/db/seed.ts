@@ -38,13 +38,14 @@ export function seedDatabase(): void {
   const mathId = (
     db
       .prepare(
-        `INSERT INTO subjects (learner_id, title, description, goals, current_level) VALUES (?, ?, ?, ?, ?)`
+        `INSERT INTO subjects (learner_id, title, description, goals, criteria, current_level) VALUES (?, ?, ?, ?, ?, ?)`
       )
       .run(
         learnerId,
         "Applied Probability & Statistics",
         "Understanding probability theory, Bayesian inference, and statistical analysis through practical models.",
         "Reach competence-level understanding of Bayesian inference and apply it to real datasets using Python.",
+        "Focus on building intuition through simulation first, then formal notation. Include Python code exercises that implement the models from scratch. I find rote formula derivations less useful than understanding the mechanics through examples. Prefer lessons that connect back to real-world decision-making contexts rather than purely abstract math.",
         "familiarity"
       )
   ).lastInsertRowid as number;
@@ -52,13 +53,14 @@ export function seedDatabase(): void {
   const econId = (
     db
       .prepare(
-        `INSERT INTO subjects (learner_id, title, description, goals, current_level) VALUES (?, ?, ?, ?, ?)`
+        `INSERT INTO subjects (learner_id, title, description, goals, criteria, current_level) VALUES (?, ?, ?, ?, ?, ?)`
       )
       .run(
         learnerId,
         "Microeconomics",
         "Understanding market forces, incentives, and decision-making under constraints.",
         "Model economic concepts in Python: supply/demand curves, utility functions, game theory payoff matrices.",
+        "Prefer applied examples over pure theory. Use Python simulations to make abstract concepts concrete — build the supply/demand model, run the game, see the equilibrium. Keep math notation concise and always explain what each variable means in plain English before using it in a formula.",
         "familiarity"
       )
   ).lastInsertRowid as number;
@@ -67,14 +69,15 @@ export function seedDatabase(): void {
   const archivedId = (
     db
       .prepare(
-        `INSERT INTO subjects (learner_id, title, description, goals, current_level, status, archived_at)
-         VALUES (?, ?, ?, ?, ?, 'archived', datetime('now', '-9 days'))`
+        `INSERT INTO subjects (learner_id, title, description, goals, criteria, current_level, status, archived_at)
+         VALUES (?, ?, ?, ?, ?, ?, 'archived', datetime('now', '-9 days'))`
       )
       .run(
         learnerId,
         "Intro to Calculus",
         "Limits, derivatives, and integrals — paused to focus on probability first.",
         "Build intuition for rates of change and accumulation, then model them in Python.",
+        "Visual-first approach preferred. Use geometric intuitions before formal epsilon-delta definitions. Python plots and animations help a lot.",
         "familiarity"
       )
   ).lastInsertRowid as number;

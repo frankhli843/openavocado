@@ -2,7 +2,53 @@ import { NextResponse } from "next/server";
 import { getDb } from "@/db/connection";
 import { seedDatabase } from "@/db/seed";
 import { computeSubjectMastery } from "@/lib/mastery";
-import type { SubjectSummary } from "@/types";
+import type { Subject, SubjectSummary } from "@/types";
+
+/** POST /api/subjects — create a new subject for a learner */
+export async function POST(request: Request) {
+  try {
+    const db = getDb();
+    const body = (await request.json()) as Partial<Subject & { learner_id: number }>;
+
+    const learnerId = Number(body.learner_id || 1);
+    const title = (body.title || "").trim();
+    if (!title) {
+      return NextResponse.json({ error: "title is required" }, { status: 400 });
+    }
+
+    // Validate learner exists
+    const learner = db.prepare("SELECT id FROM learner_profiles WHERE id = ?").get(learnerId);
+    if (!learner) {
+      return NextResponse.json({ error: "Learner not found" }, { status: 404 });
+    }
+
+    const description = typeof body.description === "string" ? body.description.trim() || null : null;
+    const goals = typeof body.goals === "string" ? body.goals.trim() || null : null;
+    const criteria = typeof body.criteria === "string" ? body.criteria.trim() || null : null;
+    const currentLevel = body.current_level || "familiarity";
+
+    const validLevels = ["familiarity", "competence", "mastery"];
+    if (!validLevels.includes(currentLevel)) {
+      return NextResponse.json({ error: `current_level must be one of: ${validLevels.join(", ")}` }, { status: 400 });
+    }
+
+    const result = db
+      .prepare(
+        `INSERT INTO subjects (learner_id, title, description, goals, criteria, current_level)
+         VALUES (?, ?, ?, ?, ?, ?)`
+      )
+      .run(learnerId, title, description, goals, criteria, currentLevel);
+
+    const subject = db
+      .prepare("SELECT * FROM subjects WHERE id = ?")
+      .get(result.lastInsertRowid) as Subject;
+
+    return NextResponse.json({ subject }, { status: 201 });
+  } catch (err) {
+    console.error("[api/subjects POST]", err);
+    return NextResponse.json({ error: "Failed to create subject" }, { status: 500 });
+  }
+}
 
 /** GET /api/subjects — list all subjects for a learner */
 export async function GET(request: Request) {

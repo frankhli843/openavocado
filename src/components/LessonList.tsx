@@ -7,9 +7,11 @@ interface LessonListProps {
   completed: Lesson[];
   active: Lesson[];
   queued: Lesson[];
+  discarded?: Lesson[];
 }
 
-export function LessonList({ completed, active, queued }: LessonListProps) {
+export function LessonList({ completed, active, queued, discarded = [] }: LessonListProps) {
+  const isEmpty = completed.length === 0 && active.length === 0 && queued.length === 0 && discarded.length === 0;
   return (
     <div className="space-y-8">
       {/* In Progress */}
@@ -26,6 +28,17 @@ export function LessonList({ completed, active, queued }: LessonListProps) {
         </Section>
       )}
 
+      {/* Replacement requested */}
+      {discarded.length > 0 && (
+        <Section title="Replacement requested">
+          <div className="px-4 py-3 bg-amber-50 border border-amber-100 rounded-lg text-xs text-amber-700 mb-2">
+            The lesson generator has been asked to create a replacement for the discarded lesson below.
+            A new lesson will appear in the Queued section when ready.
+          </div>
+          {discarded.map((l) => <LessonRow key={l.id} lesson={l} />)}
+        </Section>
+      )}
+
       {/* Completed */}
       {completed.length > 0 && (
         <Section title="Completed">
@@ -33,7 +46,7 @@ export function LessonList({ completed, active, queued }: LessonListProps) {
         </Section>
       )}
 
-      {completed.length === 0 && active.length === 0 && queued.length === 0 && (
+      {isEmpty && (
         <div className="py-12 text-center text-gray-400 text-sm">
           No lessons yet. A lesson will be queued when a next-lesson task runs.
         </div>
@@ -62,6 +75,7 @@ function LessonRow({ lesson }: { lesson: Lesson }) {
     in_progress: "bg-blue-500 animate-pulse",
     queued: "bg-gray-300",
     skipped: "bg-gray-200",
+    discarded: "bg-amber-400",
   };
 
   return (
