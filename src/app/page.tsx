@@ -2,10 +2,11 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import type { SubjectSummary } from "@/types";
+import type { SubjectSummary, Subject } from "@/types";
 import { SubjectCard } from "@/components/SubjectCard";
 import { LearnerHeader } from "@/components/LearnerHeader";
 import { Logo } from "@/components/Logo";
+import { SubjectForm } from "@/components/SubjectForm";
 
 export default function DashboardPage() {
   const [subjects, setSubjects] = useState<SubjectSummary[]>([]);
@@ -15,6 +16,7 @@ export default function DashboardPage() {
   const [busyId, setBusyId] = useState<number | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
   const [showArchived, setShowArchived] = useState(false);
+  const [showCreateForm, setShowCreateForm] = useState(false);
 
   async function load() {
     try {
@@ -33,6 +35,12 @@ export default function DashboardPage() {
     load();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [learnerId]);
+
+  function handleSubjectCreated(subject: Subject) {
+    setShowCreateForm(false);
+    setNotice(`Subject "${subject.title}" created. Open it to start generating lessons.`);
+    load();
+  }
 
   async function handleArchiveToggle(subject: SubjectSummary) {
     const archiving = subject.status !== "archived";
@@ -72,6 +80,15 @@ export default function DashboardPage() {
           <div className="flex gap-1 ml-4">
             <NavTab href="/" active>Subjects</NavTab>
             <NavTab href="/progress">Progress</NavTab>
+          </div>
+          <div className="ml-auto">
+            <button
+              onClick={() => setShowCreateForm(true)}
+              className="flex items-center gap-1.5 px-3.5 py-1.5 text-sm font-medium bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+            >
+              <span className="text-lg leading-none">+</span>
+              <span>New subject</span>
+            </button>
           </div>
         </div>
       </nav>
@@ -144,12 +161,46 @@ export default function DashboardPage() {
             {subjects.length === 0 && (
               <div className="py-16 text-center text-gray-400">
                 <p className="text-lg font-medium mb-2">No subjects yet</p>
-                <p className="text-sm">Add a subject to get started.</p>
+                <p className="text-sm mb-4">Create your first subject to get started.</p>
+                <button
+                  onClick={() => setShowCreateForm(true)}
+                  className="px-5 py-2.5 text-sm font-medium bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+                >
+                  Create a subject
+                </button>
               </div>
             )}
           </>
         )}
       </div>
+
+      {/* Create subject modal */}
+      {showCreateForm && (
+        <div
+          className="fixed inset-0 z-50 flex items-start justify-center bg-black/40 px-4 pt-16 pb-8 overflow-y-auto"
+          onClick={(e) => {
+            if (e.target === e.currentTarget) setShowCreateForm(false);
+          }}
+        >
+          <div className="bg-white rounded-xl shadow-xl max-w-xl w-full p-6 my-auto">
+            <div className="flex items-center justify-between mb-6">
+              <h2 className="text-base font-semibold text-gray-900">Create a new subject</h2>
+              <button
+                onClick={() => setShowCreateForm(false)}
+                className="text-gray-400 hover:text-gray-600 text-xl leading-none"
+                aria-label="Close"
+              >
+                &#10005;
+              </button>
+            </div>
+            <SubjectForm
+              learnerId={learnerId}
+              onSave={handleSubjectCreated}
+              onCancel={() => setShowCreateForm(false)}
+            />
+          </div>
+        </div>
+      )}
     </div>
   );
 }

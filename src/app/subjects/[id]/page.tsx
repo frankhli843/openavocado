@@ -9,6 +9,8 @@ import { MasteryPanel } from "@/components/MasteryPanel";
 import { MasterySummary } from "@/components/MasterySummary";
 import { ProgressChart } from "@/components/ProgressChart";
 import { GoalsEditor } from "@/components/GoalsEditor";
+import { CriteriaEditor } from "@/components/CriteriaEditor";
+import { SubjectForm } from "@/components/SubjectForm";
 
 interface SubjectData {
   subject: Subject;
@@ -19,7 +21,7 @@ interface SubjectData {
   tags: Array<{ id: number; name: string; tag_type: string }>;
 }
 
-type TabId = "lessons" | "mastery" | "progress" | "goals";
+type TabId = "lessons" | "mastery" | "progress" | "goals" | "criteria";
 
 export default function SubjectPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
@@ -29,6 +31,7 @@ export default function SubjectPage({ params }: { params: Promise<{ id: string }
   const [activeTab, setActiveTab] = useState<TabId>("lessons");
   const [archiveBusy, setArchiveBusy] = useState(false);
   const [notice, setNotice] = useState<string | null>(null);
+  const [showEditForm, setShowEditForm] = useState(false);
 
   async function load() {
     try {
@@ -98,12 +101,14 @@ export default function SubjectPage({ params }: { params: Promise<{ id: string }
   const completedLessons = lessons.filter((l) => l.status === "completed");
   const activeLessons = lessons.filter((l) => l.status === "in_progress");
   const queuedLessons = lessons.filter((l) => l.status === "queued");
+  const discardedLessons = lessons.filter((l) => l.status === "discarded");
 
   const tabs: Array<{ id: TabId; label: string; count?: number }> = [
     { id: "lessons", label: "Lessons", count: lessons.length },
     { id: "mastery", label: "Mastery", count: mastery_signals.length },
     { id: "progress", label: "Progress" },
     { id: "goals", label: "Goals" },
+    { id: "criteria", label: "Generator notes" },
   ];
 
   return (
@@ -157,11 +162,18 @@ export default function SubjectPage({ params }: { params: Promise<{ id: string }
             )}
           </div>
 
-          {/* Quick stats */}
-          <div className="shrink-0 flex items-center gap-4 text-sm">
+          {/* Quick stats + edit button */}
+          <div className="shrink-0 flex items-center gap-3 text-sm">
             <StatPill label="Done" value={completedLessons.length} color="green" />
             <StatPill label="Active" value={activeLessons.length} color="blue" />
             <StatPill label="Queued" value={queuedLessons.length} color="gray" />
+            <button
+              onClick={() => setShowEditForm(true)}
+              className="px-3 py-1.5 text-sm font-medium text-gray-600 border border-gray-200 rounded-lg hover:bg-gray-50 hover:text-gray-900 transition-colors"
+              title="Edit subject details"
+            >
+              Edit
+            </button>
           </div>
         </div>
 
@@ -210,6 +222,7 @@ export default function SubjectPage({ params }: { params: Promise<{ id: string }
               completed={completedLessons}
               active={activeLessons}
               queued={queuedLessons}
+              discarded={discardedLessons}
             />
           )}
           {activeTab === "mastery" && (
@@ -224,8 +237,50 @@ export default function SubjectPage({ params }: { params: Promise<{ id: string }
           {activeTab === "goals" && (
             <GoalsEditor subjectId={subject.id} initialGoals={subject.goals ?? ""} />
           )}
+          {activeTab === "criteria" && (
+            <CriteriaEditor subjectId={subject.id} initialCriteria={subject.criteria ?? ""} />
+          )}
         </div>
       </div>
+
+      {/* Edit subject modal */}
+      {showEditForm && (
+        <div
+          className="fixed inset-0 z-50 flex items-start justify-center bg-black/40 px-4 pt-16 pb-8 overflow-y-auto"
+          onClick={(e) => {
+            if (e.target === e.currentTarget) setShowEditForm(false);
+          }}
+        >
+          <div className="bg-white rounded-xl shadow-xl max-w-xl w-full p-6 my-auto">
+            <div className="flex items-center justify-between mb-6">
+              <h2 className="text-base font-semibold text-gray-900">Edit subject</h2>
+              <button
+                onClick={() => setShowEditForm(false)}
+                className="text-gray-400 hover:text-gray-600 text-xl leading-none"
+                aria-label="Close"
+              >
+                &#10005;
+              </button>
+            </div>
+            {subject.status === "archived" && (
+              <div className="mb-4 p-3 bg-amber-50 border border-amber-200 rounded-lg text-amber-700 text-sm">
+                This subject is archived. You can edit its details, but it will remain hidden from the active learning list until restored.
+              </div>
+            )}
+            <SubjectForm
+              initial={subject}
+              learnerId={subject.learner_id}
+              onSave={(updated) => {
+                setShowEditForm(false);
+                setNotice(`Subject updated.`);
+                load();
+                void updated; // load() refreshes from server
+              }}
+              onCancel={() => setShowEditForm(false)}
+            />
+          </div>
+        </div>
+      )}
     </div>
   );
 }

@@ -10,6 +10,7 @@ import { InteractiveSection } from "@/components/lesson/InteractiveSection";
 import { PythonSection } from "@/components/lesson/PythonSection";
 import { AssessmentSection } from "@/components/lesson/AssessmentSection";
 import { debounce, postAutosave, type SaveStatus } from "@/lib/autosave";
+import { DiscardLessonModal } from "@/components/DiscardLessonModal";
 
 interface LessonData {
   lesson: Lesson;
@@ -33,6 +34,9 @@ export default function LessonPage({ params }: { params: Promise<{ id: string }>
   const [lastSavedAt, setLastSavedAt] = useState<string | null>(null);
   const [completing, setCompleting] = useState(false);
   const [completed, setCompleted] = useState(false);
+  const [showDiscardModal, setShowDiscardModal] = useState(false);
+  const [discarded, setDiscarded] = useState(false);
+  const [discardRegenRef, setDiscardRegenRef] = useState<string | null>(null);
   const [assessmentAnswers, setAssessmentAnswers] = useState<Record<string, string>>({});
   const [codeDraft, setCodeDraft] = useState<string>("");
   const [runOutput, setRunOutput] = useState<string>("");
@@ -227,8 +231,19 @@ export default function LessonPage({ params }: { params: Promise<{ id: string }>
                 : ""}
             </span>
 
+            {/* Discard button — only for incomplete lessons */}
+            {!completed && !discarded && lesson.status !== "completed" && (
+              <button
+                onClick={() => setShowDiscardModal(true)}
+                className="px-3 py-1.5 text-sm font-medium text-gray-500 border border-gray-200 rounded-lg hover:bg-gray-50 hover:text-gray-700 transition-colors"
+                title="Discard this lesson and request a replacement"
+              >
+                Discard
+              </button>
+            )}
+
             {/* Complete button — only path to completion */}
-            {!completed ? (
+            {!completed && !discarded ? (
               <button
                 onClick={handleComplete}
                 disabled={completing || lesson.status === "completed"}
@@ -236,9 +251,13 @@ export default function LessonPage({ params }: { params: Promise<{ id: string }>
               >
                 {completing ? "Completing..." : "Mark Complete"}
               </button>
-            ) : (
+            ) : completed ? (
               <span className="px-3 py-1.5 text-sm font-medium bg-green-50 text-green-700 rounded-lg border border-green-100">
                 Completed
+              </span>
+            ) : (
+              <span className="px-3 py-1.5 text-sm font-medium bg-amber-50 text-amber-700 rounded-lg border border-amber-100">
+                Discarded
               </span>
             )}
           </div>
@@ -283,8 +302,24 @@ export default function LessonPage({ params }: { params: Promise<{ id: string }>
           </div>
         )}
 
+        {/* Discarded notice */}
+        {discarded && (
+          <div className="p-4 bg-amber-50 border border-amber-200 rounded-xl text-sm text-amber-700 flex items-start gap-2">
+            <span className="mt-0.5">&#9888;</span>
+            <div>
+              <strong>Lesson discarded.</strong> A replacement lesson has been requested.
+              {discardRegenRef && (
+                <span className="block text-xs mt-1 text-amber-600 font-mono">Ref: {discardRegenRef}</span>
+              )}
+              <span className="block mt-1 text-amber-600">
+                This lesson is no longer in your active queue. Your mastery score has not changed.
+              </span>
+            </div>
+          </div>
+        )}
+
         {/* Completion clarification */}
-        {!completed && (
+        {!completed && !discarded && (
           <div className="px-4 py-2.5 bg-blue-50 border border-blue-100 rounded-lg text-xs text-blue-600 flex items-center gap-2">
             <span>&#8505;</span>
             Progress is saved automatically. Click &quot;Mark Complete&quot; only when you&apos;re done with the whole lesson.
@@ -352,9 +387,15 @@ export default function LessonPage({ params }: { params: Promise<{ id: string }>
           return null;
         })}
 
-        {/* Bottom complete button */}
-        {!completed && (
-          <div className="pt-4 pb-8 flex justify-center">
+        {/* Bottom action row */}
+        {!completed && !discarded && (
+          <div className="pt-4 pb-8 flex items-center justify-center gap-4">
+            <button
+              onClick={() => setShowDiscardModal(true)}
+              className="px-5 py-2.5 text-sm font-medium text-gray-500 border border-gray-200 rounded-xl hover:bg-gray-50 hover:text-gray-700 transition-colors"
+            >
+              Discard lesson
+            </button>
             <button
               onClick={handleComplete}
               disabled={completing}
@@ -365,6 +406,21 @@ export default function LessonPage({ params }: { params: Promise<{ id: string }>
           </div>
         )}
       </div>
+
+      {/* Discard lesson modal */}
+      {showDiscardModal && (
+        <DiscardLessonModal
+          lessonId={lesson.id}
+          lessonTitle={lesson.title}
+          learnerId={LEARNER_ID}
+          onDiscarded={(result) => {
+            setShowDiscardModal(false);
+            setDiscarded(true);
+            setDiscardRegenRef(result.regeneration_job.ref ?? null);
+          }}
+          onCancel={() => setShowDiscardModal(false)}
+        />
+      )}
     </div>
   );
 }
@@ -375,6 +431,7 @@ function StatusBadge({ status }: { status: string }) {
     in_progress: "bg-blue-50 text-blue-700",
     completed: "bg-green-50 text-green-700",
     skipped: "bg-gray-50 text-gray-400",
+    discarded: "bg-amber-50 text-amber-700",
   };
   return (
     <span className={`px-2 py-0.5 text-xs font-medium rounded-full ${styles[status] ?? "bg-gray-50 text-gray-600"}`}>

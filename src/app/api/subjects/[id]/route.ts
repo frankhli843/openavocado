@@ -77,7 +77,7 @@ export async function PATCH(
     const body = (await request.json()) as Partial<Subject>;
     const subjectId = Number(id);
 
-    const allowed = ["goals", "status", "title", "description", "current_level"] as const;
+    const allowed = ["goals", "criteria", "status", "title", "description", "current_level"] as const;
     const updates: string[] = [];
     const values: unknown[] = [];
 
