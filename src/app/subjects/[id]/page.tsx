@@ -153,19 +153,19 @@ export default function SubjectPage({ params }: { params: Promise<{ id: string }
 
       {/* Subject header */}
       <div className="max-w-5xl mx-auto px-4 sm:px-6 py-6">
-        <div className="flex items-start justify-between gap-4 mb-6">
+        <div className="flex flex-col gap-3 mb-6 sm:flex-row sm:items-start sm:justify-between sm:gap-4">
           <div className="min-w-0">
-            <div className="flex items-center gap-3 mb-1">
-              <h1 className="text-xl font-bold text-gray-900 tracking-tight">{subject.title}</h1>
+            <div className="flex flex-wrap items-baseline gap-2 mb-1">
+              <h1 className="min-w-0 break-words text-xl font-bold text-gray-900 tracking-tight">{subject.title}</h1>
               <LevelBadge level={subject.current_level} />
             </div>
             {subject.description && (
-              <p className="text-sm text-gray-500 leading-relaxed">{subject.description}</p>
+              <p className="text-sm text-gray-500 leading-relaxed break-words">{subject.description}</p>
             )}
           </div>
 
           {/* Quick stats + edit button */}
-          <div className="shrink-0 flex items-center gap-3 text-sm">
+          <div className="flex flex-wrap items-center gap-2 text-sm sm:shrink-0 sm:gap-3">
             <StatPill label="Done" value={completedLessons.length} color="green" />
             <StatPill label="Active" value={activeLessons.length} color="blue" />
             <StatPill label="Queued" value={queuedLessons.length} color="gray" />

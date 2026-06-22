@@ -30,7 +30,7 @@ export function SubjectCard({ subject, onArchiveToggle, busy }: SubjectCardProps
       <Link href={`/subjects/${subject.id}`} className="block">
         {/* Header row */}
         <div className="flex items-start justify-between gap-3 mb-3">
-          <h3 className="font-semibold text-gray-900 text-base leading-snug group-hover:text-blue-700 transition-colors">
+          <h3 className="min-w-0 break-words font-semibold text-gray-900 text-base leading-snug group-hover:text-blue-700 transition-colors">
             {subject.title}
           </h3>
           <span

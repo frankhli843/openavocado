@@ -82,6 +82,22 @@ export function seedDatabase(): void {
       )
   ).lastInsertRowid as number;
 
+  // GDM Image Preprocessor subject — exact title/level/description preserved for regression QA
+  const gdmId = (
+    db
+      .prepare(
+        `INSERT INTO subjects (learner_id, title, description, goals, criteria, current_level) VALUES (?, ?, ?, ?, ?, ?)`
+      )
+      .run(
+        learnerId,
+        "GDM Image Preprocessor",
+        "A focused learning track for becoming fluent in model-building foundations and expert-level vision preprocessing for multimodal models, aimed at Sara follow-up preparation.",
+        "Understand the full image preprocessing pipeline from raw pixel data to model-ready tensors. Reach competence-level understanding of transforms, normalization, tokenization, and batching as applied to multimodal architectures like Gemma.",
+        "Code-first approach using Python/PIL/NumPy. Implement each preprocessing step from scratch before using library abstractions. Connect each transform to why the model architecture requires it. Focus on Gemma 4 multimodal input contracts.",
+        "familiarity"
+      )
+  ).lastInsertRowid as number;
+
   // Diagnostics for math subject
   db.prepare(
     "INSERT INTO diagnostics (subject_id, question, answer, completed_at) VALUES (?, ?, ?, ?)"
@@ -110,6 +126,9 @@ export function seedDatabase(): void {
   const supplyTagId =
     (db.prepare("INSERT OR IGNORE INTO tags (name, tag_type) VALUES (?, ?) RETURNING id").get("supply-demand", "curriculum_area") as { id: number })?.id ||
     (db.prepare("SELECT id FROM tags WHERE name = ?").get("supply-demand") as { id: number }).id;
+  const imgPreprocTagId =
+    (db.prepare("INSERT OR IGNORE INTO tags (name, tag_type) VALUES (?, ?) RETURNING id").get("image-preprocessing", "concept") as { id: number })?.id ||
+    (db.prepare("SELECT id FROM tags WHERE name = ?").get("image-preprocessing") as { id: number }).id;
 
   const insertActivity = db.prepare(
     `INSERT INTO lesson_activities (lesson_id, activity_type, is_core, sequence_order, title, content)
@@ -254,6 +273,7 @@ total = 1000
         { id: "q2", text: "A medical test is 95% sensitive and 90% specific. If 1% of the population has the disease, what is P(disease | positive test)?", type: "numeric", hint: "Use Bayes' theorem" },
         { id: "q3", text: "What is the key difference between P(A|B) and P(B|A)?", type: "free_text" },
       ],
+      quiz: CONDITIONAL_PROBABILITY_MC_QUIZ,
     })
   );
 
@@ -622,6 +642,201 @@ q_star = None
   db.prepare(
     "INSERT INTO mastery_signals (learner_id, subject_id, lesson_id, signal_type, concept, detail, confidence) VALUES (?, ?, ?, 'strength', ?, ?, ?)"
   ).run(learnerId, econId, econLesson1Id, "supply-demand", "Comfortable reading the equilibrium point.", 0.5);
+
+  // ─── GDM Image Preprocessor — vision lesson (queued) ─────────────────────
+  const gdmLesson1Id = (
+    db
+      .prepare(
+        `INSERT INTO lessons (subject_id, title, description, status, sequence_number, goals, tags, generated_by)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?)`
+      )
+      .run(
+        gdmId,
+        "From Raw Image to Model-Ready Tensor",
+        "Trace an image from JPEG on disk through resize, normalization, channel reordering, and tokenization into the tensor format Gemma and other multimodal models consume.",
+        "queued",
+        1,
+        JSON.stringify(["Understand each preprocessing step and why it is needed", "Implement resize + normalize + channel permute from scratch in Python", "Map raw pixel values to float tensors in the correct range and shape"]),
+        JSON.stringify(["image-preprocessing", "multimodal-ai"]),
+        "doramon-lesson-generator/v1"
+      )
+  ).lastInsertRowid as number;
+  db.prepare("INSERT OR IGNORE INTO lesson_tags (lesson_id, tag_id) VALUES (?, ?)").run(gdmLesson1Id, imgPreprocTagId);
+
+  insertActivity.run(
+    gdmLesson1Id,
+    "audio",
+    1,
+    1,
+    "Audio: The Preprocessing Pipeline",
+    JSON.stringify({
+      script: "A vision model does not see pixels the way you do. It sees a three-dimensional tensor: height, width, and channels, with values floating between negative two and positive two. Getting from a JPEG on disk to that tensor is the preprocessing pipeline — and every step exists for a reason. Resize standardises the spatial footprint. Normalization moves the pixel scale into the range the model was trained on. Channel reordering puts the axes where the architecture expects them. Together they turn an arbitrary photograph into a form the model can reason about.",
+      duration_hint: 540,
+    })
+  );
+
+  insertActivity.run(
+    gdmLesson1Id,
+    "reading",
+    1,
+    2,
+    "Read: Every Transform and Why It Exists",
+    JSON.stringify({
+      intro: "Each preprocessing step compensates for a mismatch between raw image data and what the model architecture expects.",
+      blocks: [
+        { type: "heading", text: "Step 1 — Resize" },
+        { type: "paragraph", text: "Models have a fixed input resolution baked into their patch embedder. Gemma 4's vision encoder expects 896 × 896 pixel images. An arbitrary photo is unlikely to be that size, so you resize first." },
+        { type: "callout", tone: "insight", text: "Bilinear and bicubic resampling preserve more detail than nearest-neighbour but are slower. For training, bicubic is common. For fast inference, bilinear is a reasonable trade-off." },
+        { type: "heading", text: "Step 2 — Rescale and normalise" },
+        { type: "definition", term: "Normalisation", definition: "Subtract the channel mean and divide by the channel standard deviation, so that values that were spread across 0–255 become centred near 0. ImageNet means: [0.485, 0.456, 0.406], stds: [0.229, 0.224, 0.225] for RGB." },
+        { type: "paragraph", text: "Before normalisation, pixel values are rescaled from uint8 [0, 255] to float32 [0.0, 1.0] by dividing by 255. Only then is the mean subtracted and divided by the std." },
+        { type: "heading", text: "Step 3 — Channel order" },
+        { type: "paragraph", text: "PIL loads images as HWC (height × width × channels). PyTorch and most vision models want CHW (channels × height × width). A single permute or transpose call reorders the axes." },
+        { type: "example", title: "Shape trace", body: "PIL image (896, 896, 3) → NumPy array uint8 (896, 896, 3) → float32 /255 → normalised float32 → transpose to (3, 896, 896)." },
+        { type: "callout", tone: "warning", text: "Forgetting the axis permute is one of the most common bugs in custom preprocessing. Always print tensor.shape before passing to the model." },
+        { type: "heading", text: "Step 4 — Batching" },
+        { type: "paragraph", text: "Most models process a batch of N images at once. A single image (3, H, W) becomes (1, 3, H, W) with np.expand_dims or tensor.unsqueeze(0). During training, multiple images are stacked along axis 0." },
+        { type: "list", ordered: true, items: ["Open image with PIL.", "Resize to target (H, W) with bilinear resampling.", "Convert to float32 and divide by 255.", "Subtract per-channel mean, divide by per-channel std.", "Permute axes from HWC to CHW.", "Add batch dimension."] },
+      ],
+      summary: "The preprocessing pipeline standardises shape, scale, and axis order. Each step compensates for a specific mismatch between raw media data and model expectations.",
+    })
+  );
+
+  insertActivity.run(
+    gdmLesson1Id,
+    "media",
+    0,
+    3,
+    "Watch: How Vision Models See Images",
+    JSON.stringify({
+      embeds: [
+        {
+          provider: "youtube",
+          video_id: "dPWYUELwIdM",
+          title: "How a CNN Sees an Image — intuition for patches and channels",
+          reason: "A visual walkthrough of how raw pixel data gets converted into the features a model actually uses.",
+          fallback_text: "If the video is unavailable, re-read the 'Every Transform and Why It Exists' section — the shape trace example shows the same journey in text form.",
+        },
+      ],
+    })
+  );
+
+  insertActivity.run(
+    gdmLesson1Id,
+    "interactive",
+    1,
+    4,
+    "Explore: Preprocessing Step Visualiser",
+    JSON.stringify({
+      schema_version: "1.0",
+      widget_type: "declarative",
+      title: "How Normalisation Changes Pixel Values",
+      instructions: "Adjust the input pixel value (0–255) and the channel mean and std. Watch how the final normalised float value changes. This is exactly what happens to every pixel before it enters the model.",
+      controls: [
+        { type: "slider", id: "pixel", label: "Raw pixel value (uint8)", min: 0, max: 255, step: 1, default: 128 },
+        { type: "slider", id: "mean", label: "Channel mean (ImageNet ≈ 0.485 for R)", min: 0, max: 1, step: 0.001, default: 0.485 },
+        { type: "slider", id: "std", label: "Channel std (ImageNet ≈ 0.229 for R)", min: 0.01, max: 1, step: 0.001, default: 0.229 },
+      ],
+      outputs: [
+        { id: "rescaled", label: "After /255", formula: "pixel / 255", format: "decimal", precision: 4 },
+        { id: "normalised", label: "After normalise", formula: "(pixel / 255 - mean) / std", format: "decimal", precision: 4 },
+      ],
+      chart: {
+        type: "bar",
+        title: "Pixel representation at each stage",
+        bars: [
+          { label: "uint8 (÷255 scale)", ref: "rescaled", color: "#94a3b8" },
+          { label: "normalised float", ref: "normalised", color: "#2563eb" },
+        ],
+      },
+      panels: [
+        {
+          title: "What the model receives",
+          template:
+            "Pixel {{pixel}} → rescaled to {{rescaled}} → normalised to {{normalised}}. Values near 0 after normalisation are close to the ImageNet average; negative values are darker than average; positive are brighter.",
+        },
+      ],
+    })
+  );
+
+  insertActivity.run(
+    gdmLesson1Id,
+    "practice_code",
+    1,
+    5,
+    "Python: Implement the Preprocessing Pipeline",
+    JSON.stringify({
+      language: "python",
+      prompt: "Implement preprocess_image(arr, target_size, mean, std) that takes a uint8 NumPy array of shape (H, W, 3) and returns a normalised float32 array of shape (3, target_size, target_size).",
+      constraints: [
+        "Use only NumPy (no torchvision, no PIL resize — use numpy slicing or a simple bilinear stub).",
+        "Rescale to float32 in [0, 1] by dividing by 255 before normalising.",
+        "Output shape must be (3, target_size, target_size).",
+      ],
+      guided_steps: [
+        "Resize: for simplicity, crop or pad to target_size × target_size (full bilinear needs scipy — use centre crop).",
+        "Rescale: arr.astype(np.float32) / 255.0",
+        "Normalise: (arr - mean) / std  (broadcast over channels).",
+        "Permute: arr.transpose(2, 0, 1) converts HWC → CHW.",
+      ],
+      hints: [
+        { level: 1, text: "Work step by step: convert dtype first, then normalise, then reorder axes." },
+        { level: 2, text: "np.array(mean) must broadcast correctly against an (H, W, 3) array — reshape to (1, 1, 3)." },
+        { level: 3, text: "arr = arr.astype(np.float32) / 255.0; arr = (arr - np.array(mean).reshape(1,1,3)) / np.array(std).reshape(1,1,3); return arr.transpose(2,0,1)" },
+      ],
+      starter_code: `import numpy as np
+
+def preprocess_image(arr, target_size=224, mean=(0.485, 0.456, 0.406), std=(0.229, 0.224, 0.225)):
+    """
+    arr: uint8 NumPy array (H, W, 3)
+    Returns: float32 array (3, target_size, target_size)
+    """
+    # Step 1 — centre-crop to target_size x target_size
+    h, w = arr.shape[:2]
+    top  = max(0, (h - target_size) // 2)
+    left = max(0, (w - target_size) // 2)
+    arr  = arr[top:top+target_size, left:left+target_size]
+    # Pad if smaller (rare for large images, but handle it)
+    pad_h = max(0, target_size - arr.shape[0])
+    pad_w = max(0, target_size - arr.shape[1])
+    if pad_h or pad_w:
+        arr = np.pad(arr, ((0, pad_h), (0, pad_w), (0, 0)), mode='constant')
+
+    # TODO: Step 2 — rescale to float32 in [0, 1]
+
+    # TODO: Step 3 — normalise using mean and std
+
+    # TODO: Step 4 — permute from HWC to CHW
+
+    return arr
+`,
+      tests: [
+        { id: "t1", description: "Output shape is (3, target_size, target_size)", assert: "preprocess_image(np.zeros((256,256,3), dtype=np.uint8), 224).shape == (3, 224, 224)" },
+        { id: "t2", description: "Output dtype is float32", assert: "preprocess_image(np.zeros((256,256,3), dtype=np.uint8), 224).dtype == np.float32" },
+        { id: "t3", description: "All-white image normalises correctly for R channel (value ~ (1.0-0.485)/0.229)", assert: "abs(preprocess_image(np.full((256,256,3), 255, dtype=np.uint8), 224)[0,0,0] - (1.0 - 0.485) / 0.229) < 0.01" },
+      ],
+      hidden_tests: [
+        { id: "h1", description: "All-black image gives negative normalised values", assert: "(preprocess_image(np.zeros((256,256,3), dtype=np.uint8), 224) < 0).all()" },
+        { id: "h2", description: "Output values are not clamped to [0,1] — normalised values can exceed 1", assert: "preprocess_image(np.full((256,256,3), 255, dtype=np.uint8), 224).max() > 1.0" },
+      ],
+    })
+  );
+
+  insertActivity.run(
+    gdmLesson1Id,
+    "assessment",
+    1,
+    6,
+    "Assessment: Image Preprocessing for Multimodal Models",
+    JSON.stringify({
+      questions: [
+        { id: "gq1", text: "Why must a raw uint8 pixel value be divided by 255 before normalisation?", type: "free_text" },
+        { id: "gq2", text: "A Gemma 4 vision encoder expects input shape (batch, channels, 896, 896). Your PIL image loads as (1080, 1920, 3). List the transforms needed and the shape after each one.", type: "free_text" },
+        { id: "gq3", text: "You forget the axis permute and pass shape (896, 896, 3) to a model expecting (3, 896, 896). What goes wrong?", type: "free_text" },
+      ],
+      quiz: IMAGE_PREPROCESSING_MC_QUIZ,
+    })
+  );
 
   // Next lesson job (queued after lesson 1 completion)
   db.prepare(
@@ -1138,6 +1353,319 @@ const SUPPLY_DEMAND_MC_QUIZ = {
         "A tax drives a wedge between the buyer's price and the seller's price, reducing the quantity traded. The transactions that would have happened without the tax but no longer do represent foregone value to both buyers and sellers — this is the deadweight loss, or efficiency cost, of the tax.",
       misconception_target: "Students often confuse deadweight loss with the tax revenue transferred to the government.",
       rephrase_instructions: "Frame it around a quantity restriction (quota) rather than a tax to test the same concept with a different policy tool.",
+    },
+  ],
+};
+
+// ─── Conditional Probability MC quiz ─────────────────────────────────────────
+
+/**
+ * 8-question conditional probability MC quiz.
+ * pass_threshold=6. Ordered easy→hard so missed-concept retries appear late.
+ */
+const CONDITIONAL_PROBABILITY_MC_QUIZ = {
+  pass_threshold: 6,
+  questions: [
+    {
+      id: "cq1",
+      concept: "conditional-probability-definition",
+      difficulty: "easy",
+      question: "What does P(A | B) mean?",
+      choices: [
+        "The probability of A given that B has already occurred",
+        "The probability that both A and B happen",
+        "The probability of B given that A has already occurred",
+        "The probability of A minus the probability of B",
+      ],
+      correct_index: 0,
+      explanation:
+        "P(A | B) is read 'the probability of A given B'. It restricts attention to the outcomes where B is true and asks how often A is also true within that restricted set.",
+      misconception_target: "Learners frequently confuse P(A|B) with P(A and B) or flip the condition.",
+      rephrase_instructions: "Use a non-medical example such as rolling dice or drawing cards. Keep the formal notation P(A|B).",
+    },
+    {
+      id: "cq2",
+      concept: "sample-space-narrowing",
+      difficulty: "easy",
+      question: "When we condition on event B, what happens to the sample space?",
+      choices: [
+        "The sample space shrinks to contain only outcomes where B is true",
+        "The sample space expands to include all outcomes related to B",
+        "The sample space stays the same but probabilities of A are rescaled",
+        "The sample space is replaced by the complement of B",
+      ],
+      correct_index: 0,
+      explanation:
+        "Conditioning on B means we restrict analysis to the subset of outcomes where B occurred. All probabilities are then re-evaluated within that smaller world.",
+      misconception_target: "Students sometimes think conditioning multiplies probabilities rather than restricting the space.",
+      rephrase_instructions: "Describe a concrete scenario — a bag of coloured balls — and ask what subset you analyse after conditioning.",
+    },
+    {
+      id: "cq3",
+      concept: "conditional-probability-formula",
+      difficulty: "easy",
+      question: "Which formula correctly computes P(A | B)?",
+      choices: [
+        "P(A and B) / P(B)",
+        "P(A) × P(B)",
+        "P(A) / P(B)",
+        "P(A and B) / P(A)",
+      ],
+      correct_index: 0,
+      explanation:
+        "P(A | B) = P(A ∩ B) / P(B). The numerator counts outcomes in both A and B; the denominator normalises by the size of B's subspace.",
+      misconception_target: "A common error is dividing by P(A) instead of P(B), which computes P(B|A).",
+      rephrase_instructions: "Give numeric values for P(A and B) and P(B) and ask the learner to compute the conditional probability.",
+    },
+    {
+      id: "cq4",
+      concept: "direction-of-conditioning",
+      difficulty: "medium",
+      question: "In general, P(A | B) and P(B | A) are:",
+      choices: [
+        "Different quantities — swapping the condition changes the calculation",
+        "Always equal — conditioning is symmetric",
+        "Complementary — they always add up to 1",
+        "The same when A and B are equally likely",
+      ],
+      correct_index: 0,
+      explanation:
+        "P(A|B) = P(A∩B)/P(B) and P(B|A) = P(A∩B)/P(A). Unless P(A)=P(B), these are different values. Treating them as equal is called the 'prosecutors' fallacy'.",
+      misconception_target: "Swapping conditions is the most common conceptual error in applied probability.",
+      rephrase_instructions: "Use a forensics or test-accuracy scenario where the direction of the condition changes the practical meaning.",
+    },
+    {
+      id: "cq5",
+      concept: "independence",
+      difficulty: "medium",
+      question: "Events A and B are independent when:",
+      choices: [
+        "P(A | B) = P(A) — knowing B gives no information about A",
+        "P(A | B) = 0 — A and B cannot happen together",
+        "P(A | B) = P(B | A) — the conditions are symmetric",
+        "P(A | B) = 1 — B guarantees A",
+      ],
+      correct_index: 0,
+      explanation:
+        "Independence means learning that B occurred does not change the probability of A. Formally P(A|B) = P(A), which is equivalent to P(A∩B) = P(A)P(B).",
+      misconception_target: "Students often confuse mutually exclusive events (which cannot happen together) with independent events.",
+      rephrase_instructions: "Frame as a coin-flip scenario and ask whether two flips are independent — a natural setting for this concept.",
+    },
+    {
+      id: "cq6",
+      concept: "multiplication-rule",
+      difficulty: "medium",
+      question: "The multiplication rule states that P(A and B) equals:",
+      choices: [
+        "P(A | B) × P(B)",
+        "P(A) + P(B)",
+        "P(A) × P(B) always",
+        "P(A | B) / P(B)",
+      ],
+      correct_index: 0,
+      explanation:
+        "P(A ∩ B) = P(A|B) × P(B). This rearrangement of the conditional probability formula lets you compute joint probabilities from a conditional and a marginal. P(A)×P(B) is only correct if A and B are independent.",
+      misconception_target: "Using P(A)×P(B) for non-independent events is a frequent mistake — it assumes independence that may not hold.",
+      rephrase_instructions: "Give a sequential-draw scenario (cards without replacement) where independence clearly fails.",
+    },
+    {
+      id: "cq7",
+      concept: "law-of-total-probability",
+      difficulty: "hard",
+      question: "Out of 1,000 people: 400 smokers (80 have lung disease) and 600 non-smokers (20 have lung disease). What is the overall probability of lung disease P(L)?",
+      choices: [
+        "10% — (80 + 20) / 1000",
+        "20% — 80 / 400 (the smoker rate)",
+        "3.3% — 20 / 600 (the non-smoker rate)",
+        "11.5% — average of 20% and 3.3%",
+      ],
+      correct_index: 0,
+      explanation:
+        "Total cases = 80 + 20 = 100 out of 1,000. P(L) = 100/1000 = 10%. The law of total probability says P(L) = P(L|smoker)P(smoker) + P(L|non-smoker)P(non-smoker) = 0.20×0.4 + 0.033×0.6 = 0.08 + 0.02 = 0.10.",
+      misconception_target: "Learners average the group rates rather than weighting them by group size.",
+      rephrase_instructions: "Use a different two-group partition (e.g. age groups or urban vs. rural) and ask for the overall rate.",
+    },
+    {
+      id: "cq8",
+      concept: "base-rate-and-conditional",
+      difficulty: "hard",
+      question: "A rare disease affects 0.2% of people. A test has 98% sensitivity (P(+|sick)) and 97% specificity (P(-|healthy)). Roughly what fraction of positive tests indicate actual disease?",
+      choices: [
+        "About 6% — the healthy majority generates more false positives than true positives",
+        "About 98% — the test is nearly perfectly sensitive",
+        "About 50% — equal chance sick or healthy",
+        "About 0.2% — reflects the disease prevalence",
+      ],
+      correct_index: 0,
+      explanation:
+        "Prior=0.002. True positives≈0.002×0.98=0.00196. False positives≈0.998×0.03≈0.02994. Posterior≈0.00196/(0.00196+0.02994)≈6.1%. The enormous healthy majority swamps the signal from rare true positives.",
+      misconception_target: "Focusing on sensitivity alone and ignoring the base rate leads to dramatic overestimation of the posterior.",
+      rephrase_instructions: "Change the prevalence to something higher (e.g. 5%) and ask how dramatically the posterior shifts — this shows learners the leverage of the prior.",
+    },
+  ],
+};
+
+// ─── Image Preprocessing MC quiz ─────────────────────────────────────────────
+
+/**
+ * 9-question image preprocessing MC quiz for the GDM Image Preprocessor track.
+ * pass_threshold=6.
+ */
+const IMAGE_PREPROCESSING_MC_QUIZ = {
+  pass_threshold: 6,
+  questions: [
+    {
+      id: "iq1",
+      concept: "pixel-dtype",
+      difficulty: "easy",
+      question: "Raw image pixels loaded from a JPEG are typically stored as what data type?",
+      choices: [
+        "uint8 — integers in the range 0 to 255",
+        "float32 — floating-point values between 0.0 and 1.0",
+        "int16 — signed 16-bit integers",
+        "bool — one bit per channel indicating on or off",
+      ],
+      correct_index: 0,
+      explanation:
+        "Standard 8-bit images encode each channel as an unsigned 8-bit integer (0–255). Models require float32 tensors, so the first step is always converting and rescaling.",
+      misconception_target: "Learners sometimes assume images are already float or assume a different range.",
+      rephrase_instructions: "Ask about a PNG loaded with PIL — same answer, different library context.",
+    },
+    {
+      id: "iq2",
+      concept: "rescaling",
+      difficulty: "easy",
+      question: "Why do we divide raw pixel values by 255 before normalisation?",
+      choices: [
+        "To convert from the [0, 255] integer range to the [0.0, 1.0] float range the model expects",
+        "To reduce the image resolution by a factor of 255",
+        "To convert from RGB to greyscale",
+        "To match the number of colour channels to the model's embedding dimension",
+      ],
+      correct_index: 0,
+      explanation:
+        "Models are trained on float inputs. Dividing by 255 maps uint8 values to [0, 1], after which per-channel mean subtraction and std division produces values centred near 0.",
+      misconception_target: "Students sometimes skip rescaling and directly subtract the mean from uint8 values, producing nonsensical results.",
+      rephrase_instructions: "Give the learner a uint8 value and ask what it becomes after dividing by 255 — make it concrete.",
+    },
+    {
+      id: "iq3",
+      concept: "imagenet-stats",
+      difficulty: "easy",
+      question: "ImageNet normalisation uses per-channel mean [0.485, 0.456, 0.406] and std [0.229, 0.224, 0.225]. A red-channel pixel has rescaled value 0.714. What is its normalised value?",
+      choices: [
+        "About 1.0 — (0.714 − 0.485) / 0.229",
+        "About 0.229 — only the std matters",
+        "About 0.485 — only the mean matters",
+        "About 0.714 — normalisation leaves the value unchanged",
+      ],
+      correct_index: 0,
+      explanation:
+        "(0.714 − 0.485) / 0.229 ≈ 0.229 / 0.229 = 1.0. After ImageNet normalisation, a pixel brighter than average has a positive normalised value; a darker pixel is negative.",
+      misconception_target: "Learners forget to subtract the mean first, or divide before subtracting.",
+      rephrase_instructions: "Use a different channel (green or blue) with its respective mean and std to give a different numeric answer.",
+    },
+    {
+      id: "iq4",
+      concept: "axis-order-hwc-chw",
+      difficulty: "medium",
+      question: "PIL loads an image as shape (H, W, C). Most deep-learning frameworks (PyTorch, JAX) expect shape (C, H, W). How do you convert?",
+      choices: [
+        "Transpose or permute axes: move C from last to first",
+        "Reshape the array: np.reshape(arr, (C, H, W))",
+        "Flatten then stack: np.stack([arr[:,:,i] for i in range(C)])",
+        "No conversion is needed — frameworks accept either order",
+      ],
+      correct_index: 0,
+      explanation:
+        "arr.transpose(2, 0, 1) in NumPy or tensor.permute(2, 0, 1) in PyTorch reorders axes from HWC to CHW. Reshape alone would produce the wrong mapping — it rearranges data without tracking which dimension is which.",
+      misconception_target: "Using reshape instead of transpose/permute is a silent bug: the shape becomes correct but the data order is wrong.",
+      rephrase_instructions: "Give a tiny concrete example: a 2×2 RGB image. Ask what shape and data arrangement results from reshape vs. transpose.",
+    },
+    {
+      id: "iq5",
+      concept: "resize-methods",
+      difficulty: "medium",
+      question: "Which resampling method generally produces the sharpest result when upscaling an image?",
+      choices: [
+        "Bicubic — uses a larger neighbourhood and preserves more detail",
+        "Nearest-neighbour — fastest and sharpest because it introduces no blurring",
+        "Bilinear — always outperforms bicubic",
+        "Lanczos — fastest method, optimised for real-time inference",
+      ],
+      correct_index: 0,
+      explanation:
+        "Bicubic resampling uses a 4×4 pixel neighbourhood and cubic polynomial interpolation, producing smoother gradients and fewer artefacts than nearest-neighbour or bilinear. Nearest-neighbour is fast but creates the 'blocky' look when upscaling.",
+      misconception_target: "Students assume nearest-neighbour is sharpest because it 'copies' the closest pixel, but this produces blockiness.",
+      rephrase_instructions: "Ask about the trade-off between speed and quality for a time-sensitive inference pipeline.",
+    },
+    {
+      id: "iq6",
+      concept: "batching",
+      difficulty: "medium",
+      question: "A model expects input shape (batch, C, H, W). Your single preprocessed image tensor has shape (C, H, W). What do you do?",
+      choices: [
+        "Add a batch dimension with unsqueeze(0) or np.expand_dims to get shape (1, C, H, W)",
+        "Concatenate the image with itself to reach the required batch size",
+        "Flatten the image to a 1-D vector",
+        "Duplicate the channel dimension to fill the batch dimension",
+      ],
+      correct_index: 0,
+      explanation:
+        "Models always process a batch dimension even for a single image. np.expand_dims(arr, 0) or tensor.unsqueeze(0) inserts a size-1 first dimension, turning (C, H, W) into (1, C, H, W) without copying data.",
+      misconception_target: "Passing a 3-D tensor to a model expecting 4-D causes a shape error that learners sometimes 'fix' incorrectly by concatenating.",
+      rephrase_instructions: "Give a batch of N images and ask how to stack them into the correct (N, C, H, W) shape — np.stack along axis 0.",
+    },
+    {
+      id: "iq7",
+      concept: "normalised-range",
+      difficulty: "medium",
+      question: "After ImageNet normalisation, can pixel values be negative?",
+      choices: [
+        "Yes — any pixel darker than the channel mean will have a negative normalised value",
+        "No — values are always clipped to [0, 1] after normalisation",
+        "No — subtracting the mean keeps values positive because the mean is always small",
+        "Yes — but only for pixels with value 0 before rescaling",
+      ],
+      correct_index: 0,
+      explanation:
+        "After (pixel/255 - mean) / std, a pixel darker than the mean produces a negative result. For example, a black pixel (0/255=0.0) normalised with mean 0.485 gives (0.0-0.485)/0.229 ≈ -2.12. Normalised values are unbounded and centred near 0, not clamped.",
+      misconception_target: "Learners often assume values must stay in [0,1] after normalisation because they were before.",
+      rephrase_instructions: "Give the specific black-pixel calculation and ask whether the learner should be surprised the output is around −2.",
+    },
+    {
+      id: "iq8",
+      concept: "padding-vs-crop",
+      difficulty: "hard",
+      question: "Your input image is 500×800 pixels and the model requires 224×224. Centre-cropping to 224×224 versus padding-then-resize to 224×224 differ mainly in that:",
+      choices: [
+        "Cropping discards pixels outside the central 224×224 region; padding-then-resize preserves the full image content at reduced resolution",
+        "Cropping is always better for vision models because it removes background noise",
+        "Padding-then-resize is faster because it avoids resampling",
+        "They produce identical results when the input is larger than the target size",
+      ],
+      correct_index: 0,
+      explanation:
+        "Centre-cropping discards a large portion of the image (especially on the long axis), which risks losing objects near the edges. Padding to a square first and then resizing down preserves all pixels but shrinks them. Neither is universally better — the right choice depends on the task and dataset.",
+      misconception_target: "Learners assume cropping is always fine, not realising it silently discards significant content from non-square images.",
+      rephrase_instructions: "Ask about a portrait photo (tall and narrow) being fed to a square-input model and ask which strategy is safer.",
+    },
+    {
+      id: "iq9",
+      concept: "preprocessing-vs-tokenization",
+      difficulty: "hard",
+      question: "Multimodal vision-language models (like Gemma 4) have a vision encoder AND a language tokenizer. Pixel preprocessing happens:",
+      choices: [
+        "Before the vision encoder — it converts the raw image into the float tensor the encoder consumes",
+        "Inside the language tokenizer — images are tokenized the same way as text",
+        "After the vision encoder — the encoder handles raw pixels and outputs pre-normalised features",
+        "Only during training — inference uses raw pixels directly",
+      ],
+      correct_index: 0,
+      explanation:
+        "The vision encoder takes a preprocessed float tensor (rescaled, normalised, correct axis order). The language tokenizer handles text tokens separately. Preprocessing is a dedicated CPU-side step that runs before the encoder forward pass, not inside either the encoder or the tokenizer.",
+      misconception_target: "Learners sometimes believe the model handles all preprocessing internally, especially after using high-level APIs that hide the preprocessing step.",
+      rephrase_instructions: "Ask specifically about a high-level processor class (like HuggingFace AutoProcessor) and where its image preprocessing fits in the pipeline.",
     },
   ],
 };
