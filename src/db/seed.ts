@@ -462,6 +462,7 @@ result = None
         { id: "q2", text: "Which single change raises the posterior the most: better sensitivity, better specificity, or a higher prior? Explain.", type: "free_text" },
         { id: "q3", text: "For prior=0.01, sensitivity=0.95, specificity=0.90, what is P(disease | positive)? Give a percentage.", type: "numeric" },
       ],
+      quiz: BAYES_MC_QUIZ,
     })
   );
 
@@ -607,6 +608,7 @@ q_star = None
         { id: "q2", text: "If a per-unit tax is added, what happens to the price buyers pay and the quantity traded? Why?", type: "free_text" },
         { id: "q3", text: "Who bears more of a tax when demand is very inelastic (steep): buyers or sellers?", type: "free_text" },
       ],
+      quiz: SUPPLY_DEMAND_MC_QUIZ,
     })
   );
 
@@ -796,6 +798,346 @@ const POSTERIOR_CURVE_WIDGET = {
       title: "What changes the shape?",
       template:
         "With a false-positive rate of {{false_alarm}}, the posterior stays low for rare diseases and rises toward 1 as prevalence grows. Lower the specificity and the whole curve sags.",
+    },
+  ],
+};
+
+// ─── Multiple-choice quiz banks ───────────────────────────────────────────────
+
+/**
+ * 9-question Bayes' theorem MC quiz.
+ * pass_threshold=6 means the learner must get 6 distinct concepts right.
+ * Questions are ordered easy→hard so wrong-answer retries appear well after
+ * the learner has seen all the foundational material.
+ */
+const BAYES_MC_QUIZ = {
+  pass_threshold: 6,
+  questions: [
+    {
+      id: "bq1",
+      concept: "bayes-prior",
+      difficulty: "easy",
+      question: "In Bayes' theorem, what is the 'prior' probability?",
+      choices: [
+        "The probability of a disease before seeing the test result",
+        "The probability the test is correct",
+        "The probability of a positive test result",
+        "The probability of a false alarm",
+      ],
+      correct_index: 0,
+      explanation:
+        "The prior is your belief about how likely the event is before any evidence is gathered — in the medical context, how prevalent the disease is in the population.",
+      misconception_target: "Learners often confuse the prior with the sensitivity of the test.",
+      rephrase_instructions: "Keep the medical test context. Change the wording and distractor phrasing.",
+    },
+    {
+      id: "bq2",
+      concept: "bayes-sensitivity",
+      difficulty: "easy",
+      question: "A test has 90% sensitivity. What does this mean?",
+      choices: [
+        "90% of sick people test positive",
+        "90% of healthy people test negative",
+        "90% of positive tests come from sick people",
+        "10% of sick people are missed and test negative",
+      ],
+      correct_index: 0,
+      explanation:
+        "Sensitivity is P(+ | disease) — the fraction of truly sick people who receive a positive result. A high sensitivity means few sick people are missed.",
+      misconception_target: "Learners sometimes confuse sensitivity with specificity (true-negative rate).",
+      rephrase_instructions: "Use a different number and a different context (e.g. quality-control inspection) to rephrase.",
+    },
+    {
+      id: "bq3",
+      concept: "bayes-specificity",
+      difficulty: "easy",
+      question: "A test has 95% specificity. What does this tell you about healthy people?",
+      choices: [
+        "5% of healthy people will test positive (false alarms)",
+        "95% of sick people will test positive",
+        "5% of all tests are false alarms",
+        "95% of positive tests are from sick people",
+      ],
+      correct_index: 0,
+      explanation:
+        "Specificity is P(- | healthy). At 95% specificity, 1 - 0.95 = 5% of healthy people still test positive — these are false positives.",
+      misconception_target: "Learners often read 'specificity' as the overall false-alarm rate rather than as P(-|healthy).",
+      rephrase_instructions: "Use a screening test in a non-medical setting (e.g. spam filter, fraud detection).",
+    },
+    {
+      id: "bq4",
+      concept: "base-rate-fallacy",
+      difficulty: "medium",
+      question:
+        "A disease affects 1 in 1,000 people. A test is 99% sensitive and 99% specific. If you test positive, roughly what is the chance you are sick?",
+      choices: [
+        "About 9% — most positives are false alarms from the large healthy group",
+        "About 99% — the test is nearly perfect",
+        "About 50% — you are as likely sick as not",
+        "About 1% — the disease is too rare to matter",
+      ],
+      correct_index: 0,
+      explanation:
+        "Prior = 0.001. True positives ≈ 0.001 × 0.99 ≈ 0.00099. False positives ≈ 0.999 × 0.01 ≈ 0.00999. Posterior ≈ 0.00099 / (0.00099 + 0.00999) ≈ 9%. The large healthy majority produces more false positives than the small sick group produces true positives.",
+      misconception_target: "The classic base-rate fallacy: ignoring the prior and focusing only on test accuracy.",
+      rephrase_instructions: "Change the prevalence and test accuracy numbers, but keep the punchline: the posterior is much lower than learners expect.",
+    },
+    {
+      id: "bq5",
+      concept: "posterior-update",
+      difficulty: "medium",
+      question: "Which factor most dramatically raises P(disease | positive) when it increases?",
+      choices: [
+        "The prior (disease prevalence)",
+        "Test sensitivity",
+        "The sample size",
+        "The number of tests performed",
+      ],
+      correct_index: 0,
+      explanation:
+        "The prior is the multiplier of every other factor in Bayes' theorem. Moving from 0.1% prevalence to 1% prevalence (10×) produces a roughly 10× jump in the posterior. Sensitivity improvements in the same range are much less dramatic.",
+      misconception_target: "Many learners think improving test sensitivity is the most powerful lever.",
+      rephrase_instructions: "Frame the question around a practical decision: which action would make a screening program more useful?",
+    },
+    {
+      id: "bq6",
+      concept: "false-positive-source",
+      difficulty: "medium",
+      question:
+        "For a rare condition, why do false positives outnumber true positives even when the false-positive rate is low?",
+      choices: [
+        "The healthy group is much larger, so even a small false-positive rate produces many false alarms",
+        "The test is not accurate enough for rare conditions",
+        "Rare conditions always have low sensitivity",
+        "The prior is too high when the condition is rare",
+      ],
+      correct_index: 0,
+      explanation:
+        "If 99% of the population is healthy and the false-positive rate is 1%, that 1% of 99% generates far more false alarms than the true-positive rate of 1% of sick people generates true alarms.",
+      misconception_target: "Learners think false positives come from test inaccuracy alone, not from the population imbalance.",
+      rephrase_instructions: "Use a counting example (e.g. 10,000 people) to make the arithmetic concrete in the question stem.",
+    },
+    {
+      id: "bq7",
+      concept: "conditional-probability-direction",
+      difficulty: "medium",
+      question: "P(disease | positive) and P(positive | disease) are:",
+      choices: [
+        "Different quantities — one is the posterior, the other is the sensitivity",
+        "The same quantity — both express test accuracy",
+        "Complementary — they add up to 1",
+        "Equal when the disease prevalence is 50%",
+      ],
+      correct_index: 0,
+      explanation:
+        "P(positive | disease) is sensitivity (given you are sick, how often does the test flag you?). P(disease | positive) is the posterior (given a positive result, how likely are you sick?). These are reversed conditions and generally have very different values.",
+      misconception_target: "Confusion between the two conditional directions is the core of the prosecutors' fallacy.",
+      rephrase_instructions: "Reframe using a legal or forensic scenario to give it a different context.",
+    },
+    {
+      id: "bq8",
+      concept: "bayes-formula-structure",
+      difficulty: "hard",
+      question:
+        "In the formula P(H|E) = P(E|H)·P(H) / P(E), what does the denominator P(E) represent?",
+      choices: [
+        "The total probability of seeing the evidence under all hypotheses (true positives plus false positives)",
+        "The prior probability of the hypothesis",
+        "The probability that the evidence is accurate",
+        "One minus the false-positive rate",
+      ],
+      correct_index: 0,
+      explanation:
+        "P(E) = P(E|H)·P(H) + P(E|¬H)·P(¬H). It sums all the ways the evidence can occur — both when the hypothesis is true (true positives) and when it is false (false positives). It normalises the posterior so it is a valid probability.",
+      misconception_target: "Learners often skip the denominator and only think about the numerator, leading to un-normalised posteriors.",
+      rephrase_instructions: "Phrase it as: 'what does the bottom of the Bayes fraction count?'",
+    },
+    {
+      id: "bq9",
+      concept: "sequential-testing",
+      difficulty: "hard",
+      question:
+        "A second independent test is run on someone who tested positive the first time. What should you use as the prior for the second test?",
+      choices: [
+        "The posterior from the first test — it is now your updated belief",
+        "The original population prevalence — ignore the first result",
+        "The sensitivity of the second test",
+        "The average of the prior and the first posterior",
+      ],
+      correct_index: 0,
+      explanation:
+        "Bayesian updating is sequential: after seeing evidence, the posterior becomes the new prior. Running a second test with the first posterior as input greatly improves the overall positive predictive value, which is why repeat testing is used in screening programs.",
+      misconception_target: "Learners reset to the original prior rather than updating it with each new piece of evidence.",
+      rephrase_instructions: "Use a different context — drug testing with a confirmatory test, or two witnesses in a court case.",
+    },
+  ],
+};
+
+/**
+ * 9-question supply-and-demand MC quiz.
+ * pass_threshold=6.
+ */
+const SUPPLY_DEMAND_MC_QUIZ = {
+  pass_threshold: 6,
+  questions: [
+    {
+      id: "eq1",
+      concept: "equilibrium-definition",
+      difficulty: "easy",
+      question: "What is the equilibrium price in a market?",
+      choices: [
+        "The price at which quantity demanded equals quantity supplied",
+        "The price set by the government to stabilise the market",
+        "The highest price sellers are willing to accept",
+        "The average of the minimum and maximum prices in the market",
+      ],
+      correct_index: 0,
+      explanation:
+        "Equilibrium is where the supply and demand curves cross. At this price there is no surplus or shortage — every buyer who wants to buy at that price finds a seller, and vice versa.",
+      misconception_target: "Students often confuse equilibrium with a price ceiling/floor set by an external authority.",
+      rephrase_instructions: "Use a different market context (e.g. used cars, concert tickets) and rephrase the distractors.",
+    },
+    {
+      id: "eq2",
+      concept: "demand-curve-slope",
+      difficulty: "easy",
+      question: "Why does the demand curve slope downward?",
+      choices: [
+        "As price falls, more consumers are willing and able to buy",
+        "As price falls, suppliers produce less",
+        "Higher prices attract more buyers",
+        "The demand curve shows cost, not willingness to pay",
+      ],
+      correct_index: 0,
+      explanation:
+        "The law of demand: all else equal, a lower price makes the good accessible to more buyers and encourages existing buyers to buy more. This negative price–quantity relationship gives the demand curve its downward slope.",
+      misconception_target: "Learners sometimes mix up movements along the demand curve with shifts of the curve.",
+      rephrase_instructions: "Frame it as: 'what causes quantity demanded to rise when price falls?' and use a fresh product example.",
+    },
+    {
+      id: "eq3",
+      concept: "supply-curve-slope",
+      difficulty: "easy",
+      question: "Why does the supply curve slope upward?",
+      choices: [
+        "Higher prices make production more profitable, so sellers offer more units",
+        "Higher prices discourage buyers, so sellers need to produce less",
+        "Sellers want to keep prices stable, so they supply the same amount at any price",
+        "The supply curve shows consumer demand, not producer behaviour",
+      ],
+      correct_index: 0,
+      explanation:
+        "The law of supply: a higher market price covers costs for more sellers and makes additional production worthwhile, so quantity supplied rises with price.",
+      misconception_target: "Confusion between demand-side and supply-side logic; learners sometimes think high prices reduce supply.",
+      rephrase_instructions: "Use a different product (e.g. organic tomatoes, handmade furniture) and vary the distractor reasoning.",
+    },
+    {
+      id: "eq4",
+      concept: "surplus-shortage",
+      difficulty: "medium",
+      question:
+        "At a price above equilibrium, what happens in the market?",
+      choices: [
+        "A surplus arises: sellers offer more than buyers want, pushing the price back down",
+        "A shortage arises: buyers want more than sellers offer, pushing the price up",
+        "The market clears at that price because demand adjusts to match supply",
+        "Nothing changes — prices are sticky and stay above equilibrium",
+      ],
+      correct_index: 0,
+      explanation:
+        "Above equilibrium, quantity supplied exceeds quantity demanded. Unsold inventory accumulates, incentivising sellers to lower prices until the surplus disappears at the equilibrium price.",
+      misconception_target: "Students mix up surplus (price too high) and shortage (price too low).",
+      rephrase_instructions: "Use a concrete example like too many apartments listed at a high rent, and ask what landlords are forced to do.",
+    },
+    {
+      id: "eq5",
+      concept: "tax-incidence",
+      difficulty: "medium",
+      question:
+        "A per-unit tax is placed on sellers of a good. Who ultimately bears the tax burden?",
+      choices: [
+        "Both buyers and sellers, in proportions determined by their relative elasticities",
+        "Only sellers, because they write the cheque to the government",
+        "Only buyers, because prices always rise by the full tax amount",
+        "Neither — the tax is absorbed by the government with no effect on market participants",
+      ],
+      correct_index: 0,
+      explanation:
+        "The legal incidence (who pays the government) is irrelevant to the economic incidence (who bears the cost). The burden splits according to elasticity: the less elastic (more inelastic) side bears more of the tax.",
+      misconception_target: "The most common error is assuming the legal payer (seller or buyer) bears the whole tax.",
+      rephrase_instructions: "Flip it: put the tax on buyers and ask who bears it — same answer, different framing.",
+    },
+    {
+      id: "eq6",
+      concept: "elasticity-incidence",
+      difficulty: "medium",
+      question:
+        "Demand for insulin is highly inelastic (buyers must have it regardless of price). If a tax is placed on insulin sales, who bears most of the tax?",
+      choices: [
+        "Buyers — because they cannot easily reduce their consumption when the price rises",
+        "Sellers — because they are the ones legally paying the tax",
+        "The government — it collects the tax revenue",
+        "Neither side, because inelastic demand prevents prices from rising",
+      ],
+      correct_index: 0,
+      explanation:
+        "Inelastic demand means buyers do not reduce quantity much when price rises. Sellers can therefore pass most of the tax to buyers through higher prices without losing many sales. The more inelastic the demand relative to supply, the larger the buyers' share of the tax burden.",
+      misconception_target: "Students often default to 'the seller pays the tax' rather than reasoning about elasticity.",
+      rephrase_instructions: "Use a different inelastic good (e.g. petrol, essential medication) and ask which party bears more of a carbon tax or excise duty.",
+    },
+    {
+      id: "eq7",
+      concept: "demand-shift",
+      difficulty: "medium",
+      question:
+        "Consumer incomes rise substantially. For a normal good, what happens to the demand curve and the equilibrium?",
+      choices: [
+        "Demand shifts right; both equilibrium price and quantity rise",
+        "Demand shifts left; equilibrium price falls and quantity rises",
+        "Supply shifts right; equilibrium price falls and quantity rises",
+        "The equilibrium does not change because supply is fixed",
+      ],
+      correct_index: 0,
+      explanation:
+        "A rise in income shifts the demand curve for normal goods to the right — more is demanded at every price. With supply unchanged, the demand shift raises both the equilibrium price and the equilibrium quantity.",
+      misconception_target: "Learners confuse a movement along the demand curve (price change) with a shift of the curve (income change).",
+      rephrase_instructions: "Ask about a different demand shifter, such as a change in the price of a complement or a substitute.",
+    },
+    {
+      id: "eq8",
+      concept: "price-ceiling",
+      difficulty: "hard",
+      question:
+        "A government sets a price ceiling below the equilibrium price. What is the most likely result?",
+      choices: [
+        "A shortage: quantity demanded exceeds quantity supplied at the capped price",
+        "A surplus: quantity supplied exceeds quantity demanded at the capped price",
+        "No effect: markets always reach equilibrium regardless of ceilings",
+        "The equilibrium price shifts upward to compensate for the ceiling",
+      ],
+      correct_index: 0,
+      explanation:
+        "A price ceiling below equilibrium prevents the price from rising to clear the market. At the artificially low price, buyers want more than sellers are willing to supply — creating a shortage. Rent control is a classic example.",
+      misconception_target: "Confusing ceilings (create shortages) with floors (create surpluses).",
+      rephrase_instructions: "Use a price floor below equilibrium instead and ask if a shortage or surplus results — a deliberately different scenario to test careful reading.",
+    },
+    {
+      id: "eq9",
+      concept: "deadweight-loss",
+      difficulty: "hard",
+      question:
+        "When a tax reduces the quantity traded in a market below the equilibrium level, the foregone surplus is called:",
+      choices: [
+        "Deadweight loss — trades that would have benefited both parties but no longer occur",
+        "Tax revenue — the amount collected by the government",
+        "Consumer surplus — the benefit to buyers from paying less than their maximum willingness to pay",
+        "Price elasticity — the responsiveness of quantity to a price change",
+      ],
+      correct_index: 0,
+      explanation:
+        "A tax drives a wedge between the buyer's price and the seller's price, reducing the quantity traded. The transactions that would have happened without the tax but no longer do represent foregone value to both buyers and sellers — this is the deadweight loss, or efficiency cost, of the tax.",
+      misconception_target: "Students often confuse deadweight loss with the tax revenue transferred to the government.",
+      rephrase_instructions: "Frame it around a quantity restriction (quota) rather than a tax to test the same concept with a different policy tool.",
     },
   ],
 };

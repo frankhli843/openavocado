@@ -15,7 +15,7 @@ export type {
   OutputFormat,
 } from "@/lib/widgets/schema";
 
-// Non-interactive lesson content schemas (written text, media, scaffolded code).
+// Non-interactive lesson content schemas (written text, media, scaffolded code, MC quiz).
 export type {
   ReadingBlock,
   ReadingContent,
@@ -25,6 +25,8 @@ export type {
   CodeTest,
   CodeHint,
   PracticeCodeContent,
+  MultipleChoiceQuestion,
+  MultipleChoiceQuizContent,
 } from "@/lib/lesson-content/schema";
 
 

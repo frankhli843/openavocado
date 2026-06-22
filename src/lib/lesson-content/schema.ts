@@ -369,3 +369,138 @@ export function validatePracticeCodeContent(content: unknown): { valid: boolean;
 }
 
 export { YT_ID_RE };
+
+// ─── Multiple-choice quiz content ────────────────────────────────────────────
+
+/**
+ * A single multiple-choice question in a quiz.
+ * Stable ids allow retry items to trace back to their origin question.
+ */
+export interface MultipleChoiceQuestion {
+  /** Stable id — unique within the quiz, never changes across saves. */
+  id: string;
+  /** The question text shown to the learner. */
+  question: string;
+  /** Answer options. Must have 2–6 non-empty strings with no duplicates. */
+  choices: string[];
+  /** 0-based index of the correct choice in `choices`. */
+  correct_index: number;
+  /** Explanation shown after the learner submits. Reveals why the answer is right. */
+  explanation: string;
+  /** Concept tag — identifies the learning objective targeted by this question. */
+  concept: string;
+  /** Optional difficulty hint for authoring. Does not affect grading. */
+  difficulty?: "easy" | "medium" | "hard";
+  /** Specific misconception this question probes — helps ACP craft a targeted retry. */
+  misconception_target?: string;
+  /**
+   * Optional instructions for the ACP rephrase path.
+   * Describe the angle to take, what NOT to reveal, what to preserve.
+   * Never include the correct answer here.
+   */
+  rephrase_instructions?: string;
+}
+
+/**
+ * Content spec for the multiple-choice adaptive quiz within an assessment activity.
+ * Present at `activity.content.quiz` when an assessment uses adaptive MC mode.
+ */
+export interface MultipleChoiceQuizContent {
+  questions: MultipleChoiceQuestion[];
+  /**
+   * Number of correct answers required to pass. Defaults to 6 when omitted.
+   * Counted from distinct correctly answered questions, not total attempts.
+   */
+  pass_threshold?: number;
+}
+
+/**
+ * Validate a MultipleChoiceQuizContent spec.
+ * Enforces: non-empty questions, unique ids, valid correct_index bounds,
+ * 2–6 distinct choices per question, required fields present, no answer leakage.
+ */
+export function validateMultipleChoiceQuizContent(
+  content: unknown
+): { valid: boolean; errors: string[] } {
+  const errors: string[] = [];
+
+  if (!content || typeof content !== "object") {
+    return { valid: false, errors: ["quiz content must be an object"] };
+  }
+  const c = content as Record<string, unknown>;
+
+  if (!Array.isArray(c.questions) || c.questions.length === 0) {
+    return { valid: false, errors: ["quiz content requires a non-empty questions array"] };
+  }
+
+  if (c.pass_threshold !== undefined) {
+    if (typeof c.pass_threshold !== "number" || !Number.isInteger(c.pass_threshold) || c.pass_threshold < 1) {
+      errors.push("quiz pass_threshold must be a positive integer");
+    }
+  }
+
+  const ids = new Set<string>();
+  for (const [i, raw] of (c.questions as unknown[]).entries()) {
+    if (!raw || typeof raw !== "object") {
+      errors.push(`quiz questions[${i}] must be an object`);
+      continue;
+    }
+    const q = raw as Record<string, unknown>;
+
+    if (typeof q.id !== "string" || !(q.id as string).trim()) {
+      errors.push(`quiz questions[${i}] missing id`);
+    } else if (ids.has(q.id as string)) {
+      errors.push(`quiz questions[${i}] duplicate id "${q.id}"`);
+    } else {
+      ids.add(q.id as string);
+    }
+
+    if (typeof q.question !== "string" || !(q.question as string).trim()) {
+      errors.push(`quiz questions[${i}] missing question text`);
+    }
+
+    if (!Array.isArray(q.choices)) {
+      errors.push(`quiz questions[${i}] choices must be an array`);
+    } else {
+      const choices = q.choices as unknown[];
+      if (choices.length < 2) {
+        errors.push(`quiz questions[${i}] must have at least 2 choices`);
+      }
+      if (choices.length > 6) {
+        errors.push(`quiz questions[${i}] must have at most 6 choices`);
+      }
+      if (!choices.every((ch) => typeof ch === "string" && (ch as string).trim())) {
+        errors.push(`quiz questions[${i}] all choices must be non-empty strings`);
+      }
+      const choiceSet = new Set(choices);
+      if (choiceSet.size !== choices.length) {
+        errors.push(`quiz questions[${i}] choices must not contain duplicates`);
+      }
+    }
+
+    if (typeof q.correct_index !== "number" || !Number.isInteger(q.correct_index) || q.correct_index < 0) {
+      errors.push(`quiz questions[${i}] correct_index must be a non-negative integer`);
+    } else if (Array.isArray(q.choices) && (q.correct_index as number) >= (q.choices as unknown[]).length) {
+      errors.push(
+        `quiz questions[${i}] correct_index ${q.correct_index} out of range for ${(q.choices as unknown[]).length} choices`
+      );
+    }
+
+    if (typeof q.explanation !== "string" || !(q.explanation as string).trim()) {
+      errors.push(`quiz questions[${i}] missing explanation`);
+    }
+
+    if (typeof q.concept !== "string" || !(q.concept as string).trim()) {
+      errors.push(`quiz questions[${i}] missing concept tag`);
+    }
+
+    if (
+      q.difficulty !== undefined &&
+      !["easy", "medium", "hard"].includes(q.difficulty as string)
+    ) {
+      errors.push(`quiz questions[${i}] difficulty must be "easy", "medium", or "hard"`);
+    }
+  }
+
+  return { valid: errors.length === 0, errors };
+}

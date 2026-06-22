@@ -9,6 +9,7 @@ import { MediaSection } from "@/components/lesson/MediaSection";
 import { InteractiveSection } from "@/components/lesson/InteractiveSection";
 import { PythonSection } from "@/components/lesson/PythonSection";
 import { AssessmentSection } from "@/components/lesson/AssessmentSection";
+import { MultipleChoiceAssessmentSection } from "@/components/lesson/MultipleChoiceAssessmentSection";
 import { debounce, postAutosave, type SaveStatus } from "@/lib/autosave";
 import { DiscardLessonModal } from "@/components/DiscardLessonModal";
 
@@ -38,6 +39,13 @@ export default function LessonPage({ params }: { params: Promise<{ id: string }>
   const [discarded, setDiscarded] = useState(false);
   const [discardRegenRef, setDiscardRegenRef] = useState<string | null>(null);
   const [assessmentAnswers, setAssessmentAnswers] = useState<Record<string, string>>({});
+  // Quiz session state: serialized JSON blob stored in assessment_answers under key "__quiz__".
+  // Stored separately from freeform answers so both can coexist in the same autosave row.
+  const [quizStateSerialized, setQuizStateSerialized] = useState<string | null>(null);
+  // True when the MC quiz has been passed — gates the "Mark Complete" button.
+  const [quizPassed, setQuizPassed] = useState(false);
+  // True when the lesson's assessment activity includes a MC quiz.
+  const [hasQuiz, setHasQuiz] = useState(false);
   const [codeDraft, setCodeDraft] = useState<string>("");
   const [runOutput, setRunOutput] = useState<string>("");
   const [testResults, setTestResults] = useState<Record<string, string>>({});
@@ -53,13 +61,39 @@ export default function LessonPage({ params }: { params: Promise<{ id: string }>
         const json = (await res.json()) as LessonData;
         setData(json);
 
-        // Restore autosaved state if available
+        // Detect if the lesson has an MC quiz in any assessment activity.
+        const assessmentAct = json.activities.find((a) => a.activity_type === "assessment");
+        if (assessmentAct?.content) {
+          try {
+            const ac = JSON.parse(assessmentAct.content) as Record<string, unknown>;
+            if (ac.quiz && typeof ac.quiz === "object" && Array.isArray((ac.quiz as Record<string, unknown>).questions)) {
+              setHasQuiz(true);
+            }
+          } catch { /* ignore parse errors */ }
+        }
+
+        // Restore autosaved state if available.
         const latest = json.autosave[0];
         if (latest) {
           if (latest.code_draft) setCodeDraft(latest.code_draft);
           if (latest.run_output) setRunOutput(latest.run_output);
           if (latest.test_results) setTestResults(JSON.parse(latest.test_results));
-          if (latest.assessment_answers) setAssessmentAnswers(JSON.parse(latest.assessment_answers));
+          if (latest.assessment_answers) {
+            const aa = JSON.parse(latest.assessment_answers) as Record<string, string>;
+            // __quiz__ key holds the serialized QuizSessionState; rest are freeform answers.
+            if (aa.__quiz__) {
+              setQuizStateSerialized(aa.__quiz__);
+              // If the restored quiz is already passed, reflect that in the gate.
+              try {
+                const qs = JSON.parse(aa.__quiz__) as { passed?: boolean };
+                if (qs.passed) setQuizPassed(true);
+              } catch { /* ignore */ }
+              const rest = Object.fromEntries(Object.entries(aa).filter(([k]) => k !== "__quiz__")) as Record<string, string>;
+              setAssessmentAnswers(rest);
+            } else {
+              setAssessmentAnswers(aa);
+            }
+          }
           setLastSavedAt(latest.saved_at);
         }
 
@@ -114,6 +148,21 @@ export default function LessonPage({ params }: { params: Promise<{ id: string }>
       ...patch,
       last_edited_at: new Date().toISOString(),
     });
+  }
+
+  // Quiz state autosave: merges __quiz__ key into the assessment_answers JSON blob.
+  function triggerQuizAutosave(serialized: string) {
+    if (!data) return;
+    const assessmentActivity = data.activities.find((a) => a.activity_type === "assessment");
+    const merged = { ...assessmentAnswers, __quiz__: serialized };
+    debouncedSave({
+      lesson_id: data.lesson.id,
+      learner_id: LEARNER_ID,
+      activity_id: assessmentActivity?.id,
+      assessment_answers: merged,
+      last_edited_at: new Date().toISOString(),
+    });
+    setQuizStateSerialized(serialized);
   }
 
   // Widget state autosaves under its own activity row, so it never collides with
@@ -242,11 +291,12 @@ export default function LessonPage({ params }: { params: Promise<{ id: string }>
               </button>
             )}
 
-            {/* Complete button — only path to completion */}
+            {/* Complete button — gated on MC quiz pass when quiz is present */}
             {!completed && !discarded ? (
               <button
                 onClick={handleComplete}
-                disabled={completing || lesson.status === "completed"}
+                disabled={completing || lesson.status === "completed" || (hasQuiz && !quizPassed)}
+                title={hasQuiz && !quizPassed ? "Pass the quiz first (6 correct answers required)" : undefined}
                 className="px-4 py-1.5 text-sm font-medium bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
               >
                 {completing ? "Completing..." : "Mark Complete"}
@@ -373,15 +423,24 @@ export default function LessonPage({ params }: { params: Promise<{ id: string }>
           }
           if (activity.activity_type === "assessment") {
             return (
-              <AssessmentSection
-                key={activity.id}
-                activity={activity}
-                answers={assessmentAnswers}
-                onChange={(answers) => {
-                  setAssessmentAnswers(answers);
-                  triggerAutosave({ assessment_answers: answers });
-                }}
-              />
+              <div key={activity.id} className="space-y-6">
+                {/* MC quiz — renders only when the activity content includes a "quiz" field */}
+                <MultipleChoiceAssessmentSection
+                  activity={activity}
+                  savedQuizState={quizStateSerialized}
+                  onStateChange={triggerQuizAutosave}
+                  onPassedChange={setQuizPassed}
+                />
+                {/* Freeform written response section — always shown */}
+                <AssessmentSection
+                  activity={activity}
+                  answers={assessmentAnswers}
+                  onChange={(answers) => {
+                    setAssessmentAnswers(answers);
+                    triggerAutosave({ assessment_answers: answers });
+                  }}
+                />
+              </div>
             );
           }
           return null;
@@ -398,8 +457,9 @@ export default function LessonPage({ params }: { params: Promise<{ id: string }>
             </button>
             <button
               onClick={handleComplete}
-              disabled={completing}
-              className="px-8 py-3 font-semibold bg-green-600 text-white rounded-xl hover:bg-green-700 disabled:opacity-40 transition-colors shadow-sm"
+              disabled={completing || (hasQuiz && !quizPassed)}
+              title={hasQuiz && !quizPassed ? "Pass the quiz first (6 correct answers required)" : undefined}
+              className="px-8 py-3 font-semibold bg-green-600 text-white rounded-xl hover:bg-green-700 disabled:opacity-40 disabled:cursor-not-allowed transition-colors shadow-sm"
             >
               {completing ? "Completing..." : "Mark Lesson Complete"}
             </button>
