@@ -1025,7 +1025,7 @@ const POSTERIOR_CURVE_WIDGET = {
  * Questions are ordered easy→hard so wrong-answer retries appear well after
  * the learner has seen all the foundational material.
  */
-const BAYES_MC_QUIZ = {
+export const BAYES_MC_QUIZ = {
   pass_threshold: 6,
   questions: [
     {
@@ -1192,7 +1192,7 @@ const BAYES_MC_QUIZ = {
  * 9-question supply-and-demand MC quiz.
  * pass_threshold=6.
  */
-const SUPPLY_DEMAND_MC_QUIZ = {
+export const SUPPLY_DEMAND_MC_QUIZ = {
   pass_threshold: 6,
   questions: [
     {
@@ -1363,7 +1363,7 @@ const SUPPLY_DEMAND_MC_QUIZ = {
  * 8-question conditional probability MC quiz.
  * pass_threshold=6. Ordered easy→hard so missed-concept retries appear late.
  */
-const CONDITIONAL_PROBABILITY_MC_QUIZ = {
+export const CONDITIONAL_PROBABILITY_MC_QUIZ = {
   pass_threshold: 6,
   questions: [
     {
@@ -1511,7 +1511,7 @@ const CONDITIONAL_PROBABILITY_MC_QUIZ = {
  * 9-question image preprocessing MC quiz for the GDM Image Preprocessor track.
  * pass_threshold=6.
  */
-const IMAGE_PREPROCESSING_MC_QUIZ = {
+export const IMAGE_PREPROCESSING_MC_QUIZ = {
   pass_threshold: 6,
   questions: [
     {
