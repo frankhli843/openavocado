@@ -256,6 +256,61 @@ No page-level horizontal scrolling; outputs and visualizations reflow.
 
 ---
 
+## Adaptive multiple-choice quiz (2026-06-22)
+
+Commit `238dbeb`. Adds the full adaptive MC assessment system on top of the existing freeform assessment section.
+
+### New files
+
+| File | Purpose |
+|------|---------|
+| `src/lib/quiz-state.ts` | Pure state machine: queue, grading, pass logic, retry scheduling, autosave serialization |
+| `src/lib/acp-rephrase.ts` | Client-side fire-and-forget rephrase request adapter |
+| `src/app/api/rephrase-question/route.ts` | Server handler: calls `AVOCADOCORE_ACP_ENDPOINT` (OpenAI-compat), validates output, falls back to deterministic shuffler |
+| `src/components/lesson/MultipleChoiceAssessmentSection.tsx` | One-question-at-a-time quiz UI, keyboard-accessible, progress bar, retry badge |
+| `src/test/quiz.test.ts` | 57 new tests (169 total) |
+
+### Key behaviour verified
+
+- One question rendered at a time; Submit locks choices; correct/incorrect feedback shown with explanation; Next required to advance (no auto-advance)
+- Pass requires 6 distinct correct concepts; missed concept requeued as retry; retry cleared only on correct retry answer
+- Deterministic fallback retry shuffles choices via seeded Fisher-Yates so the UI is never blocked waiting for ACP
+- ACP rephrase fires asynchronously after a wrong answer; result integrated when retry reaches front of queue
+- Autosave writes quiz state under `__quiz__` key in `assessment_answers`; page reload restores full state including retry queue and feedback
+- Mark Complete gated until `quizPassed === true`; lesson does NOT auto-complete on quiz pass
+
+### Screenshots
+
+![Quiz — unanswered question](screenshots/quiz-unanswered.png)
+
+![Quiz — incorrect feedback with explanation and retry notice](screenshots/quiz-incorrect-feedback.png)
+
+![Quiz — correct feedback with explanation](screenshots/quiz-correct-feedback.png)
+
+![Quiz — retry question (concept returned, choices shuffled)](screenshots/quiz-retry-question.png)
+
+![Quiz — passed state, Mark Complete now enabled](screenshots/quiz-passed.png)
+
+---
+
+## Verification (adaptive MC quiz — 2026-06-22)
+
+| Check | Result |
+|-------|--------|
+| `pnpm test` (Vitest) | 169/169 passing (57 new quiz tests) |
+| `pnpm exec tsc --noEmit` | Clean |
+| `pnpm lint` | No warnings or errors |
+| Unanswered question renders (browser) | Question text + 4 radio choices + disabled Submit shown |
+| Correct feedback (browser) | Answer locked, correct choice highlighted green ✓, explanation shown, Next required |
+| Incorrect feedback (browser) | Answer locked, wrong choice highlighted red ✗, correct answer shown, explanation, retry notice |
+| Retry scheduling (browser) | Wrong answer on Q2 → "(1 retry)" badge; Q10 shows "↻ This concept came back for another look." with shuffled choices |
+| Passed state (browser) | After 6 correct (plus retry obligation cleared), "Assessment passed" screen shown, 9/6 correct displayed |
+| No auto-completion (live API) | Lesson status remained `in_progress` after quiz passed; Mark Complete button enabled but not auto-clicked |
+| Autosave `__quiz__` key (live API) | `GET /api/lessons/2` autosave row confirmed has `__quiz__` in `assessment_answers` |
+| Mark Complete gated (browser) | Button had `disabled` + tooltip "Pass the quiz first (6 correct answers required)" before quiz passed; enabled after pass |
+
+---
+
 ## Verification (richer-lessons pass — 2026-06-20)
 
 | Check | Result |

@@ -94,12 +94,72 @@ Validation **rejects** any `solution`, `answer`, `solution_code`,
 submit code that passes the tests. Passing tests records a mastery signal but
 **never** completes the lesson.
 
+## Multiple-choice quiz (`assessment` content — optional)
+
+An `assessment` activity can include an adaptive multiple-choice quiz by adding
+a `quiz` key to its content JSON. When present, the quiz is shown above the
+freeform questions and the "Mark Complete" button is gated until the learner
+passes.
+
+### Schema
+
+```json
+{
+  "questions": [...],      // freeform questions (unchanged)
+  "quiz": {
+    "pass_threshold": 6,   // distinct concepts the learner must get correct (default: 6)
+    "questions": [
+      {
+        "id": "q1",                         // unique within the quiz
+        "concept": "bayes-prior",           // concept tag (used for dedup on retries)
+        "difficulty": "easy",               // optional: "easy" | "medium" | "hard"
+        "question": "...",                  // question text
+        "choices": ["A", "B", "C", "D"],   // 2–6 distinct non-empty strings
+        "correct_index": 0,                 // 0-based index into choices
+        "explanation": "...",              // shown after submit (required)
+        "misconception_target": "...",      // optional: the error this question tests
+        "rephrase_instructions": "..."      // optional: hint for ACP rephrasing
+      }
+    ]
+  }
+}
+```
+
+Validation (enforced by `validateMultipleChoiceQuizContent`):
+- 2–6 distinct non-empty choices per question.
+- `correct_index` must be in range.
+- All question `id` values must be unique.
+- `concept`, `explanation`, and `question` text are required.
+
+### Pass rule and retry behaviour
+
+- The learner must answer `pass_threshold` **distinct concepts** correctly
+  (default: 6). A concept is counted once even if multiple retries were needed.
+- A wrong answer schedules a retry: the missed concept returns later in the
+  queue in a rephrased form (via `AVOCADOCORE_ACP_ENDPOINT` if configured, or
+  a deterministic choice-shuffle fallback). The retry is generated
+  asynchronously and never blocks feedback display.
+- "Mark Complete" is disabled until `passed === true`. The quiz does not
+  auto-complete the lesson.
+
+### Authoring tips
+
+- Order questions easy → hard. The retry mechanism will bring missed concepts
+  back, so the initial queue should build from foundations up.
+- Write `misconception_target` to describe the exact wrong reasoning the
+  question is designed to surface. This improves ACP rephrasing quality.
+- Write `rephrase_instructions` to guide the rephrasing model (e.g. "use a
+  non-medical context", "keep the formula explicit").
+- Provide 8–12 questions when `pass_threshold` is 6 so the learner has some
+  headroom and wrong-answer retries do not immediately loop.
+
 ## Completion is manual, always
 
 Reading, watching, exploring widgets, and drafting/running code all autosave as
-progress. **None** of them complete a lesson. Only the learner clicking "Mark
-Complete" does, which dispatches the next-lesson hook. Do not design content
-that implies otherwise.
+progress. **None** of them complete a lesson — including passing the MC quiz.
+Only the learner clicking "Mark Complete" does, which dispatches the next-lesson
+hook. When a quiz is present, "Mark Complete" is disabled until the quiz is
+passed, but passing the quiz alone does not fire the hook.
 
 ## Privacy boundary
 
@@ -117,4 +177,7 @@ deployment configuration.
 - [ ] Code has a prompt, progressive hints, public + hidden tests, and no
       exposed answer.
 - [ ] Assessment questions probe understanding, not recall of the audio.
+- [ ] If a quiz is included: 8+ questions, unique ids, `pass_threshold` ≤ question count,
+      `misconception_target` and `rephrase_instructions` on each question.
 - [ ] `validateGeneratedContent` returns `{ valid: true }`.
+- [ ] `validateMultipleChoiceQuizContent` returns `{ valid: true }` (if quiz included).
