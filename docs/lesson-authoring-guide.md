@@ -396,3 +396,89 @@ the lesson in the browser, interacting with every activity, and confirming that
 a learner could genuinely learn the subject from this lesson alone. A lesson
 that passes all machine checks but is thin, confusing, or pedagogically wrong
 still fails QA and must be regenerated.
+
+### Manual authoring principle — no blind autogeneration
+
+Every lesson is authored manually and thoughtfully. Automation (LLMs, generators, scripts) may
+assist, but the AI lesson author must own the pedagogy — choosing what to teach, at what
+depth, in what order, and through which examples and interactions. No blind
+template-fill or autogeneration-only output passes QA. Specifically:
+
+- **Design intent is required.** Before generating any content, decide: what is the learner
+  struggling with? What is the single most important thing to understand by the end? What is
+  the best analogy or worked example for this particular learner's context?
+- **Knowledge graph first.** Author the `knowledge_graph_data` before writing activities. The
+  graph is the lesson's map; the activities fill in the areas the map marks as covered.
+- **Interactives must be designed, not defaulted.** Each interactive section must have a
+  specific learning objective and a learner-controlled variable that reveals a consequence.
+  An interactive that merely displays a static figure is not interactive.
+- **"I generated this" is not evidence.** The Dora task completion evidence must show what
+  the agent verified, not just that it ran a generator. See the acceptance criteria template below.
+
+### New lesson Dora task — acceptance criteria template
+
+When creating a Dora task for a new lesson (whether the first lesson for a subject, a
+replacement, or an ad-hoc addition), the task acceptance criteria must include all of the
+following. Copy and fill in this template:
+
+```
+Generate lesson <N> for "<Subject Title>" — learner <profile name or id>.
+
+PEDAGOGICAL INTENT (fill in before generating):
+- What weakness or gap is this lesson addressing?
+- What is the single most important takeaway?
+- Which concepts are COVERED vs PREVIEWED vs LEFT FOR LATER?
+
+GENERATION:
+- Use the enriched LessonCompletedEvent / LessonDiscardedEvent context (or equivalent
+  subject + learner state) as primary input.
+- The AI author must manually decide the lesson scope, the knowledge graph, the interactives,
+  the worked example in the audio script, and the quiz misconception targets. Do not
+  accept a generic template fill.
+- Embed LESSON_QUALITY_BAR_PROMPT in the generator prompt (src/lib/lesson-generator/contract.ts).
+
+MACHINE CHECKS (must all pass before QA):
+- validateGeneratedContent(content) → { valid: true }
+- validateMultipleChoiceQuizContent(quiz) → { valid: true } (if quiz present)
+- validateKnowledgeGraphData(graph) → { valid: true, errors: [] }
+
+IMPLEMENTATION EVIDENCE (required in task notes before QA):
+- POST /api/lessons created with the full generated content; record the lesson id.
+- pnpm audio:generate <id> completes with HTTP 200 from /runtime/... route.
+- Verify on LIVE or FRESH DB (not a temporary one-off): GET /api/lessons/<id> returns the
+  lesson with all activities, generated_artifacts with real audio, and next_lesson_diagnostics.
+- Verify audio route GET /runtime/runtime_artifacts/audio/lesson_<id>_audio.* → HTTP 200, audio/* content-type.
+
+LIVE / FRESH-DB VERIFICATION (required before QA):
+- Open http://<deployment>/lessons/<id> in the browser.
+- Take a desktop screenshot (1280px) and a mobile screenshot (390px).
+- Confirm the knowledge graph renders at the top, audio player shows real duration (not 0:00),
+  and all activities are visible without horizontal overflow at 390px.
+
+MANUAL QA REVIEW (must be done by a DIFFERENT agent/reviewer than the one that generated):
+- Listen to the audio script or play the audio. Substantive? Covers all goals?
+  Uses explicit preview wording for high-level concepts?
+- Read the written section. Stands alone without audio?
+- Interact with every widget. Controls work? Legible at 390px?
+- Attempt the code exercise. Progressive hints? Tests actually test the concept?
+- Answer sample quiz questions. Distractors require real understanding? IDK works?
+- Fill in end-of-lesson diagnostics. Prompts relevant to this lesson?
+- Check knowledge graph. Accurately reflects covered / previewed / later?
+
+COMPLETION EVIDENCE:
+- Link to commit or lesson id in the database.
+- Live URL screenshot (desktop + mobile).
+- QA reviewer label (different from generator agent).
+- Confirmation that lessons.status was set to the appropriate active state.
+```
+
+This template must be referenced (not paraphrased) in the Dora task acceptance criteria.
+Reviewers should verify the template was followed, not just that output was produced.
+
+### What "separate QA" means
+
+The reviewer must be a different worker label than the generator. If the same agent generates
+and reviews, the review is invalid and must be repeated. The reviewer's job is to find
+problems, not confirm that generation ran. A QA reviewer who approves a lesson without
+opening the browser and interacting with every activity has not done QA.
+

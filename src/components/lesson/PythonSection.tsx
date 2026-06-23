@@ -1,8 +1,12 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
+import dynamic from "next/dynamic";
 import type { LessonActivity, PracticeCodeContent, CodeTest } from "@/types";
 import { createPyodideExecutor, stubExecutor, type PythonExecutor } from "@/lib/python-sandbox";
+
+// CodeMirror is client-only (uses DOM APIs). Dynamically import to skip SSR.
+const CodeMirrorEditor = dynamic(() => import("./PythonEditor"), { ssr: false, loading: () => null });
 
 interface PythonSectionProps {
   activity: LessonActivity;
@@ -22,6 +26,9 @@ interface PythonSectionProps {
  * completed solution is never displayed inline — the learner must write and
  * submit code that passes. Drafts, output, and test results autosave; passing
  * tests is recorded as a mastery signal but never auto-completes the lesson.
+ *
+ * The editor uses CodeMirror (via @uiw/react-codemirror) for Python syntax
+ * highlighting, auto-indentation, bracket matching, and fullscreen/focus mode.
  */
 export function PythonSection({
   activity,
@@ -49,6 +56,7 @@ export function PythonSection({
   const [hintsShown, setHintsShown] = useState(0);
   const [executor, setExecutor] = useState<PythonExecutor>(stubExecutor);
   const [pyStatus, setPyStatus] = useState<"loading" | "ready" | "unavailable">("loading");
+  const [isFullscreen, setIsFullscreen] = useState(false);
   const executorRef = useRef(executor);
 
   useEffect(() => {
@@ -82,6 +90,24 @@ export function PythonSection({
       cancelled = true;
     };
   }, []);
+
+  // Close fullscreen on Escape
+  useEffect(() => {
+    if (!isFullscreen) return;
+    const handler = (e: KeyboardEvent) => {
+      if (e.key === "Escape") setIsFullscreen(false);
+    };
+    window.addEventListener("keydown", handler);
+    return () => window.removeEventListener("keydown", handler);
+  }, [isFullscreen]);
+
+  const handleCodeChange = useCallback(
+    (value: string) => {
+      setCode(value);
+      onChange(value, output, testResults);
+    },
+    [output, testResults, onChange]
+  );
 
   async function runTests(tests: CodeTest[]): Promise<{ output: string; results: Record<string, string> }> {
     const result = await executorRef.current.run({ code, tests });
@@ -155,209 +181,375 @@ export function PythonSection({
     [...publicTests, ...hiddenTests].length > 0 &&
     [...publicTests, ...hiddenTests].every((t) => testResults[t.id] === "pass");
 
-  return (
-    <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
-      {/* Header */}
-      <div className="flex items-center gap-3 px-6 py-4 border-b border-gray-100 bg-gray-50/50">
-        <span className="text-xl" aria-hidden="true">&#128187;</span>
-        <div className="flex-1 min-w-0">
-          <div className="text-xs font-semibold text-gray-400 uppercase tracking-wider">Code Exercise</div>
-          <h2 className="text-sm font-semibold text-gray-800 mt-0.5">
-            {activity.title ?? "Code Exercise"}
-          </h2>
-        </div>
-        <span
-          className={`inline-flex items-center gap-1 text-xs px-2 py-0.5 rounded-full shrink-0 ${
-            pyStatus === "ready"
-              ? "bg-green-50 text-green-700"
-              : pyStatus === "loading"
-              ? "bg-yellow-50 text-yellow-700"
-              : "bg-red-50 text-red-700"
-          }`}
-        >
-          <span
-            className={`w-1.5 h-1.5 rounded-full ${
-              pyStatus === "ready" ? "bg-green-500" : pyStatus === "loading" ? "bg-yellow-400 animate-pulse" : "bg-red-400"
-            }`}
-          />
-          {pyStatus === "ready" ? "Pyodide ready" : pyStatus === "loading" ? "Loading Python..." : "Python unavailable"}
-        </span>
+  // Shared editor area rendered both inline and in fullscreen overlay
+  const editorArea = (
+    <div className="flex flex-col h-full">
+      <div className="text-xs text-gray-400 mb-1.5 font-mono flex items-center gap-2">
+        Python 3 (Pyodide/WASM)
+        <span className="text-gray-300">·</span>
+        <span className="text-gray-500 text-xs">syntax highlighting · auto-indent · Tab=4 spaces</span>
       </div>
-
-      <div className="p-6 space-y-4">
-        {/* Task prompt */}
-        {content.prompt && (
-          <div className="rounded-lg bg-blue-50/60 border border-blue-100 px-4 py-3">
-            <div className="text-xs font-semibold text-blue-700 uppercase tracking-wider mb-1">Your task</div>
-            <p className="text-sm text-gray-700 leading-relaxed whitespace-pre-wrap">{content.prompt}</p>
-          </div>
-        )}
-
-        {/* Constraints */}
-        {constraints.length > 0 && (
-          <div>
-            <div className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-1.5">Constraints</div>
-            <ul className="list-disc pl-5 space-y-1 text-sm text-gray-600">
-              {constraints.map((c, i) => <li key={i}>{c}</li>)}
-            </ul>
-          </div>
-        )}
-
-        {/* Guided steps */}
-        {guidedSteps.length > 0 && (
-          <details className="rounded-lg border border-gray-100 bg-gray-50/40 px-4 py-2.5">
-            <summary className="text-sm font-medium text-gray-700 cursor-pointer select-none">
-              Guided steps
-            </summary>
-            <ol className="list-decimal pl-5 mt-2 space-y-1 text-sm text-gray-600">
-              {guidedSteps.map((s, i) => <li key={i}>{s}</li>)}
-            </ol>
-          </details>
-        )}
-
-        {/* Editor */}
-        <div>
-          <div className="text-xs text-gray-400 mb-1.5 font-mono">Python 3 (Pyodide/WASM)</div>
-          <textarea
-            aria-label="Python code editor"
-            className="code-editor w-full h-52 px-4 py-3 bg-gray-950 text-green-300 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-200 focus:border-blue-400 transition-colors text-sm"
-            value={code}
-            onChange={(e) => {
-              setCode(e.target.value);
-              onChange(e.target.value, output, testResults);
-            }}
-            spellCheck={false}
-          />
-        </div>
-
-        {/* Actions */}
-        <div className="flex flex-wrap items-center gap-2">
-          <button
-            onClick={handleRun}
-            disabled={running || submitting || pyStatus !== "ready"}
-            className="flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium bg-white border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 disabled:opacity-40 transition-colors"
-          >
-            {running ? "Running..." : "Run tests"}
-          </button>
-          <button
-            onClick={handleSubmit}
-            disabled={running || submitting || pyStatus !== "ready"}
-            className="flex items-center gap-1.5 px-4 py-1.5 text-sm font-medium bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-40 transition-colors"
-          >
-            {submitting ? "Submitting..." : "Submit"}
-          </button>
-          <button
-            onClick={handleReset}
-            disabled={running || submitting}
-            className="px-3 py-1.5 text-sm font-medium text-gray-500 hover:text-gray-700 disabled:opacity-40 transition-colors"
-          >
-            Reset
-          </button>
-          {hints.length > 0 && (
-            <button
-              onClick={() => setHintsShown((n) => Math.min(n + 1, hints.length))}
-              disabled={hintsShown >= hints.length}
-              className="ml-auto px-3 py-1.5 text-sm font-medium text-amber-700 bg-amber-50 border border-amber-100 rounded-lg hover:bg-amber-100 disabled:opacity-40 transition-colors"
-            >
-              {hintsShown >= hints.length ? "All hints shown" : `Show hint (${hintsShown}/${hints.length})`}
-            </button>
-          )}
-        </div>
-
-        {/* Progressive hints */}
-        {hintsShown > 0 && (
-          <div className="space-y-1.5">
-            {hints.slice(0, hintsShown).map((h, i) => (
-              <div key={i} className="rounded-lg bg-amber-50 border border-amber-100 px-3 py-2 text-sm text-amber-900">
-                <span className="font-semibold mr-1.5">Hint {h.level ?? i + 1}:</span>
-                {h.text}
-              </div>
-            ))}
-          </div>
-        )}
-
-        {/* Output */}
-        {(output || running || submitting) && (
-          <div>
-            <div className="text-xs text-gray-400 mb-1.5 font-mono">Output</div>
-            <pre className="w-full min-h-12 px-4 py-3 bg-gray-50 border border-gray-100 rounded-lg text-xs font-mono text-gray-700 overflow-x-auto whitespace-pre-wrap">
-              {running || submitting ? "Running..." : output}
-            </pre>
-          </div>
-        )}
-
-        {/* Public tests */}
-        {publicTests.length > 0 && (
-          <div>
-            <div className="flex items-center gap-2 mb-2">
-              <div className="text-xs text-gray-400 font-mono">Tests</div>
-              {publicPassed && <span className="text-xs text-green-600 font-medium">All public tests passed</span>}
-            </div>
-            <div className="space-y-1.5">
-              {publicTests.map((test) => {
-                const result = testResults[test.id];
-                return (
-                  <div
-                    key={test.id}
-                    className={`flex items-center gap-2 px-3 py-2 rounded-lg text-sm ${
-                      result === "pass"
-                        ? "bg-green-50 border border-green-100 text-green-700"
-                        : result === "fail"
-                        ? "bg-red-50 border border-red-100 text-red-700"
-                        : "bg-gray-50 border border-gray-100 text-gray-500"
-                    }`}
-                  >
-                    <span>{result === "pass" ? "✓" : result === "fail" ? "✗" : "○"}</span>
-                    <span>{test.description}</span>
-                  </div>
-                );
-              })}
-            </div>
-          </div>
-        )}
-
-        {/* Hidden tests — count only, assertions never shown */}
-        {hiddenTests.length > 0 && (
-          <div
-            className={`flex items-center justify-between gap-2 px-3 py-2 rounded-lg text-sm border ${
-              submitted
-                ? hiddenPassedCount === hiddenTests.length
-                  ? "bg-green-50 border-green-100 text-green-700"
-                  : "bg-red-50 border-red-100 text-red-700"
-                : "bg-gray-50 border-gray-100 text-gray-500"
-            }`}
-          >
-            <span className="flex items-center gap-2">
-              <span aria-hidden="true">&#128274;</span>
-              {hiddenTests.length} hidden test{hiddenTests.length > 1 ? "s" : ""}
-            </span>
-            <span className="font-medium">
-              {submitted ? `${hiddenPassedCount}/${hiddenTests.length} passed` : "run on submit"}
-            </span>
-          </div>
-        )}
-
-        {/* Submission feedback */}
-        {submitted && (
-          <div
-            className={`rounded-lg px-4 py-3 text-sm border ${
-              allPassed
-                ? "bg-green-50 border-green-200 text-green-800"
-                : "bg-amber-50 border-amber-200 text-amber-900"
-            }`}
-          >
-            {allPassed ? (
-              <span><strong>Solution accepted.</strong> All public and hidden tests pass. You can still revise, then mark the lesson complete when ready.</span>
-            ) : (
-              <span><strong>Not passing yet.</strong> Some tests fail. Use the hints, adjust your code, and submit again — the answer is never shown for you.</span>
-            )}
-          </div>
-        )}
-
-        <p className="text-xs text-gray-400">
-          Your code, output, and results save automatically. Submitting or passing tests does not complete the lesson — use &quot;Mark Complete&quot; for that.
-        </p>
+      <div className="flex-1 min-h-0 rounded-lg overflow-hidden border border-gray-700 focus-within:ring-2 focus-within:ring-blue-500">
+        <CodeMirrorEditor
+          value={code}
+          onChange={handleCodeChange}
+          height={isFullscreen ? "100%" : "208px"}
+          fullscreen={isFullscreen}
+        />
       </div>
     </div>
+  );
+
+  const actionBar = (
+    <div className="flex flex-wrap items-center gap-2">
+      <button
+        onClick={handleRun}
+        disabled={running || submitting || pyStatus !== "ready"}
+        className="flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium bg-white border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 disabled:opacity-40 transition-colors"
+      >
+        {running ? "Running..." : "Run tests"}
+      </button>
+      <button
+        onClick={handleSubmit}
+        disabled={running || submitting || pyStatus !== "ready"}
+        className="flex items-center gap-1.5 px-4 py-1.5 text-sm font-medium bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-40 transition-colors"
+      >
+        {submitting ? "Submitting..." : "Submit"}
+      </button>
+      <button
+        onClick={handleReset}
+        disabled={running || submitting}
+        className="px-3 py-1.5 text-sm font-medium text-gray-500 hover:text-gray-700 disabled:opacity-40 transition-colors"
+      >
+        Reset
+      </button>
+      <button
+        onClick={() => setIsFullscreen((v) => !v)}
+        title={isFullscreen ? "Exit fullscreen (Esc)" : "Fullscreen focus mode"}
+        aria-label={isFullscreen ? "Exit fullscreen" : "Enter fullscreen"}
+        className="ml-auto px-3 py-1.5 text-sm font-medium text-gray-500 bg-gray-100 border border-gray-200 rounded-lg hover:bg-gray-200 transition-colors"
+      >
+        {isFullscreen ? "⊠ Exit focus" : "⊞ Focus"}
+      </button>
+      {hints.length > 0 && (
+        <button
+          onClick={() => setHintsShown((n) => Math.min(n + 1, hints.length))}
+          disabled={hintsShown >= hints.length}
+          className="px-3 py-1.5 text-sm font-medium text-amber-700 bg-amber-50 border border-amber-100 rounded-lg hover:bg-amber-100 disabled:opacity-40 transition-colors"
+        >
+          {hintsShown >= hints.length ? "All hints shown" : `Show hint (${hintsShown}/${hints.length})`}
+        </button>
+      )}
+    </div>
+  );
+
+  return (
+    <>
+      {/* Fullscreen overlay */}
+      {isFullscreen && (
+        <div
+          className="fixed inset-0 z-50 bg-gray-950 flex flex-col"
+          role="dialog"
+          aria-modal="true"
+          aria-label="Python code editor fullscreen"
+        >
+          {/* Fullscreen header */}
+          <div className="flex items-center gap-3 px-6 py-3 bg-gray-900 border-b border-gray-800 shrink-0">
+            <span className="text-xl" aria-hidden="true">&#128187;</span>
+            <div className="flex-1 min-w-0">
+              <span className="text-sm font-semibold text-gray-200">{activity.title ?? "Code Exercise"}</span>
+            </div>
+            <span
+              className={`inline-flex items-center gap-1 text-xs px-2 py-0.5 rounded-full shrink-0 ${
+                pyStatus === "ready"
+                  ? "bg-green-900/50 text-green-300"
+                  : pyStatus === "loading"
+                  ? "bg-yellow-900/50 text-yellow-300"
+                  : "bg-red-900/50 text-red-300"
+              }`}
+            >
+              <span
+                className={`w-1.5 h-1.5 rounded-full ${
+                  pyStatus === "ready" ? "bg-green-400" : pyStatus === "loading" ? "bg-yellow-400 animate-pulse" : "bg-red-400"
+                }`}
+              />
+              {pyStatus === "ready" ? "Pyodide ready" : pyStatus === "loading" ? "Loading Python..." : "Python unavailable"}
+            </span>
+          </div>
+          {/* Fullscreen body: side-by-side on wide screens, stacked on narrow */}
+          <div className="flex-1 min-h-0 flex flex-col lg:flex-row gap-0 overflow-hidden">
+            {/* Left: editor */}
+            <div className="flex-1 min-h-0 flex flex-col p-4 gap-3">
+              {content.prompt && (
+                <div className="rounded-lg bg-blue-950/60 border border-blue-800 px-4 py-3 shrink-0">
+                  <div className="text-xs font-semibold text-blue-400 uppercase tracking-wider mb-1">Your task</div>
+                  <p className="text-sm text-gray-200 leading-relaxed whitespace-pre-wrap">{content.prompt}</p>
+                </div>
+              )}
+              <div className="flex-1 min-h-0 flex flex-col">
+                {editorArea}
+              </div>
+              <div className="shrink-0">{actionBar}</div>
+            </div>
+            {/* Right: output + tests */}
+            <div className="lg:w-96 shrink-0 border-t lg:border-t-0 lg:border-l border-gray-800 flex flex-col gap-3 p-4 overflow-y-auto">
+              {hintsShown > 0 && (
+                <div className="space-y-1.5">
+                  {hints.slice(0, hintsShown).map((h, i) => (
+                    <div key={i} className="rounded-lg bg-amber-900/40 border border-amber-800 px-3 py-2 text-sm text-amber-200">
+                      <span className="font-semibold mr-1.5">Hint {h.level ?? i + 1}:</span>
+                      {h.text}
+                    </div>
+                  ))}
+                </div>
+              )}
+              {(output || running || submitting) && (
+                <div>
+                  <div className="text-xs text-gray-500 mb-1.5 font-mono">Output</div>
+                  <pre className="w-full min-h-12 px-4 py-3 bg-gray-900 border border-gray-800 rounded-lg text-xs font-mono text-gray-300 overflow-x-auto whitespace-pre-wrap">
+                    {running || submitting ? "Running..." : output}
+                  </pre>
+                </div>
+              )}
+              {publicTests.length > 0 && (
+                <div>
+                  <div className="flex items-center gap-2 mb-2">
+                    <div className="text-xs text-gray-500 font-mono">Tests</div>
+                    {publicPassed && <span className="text-xs text-green-400 font-medium">All public tests passed</span>}
+                  </div>
+                  <div className="space-y-1.5">
+                    {publicTests.map((test) => {
+                      const result = testResults[test.id];
+                      return (
+                        <div
+                          key={test.id}
+                          className={`flex items-center gap-2 px-3 py-2 rounded-lg text-sm ${
+                            result === "pass"
+                              ? "bg-green-900/40 border border-green-800 text-green-300"
+                              : result === "fail"
+                              ? "bg-red-900/40 border border-red-800 text-red-300"
+                              : "bg-gray-800 border border-gray-700 text-gray-400"
+                          }`}
+                        >
+                          <span>{result === "pass" ? "✓" : result === "fail" ? "✗" : "○"}</span>
+                          <span>{test.description}</span>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
+              {hiddenTests.length > 0 && (
+                <div
+                  className={`flex items-center justify-between gap-2 px-3 py-2 rounded-lg text-sm border ${
+                    submitted
+                      ? hiddenPassedCount === hiddenTests.length
+                        ? "bg-green-900/40 border-green-800 text-green-300"
+                        : "bg-red-900/40 border-red-800 text-red-300"
+                      : "bg-gray-800 border-gray-700 text-gray-400"
+                  }`}
+                >
+                  <span className="flex items-center gap-2">
+                    <span aria-hidden="true">&#128274;</span>
+                    {hiddenTests.length} hidden test{hiddenTests.length > 1 ? "s" : ""}
+                  </span>
+                  <span className="font-medium">
+                    {submitted ? `${hiddenPassedCount}/${hiddenTests.length} passed` : "run on submit"}
+                  </span>
+                </div>
+              )}
+              {submitted && (
+                <div
+                  className={`rounded-lg px-4 py-3 text-sm border ${
+                    allPassed
+                      ? "bg-green-900/40 border-green-800 text-green-200"
+                      : "bg-amber-900/40 border-amber-800 text-amber-200"
+                  }`}
+                >
+                  {allPassed ? (
+                    <span><strong>Solution accepted.</strong> All public and hidden tests pass.</span>
+                  ) : (
+                    <span><strong>Not passing yet.</strong> Some tests fail. Use the hints, adjust your code, and submit again.</span>
+                  )}
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Inline card (always rendered, editor area hidden when fullscreen so CodeMirror doesn't double-mount) */}
+      <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
+        {/* Header */}
+        <div className="flex items-center gap-3 px-6 py-4 border-b border-gray-100 bg-gray-50/50">
+          <span className="text-xl" aria-hidden="true">&#128187;</span>
+          <div className="flex-1 min-w-0">
+            <div className="text-xs font-semibold text-gray-400 uppercase tracking-wider">Code Exercise</div>
+            <h2 className="text-sm font-semibold text-gray-800 mt-0.5">
+              {activity.title ?? "Code Exercise"}
+            </h2>
+          </div>
+          <span
+            className={`inline-flex items-center gap-1 text-xs px-2 py-0.5 rounded-full shrink-0 ${
+              pyStatus === "ready"
+                ? "bg-green-50 text-green-700"
+                : pyStatus === "loading"
+                ? "bg-yellow-50 text-yellow-700"
+                : "bg-red-50 text-red-700"
+            }`}
+          >
+            <span
+              className={`w-1.5 h-1.5 rounded-full ${
+                pyStatus === "ready" ? "bg-green-500" : pyStatus === "loading" ? "bg-yellow-400 animate-pulse" : "bg-red-400"
+              }`}
+            />
+            {pyStatus === "ready" ? "Pyodide ready" : pyStatus === "loading" ? "Loading Python..." : "Python unavailable"}
+          </span>
+        </div>
+
+        <div className="p-6 space-y-4">
+          {/* Task prompt */}
+          {content.prompt && (
+            <div className="rounded-lg bg-blue-50/60 border border-blue-100 px-4 py-3">
+              <div className="text-xs font-semibold text-blue-700 uppercase tracking-wider mb-1">Your task</div>
+              <p className="text-sm text-gray-700 leading-relaxed whitespace-pre-wrap">{content.prompt}</p>
+            </div>
+          )}
+
+          {/* Constraints */}
+          {constraints.length > 0 && (
+            <div>
+              <div className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-1.5">Constraints</div>
+              <ul className="list-disc pl-5 space-y-1 text-sm text-gray-600">
+                {constraints.map((c, i) => <li key={i}>{c}</li>)}
+              </ul>
+            </div>
+          )}
+
+          {/* Guided steps */}
+          {guidedSteps.length > 0 && (
+            <details className="rounded-lg border border-gray-100 bg-gray-50/40 px-4 py-2.5">
+              <summary className="text-sm font-medium text-gray-700 cursor-pointer select-none">
+                Guided steps
+              </summary>
+              <ol className="list-decimal pl-5 mt-2 space-y-1 text-sm text-gray-600">
+                {guidedSteps.map((s, i) => <li key={i}>{s}</li>)}
+              </ol>
+            </details>
+          )}
+
+          {/* Editor — hidden when fullscreen so CodeMirror doesn't double-mount */}
+          {!isFullscreen && (
+            <div className="space-y-2">
+              {editorArea}
+            </div>
+          )}
+          {isFullscreen && (
+            <div className="rounded-lg bg-gray-950 border border-gray-700 px-4 py-3 text-sm text-gray-400 text-center">
+              Editor open in focus mode &mdash; press <kbd className="bg-gray-800 text-gray-300 px-1 rounded text-xs">Esc</kbd> or click <strong>⊠ Exit focus</strong> to return.
+            </div>
+          )}
+
+          {/* Actions */}
+          {!isFullscreen && actionBar}
+
+          {/* Focus mode button when fullscreen not active (also in actionBar, but easy to find here) */}
+
+          {/* Progressive hints */}
+          {!isFullscreen && hintsShown > 0 && (
+            <div className="space-y-1.5">
+              {hints.slice(0, hintsShown).map((h, i) => (
+                <div key={i} className="rounded-lg bg-amber-50 border border-amber-100 px-3 py-2 text-sm text-amber-900">
+                  <span className="font-semibold mr-1.5">Hint {h.level ?? i + 1}:</span>
+                  {h.text}
+                </div>
+              ))}
+            </div>
+          )}
+
+          {/* Output */}
+          {!isFullscreen && (output || running || submitting) && (
+            <div>
+              <div className="text-xs text-gray-400 mb-1.5 font-mono">Output</div>
+              <pre className="w-full min-h-12 px-4 py-3 bg-gray-50 border border-gray-100 rounded-lg text-xs font-mono text-gray-700 overflow-x-auto whitespace-pre-wrap">
+                {running || submitting ? "Running..." : output}
+              </pre>
+            </div>
+          )}
+
+          {/* Public tests */}
+          {!isFullscreen && publicTests.length > 0 && (
+            <div>
+              <div className="flex items-center gap-2 mb-2">
+                <div className="text-xs text-gray-400 font-mono">Tests</div>
+                {publicPassed && <span className="text-xs text-green-600 font-medium">All public tests passed</span>}
+              </div>
+              <div className="space-y-1.5">
+                {publicTests.map((test) => {
+                  const result = testResults[test.id];
+                  return (
+                    <div
+                      key={test.id}
+                      className={`flex items-center gap-2 px-3 py-2 rounded-lg text-sm ${
+                        result === "pass"
+                          ? "bg-green-50 border border-green-100 text-green-700"
+                          : result === "fail"
+                          ? "bg-red-50 border border-red-100 text-red-700"
+                          : "bg-gray-50 border border-gray-100 text-gray-500"
+                      }`}
+                    >
+                      <span>{result === "pass" ? "✓" : result === "fail" ? "✗" : "○"}</span>
+                      <span>{test.description}</span>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          )}
+
+          {/* Hidden tests — count only, assertions never shown */}
+          {!isFullscreen && hiddenTests.length > 0 && (
+            <div
+              className={`flex items-center justify-between gap-2 px-3 py-2 rounded-lg text-sm border ${
+                submitted
+                  ? hiddenPassedCount === hiddenTests.length
+                    ? "bg-green-50 border-green-100 text-green-700"
+                    : "bg-red-50 border-red-100 text-red-700"
+                  : "bg-gray-50 border-gray-100 text-gray-500"
+              }`}
+            >
+              <span className="flex items-center gap-2">
+                <span aria-hidden="true">&#128274;</span>
+                {hiddenTests.length} hidden test{hiddenTests.length > 1 ? "s" : ""}
+              </span>
+              <span className="font-medium">
+                {submitted ? `${hiddenPassedCount}/${hiddenTests.length} passed` : "run on submit"}
+              </span>
+            </div>
+          )}
+
+          {/* Submission feedback */}
+          {!isFullscreen && submitted && (
+            <div
+              className={`rounded-lg px-4 py-3 text-sm border ${
+                allPassed
+                  ? "bg-green-50 border-green-200 text-green-800"
+                  : "bg-amber-50 border-amber-200 text-amber-900"
+              }`}
+            >
+              {allPassed ? (
+                <span><strong>Solution accepted.</strong> All public and hidden tests pass. You can still revise, then mark the lesson complete when ready.</span>
+              ) : (
+                <span><strong>Not passing yet.</strong> Some tests fail. Use the hints, adjust your code, and submit again — the answer is never shown for you.</span>
+              )}
+            </div>
+          )}
+
+          <p className="text-xs text-gray-400">
+            Your code, output, and results save automatically. Submitting or passing tests does not complete the lesson — use &quot;Mark Complete&quot; for that.
+          </p>
+        </div>
+      </div>
+    </>
   );
 }

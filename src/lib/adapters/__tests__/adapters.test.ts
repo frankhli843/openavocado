@@ -149,6 +149,12 @@ describe("dora-task prompts embed the lesson quality bar", () => {
     "next-lesson diagnostics",
     "preview / deeper-later wording",
     "validateGeneratedContent",
+    // Manual authoring requirement — must travel to every generator agent
+    "MANUAL AUTHORING",
+    // Dora task and QA requirement — must reference acceptance criteria template
+    "acceptance criteria template",
+    // Knowledge graph orientation requirement
+    "KNOWLEDGE GRAPH ORIENTATION",
   ];
 
   const captureAcceptance = async (dispatch: () => Promise<unknown>) => {
