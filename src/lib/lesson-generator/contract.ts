@@ -47,6 +47,30 @@ export const WIDGET_AUTHORING_NOTE =
   "interactive.content must be a WidgetSpec (declarative or registered). No raw code.";
 
 /**
+ * The enrichment quality bar every generated lesson must meet, formatted for
+ * direct inclusion in a lesson-generation task/prompt.
+ *
+ * This is the SAME standard as docs/lesson-authoring-guide.md ("Enrichment
+ * requirements") and the machine-checked {@link validateGeneratedContent}. It
+ * lives here so the reusable generator paths (the Dora-task adapter and any
+ * other generator) hand future lesson-generation AGENTS the requirements
+ * directly — not just a doc link they might never open. Keep it in sync with the
+ * authoring guide and validateGeneratedContent whenever the contract changes.
+ */
+export const LESSON_QUALITY_BAR_PROMPT = [
+  "=== LESSON QUALITY BAR (required for EVERY generated lesson) ===",
+  "Do not ship a thin, audio-only, or high-level-only lesson. Every lesson must include:",
+  '- Generated audio AVAILABLE AT CREATION: a substantive spoken script (never a stub or "audio coming soon"); produce the actual audio artifact at creation time and record it as a generated artifact.',
+  "- First-class WRITTEN teaching text the learner can study without the audio (headings, a definition, a worked example, a summary) — not a transcript dump.",
+  "- MULTIPLE meaningful visual/interactive explorations when the lesson covers multiple concepts. A multi-concept lesson (3+ goals/mastery targets) needs at least TWO distinct visual perspectives: several interactive widgets, or one declarative widget driving a charts[] array. One thin widget for many concepts is rejected.",
+  "- PRACTICE/CODE the learner submits: scaffolded, with progressive hints and public + hidden tests, and never an exposed answer.",
+  '- ADAPTIVE ASSESSMENT: an MC quiz where every question carries a required difficulty (easy|medium|hard) and the virtual "I don\'t know" option, plus freeform questions.',
+  "- END-OF-LESSON next-lesson diagnostics: what felt unclear, what to cover next, confidence/effort, and a practical objective.",
+  "- EXPLICIT preview / deeper-later wording: if a concept is intentionally introduced only at a high level, the audio script AND the written text must say so — name it a preview and state it will be explored in more detail in a later lesson. Never leave a glossed-over idea looking fully taught.",
+  "The machine-checked gate is validateGeneratedContent (src/lib/lesson-generator/contract.ts); the full standard is docs/lesson-authoring-guide.md. A lesson that fails validateGeneratedContent must be fixed, not shipped.",
+].join("\n");
+
+/**
  * A lesson generator adapter.
  * Implement this to wire your preferred generation backend.
  */

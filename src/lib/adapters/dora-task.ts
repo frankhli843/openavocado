@@ -4,6 +4,7 @@ import type {
   RegenerationHookAdapter,
   LessonDiscardedEvent,
 } from "@/types";
+import { LESSON_QUALITY_BAR_PROMPT } from "@/lib/lesson-generator/contract";
 
 /**
  * Dora-task adapter — creates a Doramon todo-loop task for next-lesson generation.
@@ -101,6 +102,8 @@ export const doraTaskAdapter: CompletionHookAdapter = {
       `=== SECONDARY CONTEXT (use only if it helps) ===`,
       `Profile config: ${event.learner_profile_config ? JSON.stringify(event.learner_profile_config) : "(none)"}`,
       `Cross-subject mastery: ${event.cross_subject_history.map((c) => `${c.subject_title}=${c.mastery_score ?? "n/a"}`).join(", ") || "(none)"}`,
+      ``,
+      LESSON_QUALITY_BAR_PROMPT,
       ``,
       `Delivery:`,
       channel
@@ -220,6 +223,8 @@ export const doraTaskRegenerationAdapter: RegenerationHookAdapter = {
       `4. Review the AI workpad (if available) for current plan and open questions.`,
       `5. Update the workpad with what you decided and why, then include the workpad delta in your task notes.`,
       `6. Generate a lesson that better fits the learner's goals, criteria, and current level.`,
+      ``,
+      LESSON_QUALITY_BAR_PROMPT,
       ``,
       `Completion:`,
       channel

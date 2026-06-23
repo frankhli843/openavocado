@@ -55,6 +55,17 @@ These rules apply to **all** future lessons, not just seed/demo content. The
 canonical home of this guidance is this file plus `validateGeneratedContent`;
 keep them in sync when the contract changes.
 
+So a future lesson-generation **agent** receives these requirements directly (not
+just as a doc link it might never open), the reusable generator paths embed them
+in the task prompt. `LESSON_QUALITY_BAR_PROMPT`
+(`src/lib/lesson-generator/contract.ts`) is the single formatted copy of this
+bar, and the Dora-task adapters (`src/lib/adapters/dora-task.ts`, both
+next-lesson and replacement generation) inject it into every generated task.
+`src/lib/adapters/__tests__/adapters.test.ts` asserts each generated task prompt
+still names every enrichment dimension, so this guidance cannot silently drop out
+of the generation pipeline. Keep `LESSON_QUALITY_BAR_PROMPT` in sync with this
+section and `validateGeneratedContent`.
+
 ## Written text (`reading`)
 
 Written text is real lesson content, not a transcript dump. Use a `blocks`
