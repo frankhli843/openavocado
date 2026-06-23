@@ -30,6 +30,8 @@ AvocadoCore is multi-user from day one. The data model should separate account/u
 
 Core records should be scoped so multiple users can have their own subjects, goals, lessons, attempts, mastery signals, tags, generated artifacts, and progress history. Even if a deployment starts with one learner, the schema should not assume a single global learner.
 
+A user account can hold several **learner profiles**. Each profile has a display name, bio, preferred language, and a free-form privacy-safe `config` JSON (learner notes/preferences/context that guide lesson generation). `users.active_learner_id` records which profile is active; the app falls back to the account's first profile when unset. Profiles are managed from the UI (`ProfileSwitcher`) via `/api/profiles` (list/create), `/api/profiles/[id]` (rename/edit config), and `/api/profiles/active` (switch). Every subject, mastery, autosave, assessment, and completion query is scoped by `learner_id`, so one profile's history never leaks into another.
+
 ## First Data Model Sketch
 
 - `users`: account or local user identity.
@@ -44,6 +46,19 @@ Core records should be scoped so multiple users can have their own subjects, goa
 - `progress_points`: time-series data for mastery, confidence, assessment results, code/test results, and review cadence.
 - `generated_artifacts`: durable generated assets, including audio metadata.
 - `next_lesson_jobs`: next-lesson generation links, adapter metadata, and generation state.
+- `assessment_results`: per-question evidence (question type, `concept`, `difficulty`, `outcome`) for every graded MC attempt and freeform/diagnostic answer.
+- `assessment_result_tags`: tags attached to each assessment result by the assessor.
+
+## Adaptive Assessment Pipeline
+
+Answer assessment is a first-class part of the learning loop, not a static display. When a learner answers (an MC attempt graded live, or freeform/diagnostic answers at completion), the answer goes through an `AssessmentAdapter` (`src/lib/assessment.ts`). The default is a **deterministic, no-LLM assessor** behind a clean boundary so a future ACP/LLM adapter can replace it without touching callers. The assessor:
+
+- matches the question's `concept` against the subject's existing tag vocabulary (`subject_tags`), or **creates a normalized tag automatically** when the concept is new (a `misconception` tag for wrong/IDK answers, a `concept` tag for correct ones);
+- emits a single mastery signal (type + concept + confidence + `difficulty`).
+
+`src/lib/assessment-store.ts` persists the decision in one transaction: an `assessment_results` row, the matched/created tags linked to both the subject and the result, and a `mastery_signals` row carrying `difficulty` and the resolved `tag_id`. The `/api/assess` route surfaces persistence/tagging failures as errors rather than swallowing them. Because `difficulty` is stored on every attempt and signal, performance is queryable by tag **and** difficulty (e.g. "how did this learner do on hard `base-rate-fallacy` questions"), which feeds both the subject-page evidence panel and next-lesson generation.
+
+Every multiple-choice question carries a **required** `difficulty` and renders a virtual **"I don't know"** option (index `=== choices.length`, never the correct answer, no schema change). IDK grades incorrect (the concept requeues) but is recorded as a distinct low-confidence `review_needed` signal. Each lesson also ends with freeform **next-lesson diagnostics** (`lessons.next_lesson_diagnostics`) whose answers autosave, are assessed for tags/signals, and enrich the `lesson.completed` payload — none of which complete the lesson.
 
 ## Completion Semantics
 
@@ -157,3 +172,5 @@ Recommended event fields:
 - concepts to review
 - misunderstandings to repair
 - next curriculum targets
+
+The current `lesson.completed` payload is enriched so next-lesson generation can be **adaptive to evidence** rather than a generic course step. Beyond the basics it carries: subject goals + learner criteria, the subject AI workpad summary, the quiz result, **tag + difficulty performance**, the freeform next-lesson diagnostics, recent misconceptions, completed + discarded lesson history, the learner-profile `config`, and a cross-subject mastery snapshot. The `dora-task` adapter prompt is structured to use this in priority order: subject-specific evidence first; profile config and cross-subject history only when they help. Its stated pedagogical goal is to **find foundational weaknesses and bridge them with the least learner effort**, advancing the curriculum only where the foundation is solid.

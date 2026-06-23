@@ -108,11 +108,12 @@ passes.
   "questions": [...],      // freeform questions (unchanged)
   "quiz": {
     "pass_threshold": 6,   // distinct concepts the learner must get correct (default: 6)
+    "idk_option": true,    // optional; defaults true, must NOT be false (see below)
     "questions": [
       {
         "id": "q1",                         // unique within the quiz
-        "concept": "bayes-prior",           // concept tag (used for dedup on retries)
-        "difficulty": "easy",               // optional: "easy" | "medium" | "hard"
+        "concept": "bayes-prior",           // concept tag (assessment + retry dedup)
+        "difficulty": "easy",               // REQUIRED: "easy" | "medium" | "hard"
         "question": "...",                  // question text
         "choices": ["A", "B", "C", "D"],   // 2–6 distinct non-empty strings
         "correct_index": 0,                 // 0-based index into choices
@@ -130,6 +131,32 @@ Validation (enforced by `validateMultipleChoiceQuizContent`):
 - `correct_index` must be in range.
 - All question `id` values must be unique.
 - `concept`, `explanation`, and `question` text are required.
+- **`difficulty` is required** on every question (`easy` | `medium` | `hard`).
+  Difficulty is persisted with every graded attempt and mastery signal so the
+  learner's performance is queryable by tag **and** difficulty (e.g. "hard
+  questions tagged `base-rate-fallacy`").
+- `idk_option` may be omitted (defaults `true`) but must never be `false`.
+
+### "I don't know" option (always rendered)
+
+Every multiple-choice question shows a virtual **"I'm not sure / I don't know"**
+option after the real choices. You do NOT author it — the app appends it at
+render time (index `=== choices.length`), so it never appears in `choices` and
+never collides with `correct_index`. Selecting it is graded **incorrect** (the
+concept requeues like any miss) but recorded as a distinct high-signal
+uncertainty: it reveals the correct answer + explanation with no-shame messaging
+and writes a low-confidence `review_needed` mastery signal for that tag and
+difficulty.
+
+### Answer → tag assessment
+
+Every graded MC answer is sent to the assessment pipeline (`/api/assess`). The
+assessor matches the question's `concept` against the subject's existing tag
+vocabulary, or **creates a normalized tag automatically** when the concept is
+new (a `misconception` tag for wrong/IDK answers, a `concept` tag for correct
+ones). The result is persisted as `assessment_results` + linked tags + a mastery
+signal carrying difficulty. Freeform assessment answers and the end-of-lesson
+diagnostics are assessed the same way at completion.
 
 ### Pass rule and retry behaviour
 
@@ -152,6 +179,25 @@ Validation (enforced by `validateMultipleChoiceQuizContent`):
   non-medical context", "keep the formula explicit").
 - Provide 8–12 questions when `pass_threshold` is 6 so the learner has some
   headroom and wrong-answer retries do not immediately loop.
+
+## End-of-lesson next-lesson diagnostics
+
+Every lesson can carry `lessons.next_lesson_diagnostics` — a JSON array of
+freeform prompts shown at the very end of the lesson:
+
+```json
+[
+  { "id": "diag-unclear", "prompt": "What still feels unclear?", "hint": "..." },
+  { "id": "diag-next", "prompt": "What should the next lesson cover?" }
+]
+```
+
+If you omit them, the seed/backfill applies a sensible default set
+(`DEFAULT_NEXT_LESSON_DIAGNOSTICS`: what felt unclear, what to cover next,
+confidence/effort, a practical objective). The answers autosave, are assessed
+for tags + mastery signals, and are included in the `lesson.completed` event so
+the next-lesson generator knows the learner's readiness and intent. **Answering
+diagnostics never completes the lesson** — only "Mark Complete" does.
 
 ## Completion is manual, always
 
@@ -178,6 +224,8 @@ deployment configuration.
       exposed answer.
 - [ ] Assessment questions probe understanding, not recall of the audio.
 - [ ] If a quiz is included: 8+ questions, unique ids, `pass_threshold` ≤ question count,
-      `misconception_target` and `rephrase_instructions` on each question.
+      a **required `difficulty`** on every question, `misconception_target` and
+      `rephrase_instructions` on each question.
+- [ ] End-of-lesson `next_lesson_diagnostics` present (or rely on the default set).
 - [ ] `validateGeneratedContent` returns `{ valid: true }`.
 - [ ] `validateMultipleChoiceQuizContent` returns `{ valid: true }` (if quiz included).
