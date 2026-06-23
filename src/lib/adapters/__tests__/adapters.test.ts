@@ -137,8 +137,12 @@ describe("dora-task prompts embed the lesson quality bar", () => {
   const REQUIRED_MARKERS = [
     "LESSON QUALITY BAR",
     "Generated audio AVAILABLE AT CREATION",
+    "WHY-FIRST TEACHING",
+    "what breaks or becomes invalid if we skip it",
     "WRITTEN teaching text",
     "MULTIPLE meaningful visual/interactive explorations",
+    "Interactives must deepen understanding",
+    "long generic videos",
     "PRACTICE/CODE",
     "ADAPTIVE ASSESSMENT",
     "I don't know",

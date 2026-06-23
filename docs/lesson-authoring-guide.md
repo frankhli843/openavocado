@@ -41,12 +41,32 @@ enforced by `validateGeneratedContent`; the rest is a hard authoring rule.
   DB). Verify a lesson's audio actually plays: `GET /runtime/<file_path>` must
   return **HTTP 200** with an `audio/*` content type — a metadata row pointing at a
   404 does **not** count as generated audio.
+- **Start with the why, not the mechanics.** Before formulas or code, explain
+  the higher-level purpose of the lesson and the mismatch, failure mode, or
+  decision the learner is trying to understand. For preprocessing-style lessons,
+  each step must answer: "what breaks or becomes invalid if we skip this?" A
+  lesson that only lists operations is not ready.
+- **Audio is a real walkthrough, not a short caption.** The spoken script must be
+  detailed enough for the learner to understand the high-level picture, the why,
+  and at least one concrete worked example before using the interactives. It
+  should explicitly bridge concepts in plain language. If it sounds like a quick
+  summary or table of contents, regenerate it.
 - **First-class written teaching text** (`reading`), not a transcript dump.
 - **Multiple meaningful visual/interactive explorations when the lesson covers
   multiple concepts.** A multi-concept lesson (3+ goals or mastery targets) must
   offer **at least two distinct visual perspectives** — either several
   `interactive` activities, or one declarative widget driving a `charts: []`
   array. One thin widget for many concepts is rejected (enforced).
+- **Interactive sections must deepen understanding.** A widget is not acceptable
+  just because it displays a chart. Each interactive must have a clear learning
+  objective, a learner-controlled variable, a visible consequence, and a written
+  takeaway that explains what changed and why. Prefer "what breaks if..." and
+  before/after/counterfactual views over decorative graphs.
+- **Media is optional and must be directly useful.** Do not embed long general
+  videos as filler. If a video is used, it must be short or timestamped to the
+  exact relevant segment, and the `reason` must say what the learner should look
+  for. If no tightly relevant clip exists, omit the media section and teach the
+  concept directly in audio, writing, and interactives.
 - **Practice/code** the learner submits (scaffolded, no exposed answer).
 - **Adaptive assessment** — an MC quiz (every question carries a required
   `difficulty` and the virtual "I don't know" option) plus freeform questions.
@@ -299,3 +319,80 @@ deployment configuration.
 - [ ] End-of-lesson `next_lesson_diagnostics` present (or rely on the default set).
 - [ ] `validateGeneratedContent` returns `{ valid: true }`.
 - [ ] `validateMultipleChoiceQuizContent` returns `{ valid: true }` (if quiz included).
+- [ ] `knowledge_graph_data` is authored (not a generic placeholder); `validateKnowledgeGraphData` produces no errors.
+
+## Lesson generation workflow (every new lesson)
+
+Every generated lesson must be tracked as a Dora task and pass a manual QA
+review before the learner sees it. Machine validators catch structural problems;
+a human reviewer catches content quality problems (thin explanations, bad
+examples, wrong difficulty calibration, audio that sounds robotic or truncated).
+
+### Required steps
+
+1. **Create a Dora task** before generation starts. Title: `Generate lesson N
+   for <subject> — <learner>`. The task acceptance criteria must reference this
+   authoring guide and the `validateGeneratedContent` contract. Do not generate
+   ad hoc without a task; the task is the audit trail.
+
+2. **Generate.** Use the deployment's `LessonGeneratorAdapter` (e.g. the
+   `dora-task` adapter dispatched from `CompletionHookAdapter` on lesson
+   completion). The generator receives the enriched `LessonCompletedEvent` and
+   LESSON_QUALITY_BAR_PROMPT.
+
+3. **Run the machine checks** before QA:
+   ```
+   validateGeneratedContent(content)          // must return { valid: true }
+   validateMultipleChoiceQuizContent(quiz)    // must return { valid: true } if quiz present
+   validateKnowledgeGraphData(graph)          // must return { valid: true, errors: [] }
+   ```
+   A lesson that fails any of these must be regenerated or fixed — it cannot
+   proceed to QA.
+
+4. **Manual QA review.** A reviewer (not the same agent that generated the
+   lesson) opens the lesson in the browser and works through it:
+   - Listen to the full audio or scan the script. Is it substantive? Does it
+     cover all goals? Does it use explicit preview wording for high-level
+     concepts?
+   - Read the written section. Does it stand alone without the audio?
+   - Interact with every widget. Do the controls produce sensible output? Are
+     chart labels legible at 390px mobile width?
+   - Attempt the code exercise. Is the starter code helpful? Are hints
+     progressive without giving the answer? Do the tests actually test the
+     concept?
+   - Answer a sample of quiz questions. Do the distractors require real
+     understanding to reject? Does the IDK option work and show the correct
+     answer?
+   - Fill in the end-of-lesson diagnostics. Do the prompts make sense for this
+     lesson?
+   - Check the knowledge graph orientation. Does it accurately reflect what this
+     lesson covers vs. previews vs. leaves for later?
+
+5. **Approve or iterate.** If QA passes, mark the Dora task complete with a
+   summary of what was reviewed. If QA fails, note the specific problems in the
+   task and regenerate the affected sections.
+
+6. **Activate the lesson.** Set `lessons.status` to the appropriate state so the
+   learner can access it. The Dora task is the evidence trail; do not activate
+   without a completed task.
+
+### Adapters and deployment
+
+The `LessonGeneratorAdapter` interface (`src/lib/lesson-generator/contract.ts`)
+decouples generation from the app. The `dora-task` adapter
+(`src/lib/adapters/dora-task.ts`) is the reference implementation for
+Doramon-backed deployments: it creates a todo task with full learner evidence
+as acceptance criteria and includes `LESSON_QUALITY_BAR_PROMPT` verbatim so
+the generator agent sees the requirements directly.
+
+Custom adapters (CLI scripts, REST-backed LLMs, etc.) must also embed
+`LESSON_QUALITY_BAR_PROMPT` in whatever prompt they send to the model. The
+quality bar is not optional for any adapter.
+
+### What "full QA" means
+
+Full QA is not running the validators. It is a human or reviewer agent loading
+the lesson in the browser, interacting with every activity, and confirming that
+a learner could genuinely learn the subject from this lesson alone. A lesson
+that passes all machine checks but is thin, confusing, or pedagogically wrong
+still fails QA and must be regenerated.
