@@ -53,6 +53,32 @@ function applyAdditiveMigrations(db: Database.Database): void {
     db.exec("ALTER TABLE lesson_autosave ADD COLUMN widget_state TEXT");
   }
 
+  // Active learner profile pointer on the account (multi-profile support).
+  if (!hasColumn("users", "active_learner_id")) {
+    db.exec("ALTER TABLE users ADD COLUMN active_learner_id INTEGER REFERENCES learner_profiles(id) ON DELETE SET NULL");
+  }
+
+  // Per-profile learner configuration JSON for lesson generation.
+  if (!hasColumn("learner_profiles", "config")) {
+    db.exec("ALTER TABLE learner_profiles ADD COLUMN config TEXT");
+  }
+
+  // End-of-lesson freeform next-lesson diagnostics (JSON array).
+  if (!hasColumn("lessons", "next_lesson_diagnostics")) {
+    db.exec("ALTER TABLE lessons ADD COLUMN next_lesson_diagnostics TEXT");
+  }
+
+  // Difficulty + tag link on mastery signals so tag-plus-difficulty evidence is
+  // queryable. SQLite allows adding columns with a CHECK that permits NULL.
+  if (!hasColumn("mastery_signals", "difficulty")) {
+    db.exec(
+      "ALTER TABLE mastery_signals ADD COLUMN difficulty TEXT CHECK (difficulty IN ('easy', 'medium', 'hard') OR difficulty IS NULL)"
+    );
+  }
+  if (!hasColumn("mastery_signals", "tag_id")) {
+    db.exec("ALTER TABLE mastery_signals ADD COLUMN tag_id INTEGER REFERENCES tags(id) ON DELETE SET NULL");
+  }
+
   // Reversible subject archive: track when a subject was archived.
   if (!hasColumn("subjects", "archived_at")) {
     db.exec("ALTER TABLE subjects ADD COLUMN archived_at TEXT");

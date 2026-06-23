@@ -41,24 +41,70 @@ export const doraTaskAdapter: CompletionHookAdapter = {
       };
     }
 
-    // Build acceptance criteria for the next-lesson Dora task
+    // Build acceptance criteria for the next-lesson Dora task.
+    // The generator must FIRST use subject-specific evidence (goals, criteria,
+    // workpad, this lesson's answers, quiz, diagnostics, tag+difficulty
+    // performance, mastery signals, completed/discarded lessons, misconceptions).
+    // Profile config + cross-subject history are secondary, used only when they
+    // help find the fastest path to mastery. The pedagogical goal is to find
+    // foundational weaknesses and bridge them with the least learner effort,
+    // while advancing the curriculum when the foundation is solid.
+    const fmtTagPerf = event.tag_difficulty_performance.length
+      ? event.tag_difficulty_performance
+          .map(
+            (p) =>
+              `  - ${p.tag} [${p.difficulty}]: ${p.correct} correct, ${p.incorrect} wrong, ${p.idk} "don't know" (of ${p.total})`
+          )
+          .join("\n")
+      : "  (no tagged attempts recorded)";
+    const fmtDiagnostics = event.next_lesson_diagnostics.length
+      ? event.next_lesson_diagnostics.map((d) => `  - Q: ${d.prompt}\n    A: ${d.answer}`).join("\n")
+      : "  (no diagnostics answered)";
+
     const acceptance = [
       `Generate the next lesson for subject "${event.subject_title}" (learner ${event.learner_id}).`,
+      `Be adaptive to the evidence below — do NOT produce a generic next chapter.`,
       ``,
-      `Prior lesson: "${event.lesson_title}"`,
-      `Goals: ${event.lesson_goals.join(", ")}`,
+      `=== PEDAGOGICAL GOAL ===`,
+      `Find foundational weaknesses and bridge them as fast as possible with the least learner effort.`,
+      `Advance the curriculum only where the foundation is already solid. Prioritise subject-specific`,
+      `evidence first; use profile config + cross-subject history only if they speed up mastery.`,
       ``,
-      `Assessment Q&A from completed lesson:`,
-      event.assessment_qa
-        .map((qa) => `- Q: ${qa.question}\n  A: ${qa.learner_answer}`)
-        .join("\n"),
+      `=== SUBJECT CONTEXT (use first) ===`,
+      `Goals: ${event.subject_goals || "(none set)"}`,
+      `Learner criteria/notes: ${event.subject_criteria || "(none set)"}`,
+      event.workpad_summary ? `AI workpad (current plan):\n${event.workpad_summary}` : `AI workpad: (none yet)`,
       ``,
+      `=== THIS LESSON ===`,
+      `Prior lesson: "${event.lesson_title}"  | Goals: ${event.lesson_goals.join(", ")}`,
+      event.quiz_result
+        ? `Quiz: ${event.quiz_result.passed ? "passed" : "not passed"} (${event.quiz_result.correct_count}/${event.quiz_result.pass_threshold})`
+        : `Quiz: (none)`,
+      `Freeform assessment Q&A:`,
+      event.assessment_qa.map((qa) => `  - Q: ${qa.question}\n    A: ${qa.learner_answer}`).join("\n"),
+      ``,
+      `=== TAG + DIFFICULTY PERFORMANCE (the queryable evidence) ===`,
+      fmtTagPerf,
+      ``,
+      `=== END-OF-LESSON DIAGNOSTICS (what the learner wants next) ===`,
+      fmtDiagnostics,
+      ``,
+      `=== MASTERY SIGNALS ===`,
       `Concepts to review: ${event.concepts_to_review.join(", ") || "none"}`,
       `Concepts ready to advance: ${event.concepts_ready_to_advance.join(", ") || "none"}`,
+      `Recent misconceptions: ${event.recent_misconceptions.join(", ") || "none"}`,
+      ``,
+      `=== CURRICULUM CONTEXT ===`,
+      `Completed lessons: ${event.completed_lessons.map((l) => l.title).join("; ") || "none"}`,
+      `Discarded lessons (avoid repeating): ${event.discarded_lessons.map((l) => `${l.title}${l.reason ? ` (${l.reason})` : ""}`).join("; ") || "none"}`,
+      ``,
+      `=== SECONDARY CONTEXT (use only if it helps) ===`,
+      `Profile config: ${event.learner_profile_config ? JSON.stringify(event.learner_profile_config) : "(none)"}`,
+      `Cross-subject mastery: ${event.cross_subject_history.map((c) => `${c.subject_title}=${c.mastery_score ?? "n/a"}`).join(", ") || "(none)"}`,
       ``,
       `Delivery:`,
       channel
-        ? `After generating the next lesson, post a review in <#${channel}> explaining which answers were right, which were wrong, why, and how the next lesson addresses the gaps. Tag the learner in the thread.`
+        ? `After generating the next lesson, post a review in <#${channel}> explaining which answers were right, which were wrong, why, and how the next lesson bridges the foundational gaps. Tag the learner in the thread.`
         : `After generating the next lesson, confirm completion in the appropriate channel.`,
     ].join("\n");
 

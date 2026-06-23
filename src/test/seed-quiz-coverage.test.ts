@@ -58,10 +58,10 @@ describe("Seeded MC quiz schema coverage", () => {
 
       it("has enough questions to satisfy the 6-correct pass gate", () => {
         const threshold = quiz.pass_threshold ?? 6;
-        expect(quiz.questions.length).toBeGreaterThanOrEqual(
-          threshold,
+        expect(
+          quiz.questions.length,
           `${label} has ${quiz.questions.length} questions but pass_threshold is ${threshold} — not enough questions to pass`
-        );
+        ).toBeGreaterThanOrEqual(threshold);
       });
 
       it("has a pass_threshold of 6 or explicitly set", () => {
@@ -72,16 +72,27 @@ describe("Seeded MC quiz schema coverage", () => {
       it("has no duplicate question ids", () => {
         const ids = quiz.questions.map((q: { id: string }) => q.id);
         const unique = new Set(ids);
-        expect(unique.size).toBe(
-          ids.length,
+        expect(
+          unique.size,
           `${label} has duplicate question ids: ${ids.filter((id, i) => ids.indexOf(id) !== i).join(", ")}`
-        );
+        ).toBe(ids.length);
       });
 
       it("every question has a non-empty concept tag", () => {
         for (const q of quiz.questions as Array<{ id: string; concept: string }>) {
           expect(q.concept?.trim()).toBeTruthy();
         }
+      });
+
+      it("every question carries a required difficulty (easy/medium/hard)", () => {
+        for (const q of quiz.questions as Array<{ id: string; difficulty?: string }>) {
+          expect(["easy", "medium", "hard"]).toContain(q.difficulty);
+        }
+      });
+
+      it('renders an "I don\'t know" option (idk_option is not disabled)', () => {
+        const q = quiz as { idk_option?: boolean };
+        expect(q.idk_option === undefined || q.idk_option === true).toBe(true);
       });
     });
   }

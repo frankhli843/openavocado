@@ -19,6 +19,16 @@ interface SubjectData {
   progress_points: ProgressPoint[];
   mastery?: SubjectMastery;
   tags: Array<{ id: number; name: string; tag_type: string }>;
+  tag_evidence?: TagEvidenceRow[];
+}
+
+interface TagEvidenceRow {
+  tag: string;
+  difficulty: "easy" | "medium" | "hard" | "ungraded";
+  correct: number;
+  incorrect: number;
+  idk: number;
+  total: number;
 }
 
 type TabId = "lessons" | "mastery" | "progress" | "goals" | "criteria";
@@ -230,6 +240,7 @@ export default function SubjectPage({ params }: { params: Promise<{ id: string }
           {activeTab === "mastery" && (
             <>
               <MasterySummary mastery={data.mastery} />
+              <TagEvidencePanel evidence={data.tag_evidence ?? []} />
               <MasteryPanel signals={mastery_signals} />
             </>
           )}
@@ -290,6 +301,59 @@ export default function SubjectPage({ params }: { params: Promise<{ id: string }
           </div>
         </div>
       )}
+    </div>
+  );
+}
+
+/**
+ * Tag + difficulty evidence panel. Shows how the learner has done on each tag,
+ * broken out by difficulty — the queryable evidence behind adaptive lessons.
+ * Readable on mobile (stacked rows) and desktop.
+ */
+function TagEvidencePanel({ evidence }: { evidence: TagEvidenceRow[] }) {
+  if (evidence.length === 0) {
+    return (
+      <div className="mb-6 rounded-xl border border-gray-200 p-5 text-sm text-gray-500">
+        <div className="text-xs font-semibold uppercase tracking-wider text-gray-400 mb-1">
+          Tag &amp; difficulty evidence
+        </div>
+        No assessed answers yet. Answer a lesson&apos;s quiz or diagnostics to build tag-by-difficulty evidence.
+      </div>
+    );
+  }
+  const diffColor: Record<string, string> = {
+    easy: "bg-green-50 text-green-700",
+    medium: "bg-amber-50 text-amber-700",
+    hard: "bg-red-50 text-red-700",
+    ungraded: "bg-gray-50 text-gray-500",
+  };
+  return (
+    <div className="mb-6 rounded-xl border border-gray-200 p-5">
+      <div className="text-xs font-semibold uppercase tracking-wider text-gray-400 mb-3">
+        Tag &amp; difficulty evidence
+      </div>
+      <ul className="space-y-2">
+        {evidence.map((e, i) => {
+          const accuracy = e.total > 0 ? Math.round((e.correct / e.total) * 100) : 0;
+          return (
+            <li
+              key={`${e.tag}-${e.difficulty}-${i}`}
+              className="flex flex-wrap items-center gap-x-3 gap-y-1 rounded-lg bg-gray-50/60 px-3 py-2"
+            >
+              <span className="min-w-0 break-words text-sm font-medium text-gray-800">{e.tag}</span>
+              <span className={`shrink-0 rounded-full px-2 py-0.5 text-xs font-medium ${diffColor[e.difficulty] ?? diffColor.ungraded}`}>
+                {e.difficulty}
+              </span>
+              <span className="ml-auto flex shrink-0 items-center gap-2 text-xs text-gray-500">
+                <span className="text-green-600">{e.correct}✓</span>
+                {e.incorrect > 0 && <span className="text-red-500">{e.incorrect}✗</span>}
+                {e.idk > 0 && <span className="text-amber-600">{e.idk}?</span>}
+                <span className="font-medium text-gray-700">{accuracy}%</span>
+              </span>
+            </li>
+          );
+        })}
+      </ul>
     </div>
   );
 }

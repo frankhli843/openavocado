@@ -389,8 +389,12 @@ export interface MultipleChoiceQuestion {
   explanation: string;
   /** Concept tag — identifies the learning objective targeted by this question. */
   concept: string;
-  /** Optional difficulty hint for authoring. Does not affect grading. */
-  difficulty?: "easy" | "medium" | "hard";
+  /**
+   * Difficulty of the question. Required so tag + difficulty can be queried
+   * together (e.g. "hard questions tagged base-rate-fallacy"). Persisted on every
+   * graded attempt and the resulting mastery signal.
+   */
+  difficulty: "easy" | "medium" | "hard";
   /** Specific misconception this question probes — helps ACP craft a targeted retry. */
   misconception_target?: string;
   /**
@@ -412,7 +416,21 @@ export interface MultipleChoiceQuizContent {
    * Counted from distinct correctly answered questions, not total attempts.
    */
   pass_threshold?: number;
+  /**
+   * Whether to render an "I don't know" option on every question. Defaults to
+   * true and should stay true — IDK is a product invariant treated as an
+   * incorrect-but-high-signal uncertainty answer. The option is a virtual choice
+   * appended at render time (index === choices.length), so it never appears in
+   * `choices` and never collides with `correct_index`.
+   */
+  idk_option?: boolean;
 }
+
+/**
+ * Label rendered for the virtual "I don't know" option appended to every MC
+ * question. Selecting it grades as incorrect with a distinct uncertainty signal.
+ */
+export const IDK_LABEL = "I'm not sure / I don't know";
 
 /**
  * Validate a MultipleChoiceQuizContent spec.
@@ -437,6 +455,14 @@ export function validateMultipleChoiceQuizContent(
     if (typeof c.pass_threshold !== "number" || !Number.isInteger(c.pass_threshold) || c.pass_threshold < 1) {
       errors.push("quiz pass_threshold must be a positive integer");
     }
+  }
+
+  if (c.idk_option !== undefined && typeof c.idk_option !== "boolean") {
+    errors.push("quiz idk_option must be a boolean when present");
+  }
+  // IDK is a product invariant: an author may not disable it.
+  if (c.idk_option === false) {
+    errors.push('quiz idk_option must not be false — every multiple-choice question requires an "I don\'t know" option');
   }
 
   const ids = new Set<string>();
@@ -494,13 +520,164 @@ export function validateMultipleChoiceQuizContent(
       errors.push(`quiz questions[${i}] missing concept tag`);
     }
 
-    if (
-      q.difficulty !== undefined &&
-      !["easy", "medium", "hard"].includes(q.difficulty as string)
-    ) {
+    if (q.difficulty === undefined || q.difficulty === null) {
+      errors.push(`quiz questions[${i}] missing required difficulty ("easy", "medium", or "hard")`);
+    } else if (!["easy", "medium", "hard"].includes(q.difficulty as string)) {
       errors.push(`quiz questions[${i}] difficulty must be "easy", "medium", or "hard"`);
     }
   }
 
   return { valid: errors.length === 0, errors };
 }
+
+// ─── Freeform assessment + end-of-lesson diagnostics ──────────────────────────
+
+export type FreeformAnswerType = "free_text" | "numeric";
+
+/**
+ * A freeform assessment question (non-multiple-choice). Carries an optional
+ * concept tag and difficulty so freeform answers can also feed the tag +
+ * difficulty evidence model, alongside the deterministic assessor.
+ */
+export interface FreeformQuestion {
+  id: string;
+  text: string;
+  type?: FreeformAnswerType;
+  hint?: string;
+  /** Concept this question targets — used by the assessor to attach tags. */
+  concept?: string;
+  /** Optional difficulty so freeform evidence is queryable like MC evidence. */
+  difficulty?: "easy" | "medium" | "hard";
+}
+
+/**
+ * Content spec for an `assessment` activity. Holds the freeform questions and,
+ * optionally, the adaptive multiple-choice quiz.
+ */
+export interface AssessmentContent {
+  questions: FreeformQuestion[];
+  quiz?: MultipleChoiceQuizContent;
+}
+
+/**
+ * Validate an assessment activity's content. Freeform questions need a stable
+ * id and text; difficulty/concept are optional but typed when present. If a
+ * `quiz` is present it must satisfy the MC contract.
+ */
+export function validateAssessmentContent(content: unknown): { valid: boolean; errors: string[] } {
+  const errors: string[] = [];
+  if (!content || typeof content !== "object") {
+    return { valid: false, errors: ["assessment content must be an object"] };
+  }
+  const c = content as Record<string, unknown>;
+  if (!Array.isArray(c.questions)) {
+    return { valid: false, errors: ["assessment content requires a questions array"] };
+  }
+
+  const ids = new Set<string>();
+  for (const [i, raw] of c.questions.entries()) {
+    if (!raw || typeof raw !== "object") {
+      errors.push(`assessment questions[${i}] must be an object`);
+      continue;
+    }
+    const q = raw as Record<string, unknown>;
+    if (typeof q.id !== "string" || !q.id.trim()) {
+      errors.push(`assessment questions[${i}] missing id`);
+    } else if (ids.has(q.id)) {
+      errors.push(`assessment questions[${i}] duplicate id "${q.id}"`);
+    } else {
+      ids.add(q.id);
+    }
+    if (typeof q.text !== "string" || !q.text.trim()) {
+      errors.push(`assessment questions[${i}] missing text`);
+    }
+    if (q.type !== undefined && !["free_text", "numeric"].includes(q.type as string)) {
+      errors.push(`assessment questions[${i}] type must be "free_text" or "numeric"`);
+    }
+    if (
+      q.difficulty !== undefined &&
+      !["easy", "medium", "hard"].includes(q.difficulty as string)
+    ) {
+      errors.push(`assessment questions[${i}] difficulty must be "easy", "medium", or "hard"`);
+    }
+  }
+
+  if (c.quiz !== undefined) {
+    const quizResult = validateMultipleChoiceQuizContent(c.quiz);
+    for (const e of quizResult.errors) errors.push(`quiz: ${e}`);
+  }
+
+  return { valid: errors.length === 0, errors };
+}
+
+/**
+ * A single end-of-lesson next-lesson diagnostic prompt. Freeform; answers
+ * autosave and feed next-lesson planning. They never trigger lesson completion.
+ */
+export interface NextLessonDiagnostic {
+  id: string;
+  prompt: string;
+  hint?: string;
+}
+
+/**
+ * Validate the lessons.next_lesson_diagnostics JSON array. Each entry needs a
+ * stable id and a prompt. A lesson with diagnostics should have at least one.
+ */
+export function validateNextLessonDiagnostics(content: unknown): { valid: boolean; errors: string[] } {
+  const errors: string[] = [];
+  if (!Array.isArray(content)) {
+    return { valid: false, errors: ["next_lesson_diagnostics must be an array"] };
+  }
+  if (content.length === 0) {
+    errors.push("next_lesson_diagnostics needs at least one prompt when present");
+  }
+  const ids = new Set<string>();
+  for (const [i, raw] of content.entries()) {
+    if (!raw || typeof raw !== "object") {
+      errors.push(`next_lesson_diagnostics[${i}] must be an object`);
+      continue;
+    }
+    const d = raw as Record<string, unknown>;
+    if (typeof d.id !== "string" || !d.id.trim()) {
+      errors.push(`next_lesson_diagnostics[${i}] missing id`);
+    } else if (ids.has(d.id)) {
+      errors.push(`next_lesson_diagnostics[${i}] duplicate id "${d.id}"`);
+    } else {
+      ids.add(d.id);
+    }
+    if (typeof d.prompt !== "string" || !d.prompt.trim()) {
+      errors.push(`next_lesson_diagnostics[${i}] missing prompt`);
+    }
+  }
+  return { valid: errors.length === 0, errors };
+}
+
+/**
+ * The standard end-of-lesson diagnostic prompts. Authors may override per
+ * lesson, but every backfilled/seeded lesson uses these so the next-lesson
+ * generator always gets a readiness signal. Covers: what felt unclear, what the
+ * learner wants next, confidence/effort, and a practical objective.
+ */
+export const DEFAULT_NEXT_LESSON_DIAGNOSTICS: NextLessonDiagnostic[] = [
+  {
+    id: "diag-unclear",
+    prompt: "What still feels unclear or shaky after this lesson?",
+    hint: "Name the specific idea, step, or term. 'Nothing' is a valid answer if it all clicked.",
+  },
+  {
+    id: "diag-next",
+    prompt: "What would you most like the next lesson to cover or go deeper on?",
+    hint: "A concept to revisit, a harder variation, or a new direction.",
+  },
+  {
+    id: "diag-confidence",
+    prompt: "How confident do you feel with this material, and how much effort did it take? (e.g. low/medium/high)",
+    hint: "Your honest read helps tune the pace and difficulty of the next lesson.",
+  },
+  {
+    id: "diag-objective",
+    prompt: "Is there a concrete thing you want to be able to do after the next lesson?",
+    hint: "A practical objective, e.g. 'implement it without hints' or 'apply it to my own data'.",
+  },
+];

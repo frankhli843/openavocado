@@ -72,6 +72,8 @@ export interface User {
   username: string;
   display_name: string;
   email: string | null;
+  /** Currently active learner profile for this account. NULL → use first profile. */
+  active_learner_id: number | null;
   created_at: string;
   updated_at: string;
 }
@@ -82,9 +84,14 @@ export interface LearnerProfile {
   display_name: string;
   bio: string | null;
   preferred_lang: string;
+  /** Per-profile learner configuration JSON (notes/preferences/context) for generation. */
+  config: string | null;
   created_at: string;
   updated_at: string;
 }
+
+/** Difficulty scale shared by questions, attempts, and mastery evidence. */
+export type Difficulty = "easy" | "medium" | "hard";
 
 export interface Subject {
   id: number;
@@ -149,6 +156,8 @@ export interface Lesson {
   sequence_number: number;
   goals: string | null; // JSON string
   tags: string | null;  // JSON string
+  /** JSON array of { id, prompt, hint? } end-of-lesson diagnostic questions. */
+  next_lesson_diagnostics: string | null;
   started_at: string | null;
   completed_at: string | null;
   /** Set when the learner discards this incomplete lesson. NULL for active/completed lessons. */
@@ -194,6 +203,26 @@ export interface MasterySignal {
   concept: string;
   detail: string | null;
   confidence: number | null;
+  /** Difficulty of the evidence that produced this signal, if graded. */
+  difficulty: Difficulty | null;
+  /** Optional resolved tag this signal concerns, in addition to free-text concept. */
+  tag_id: number | null;
+  created_at: string;
+}
+
+/** Persisted per-question assessment evidence (tag + difficulty + outcome). */
+export interface AssessmentResult {
+  id: number;
+  learner_id: number;
+  subject_id: number;
+  lesson_id: number | null;
+  activity_id: number | null;
+  question_id: string;
+  question_type: "mc" | "freeform" | "diagnostic";
+  concept: string | null;
+  difficulty: Difficulty | null;
+  outcome: "correct" | "incorrect" | "idk" | "assessed";
+  answer_text: string | null;
   created_at: string;
 }
 
@@ -358,6 +387,9 @@ export interface LessonCompletedEvent {
   learner_id: number;
   subject_id: number;
   subject_title: string;
+  /** Subject-level goals + learner criteria — primary context for the next lesson. */
+  subject_goals: string | null;
+  subject_criteria: string | null;
   lesson_id: number;
   lesson_title: string;
   lesson_goals: string[];
@@ -378,9 +410,35 @@ export interface LessonCompletedEvent {
     signal_type: SignalType;
     concept: string;
     detail: string | null;
+    difficulty?: Difficulty | null;
   }>;
   concepts_to_review: string[];
   concepts_ready_to_advance: string[];
+  /** Freeform end-of-lesson diagnostic answers — readiness/intent for next lesson. */
+  next_lesson_diagnostics: Array<{ prompt: string; answer: string }>;
+  /** Quiz outcome for this lesson, when the assessment had an adaptive MC quiz. */
+  quiz_result: { passed: boolean; correct_count: number; pass_threshold: number } | null;
+  /** Performance aggregated by tag + difficulty — the queryable evidence model. */
+  tag_difficulty_performance: Array<{
+    tag: string;
+    difficulty: Difficulty | "ungraded";
+    correct: number;
+    incorrect: number;
+    idk: number;
+    total: number;
+  }>;
+  /** Recent misconception concepts flagged across the subject. */
+  recent_misconceptions: string[];
+  /** Completed lesson titles for curriculum context (most recent first). */
+  completed_lessons: Array<{ title: string; completed_at: string }>;
+  /** Discarded lesson titles + reasons — what the learner rejected. */
+  discarded_lessons: Array<{ title: string; reason: string | null }>;
+  /** Living AI workpad summary, when available. */
+  workpad_summary: string | null;
+  /** General learner-profile config (notes/preferences) — secondary context. */
+  learner_profile_config: Record<string, unknown> | null;
+  /** Cross-subject mastery snapshots — used only when they speed up mastery. */
+  cross_subject_history: Array<{ subject_title: string; mastery_score: number | null }>;
   completed_at: string;
 }
 

@@ -26,6 +26,7 @@ import type { MultipleChoiceQuestion } from "@/lib/lesson-content/schema";
 // ─── Fixtures ─────────────────────────────────────────────────────────────────
 
 function makeQuestions(n: number): MultipleChoiceQuestion[] {
+  const difficulties: Array<"easy" | "medium" | "hard"> = ["easy", "medium", "hard"];
   return Array.from({ length: n }, (_, i) => ({
     id: `q${i + 1}`,
     question: `Question ${i + 1}`,
@@ -33,6 +34,7 @@ function makeQuestions(n: number): MultipleChoiceQuestion[] {
     correct_index: 0,
     explanation: `Explanation for question ${i + 1}`,
     concept: `concept-${i + 1}`,
+    difficulty: difficulties[i % 3],
   }));
 }
 
@@ -572,6 +574,7 @@ describe("validateMultipleChoiceQuizContent (schema)", () => {
     correct_index: 1,
     explanation: "Two plus two is four.",
     concept: "arithmetic",
+    difficulty: "easy",
   };
 
   // validateMultipleChoiceQuizContent takes the quiz object directly

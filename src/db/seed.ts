@@ -8,6 +8,7 @@
  * hints and hidden tests (no exposed answer).
  */
 import { getDb } from "./connection";
+import { DEFAULT_NEXT_LESSON_DIAGNOSTICS } from "@/lib/lesson-content/schema";
 
 export function seedDatabase(): void {
   const db = getDb();
@@ -129,6 +130,17 @@ export function seedDatabase(): void {
   const imgPreprocTagId =
     (db.prepare("INSERT OR IGNORE INTO tags (name, tag_type) VALUES (?, ?) RETURNING id").get("image-preprocessing", "concept") as { id: number })?.id ||
     (db.prepare("SELECT id FROM tags WHERE name = ?").get("image-preprocessing") as { id: number }).id;
+
+  // Subject tag vocabularies — the existing tags the assessment pipeline matches
+  // against before creating new ones. (Quiz-question concepts not listed here are
+  // auto-created by the assessor when first answered, demonstrating that path.)
+  const linkSubjectTag = db.prepare(
+    "INSERT OR IGNORE INTO subject_tags (subject_id, tag_id) VALUES (?, ?)"
+  );
+  linkSubjectTag.run(mathId, conceptTagId);
+  linkSubjectTag.run(mathId, bayesTagId);
+  linkSubjectTag.run(econId, supplyTagId);
+  linkSubjectTag.run(gdmId, imgPreprocTagId);
 
   const insertActivity = db.prepare(
     `INSERT INTO lesson_activities (lesson_id, activity_type, is_core, sequence_order, title, content)
@@ -857,6 +869,13 @@ def preprocess_image(arr, target_size=224, mean=(0.485, 0.456, 0.406), std=(0.22
     })
   );
 
+  // Backfill every seeded lesson with the standard end-of-lesson next-lesson
+  // diagnostics so the existing demo exercises the readiness-feedback flow.
+  db.prepare(
+    `UPDATE lessons SET next_lesson_diagnostics = ?
+     WHERE next_lesson_diagnostics IS NULL`
+  ).run(JSON.stringify(DEFAULT_NEXT_LESSON_DIAGNOSTICS));
+
   console.log(
     `Seed applied: synthetic user alex_learner, 2 active subjects + 1 archived (id ${archivedId}), flagship Bayes lesson ${lesson2Id}.`
   );
@@ -1027,6 +1046,7 @@ const POSTERIOR_CURVE_WIDGET = {
  */
 export const BAYES_MC_QUIZ = {
   pass_threshold: 6,
+  idk_option: true,
   questions: [
     {
       id: "bq1",
@@ -1194,6 +1214,7 @@ export const BAYES_MC_QUIZ = {
  */
 export const SUPPLY_DEMAND_MC_QUIZ = {
   pass_threshold: 6,
+  idk_option: true,
   questions: [
     {
       id: "eq1",
@@ -1365,6 +1386,7 @@ export const SUPPLY_DEMAND_MC_QUIZ = {
  */
 export const CONDITIONAL_PROBABILITY_MC_QUIZ = {
   pass_threshold: 6,
+  idk_option: true,
   questions: [
     {
       id: "cq1",
@@ -1513,6 +1535,7 @@ export const CONDITIONAL_PROBABILITY_MC_QUIZ = {
  */
 export const IMAGE_PREPROCESSING_MC_QUIZ = {
   pass_threshold: 6,
+  idk_option: true,
   questions: [
     {
       id: "iq1",

@@ -12,6 +12,9 @@ CREATE TABLE IF NOT EXISTS users (
   username    TEXT    NOT NULL UNIQUE,
   display_name TEXT   NOT NULL,
   email       TEXT    UNIQUE,
+  -- Which learner profile is currently active for this account. NULL until a
+  -- profile is selected; the app falls back to the account's first profile.
+  active_learner_id INTEGER REFERENCES learner_profiles(id) ON DELETE SET NULL,
   created_at  TEXT    NOT NULL DEFAULT (datetime('now')),
   updated_at  TEXT    NOT NULL DEFAULT (datetime('now'))
 );
@@ -26,6 +29,10 @@ CREATE TABLE IF NOT EXISTS learner_profiles (
   display_name    TEXT    NOT NULL,
   bio             TEXT,
   preferred_lang  TEXT    NOT NULL DEFAULT 'en',
+  -- Per-profile learner configuration that guides lesson generation: notes,
+  -- preferences, context, goals at the learner (not subject) level. JSON object,
+  -- privacy-safe and free-form so the shape can evolve without a migration.
+  config          TEXT,
   created_at      TEXT    NOT NULL DEFAULT (datetime('now')),
   updated_at      TEXT    NOT NULL DEFAULT (datetime('now'))
 );
@@ -68,6 +75,10 @@ CREATE TABLE IF NOT EXISTS lessons (
   sequence_number INTEGER NOT NULL DEFAULT 0,
   goals           TEXT,   -- JSON array of lesson goals
   tags            TEXT,   -- JSON array of tag strings
+  -- Freeform next-lesson diagnostic prompts shown at the end of the lesson.
+  -- JSON array of { id, prompt, hint? }. Answers autosave and feed next-lesson
+  -- planning; they never trigger completion. NULL when a lesson has none.
+  next_lesson_diagnostics TEXT,
   -- Completion tracking
   started_at      TEXT,
   completed_at    TEXT,
@@ -130,6 +141,13 @@ CREATE TABLE IF NOT EXISTS mastery_signals (
   concept         TEXT    NOT NULL,
   detail          TEXT,
   confidence      REAL    CHECK (confidence BETWEEN 0.0 AND 1.0),
+  -- Difficulty of the question/evidence that produced this signal. Lets mastery
+  -- and lesson generation answer "how did the learner do on hard questions
+  -- tagged X". NULL when the signal is not tied to a graded difficulty.
+  difficulty      TEXT    CHECK (difficulty IN ('easy', 'medium', 'hard') OR difficulty IS NULL),
+  -- Optional direct link to the tag this signal concerns (in addition to the
+  -- free-text concept). NULL when no tag row was resolved.
+  tag_id          INTEGER REFERENCES tags(id) ON DELETE SET NULL,
   created_at      TEXT    NOT NULL DEFAULT (datetime('now'))
 );
 
@@ -154,6 +172,40 @@ CREATE TABLE IF NOT EXISTS subject_tags (
   subject_id      INTEGER NOT NULL REFERENCES subjects(id) ON DELETE CASCADE,
   tag_id          INTEGER NOT NULL REFERENCES tags(id) ON DELETE CASCADE,
   PRIMARY KEY (subject_id, tag_id)
+);
+
+-- ─── ASSESSMENT RESULTS ────────────────────────────────────────────────────────
+-- Per-question evidence produced by the assessment pipeline. Captures the
+-- queryable combination of tag + difficulty + outcome for every multiple-choice
+-- attempt and freeform/diagnostic answer, so mastery and next-lesson generation
+-- can answer questions like "how did this learner do on hard base-rate-fallacy
+-- questions". Private learner data — lives in the gitignored runtime DB.
+
+CREATE TABLE IF NOT EXISTS assessment_results (
+  id              INTEGER PRIMARY KEY AUTOINCREMENT,
+  learner_id      INTEGER NOT NULL REFERENCES learner_profiles(id) ON DELETE CASCADE,
+  subject_id      INTEGER NOT NULL REFERENCES subjects(id) ON DELETE CASCADE,
+  lesson_id       INTEGER REFERENCES lessons(id) ON DELETE SET NULL,
+  activity_id     INTEGER REFERENCES lesson_activities(id) ON DELETE SET NULL,
+  -- Question identity within the activity content (e.g. MC question id or
+  -- freeform/diagnostic question id). Free text — questions live in JSON content.
+  question_id     TEXT    NOT NULL,
+  question_type   TEXT    NOT NULL CHECK (question_type IN ('mc', 'freeform', 'diagnostic')),
+  concept         TEXT,
+  difficulty      TEXT    CHECK (difficulty IN ('easy', 'medium', 'hard') OR difficulty IS NULL),
+  -- 'correct'/'incorrect'/'idk' for graded MC; 'assessed' for freeform answers
+  -- that the deterministic assessor evaluated without a hard right/wrong.
+  outcome         TEXT    NOT NULL CHECK (outcome IN ('correct', 'incorrect', 'idk', 'assessed')),
+  answer_text     TEXT,   -- the learner's selected choice text or freeform answer
+  created_at      TEXT    NOT NULL DEFAULT (datetime('now'))
+);
+
+-- Tags attached to a specific assessment result by the assessor (existing tags
+-- that matched plus newly created tags). Lets a result carry multiple tags.
+CREATE TABLE IF NOT EXISTS assessment_result_tags (
+  result_id       INTEGER NOT NULL REFERENCES assessment_results(id) ON DELETE CASCADE,
+  tag_id          INTEGER NOT NULL REFERENCES tags(id) ON DELETE CASCADE,
+  PRIMARY KEY (result_id, tag_id)
 );
 
 -- ─── PROGRESS POINTS ───────────────────────────────────────────────────────────
@@ -277,3 +329,6 @@ CREATE INDEX IF NOT EXISTS idx_generated_artifacts_lesson_id ON generated_artifa
 CREATE INDEX IF NOT EXISTS idx_next_lesson_jobs_subject_id ON next_lesson_jobs(subject_id);
 CREATE INDEX IF NOT EXISTS idx_lesson_autosave_lesson_learner ON lesson_autosave(lesson_id, learner_id);
 CREATE INDEX IF NOT EXISTS idx_subject_workpads_subject_learner ON subject_workpads(subject_id, learner_id);
+CREATE INDEX IF NOT EXISTS idx_assessment_results_learner_subject ON assessment_results(learner_id, subject_id);
+CREATE INDEX IF NOT EXISTS idx_assessment_results_lesson ON assessment_results(lesson_id);
+CREATE INDEX IF NOT EXISTS idx_assessment_result_tags_tag ON assessment_result_tags(tag_id);

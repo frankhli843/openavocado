@@ -49,6 +49,25 @@ export async function GET(
 
     const mastery = computeSubjectMastery(db, subjectId, subject.learner_id);
 
+    // Tag + difficulty evidence — how the learner has done per tag and per
+    // difficulty across all assessed answers. Drives the adaptive-evidence view.
+    const tag_evidence = db
+      .prepare(
+        `SELECT t.name AS tag,
+                COALESCE(ar.difficulty, 'ungraded') AS difficulty,
+                SUM(CASE WHEN ar.outcome = 'correct' THEN 1 ELSE 0 END) AS correct,
+                SUM(CASE WHEN ar.outcome = 'incorrect' THEN 1 ELSE 0 END) AS incorrect,
+                SUM(CASE WHEN ar.outcome = 'idk' THEN 1 ELSE 0 END) AS idk,
+                COUNT(*) AS total
+         FROM assessment_results ar
+         JOIN assessment_result_tags art ON art.result_id = ar.id
+         JOIN tags t ON t.id = art.tag_id
+         WHERE ar.subject_id = ? AND ar.learner_id = ?
+         GROUP BY t.name, difficulty
+         ORDER BY total DESC, t.name ASC`
+      )
+      .all(subjectId, subject.learner_id);
+
     return NextResponse.json({
       subject,
       lessons,
@@ -56,6 +75,7 @@ export async function GET(
       progress_points,
       mastery,
       tags,
+      tag_evidence,
     });
   } catch (err) {
     console.error("[api/subjects/:id]", err);

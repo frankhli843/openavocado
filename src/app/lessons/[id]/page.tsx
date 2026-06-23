@@ -10,8 +10,10 @@ import { InteractiveSection } from "@/components/lesson/InteractiveSection";
 import { PythonSection } from "@/components/lesson/PythonSection";
 import { AssessmentSection } from "@/components/lesson/AssessmentSection";
 import { MultipleChoiceAssessmentSection } from "@/components/lesson/MultipleChoiceAssessmentSection";
+import { NextLessonDiagnosticsSection } from "@/components/lesson/NextLessonDiagnosticsSection";
 import { debounce, postAutosave, type SaveStatus } from "@/lib/autosave";
 import { DiscardLessonModal } from "@/components/DiscardLessonModal";
+import type { NextLessonDiagnostic } from "@/lib/lesson-content/schema";
 
 interface LessonData {
   lesson: Lesson;
@@ -39,6 +41,9 @@ export default function LessonPage({ params }: { params: Promise<{ id: string }>
   const [discarded, setDiscarded] = useState(false);
   const [discardRegenRef, setDiscardRegenRef] = useState<string | null>(null);
   const [assessmentAnswers, setAssessmentAnswers] = useState<Record<string, string>>({});
+  // End-of-lesson freeform next-lesson diagnostics. Autosaved like answers;
+  // answering them never completes the lesson.
+  const [diagnosticAnswers, setDiagnosticAnswers] = useState<Record<string, string>>({});
   // Quiz session state: serialized JSON blob stored in assessment_answers under key "__quiz__".
   // Stored separately from freeform answers so both can coexist in the same autosave row.
   const [quizStateSerialized, setQuizStateSerialized] = useState<string | null>(null);
@@ -80,7 +85,8 @@ export default function LessonPage({ params }: { params: Promise<{ id: string }>
           if (latest.test_results) setTestResults(JSON.parse(latest.test_results));
           if (latest.assessment_answers) {
             const aa = JSON.parse(latest.assessment_answers) as Record<string, string>;
-            // __quiz__ key holds the serialized QuizSessionState; rest are freeform answers.
+            // __quiz__ holds serialized QuizSessionState; __diag__ holds diagnostic
+            // answers; the rest are freeform assessment answers.
             if (aa.__quiz__) {
               setQuizStateSerialized(aa.__quiz__);
               // If the restored quiz is already passed, reflect that in the gate.
@@ -88,11 +94,16 @@ export default function LessonPage({ params }: { params: Promise<{ id: string }>
                 const qs = JSON.parse(aa.__quiz__) as { passed?: boolean };
                 if (qs.passed) setQuizPassed(true);
               } catch { /* ignore */ }
-              const rest = Object.fromEntries(Object.entries(aa).filter(([k]) => k !== "__quiz__")) as Record<string, string>;
-              setAssessmentAnswers(rest);
-            } else {
-              setAssessmentAnswers(aa);
             }
+            if (aa.__diag__) {
+              try {
+                setDiagnosticAnswers(JSON.parse(aa.__diag__) as Record<string, string>);
+              } catch { /* ignore */ }
+            }
+            const rest = Object.fromEntries(
+              Object.entries(aa).filter(([k]) => k !== "__quiz__" && k !== "__diag__")
+            ) as Record<string, string>;
+            setAssessmentAnswers(rest);
           }
           setLastSavedAt(latest.saved_at);
         }
@@ -150,11 +161,13 @@ export default function LessonPage({ params }: { params: Promise<{ id: string }>
     });
   }
 
-  // Quiz state autosave: merges __quiz__ key into the assessment_answers JSON blob.
+  // Quiz state autosave: merges __quiz__ key into the assessment_answers JSON blob,
+  // preserving any diagnostic answers already captured.
   function triggerQuizAutosave(serialized: string) {
     if (!data) return;
     const assessmentActivity = data.activities.find((a) => a.activity_type === "assessment");
-    const merged = { ...assessmentAnswers, __quiz__: serialized };
+    const merged: Record<string, string> = { ...assessmentAnswers, __quiz__: serialized };
+    if (Object.keys(diagnosticAnswers).length) merged.__diag__ = JSON.stringify(diagnosticAnswers);
     debouncedSave({
       lesson_id: data.lesson.id,
       learner_id: LEARNER_ID,
@@ -163,6 +176,22 @@ export default function LessonPage({ params }: { params: Promise<{ id: string }>
       last_edited_at: new Date().toISOString(),
     });
     setQuizStateSerialized(serialized);
+  }
+
+  // Diagnostic autosave: merges __diag__ into the assessment-activity blob,
+  // preserving freeform answers + quiz state. Never marks the lesson complete.
+  function triggerDiagAutosave(diag: Record<string, string>) {
+    if (!data) return;
+    const assessmentActivity = data.activities.find((a) => a.activity_type === "assessment");
+    const merged: Record<string, string> = { ...assessmentAnswers, __diag__: JSON.stringify(diag) };
+    if (quizStateSerialized) merged.__quiz__ = quizStateSerialized;
+    debouncedSave({
+      lesson_id: data.lesson.id,
+      learner_id: LEARNER_ID,
+      activity_id: assessmentActivity?.id,
+      assessment_answers: merged,
+      last_edited_at: new Date().toISOString(),
+    });
   }
 
   // Widget state autosaves under its own activity row, so it never collides with
@@ -202,6 +231,7 @@ export default function LessonPage({ params }: { params: Promise<{ id: string }>
           lesson_id: data.lesson.id,
           learner_id: LEARNER_ID,
           assessment_answers: assessmentAnswers,
+          diagnostic_answers: diagnosticAnswers,
           code_results: codeActivity
             ? [
                 {
@@ -256,6 +286,20 @@ export default function LessonPage({ params }: { params: Promise<{ id: string }>
   const audioArtifact = artifacts.find((a) => a.artifact_type === "audio");
 
   const lessonGoals: string[] = lesson.goals ? JSON.parse(lesson.goals) : [];
+
+  // End-of-lesson next-lesson diagnostics (parsed from the lesson row).
+  const diagnostics: NextLessonDiagnostic[] = (() => {
+    if (!lesson.next_lesson_diagnostics) return [];
+    try {
+      const parsed = JSON.parse(lesson.next_lesson_diagnostics) as NextLessonDiagnostic[];
+      return Array.isArray(parsed) ? parsed : [];
+    } catch {
+      return [];
+    }
+  })();
+
+  // Context for recording per-question assessment evidence (tags + signals).
+  const assessContext = { learnerId: LEARNER_ID, subjectId: lesson.subject_id, lessonId: lesson.id };
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -430,6 +474,7 @@ export default function LessonPage({ params }: { params: Promise<{ id: string }>
                   savedQuizState={quizStateSerialized}
                   onStateChange={triggerQuizAutosave}
                   onPassedChange={setQuizPassed}
+                  assessContext={assessContext}
                 />
                 {/* Freeform written response section — always shown */}
                 <AssessmentSection
@@ -445,6 +490,19 @@ export default function LessonPage({ params }: { params: Promise<{ id: string }>
           }
           return null;
         })}
+
+        {/* End-of-lesson next-lesson diagnostics — autosave only, never completes */}
+        {diagnostics.length > 0 && !discarded && (
+          <NextLessonDiagnosticsSection
+            diagnostics={diagnostics}
+            answers={diagnosticAnswers}
+            disabled={completed}
+            onChange={(next) => {
+              setDiagnosticAnswers(next);
+              triggerDiagAutosave(next);
+            }}
+          />
+        )}
 
         {/* Bottom action row */}
         {!completed && !discarded && (

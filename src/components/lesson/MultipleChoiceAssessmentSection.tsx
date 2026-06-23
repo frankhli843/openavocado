@@ -13,8 +13,17 @@ import {
   serializeQuizState,
   deserializeQuizState,
   checkPassedAfterFeedback,
+  isIdkSelection,
+  IDK_LABEL,
 } from "@/lib/quiz-state";
 import { requestRephrase } from "@/lib/acp-rephrase";
+
+/** Context needed to record per-question assessment evidence (tags + signals). */
+export interface QuizAssessContext {
+  learnerId: number;
+  subjectId: number;
+  lessonId: number;
+}
 
 interface MultipleChoiceAssessmentSectionProps {
   activity: LessonActivity;
@@ -24,6 +33,36 @@ interface MultipleChoiceAssessmentSectionProps {
   onStateChange: (serialized: string) => void;
   /** Whether the "Mark Complete" button should be enabled. */
   onPassedChange: (passed: boolean) => void;
+  /** When provided, each graded answer posts evidence to /api/assess. */
+  assessContext?: QuizAssessContext | null;
+}
+
+/**
+ * Record a graded MC answer as assessment evidence (tag + difficulty + outcome).
+ * Fire-and-forget: a tagging failure is logged but never blocks the quiz.
+ */
+function recordMcAssessment(
+  ctx: QuizAssessContext,
+  q: { id: string; concept: string; difficulty: "easy" | "medium" | "hard"; question: string },
+  outcome: "correct" | "incorrect" | "idk",
+  answerText: string
+) {
+  void fetch("/api/assess", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      learner_id: ctx.learnerId,
+      subject_id: ctx.subjectId,
+      lesson_id: ctx.lessonId,
+      question_id: q.id,
+      question_text: q.question,
+      question_type: "mc",
+      concept: q.concept,
+      difficulty: q.difficulty,
+      mc_outcome: outcome,
+      answer_text: answerText,
+    }),
+  }).catch((e) => console.error("[quiz] assess failed", e));
 }
 
 /** Extract quiz config from activity content. Returns null if missing/malformed. */
@@ -47,6 +86,7 @@ export function MultipleChoiceAssessmentSection({
   savedQuizState,
   onStateChange,
   onPassedChange,
+  assessContext,
 }: MultipleChoiceAssessmentSectionProps) {
   const quiz = parseQuizContent(activity);
 
@@ -60,6 +100,7 @@ export function MultipleChoiceAssessmentSection({
       savedQuizState={savedQuizState}
       onStateChange={onStateChange}
       onPassedChange={onPassedChange}
+      assessContext={assessContext ?? null}
     />
   );
 }
@@ -72,9 +113,10 @@ interface QuizEngineProps {
   savedQuizState: string | null;
   onStateChange: (serialized: string) => void;
   onPassedChange: (passed: boolean) => void;
+  assessContext: QuizAssessContext | null;
 }
 
-function QuizEngine({ activity, quiz, savedQuizState, onStateChange, onPassedChange }: QuizEngineProps) {
+function QuizEngine({ activity, quiz, savedQuizState, onStateChange, onPassedChange, assessContext }: QuizEngineProps) {
   const questions: MultipleChoiceQuestion[] = quiz.questions;
   const pass_threshold = quiz.pass_threshold ?? 6;
   const retryCounterRef = useRef<{ n: number }>({ n: 0 });
@@ -144,6 +186,26 @@ function QuizEngine({ activity, quiz, savedQuizState, onStateChange, onPassedCha
     );
     setSession(newSession);
     persist(newSession);
+
+    // Record assessment evidence (tag + difficulty + outcome) for this answer.
+    // Retry items trace back to their origin question's concept + difficulty.
+    if (assessContext && currentQuestion) {
+      const originId =
+        currentItem.kind === "original" ? currentItem.question_id : currentItem.origin_question_id;
+      const originQ = questions.find((q) => q.id === originId);
+      if (originQ) {
+        const fb = newSession.feedback;
+        const outcome: "correct" | "incorrect" | "idk" = fb?.correct
+          ? "correct"
+          : fb?.is_idk
+          ? "idk"
+          : "incorrect";
+        const answerText = isIdkSelection(currentQuestion.choices.length, selectedIndex)
+          ? IDK_LABEL
+          : currentQuestion.choices[selectedIndex] ?? "";
+        recordMcAssessment(assessContext, originQ, outcome, answerText);
+      }
+    }
 
     // If wrong, trigger async ACP rephrase for the new retry item.
     if (!newSession.feedback?.correct && currentItem) {
@@ -324,6 +386,35 @@ function QuizEngine({ activity, quiz, savedQuizState, onStateChange, onPassedCha
               </button>
             );
           })}
+
+          {/* Virtual "I don't know" option — always present, never correct.
+              Treated as incorrect but recorded as high-signal uncertainty. */}
+          {(() => {
+            const idkIndex = choices.length;
+            const isSelected = selectedIndex === idkIndex;
+            const showResult = submitted && feedback;
+            let cls = "border-gray-200 hover:bg-gray-50 hover:border-gray-300 bg-white text-gray-500";
+            if (showResult && isSelected) {
+              cls = "border-amber-300 bg-amber-50 text-amber-700";
+            } else if (isSelected) {
+              cls = "border-blue-400 ring-2 ring-blue-100 bg-blue-50 text-gray-700";
+            }
+            return (
+              <button
+                type="button"
+                role="radio"
+                aria-checked={isSelected}
+                onClick={() => handleSelect(idkIndex)}
+                disabled={submitted}
+                className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg border text-left transition-colors text-sm italic ${cls} disabled:cursor-default`}
+              >
+                <span className="shrink-0 w-5 h-5 rounded-full border-2 border-dashed border-gray-300 flex items-center justify-center text-xs font-bold">
+                  ?
+                </span>
+                <span className="flex-1 leading-relaxed">{IDK_LABEL}</span>
+              </button>
+            );
+          })()}
         </div>
 
         {/* Submit button */}
@@ -345,18 +436,20 @@ function QuizEngine({ activity, quiz, savedQuizState, onStateChange, onPassedCha
             className={`rounded-xl border p-4 space-y-3 ${
               feedback.correct
                 ? "bg-green-50 border-green-200"
+                : feedback.is_idk
+                ? "bg-amber-50 border-amber-200"
                 : "bg-red-50 border-red-200"
             }`}
           >
             <div className="flex items-center gap-2">
-              <span className={`text-lg ${feedback.correct ? "text-green-600" : "text-red-500"}`}>
-                {feedback.correct ? "✓" : "✗"}
+              <span className={`text-lg ${feedback.correct ? "text-green-600" : feedback.is_idk ? "text-amber-500" : "text-red-500"}`}>
+                {feedback.correct ? "✓" : feedback.is_idk ? "?" : "✗"}
               </span>
-              <span className={`text-sm font-semibold ${feedback.correct ? "text-green-700" : "text-red-700"}`}>
-                {feedback.correct ? "Correct!" : "Not quite."}
+              <span className={`text-sm font-semibold ${feedback.correct ? "text-green-700" : feedback.is_idk ? "text-amber-700" : "text-red-700"}`}>
+                {feedback.correct ? "Correct!" : feedback.is_idk ? "No problem — here's the answer." : "Not quite."}
               </span>
               {!feedback.correct && (
-                <span className="text-xs text-red-600 ml-auto">
+                <span className={`text-xs ml-auto ${feedback.is_idk ? "text-amber-700" : "text-red-600"}`}>
                   Correct answer: <strong>{feedback.correct_answer}</strong>
                 </span>
               )}
@@ -366,7 +459,9 @@ function QuizEngine({ activity, quiz, savedQuizState, onStateChange, onPassedCha
 
             {!feedback.correct && (
               <p className="text-xs text-amber-700 bg-amber-50 border border-amber-100 rounded-lg px-3 py-2">
-                This concept will come back later in a different form. Keep going!
+                {feedback.is_idk
+                  ? "Saying “I don’t know” is useful signal — we’ll bring this concept back so you can lock it in. No penalty."
+                  : "This concept will come back later in a different form. Keep going!"}
               </p>
             )}
 

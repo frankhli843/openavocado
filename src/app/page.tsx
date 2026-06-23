@@ -7,10 +7,12 @@ import { SubjectCard } from "@/components/SubjectCard";
 import { LearnerHeader } from "@/components/LearnerHeader";
 import { Logo } from "@/components/Logo";
 import { SubjectForm } from "@/components/SubjectForm";
+import { ProfileSwitcher } from "@/components/ProfileSwitcher";
 
 export default function DashboardPage() {
   const [subjects, setSubjects] = useState<SubjectSummary[]>([]);
-  const [learnerId] = useState(1);
+  const [userId] = useState(1);
+  const [learnerId, setLearnerId] = useState<number | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [busyId, setBusyId] = useState<number | null>(null);
@@ -19,7 +21,9 @@ export default function DashboardPage() {
   const [showCreateForm, setShowCreateForm] = useState(false);
 
   async function load() {
+    if (learnerId == null) return;
     try {
+      setLoading(true);
       const res = await fetch(`/api/subjects?learner_id=${learnerId}`);
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
       const data = (await res.json()) as { subjects: SubjectSummary[]; learner_id: number };
@@ -81,7 +85,8 @@ export default function DashboardPage() {
             <NavTab href="/" active>Subjects</NavTab>
             <NavTab href="/progress">Progress</NavTab>
           </div>
-          <div className="ml-auto flex-shrink-0">
+          <div className="ml-auto flex items-center gap-2 flex-shrink-0">
+            <ProfileSwitcher userId={userId} activeId={learnerId} onActiveChange={setLearnerId} />
             <button
               onClick={() => setShowCreateForm(true)}
               className="flex items-center gap-1.5 px-3 sm:px-3.5 py-1.5 text-sm font-medium bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
@@ -200,7 +205,7 @@ export default function DashboardPage() {
             {/* Scrollable form body */}
             <div className="overflow-y-auto px-5 py-5 sm:px-6">
               <SubjectForm
-                learnerId={learnerId}
+                learnerId={learnerId ?? 1}
                 onSave={handleSubjectCreated}
                 onCancel={() => setShowCreateForm(false)}
               />

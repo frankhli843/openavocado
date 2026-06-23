@@ -14,6 +14,21 @@
  */
 
 import type { MultipleChoiceQuestion } from "@/lib/lesson-content/schema";
+export { IDK_LABEL } from "@/lib/lesson-content/schema";
+
+/**
+ * Index of the virtual "I don't know" option for a question with `n` real
+ * choices. IDK is always appended after the real choices, so it is never the
+ * correct answer and never collides with `correct_index`.
+ */
+export function idkIndexFor(choiceCount: number): number {
+  return choiceCount;
+}
+
+/** True when the learner selected the virtual "I don't know" option. */
+export function isIdkSelection(choiceCount: number, selected_index: number): boolean {
+  return selected_index === choiceCount;
+}
 
 // ─── Core item types ──────────────────────────────────────────────────────────
 
@@ -61,6 +76,12 @@ export interface QuizFeedback {
   correct_answer: string;
   /** Explanation text. */
   explanation: string;
+  /**
+   * True when the learner picked the "I don't know" option. Treated as incorrect
+   * (so the concept still requeues), but recorded as a distinct high-signal
+   * uncertainty rather than a wrong guess. The UI shows a no-shame message.
+   */
+  is_idk: boolean;
   /** True when feedback is being displayed and the learner has not clicked Next. */
   showing: boolean;
 }
@@ -149,7 +170,10 @@ export function gradeAnswer(
   const qDef = resolveItemQuestion(item, state, allQuestions);
   if (!qDef) return state; // defensive: item not found, skip
 
-  const correct = selected_index === qDef.correct_index;
+  // The virtual IDK option sits at index === choices.length, so it can never
+  // equal correct_index — IDK always grades as incorrect, but is flagged.
+  const is_idk = isIdkSelection(qDef.choices.length, selected_index);
+  const correct = !is_idk && selected_index === qDef.correct_index;
   const correct_answer = qDef.choices[qDef.correct_index];
 
   // Build feedback state (will be shown until learner clicks Next).
@@ -159,6 +183,7 @@ export function gradeAnswer(
     correct,
     correct_answer,
     explanation: qDef.explanation,
+    is_idk,
     showing: true,
   };
 
