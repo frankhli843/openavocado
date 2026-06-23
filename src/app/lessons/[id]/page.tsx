@@ -2,7 +2,7 @@
 
 import { useEffect, useState, use } from "react";
 import Link from "next/link";
-import type { Lesson, LessonActivity, LessonAutosave, GeneratedArtifact } from "@/types";
+import type { Lesson, LessonActivity, LessonAutosave, GeneratedArtifact, Tag, KnowledgeGraphData } from "@/types";
 import { AudioSection } from "@/components/lesson/AudioSection";
 import { ReadingSection } from "@/components/lesson/ReadingSection";
 import { MediaSection } from "@/components/lesson/MediaSection";
@@ -11,6 +11,7 @@ import { PythonSection } from "@/components/lesson/PythonSection";
 import { AssessmentSection } from "@/components/lesson/AssessmentSection";
 import { MultipleChoiceAssessmentSection } from "@/components/lesson/MultipleChoiceAssessmentSection";
 import { NextLessonDiagnosticsSection } from "@/components/lesson/NextLessonDiagnosticsSection";
+import { KnowledgeGraphOrientation } from "@/components/lesson/KnowledgeGraphOrientation";
 import { debounce, postAutosave, type SaveStatus } from "@/lib/autosave";
 import { DiscardLessonModal } from "@/components/DiscardLessonModal";
 import type { NextLessonDiagnostic } from "@/lib/lesson-content/schema";
@@ -20,6 +21,8 @@ interface LessonData {
   activities: LessonActivity[];
   autosave: LessonAutosave[];
   artifacts: GeneratedArtifact[];
+  tags: Tag[];
+  subjectTags: Tag[];
 }
 
 // Canonical section order. Multiple `interactive` activities keep their relative
@@ -274,7 +277,14 @@ export default function LessonPage({ params }: { params: Promise<{ id: string }>
     );
   }
 
-  const { lesson, activities, artifacts } = data;
+  const { lesson, activities, artifacts, tags: lessonTags, subjectTags } = data;
+
+  // Parse authored knowledge graph orientation (optional — falls back to tag-derived view)
+  const knowledgeGraphData: KnowledgeGraphData | null = (() => {
+    if (!lesson.knowledge_graph_data) return null;
+    try { return JSON.parse(lesson.knowledge_graph_data) as KnowledgeGraphData; }
+    catch { return null; }
+  })();
 
   // Sort activities in canonical order
   const sorted = [...activities].sort((a, b) => {
@@ -385,6 +395,14 @@ export default function LessonPage({ params }: { params: Promise<{ id: string }>
             </div>
           )}
         </div>
+
+        {/* Knowledge graph orientation */}
+        <KnowledgeGraphOrientation
+          graphData={knowledgeGraphData}
+          subjectTags={subjectTags}
+          lessonTags={lessonTags}
+          subjectTitle={lesson.title}
+        />
 
         {/* Completion notice */}
         {completed && (

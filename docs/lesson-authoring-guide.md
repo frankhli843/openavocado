@@ -57,6 +57,26 @@ enforced by `validateGeneratedContent`; the rest is a hard authoring rule.
   text must say so explicitly** — name it a preview and state it will be explored
   in more detail in a later lesson, so the learner is never left thinking a
   glossed-over idea was fully taught. (Reviewed by hand; not auto-detectable.)
+- **Knowledge graph orientation (`knowledge_graph_data`).** Every lesson must
+  include a `KnowledgeGraphData` object (see `src/types/index.ts`) that shows
+  where this lesson sits in the subject curriculum. Think of it as a subject map
+  the learner sees at the top of the lesson.
+  - For **high-level overview lessons**: include all major subject concepts as
+    nodes. Mark which ones this lesson covers (`covered: true`). Set `type:
+    "high-level"` — the UI draws a bounding box around the covered area.
+  - For **focused/deep-dive lessons**: include the relevant subgraph of concepts
+    plus the root/subject node. Set `type: "focused"` — the UI highlights the
+    deep-dive area within the larger subject.
+  - Nodes not covered in this lesson but worth previewing should be marked
+    `preview: true` (amber in the UI). Nodes not yet taught at all should be
+    `covered: false, preview: false` (gray).
+  - Edges define meaningful concept dependencies. Connect root → direct children
+    and known prerequisite → dependent concept. Auto-star (root → all) is the
+    minimum; explicit dependency paths are better.
+  - Author this carefully for each lesson — it is the first thing the learner
+    sees. A generic placeholder is worse than a thoughtful minimal graph.
+  - Machine-checked by `validateKnowledgeGraphData` (soft warnings, not errors).
+
 
 These rules apply to **all** future lessons, not just seed/demo content. The
 canonical home of this guidance is this file plus `validateGeneratedContent`;

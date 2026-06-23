@@ -44,6 +44,15 @@ export async function GET(
       )
       .all(lessonId);
 
+    // Subject-level tags: all concept tags registered for this lesson's subject.
+    // Returned alongside lesson tags so the knowledge graph can show the full
+    // subject vocabulary and highlight which subset this lesson covers.
+    const subjectTags = db
+      .prepare(
+        `SELECT t.* FROM tags t JOIN subject_tags st ON st.tag_id = t.id WHERE st.subject_id = ?`
+      )
+      .all(lesson.subject_id);
+
     // Mark lesson as in_progress when first fetched (if queued)
     if (lesson.status === "queued") {
       db.prepare(
@@ -53,7 +62,7 @@ export async function GET(
       lesson.started_at = new Date().toISOString();
     }
 
-    return NextResponse.json({ lesson, activities, autosave, artifacts, tags });
+    return NextResponse.json({ lesson, activities, autosave, artifacts, tags, subjectTags });
   } catch (err) {
     console.error("[api/lessons/:id]", err);
     return NextResponse.json({ error: "Failed to load lesson" }, { status: 500 });

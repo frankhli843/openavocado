@@ -981,6 +981,16 @@ def preprocess_image(arr, target_size=224, mean=(0.485, 0.456, 0.406), std=(0.22
      WHERE next_lesson_diagnostics IS NULL`
   ).run(JSON.stringify(DEFAULT_NEXT_LESSON_DIAGNOSTICS));
 
+  // Backfill knowledge graph orientation for each seeded lesson.
+  // These are intentional, content-specific graphs — not generic placeholders.
+  const updateGraph = db.prepare(
+    "UPDATE lessons SET knowledge_graph_data = ? WHERE id = ? AND knowledge_graph_data IS NULL"
+  );
+  updateGraph.run(JSON.stringify(LESSON1_KNOWLEDGE_GRAPH), lesson1Id);
+  updateGraph.run(JSON.stringify(LESSON2_KNOWLEDGE_GRAPH), lesson2Id);
+  updateGraph.run(JSON.stringify(LESSON3_KNOWLEDGE_GRAPH), econLesson1Id);
+  updateGraph.run(JSON.stringify(LESSON4_KNOWLEDGE_GRAPH), gdmLesson1Id);
+
   console.log(
     `Seed applied: synthetic user alex_learner, 2 active subjects + 1 archived (id ${archivedId}), flagship Bayes lesson ${lesson2Id}.`
   );
@@ -1830,5 +1840,136 @@ const TAX_INCIDENCE_WIDGET = {
       template:
         "Buyers bear {{buyer_share}} of the tax and sellers {{seller_share}}. The more inelastic side (the steeper, less responsive curve) carries more of the burden, no matter who sends the payment.",
     },
+  ],
+};
+
+// ─── Per-lesson knowledge graph data ─────────────────────────────────────────
+// Each graph is authored to reflect the actual content of its lesson.
+// "high-level" = broad subject overview; "focused" = deep dive on a subgraph.
+
+const LESSON1_KNOWLEDGE_GRAPH = {
+  type: "high-level",
+  title: "Probability & Statistics — Subject Overview",
+  description:
+    "This lesson opens the subject: conditional probability, sample spaces, and frequency reasoning. Topics in amber will be explored in later lessons.",
+  nodes: [
+    { id: "prob-root", label: "Probability Theory", category: "subject_root", covered: true },
+    { id: "cond-prob", label: "Conditional Probability", category: "concept", covered: true, description: "P(A|B) — probability of A given B has occurred" },
+    { id: "sample-space", label: "Sample Space", category: "concept", covered: true, description: "The set of all possible outcomes in an experiment" },
+    { id: "freq-table", label: "Frequency Tables", category: "concept", covered: true, description: "Counting co-occurrences to estimate probabilities" },
+    { id: "independence", label: "Independence", category: "concept", covered: true, description: "When knowing B gives no information about A" },
+    { id: "misconceptions", label: "Common Mistakes", category: "concept", covered: true, description: "Confusion between P(A|B) and P(B|A)" },
+    { id: "bayes", label: "Bayes' Theorem", category: "concept", covered: false, preview: true, description: "Updating beliefs with new evidence — next lesson" },
+    { id: "distributions", label: "Distributions", category: "concept", covered: false, description: "Binomial, normal, Poisson — later in the curriculum" },
+    { id: "stats-inference", label: "Statistical Inference", category: "concept", covered: false, description: "Hypothesis testing, confidence intervals — later" },
+  ],
+  edges: [
+    { from: "prob-root", to: "cond-prob" },
+    { from: "prob-root", to: "sample-space" },
+    { from: "prob-root", to: "freq-table" },
+    { from: "prob-root", to: "independence" },
+    { from: "prob-root", to: "misconceptions" },
+    { from: "prob-root", to: "bayes" },
+    { from: "prob-root", to: "distributions" },
+    { from: "prob-root", to: "stats-inference" },
+    { from: "sample-space", to: "cond-prob" },
+    { from: "cond-prob", to: "bayes" },
+  ],
+};
+
+const LESSON2_KNOWLEDGE_GRAPH = {
+  type: "focused",
+  title: "Bayes' Theorem — Deep Dive",
+  description:
+    "Building on conditional probability, this lesson focuses on Bayes' theorem: why rare-disease positives are usually false alarms, and how to compute the posterior in Python.",
+  nodes: [
+    { id: "bayes-root", label: "Bayes' Theorem", category: "subject_root", covered: true },
+    { id: "prior", label: "Prior P(disease)", category: "concept", covered: true, description: "Your belief before seeing the evidence" },
+    { id: "likelihood", label: "Likelihood P(+|disease)", category: "concept", covered: true, description: "How likely is a positive test if truly diseased?" },
+    { id: "evidence", label: "Evidence P(+)", category: "concept", covered: true, description: "Total probability of testing positive" },
+    { id: "posterior", label: "Posterior P(disease|+)", category: "concept", covered: true, description: "Revised belief after the positive test" },
+    { id: "base-rate", label: "Base-Rate Fallacy", category: "concept", covered: true, description: "Why low prevalence dominates the posterior" },
+    { id: "freq-tree", label: "Population Tree", category: "concept", covered: true, description: "Visualising all 4 outcome groups simultaneously" },
+    { id: "python-impl", label: "Python Implementation", category: "concept", covered: true, description: "Computing the posterior from scratch in code" },
+    { id: "bayes-net", label: "Bayesian Networks", category: "concept", covered: false, preview: true, description: "Chained conditional dependencies — later lesson" },
+    { id: "mcmc", label: "MCMC Sampling", category: "concept", covered: false, description: "Sampling the posterior for complex models — later" },
+  ],
+  edges: [
+    { from: "bayes-root", to: "prior" },
+    { from: "bayes-root", to: "likelihood" },
+    { from: "bayes-root", to: "evidence" },
+    { from: "bayes-root", to: "posterior" },
+    { from: "prior", to: "posterior" },
+    { from: "likelihood", to: "evidence" },
+    { from: "evidence", to: "posterior" },
+    { from: "posterior", to: "base-rate" },
+    { from: "posterior", to: "freq-tree" },
+    { from: "posterior", to: "python-impl" },
+    { from: "bayes-root", to: "bayes-net" },
+    { from: "bayes-root", to: "mcmc" },
+  ],
+};
+
+const LESSON3_KNOWLEDGE_GRAPH = {
+  type: "high-level",
+  title: "Microeconomics — Subject Overview",
+  description:
+    "This lesson introduces core market mechanics: supply, demand, equilibrium, and how a tax splits between buyers and sellers. Topics in amber come in later lessons.",
+  nodes: [
+    { id: "micro-root", label: "Microeconomics", category: "subject_root", covered: true },
+    { id: "demand", label: "Demand Curve", category: "concept", covered: true, description: "Consumers' willingness to pay at each price" },
+    { id: "supply", label: "Supply Curve", category: "concept", covered: true, description: "Producers' willingness to sell at each price" },
+    { id: "equilibrium", label: "Market Equilibrium", category: "concept", covered: true, description: "Price where quantity supplied equals demanded" },
+    { id: "elasticity", label: "Elasticity", category: "concept", covered: true, description: "How sensitive quantity is to a price change" },
+    { id: "tax-incidence", label: "Tax Incidence", category: "concept", covered: true, description: "How a per-unit tax splits between buyers & sellers" },
+    { id: "consumer-surplus", label: "Consumer Surplus", category: "concept", covered: false, preview: true, description: "Value buyers receive above what they pay — next lesson" },
+    { id: "game-theory", label: "Game Theory", category: "concept", covered: false, description: "Strategic decision-making — later in curriculum" },
+    { id: "market-failure", label: "Market Failure", category: "concept", covered: false, description: "Externalities, public goods, information asymmetry" },
+  ],
+  edges: [
+    { from: "micro-root", to: "demand" },
+    { from: "micro-root", to: "supply" },
+    { from: "supply", to: "equilibrium" },
+    { from: "demand", to: "equilibrium" },
+    { from: "supply", to: "elasticity" },
+    { from: "demand", to: "elasticity" },
+    { from: "elasticity", to: "tax-incidence" },
+    { from: "equilibrium", to: "consumer-surplus" },
+    { from: "micro-root", to: "game-theory" },
+    { from: "micro-root", to: "market-failure" },
+  ],
+};
+
+const LESSON4_KNOWLEDGE_GRAPH = {
+  type: "high-level",
+  title: "GDM Image Preprocessing — Full Pipeline Overview",
+  description:
+    "This lesson covers all the core steps from raw JPEG to model-ready tensor. Each highlighted step is taught in depth here. Topics in amber are introduced as previews and will be explored in later lessons.",
+  nodes: [
+    { id: "pipeline-root", label: "Preprocessing Pipeline", category: "subject_root", covered: true, description: "The end-to-end path from raw image to float tensor" },
+    { id: "resize", label: "Resize & Crop", category: "concept", covered: true, description: "Standardise spatial dimensions (e.g. 224×224)" },
+    { id: "normalize", label: "Normalize", category: "concept", covered: true, description: "Scale pixels to float and apply mean/std subtraction" },
+    { id: "imagenet-consts", label: "ImageNet Constants", category: "concept", covered: true, description: "Standard mean=[0.485,0.456,0.406] and std=[0.229,0.224,0.225]" },
+    { id: "channel-permute", label: "Channel Order (HWC→CHW)", category: "concept", covered: true, description: "Convert NumPy HWC to PyTorch/JAX CHW tensor layout" },
+    { id: "batch-dim", label: "Batch Dimension", category: "concept", covered: true, description: "Add axis 0 for (1, C, H, W) single-image inference" },
+    { id: "memory-footprint", label: "Memory Footprint", category: "concept", covered: true, description: "How dtype and tensor shape affect GPU memory" },
+    { id: "data-aug", label: "Data Augmentation", category: "concept", covered: false, preview: true, description: "Random flips, jitter, crops — explored in a later lesson" },
+    { id: "multimodal-tok", label: "Multimodal Tokenization", category: "concept", covered: false, preview: true, description: "Patch tokenization and Gemma input contract — later" },
+    { id: "advanced-pipelines", label: "Advanced Pipelines", category: "concept", covered: false, description: "Mixed precision, hardware decode, batched transforms" },
+  ],
+  edges: [
+    { from: "pipeline-root", to: "resize" },
+    { from: "pipeline-root", to: "normalize" },
+    { from: "pipeline-root", to: "channel-permute" },
+    { from: "pipeline-root", to: "batch-dim" },
+    { from: "pipeline-root", to: "memory-footprint" },
+    { from: "pipeline-root", to: "data-aug" },
+    { from: "pipeline-root", to: "multimodal-tok" },
+    { from: "pipeline-root", to: "advanced-pipelines" },
+    { from: "resize", to: "normalize" },
+    { from: "normalize", to: "imagenet-consts" },
+    { from: "normalize", to: "channel-permute" },
+    { from: "channel-permute", to: "batch-dim" },
+    { from: "batch-dim", to: "memory-footprint" },
   ],
 };

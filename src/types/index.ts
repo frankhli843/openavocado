@@ -158,6 +158,8 @@ export interface Lesson {
   tags: string | null;  // JSON string
   /** JSON array of { id, prompt, hint? } end-of-lesson diagnostic questions. */
   next_lesson_diagnostics: string | null;
+  /** JSON KnowledgeGraphData authored by the lesson generator — shown as an orientation map at lesson top. */
+  knowledge_graph_data: string | null;
   started_at: string | null;
   completed_at: string | null;
   /** Set when the learner discards this incomplete lesson. NULL for active/completed lessons. */
@@ -231,6 +233,59 @@ export interface Tag {
   name: string;
   tag_type: "concept" | "misconception" | "review_topic" | "curriculum_area" | "lesson_type";
   created_at: string;
+}
+
+// ─── Knowledge Graph Orientation ────────────────────────────────────────────
+
+/**
+ * A single concept/topic node in the lesson knowledge graph.
+ * Authored per-lesson by the lesson generator to describe curriculum position.
+ */
+export interface KnowledgeGraphNode {
+  /** Unique identifier within this graph (does not need to match DB tag id). */
+  id: string;
+  /** Short display label shown on the node (keep ≤20 chars for readability). */
+  label: string;
+  /**
+   * Role in the graph layout:
+   * - "subject_root": the top-level subject or pipeline — placed at center
+   * - "concept": a concrete concept or skill
+   * - "prerequisite": a foundational concept the lesson builds on
+   * - "preview": mentioned but not taught in depth here
+   */
+  category?: "subject_root" | "concept" | "prerequisite" | "preview";
+  /** True if this lesson directly covers and teaches this concept. */
+  covered: boolean;
+  /**
+   * True if the concept is mentioned/introduced but intentionally left for a
+   * deeper later lesson. Renders in amber with a "Coming later" label.
+   */
+  preview?: boolean;
+  /** Optional tooltip/description shown on hover. */
+  description?: string;
+}
+
+export interface KnowledgeGraphEdge {
+  from: string; // node id
+  to: string;   // node id
+  label?: string;
+}
+
+/**
+ * Lesson-level knowledge graph authored by the lesson generator.
+ *
+ * "high-level": the lesson is a broad subject overview. Render the full
+ *   subject graph, boxing/highlighting which areas this lesson covers.
+ *
+ * "focused": the lesson is a deep dive. Show the relevant subgraph and
+ *   indicate how it fits into the larger subject.
+ */
+export interface KnowledgeGraphData {
+  type: "high-level" | "focused";
+  title: string;
+  description?: string;
+  nodes: KnowledgeGraphNode[];
+  edges: KnowledgeGraphEdge[];
 }
 
 export interface ProgressPoint {
@@ -373,6 +428,13 @@ export interface GeneratedLessonContent {
    * these; when omitted the app applies DEFAULT_NEXT_LESSON_DIAGNOSTICS.
    */
   next_lesson_diagnostics?: Array<{ id: string; prompt: string; hint?: string }>;
+  /**
+   * Knowledge graph orientation for the lesson — strongly recommended for all
+   * lessons. Shows where this lesson sits in the subject curriculum. See
+   * KnowledgeGraphData for the shape. When omitted, the UI falls back to a
+   * tag-derived view but the authored graph provides richer orientation.
+   */
+  knowledge_graph_data?: KnowledgeGraphData;
   metadata: {
     generator: string;
     generator_version: string;

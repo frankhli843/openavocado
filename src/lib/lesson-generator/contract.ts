@@ -144,7 +144,7 @@ export function buildGeneratorContext(params: {
  */
 export function validateGeneratedContent(
   content: GeneratedLessonContent
-): { valid: boolean; errors: string[] } {
+): { valid: boolean; errors: string[]; warnings: string[] } {
   const errors: string[] = [];
 
   if (!content.title?.trim()) errors.push("Missing title");
@@ -255,5 +255,67 @@ export function validateGeneratedContent(
     }
   }
 
+  // Knowledge graph orientation: strongly recommended for all lessons.
+  // Logged as a warning, not a hard error, so existing seeded lessons still
+  // pass until they are authored with graph data.
+  const warnings: string[] = [];
+  if (!content.knowledge_graph_data) {
+    warnings.push(
+      "knowledge_graph_data missing — every lesson should include a KnowledgeGraphData orientation map showing where this lesson fits in the subject curriculum"
+    );
+  } else {
+    const kg = validateKnowledgeGraphData(content.knowledge_graph_data);
+    for (const e of kg.errors) warnings.push(`knowledge_graph_data: ${e}`);
+  }
+
+  return { valid: errors.length === 0, errors, warnings };
+}
+
+/**
+ * Validate a KnowledgeGraphData object (soft — warnings only).
+ * The graph is authored per-lesson to show the curriculum context, so the
+ * minimum bar is: at least one root/subject node, at least two total nodes,
+ * and every edge references nodes that exist in the graph.
+ */
+export function validateKnowledgeGraphData(
+  graph: unknown
+): { valid: boolean; errors: string[] } {
+  const errors: string[] = [];
+  if (!graph || typeof graph !== "object") {
+    return { valid: false, errors: ["knowledge_graph_data must be an object"] };
+  }
+  const g = graph as Record<string, unknown>;
+  if (g.type !== "high-level" && g.type !== "focused") {
+    errors.push('knowledge_graph_data.type must be "high-level" or "focused"');
+  }
+  if (!g.title || typeof g.title !== "string" || !g.title.trim()) {
+    errors.push("knowledge_graph_data.title is required");
+  }
+  if (!Array.isArray(g.nodes) || g.nodes.length < 2) {
+    errors.push("knowledge_graph_data.nodes must have at least 2 nodes");
+    return { valid: errors.length === 0, errors };
+  }
+  const nodeIds = new Set<string>();
+  for (const [i, n] of (g.nodes as unknown[]).entries()) {
+    if (!n || typeof n !== "object") { errors.push(`nodes[${i}] must be an object`); continue; }
+    const node = n as Record<string, unknown>;
+    if (!node.id || typeof node.id !== "string") errors.push(`nodes[${i}].id is required`);
+    else nodeIds.add(node.id as string);
+    if (!node.label || typeof node.label !== "string") errors.push(`nodes[${i}].label is required`);
+    if (typeof node.covered !== "boolean") errors.push(`nodes[${i}].covered must be boolean`);
+  }
+  const hasRoot = (g.nodes as unknown[]).some((n) => {
+    if (!n || typeof n !== "object") return false;
+    return (n as Record<string, unknown>).category === "subject_root";
+  });
+  if (!hasRoot) errors.push("knowledge_graph_data.nodes must include at least one subject_root node");
+  if (Array.isArray(g.edges)) {
+    for (const [i, e] of (g.edges as unknown[]).entries()) {
+      if (!e || typeof e !== "object") { errors.push(`edges[${i}] must be an object`); continue; }
+      const edge = e as Record<string, unknown>;
+      if (!nodeIds.has(edge.from as string)) errors.push(`edges[${i}].from "${edge.from}" is not a known node id`);
+      if (!nodeIds.has(edge.to as string)) errors.push(`edges[${i}].to "${edge.to}" is not a known node id`);
+    }
+  }
   return { valid: errors.length === 0, errors };
 }

@@ -148,27 +148,49 @@ function backfillLesson4Activities(
       }
     }
 
-    // Copy lesson-4 diagnostics + descriptive fields that the enrichment added.
+    // Copy lesson-4 diagnostics + knowledge graph orientation from reference.
     const refRow = ref
       .prepare(
-        "SELECT next_lesson_diagnostics, description, goals, tags FROM lessons WHERE id = ?"
+        "SELECT next_lesson_diagnostics, knowledge_graph_data FROM lessons WHERE id = ?"
       )
       .get(refLesson.id) as {
       next_lesson_diagnostics: string | null;
-      description: string | null;
-      goals: string | null;
-      tags: string | null;
+      knowledge_graph_data: string | null;
     };
     live
       .prepare(
-        `UPDATE lessons SET next_lesson_diagnostics = ?, updated_at = datetime('now')
+        `UPDATE lessons
+         SET next_lesson_diagnostics = ?,
+             knowledge_graph_data = COALESCE(knowledge_graph_data, ?),
+             updated_at = datetime('now')
          WHERE id = ?`
       )
-      .run(refRow.next_lesson_diagnostics, liveLesson.id);
+      .run(refRow.next_lesson_diagnostics, refRow.knowledge_graph_data, liveLesson.id);
   });
   upsert();
 
   return { updated, inserted, liveLessonId: liveLesson.id };
+}
+
+/**
+ * Backfill knowledge_graph_data for all seeded lessons by matching on title.
+ * Safe to run on existing DBs: COALESCE preserves any existing authored graph.
+ */
+function backfillKnowledgeGraphData(ref: Database.Database, live: Database.Database): number {
+  const refLessons = ref
+    .prepare("SELECT title, knowledge_graph_data FROM lessons WHERE knowledge_graph_data IS NOT NULL")
+    .all() as Array<{ title: string; knowledge_graph_data: string }>;
+
+  let changed = 0;
+  for (const row of refLessons) {
+    const res = live
+      .prepare(
+        "UPDATE lessons SET knowledge_graph_data = ? WHERE title = ? AND knowledge_graph_data IS NULL"
+      )
+      .run(row.knowledge_graph_data, row.title);
+    changed += res.changes;
+  }
+  return changed;
 }
 
 /** Backfill default next-lesson diagnostics on every lesson missing them. */
@@ -211,6 +233,8 @@ async function main() {
     );
     const diag = backfillDiagnostics(ref, live);
     console.log(`[backfill] next_lesson_diagnostics backfilled on ${diag} lesson(s)`);
+    const graphs = backfillKnowledgeGraphData(ref, live);
+    console.log(`[backfill] knowledge_graph_data backfilled on ${graphs} lesson(s)`);
 
     if (!noAudio) {
       console.log("[backfill] generating real audio artifacts ...");
