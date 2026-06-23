@@ -22,7 +22,11 @@ import {
   validateReadingContent,
   validateMediaContent,
   validatePracticeCodeContent,
+  validateNextLessonDiagnostics,
 } from "@/lib/lesson-content/schema";
+
+/** Minimum audio script length to count as a real, generation-ready script. */
+const MIN_AUDIO_SCRIPT_CHARS = 20;
 
 export { WIDGET_SCHEMA_VERSION };
 
@@ -146,6 +150,48 @@ export function validateGeneratedContent(
   // Code section required for every subject (even non-technical)
   if (!coreActivities.includes("practice_code")) {
     errors.push("practice_code section is required for every subject");
+  }
+
+  // Generated audio must be available at lesson creation, not a placeholder.
+  // The audio activity must carry a substantive script (the source the audio is
+  // generated from), so a lesson can never ship audio-less or with a stub.
+  const audioActivity = content.activities.find((a) => a.activity_type === "audio");
+  if (audioActivity) {
+    const script = (audioActivity.content as Record<string, unknown>)?.script;
+    if (typeof script !== "string" || script.trim().length < MIN_AUDIO_SCRIPT_CHARS) {
+      errors.push(
+        "audio activity must include a substantive script (generated audio must be available at lesson creation, not a placeholder)"
+      );
+    }
+  }
+
+  // Multiple visual perspectives when the lesson covers multiple concepts. A
+  // multi-concept lesson (3+ goals or mastery targets) must offer at least two
+  // distinct visual explorations — either several interactive activities, or a
+  // declarative widget that drives several charts — so a broad lesson is never a
+  // single thin widget. (Single-concept lessons are exempt.)
+  const interactiveActivities = content.activities.filter((a) => a.activity_type === "interactive");
+  let perspectives = interactiveActivities.length;
+  for (const a of interactiveActivities) {
+    const charts = (a.content as Record<string, unknown>)?.charts;
+    if (Array.isArray(charts) && charts.length >= 2) perspectives += charts.length - 1;
+  }
+  const conceptCount = Math.max(
+    Array.isArray(content.goals) ? content.goals.length : 0,
+    Array.isArray(content.mastery_targets) ? content.mastery_targets.length : 0
+  );
+  if (conceptCount >= 3 && perspectives < 2) {
+    errors.push(
+      "a multi-concept lesson needs at least two visual perspectives (multiple interactive activities, or a declarative widget with a charts[] array) — do not ship one thin widget for many concepts"
+    );
+  }
+
+  // End-of-lesson next-lesson diagnostics: when provided, they must be valid.
+  // (Generators should always provide them; the app applies a default set if a
+  // lesson omits them — see DEFAULT_NEXT_LESSON_DIAGNOSTICS.)
+  if (content.next_lesson_diagnostics !== undefined) {
+    const r = validateNextLessonDiagnostics(content.next_lesson_diagnostics);
+    if (!r.valid) for (const e of r.errors) errors.push(`next_lesson_diagnostics: ${e}`);
   }
 
   const knownWidgetTypes = REGISTERED_WIDGETS.map((w) => w.type);

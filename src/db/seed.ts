@@ -682,8 +682,8 @@ q_star = None
     1,
     "Audio: The Preprocessing Pipeline",
     JSON.stringify({
-      script: "A vision model does not see pixels the way you do. It sees a three-dimensional tensor: height, width, and channels, with values floating between negative two and positive two. Getting from a JPEG on disk to that tensor is the preprocessing pipeline — and every step exists for a reason. Resize standardises the spatial footprint. Normalization moves the pixel scale into the range the model was trained on. Channel reordering puts the axes where the architecture expects them. Together they turn an arbitrary photograph into a form the model can reason about.",
-      duration_hint: 540,
+      script: "A vision model does not see pixels the way you do. It sees a three-dimensional tensor: height, width, and channels, with values floating between negative two and positive two. Getting from a JPEG on disk to that tensor is the preprocessing pipeline — and every step exists for a reason. Resize standardises the spatial footprint. Normalization moves the pixel scale into the range the model was trained on. Channel reordering puts the axes where the architecture expects them. Together they turn an arbitrary photograph into a form the model can reason about. One note before we dive in: the final tokenization step and the exact Gemma multimodal input contract are introduced here only at a high level — treat them as a preview. We will explore patch tokenization and the full Gemma input contract in detail in a later lesson.",
+      duration_hint: 600,
     })
   );
 
@@ -709,8 +709,10 @@ q_star = None
         { type: "heading", text: "Step 4 — Batching" },
         { type: "paragraph", text: "Most models process a batch of N images at once. A single image (3, H, W) becomes (1, 3, H, W) with np.expand_dims or tensor.unsqueeze(0). During training, multiple images are stacked along axis 0." },
         { type: "list", ordered: true, items: ["Open image with PIL.", "Resize to target (H, W) with bilinear resampling.", "Convert to float32 and divide by 255.", "Subtract per-channel mean, divide by per-channel std.", "Permute axes from HWC to CHW.", "Add batch dimension."] },
+        { type: "heading", text: "Preview — tokenization and the Gemma input contract" },
+        { type: "callout", tone: "info", text: "Preview only: after preprocessing, a vision encoder splits the tensor into patches and turns them into tokens, and Gemma wraps those tokens in a specific multimodal input contract. This lesson introduces those ideas at a high level so you know where the pipeline leads. We will explore patch tokenization and the full Gemma contract in depth in a later lesson — they are not assessed here." },
       ],
-      summary: "The preprocessing pipeline standardises shape, scale, and axis order. Each step compensates for a specific mismatch between raw media data and model expectations.",
+      summary: "The preprocessing pipeline standardises shape, scale, and axis order. Each step compensates for a specific mismatch between raw media data and model expectations. Tokenization and the Gemma input contract are previewed at a high level and explored in a later lesson.",
     })
   );
 
@@ -766,6 +768,88 @@ q_star = None
           title: "What the model receives",
           template:
             "Pixel {{pixel}} → rescaled to {{rescaled}} → normalised to {{normalised}}. Values near 0 after normalisation are close to the ImageNet average; negative values are darker than average; positive are brighter.",
+        },
+      ],
+    })
+  );
+
+  // Second visual perspective: how the tensor's shape and axis order change
+  // through resize, permute (HWC→CHW), and batching.
+  insertActivity.run(
+    gdmLesson1Id,
+    "interactive",
+    1,
+    4,
+    "Explore: Shape & Axis Order Through the Pipeline",
+    JSON.stringify({
+      schema_version: "1.0",
+      widget_type: "declarative",
+      title: "Tensor Shape at Each Stage",
+      instructions:
+        "Set the target resolution and batch size, then read off the tensor shape at each stage. Notice that resize fixes the spatial size, the permute reorders the axes (HWC → CHW) without changing the numbers, and batching adds a new leading axis.",
+      controls: [
+        { type: "slider", id: "target", label: "Target size (square)", min: 64, max: 1024, step: 64, default: 896 },
+        { type: "slider", id: "batch", label: "Batch size (N images)", min: 1, max: 16, step: 1, default: 1 },
+      ],
+      outputs: [
+        { id: "elems_per_image", label: "Elements per image (3·T·T)", formula: "3 * target * target", format: "integer" },
+        { id: "elems_total", label: "Elements in the batch", formula: "batch * 3 * target * target", format: "integer" },
+      ],
+      chart: {
+        type: "table",
+        title: "Tensor shape at each stage",
+        headers: ["Stage", "Channels", "Height", "Width", "Batch"],
+        rows: [
+          { label: "HWC float (post-normalise)", cells: [{ formula: "3", format: "integer" }, { formula: "target", format: "integer" }, { formula: "target", format: "integer" }, { formula: "1", format: "integer" }] },
+          { label: "CHW (post-permute)", cells: [{ formula: "3", format: "integer" }, { formula: "target", format: "integer" }, { formula: "target", format: "integer" }, { formula: "1", format: "integer" }] },
+          { label: "NCHW (post-batch)", cells: [{ formula: "3", format: "integer" }, { formula: "target", format: "integer" }, { formula: "target", format: "integer" }, { formula: "batch", format: "integer" }] },
+        ],
+        caption: "The permute (HWC → CHW) changes which axis is which, not the dimension sizes. Batching prepends the N axis.",
+      },
+      panels: [
+        {
+          title: "Why the permute matters",
+          template:
+            "Each image carries {{elems_per_image}} numbers; a batch of {{batch}} carries {{elems_total}}. PIL gives you HWC, but the model reads CHW — same numbers, different axis order. Forgetting the permute is the classic preprocessing bug.",
+        },
+      ],
+    })
+  );
+
+  // Third visual perspective: memory footprint as resolution and batch grow.
+  insertActivity.run(
+    gdmLesson1Id,
+    "interactive",
+    1,
+    4,
+    "Explore: Memory Footprint vs Resolution and Batch",
+    JSON.stringify({
+      schema_version: "1.0",
+      widget_type: "declarative",
+      title: "How Big Is a Preprocessed Batch?",
+      instructions:
+        "float32 tensors are 4 bytes per number. Raise the resolution or the batch size and watch the memory cost grow — this is why inference servers cap batch size and why higher resolutions are expensive.",
+      controls: [
+        { type: "slider", id: "target", label: "Target size (square)", min: 64, max: 1024, step: 64, default: 896 },
+        { type: "slider", id: "batch", label: "Batch size (N images)", min: 1, max: 32, step: 1, default: 1 },
+      ],
+      outputs: [
+        { id: "mb_one", label: "One image (MB, float32)", formula: "3 * target * target * 4 / 1000000", format: "decimal", precision: 2 },
+        { id: "mb_batch", label: "Full batch (MB, float32)", formula: "batch * 3 * target * target * 4 / 1000000", format: "decimal", precision: 2 },
+      ],
+      chart: {
+        type: "bar",
+        title: "Memory: one image vs the whole batch",
+        bars: [
+          { label: "One image", ref: "mb_one", color: "#94a3b8" },
+          { label: "Whole batch", ref: "mb_batch", color: "#399103" },
+        ],
+      },
+      panels: [
+        {
+          title: "Why batch size is capped",
+          template:
+            "At {{target}}×{{target}}, one preprocessed image is {{mb_one}} MB and a batch of {{batch}} is {{mb_batch}} MB. Memory grows with the square of the resolution and linearly with the batch — both add up fast on a GPU.",
         },
       ],
     })
@@ -849,6 +933,21 @@ def preprocess_image(arr, target_size=224, mean=(0.485, 0.456, 0.406), std=(0.22
       quiz: IMAGE_PREPROCESSING_MC_QUIZ,
     })
   );
+
+  // Generated audio for lesson 4 — durable metadata available at lesson creation
+  // (the audio file itself lives in gitignored runtime storage; only metadata +
+  // source script are recorded here, like lesson 1).
+  db.prepare(
+    `INSERT INTO generated_artifacts (lesson_id, activity_id, artifact_type, provider, voice, duration_sec, content_hash, file_path, source_script, generated_at)
+     VALUES (
+       ?,
+       (SELECT id FROM lesson_activities WHERE lesson_id = ? AND activity_type = 'audio' ORDER BY sequence_order ASC LIMIT 1),
+       'audio', 'openai-tts', 'alloy', 600.0, 'sha256:gdm4audio0001',
+       'runtime_artifacts/audio/lesson_4_audio.mp3',
+       'A vision model does not see pixels the way you do... (full preprocessing-pipeline walkthrough, tokenization + Gemma contract previewed)',
+       datetime('now')
+     )`
+  ).run(gdmLesson1Id, gdmLesson1Id);
 
   // Next lesson job (queued after lesson 1 completion)
   db.prepare(

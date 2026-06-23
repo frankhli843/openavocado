@@ -158,7 +158,7 @@ describe("declarative widget table/tree charts", () => {
 
 function richLesson(overrides: Partial<GeneratedLessonContent["activities"][number]>[] = []): GeneratedLessonContent {
   const activities: GeneratedLessonContent["activities"] = [
-    { activity_type: "audio", is_core: true, sequence_order: 1, title: "a", content: { script: "s" } },
+    { activity_type: "audio", is_core: true, sequence_order: 1, title: "a", content: { script: "A full spoken walkthrough of the concept for this lesson." } },
     {
       activity_type: "reading",
       is_core: true,
@@ -236,5 +236,50 @@ describe("validateGeneratedContent — richer lessons", () => {
     const r = validateGeneratedContent(lesson);
     expect(r.valid).toBe(false);
     expect(r.errors.join(" ")).toMatch(/media/);
+  });
+
+  it("fails when the audio script is missing or a stub (no placeholder audio)", () => {
+    const lesson = richLesson();
+    const audio = lesson.activities.find((a) => a.activity_type === "audio")!;
+    audio.content = { script: "tbd" };
+    const r = validateGeneratedContent(lesson);
+    expect(r.valid).toBe(false);
+    expect(r.errors.join(" ")).toMatch(/audio/i);
+  });
+
+  it("fails a multi-concept lesson that ships only one thin visual perspective", () => {
+    const lesson = richLesson();
+    lesson.goals = ["resize", "normalize", "channel order", "batching"]; // 4 concepts
+    // richLesson has a single interactive widget with no charts[] → 1 perspective
+    const r = validateGeneratedContent(lesson);
+    expect(r.valid).toBe(false);
+    expect(r.errors.join(" ")).toMatch(/visual perspective/i);
+  });
+
+  it("passes a multi-concept lesson with two interactive perspectives", () => {
+    const lesson = richLesson();
+    lesson.goals = ["resize", "normalize", "channel order"];
+    lesson.activities.push({
+      activity_type: "interactive",
+      is_core: true,
+      sequence_order: 6,
+      title: "i2",
+      content: {
+        schema_version: "1.0",
+        widget_type: "declarative",
+        instructions: "explore",
+        controls: [{ type: "slider", id: "n", label: "N", min: 1, max: 8, step: 1, default: 1 }],
+        outputs: [{ id: "o", label: "O", formula: "n * 3" }],
+      },
+    });
+    expect(validateGeneratedContent(lesson).valid).toBe(true);
+  });
+
+  it("validates next_lesson_diagnostics when provided", () => {
+    const lesson = richLesson();
+    lesson.next_lesson_diagnostics = [{ id: "d1" } as unknown as { id: string; prompt: string }];
+    const r = validateGeneratedContent(lesson);
+    expect(r.valid).toBe(false);
+    expect(r.errors.join(" ")).toMatch(/next_lesson_diagnostics/);
   });
 });

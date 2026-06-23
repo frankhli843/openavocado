@@ -368,6 +368,11 @@ export interface GeneratedLessonContent {
     concept: string;
     target_confidence: number;
   }>;
+  /**
+   * End-of-lesson freeform next-lesson diagnostics. Generators should provide
+   * these; when omitted the app applies DEFAULT_NEXT_LESSON_DIAGNOSTICS.
+   */
+  next_lesson_diagnostics?: Array<{ id: string; prompt: string; hint?: string }>;
   metadata: {
     generator: string;
     generator_version: string;

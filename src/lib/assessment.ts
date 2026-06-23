@@ -157,7 +157,7 @@ function matchExistingTag(
 /**
  * The default, no-LLM assessment adapter. Pure and synchronous.
  */
-export const deterministicAssessmentAdapter: AssessmentAdapter = {
+export const deterministicAssessmentAdapter = {
   name: "deterministic",
   assess(input: AssessmentInput): AssessmentOutcome {
     const difficulty = input.difficulty ?? null;
@@ -265,7 +265,7 @@ export const deterministicAssessmentAdapter: AssessmentAdapter = {
 
     return { outcome: "assessed", tags, signal };
   },
-};
+} satisfies AssessmentAdapter;
 
 /**
  * Select the configured assessment adapter. Deterministic by default; a future

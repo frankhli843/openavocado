@@ -213,7 +213,7 @@ function baseContent(interactiveContent: Record<string, unknown>): GeneratedLess
     goals: ["g"],
     tags: [],
     activities: [
-      { activity_type: "audio", is_core: true, sequence_order: 1, title: "a", content: {} },
+      { activity_type: "audio", is_core: true, sequence_order: 1, title: "a", content: { script: "A full spoken walkthrough of the concept for this lesson." } },
       {
         activity_type: "reading",
         is_core: true,
