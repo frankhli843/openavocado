@@ -14,7 +14,7 @@ import fs from "fs";
 import path from "path";
 
 import { lessonAudioRelPath } from "./runtime-storage";
-import { synthesizeSpeech } from "./tts";
+import { synthesizeSpeech, type TtsProvider } from "./tts";
 
 export interface GenerateResult {
   lessonId: number;
@@ -47,7 +47,7 @@ function scriptVersion(script: string): string {
 export async function generateLessonAudio(
   db: Database.Database,
   lessonId: number,
-  opts: { force?: boolean; provider?: "openai-tts" | "espeak-ng" } = {}
+  opts: { force?: boolean; provider?: TtsProvider } = {}
 ): Promise<GenerateResult> {
   const audio = db
     .prepare(
@@ -93,8 +93,8 @@ export async function generateLessonAudio(
 
   const result = await synthesizeSpeech(script, {
     outPath: absPath,
-    // Let the adapter pick a provider-appropriate default voice (alloy for
-    // OpenAI, en-us for espeak) so the recorded voice matches what was used.
+    // Let the adapter pick a provider-appropriate default voice. Generated
+    // lessons use Doraemon edge TTS by default.
     provider: opts.provider,
   });
 
@@ -137,7 +137,7 @@ export async function generateLessonAudio(
 /** Generate audio for every lesson that has an audio activity with a script. */
 export async function generateAllLessonAudio(
   db: Database.Database,
-  opts: { force?: boolean; provider?: "openai-tts" | "espeak-ng" } = {}
+  opts: { force?: boolean; provider?: TtsProvider } = {}
 ): Promise<GenerateResult[]> {
   const lessons = db
     .prepare(

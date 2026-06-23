@@ -1,7 +1,9 @@
 /**
  * Real-path tests for the lesson audio pipeline (not typecheck-only):
  *  - runtime-storage path resolution refuses traversal outside runtime_artifacts/
- *  - synthesizeSpeech (espeak-ng provider) produces a real, playable MP3
+ *  - synthesizeSpeech default provider produces Doraemon voice audio when
+ *    edge_tts is available
+ *  - synthesizeSpeech (espeak-ng provider) still works as an emergency fallback
  *  - generateLessonAudio writes a file AND upserts a generated_artifacts row
  *    with real provider/hash/duration, and is idempotent on re-run.
  *
@@ -21,10 +23,15 @@ import {
   lessonAudioRelPath,
   runtimeRoot,
 } from "@/lib/audio/runtime-storage";
-import { synthesizeSpeech, espeakAvailable } from "@/lib/audio/tts";
+import {
+  synthesizeSpeech,
+  espeakAvailable,
+  doraemonEdgeAvailable,
+} from "@/lib/audio/tts";
 import { generateLessonAudio } from "@/lib/audio/generate-lesson-audio";
 
 const HAS_ESPEAK = espeakAvailable();
+const HAS_DORAEMON_EDGE = doraemonEdgeAvailable();
 const tmpFiles: string[] = [];
 
 afterAll(() => {
@@ -60,6 +67,23 @@ describe("runtime-storage path safety", () => {
 
   it("derives the canonical per-lesson audio path", () => {
     expect(lessonAudioRelPath(4)).toBe("runtime_artifacts/audio/lesson_4_audio.mp3");
+  });
+});
+
+describe.runIf(HAS_DORAEMON_EDGE)("synthesizeSpeech (default Doraemon voice)", () => {
+  it("uses Doraemon edge TTS by default for learner-facing lesson audio", async () => {
+    const dir = mkdtempSync(path.join(os.tmpdir(), "avo-tts-"));
+    tmpFiles.push(dir);
+    const out = path.join(dir, "clip.mp3");
+    const res = await synthesizeSpeech(
+      "Preprocessing turns an image file into a model ready tensor.",
+      { outPath: out }
+    );
+    expect(res.provider).toBe("doraemon-edge-tts");
+    expect(res.voice).toBe("en-US-BrianNeural");
+    expect(existsSync(out)).toBe(true);
+    expect(statSync(out).size).toBeGreaterThan(1000);
+    expect(res.durationSec).toBeGreaterThan(0);
   });
 });
 

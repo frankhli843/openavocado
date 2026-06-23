@@ -7,10 +7,10 @@
  * deployment always ends up with a real audio file rather than placeholder
  * metadata that points at a 404:
  *
- *   1. OpenAI TTS  — used when OPENAI_API_KEY is set and the account has quota.
- *   2. espeak-ng   — fully offline local synthesis (apt: espeak-ng), piped
- *                    through ffmpeg to MP3. Always available on the demo host
- *                    and requires no network or API quota.
+ *   1. Doraemon edge TTS — default learner-facing narration voice.
+ *   2. OpenAI TTS       — optional fallback when OPENAI_API_KEY has quota.
+ *   3. espeak-ng        — last-resort offline fallback, never preferred for
+ *                         generated lesson narration.
  *
  * Server-only: uses Node fs / child_process. Never import from client code.
  */
@@ -20,11 +20,13 @@ import fs from "fs";
 import os from "os";
 import path from "path";
 
+export type TtsProvider = "doraemon-edge-tts" | "openai-tts" | "espeak-ng";
+
 export interface TtsResult {
   /** Absolute path to the written MP3 file. */
   filePath: string;
   /** Provider that actually produced the audio. */
-  provider: "openai-tts" | "espeak-ng";
+  provider: TtsProvider;
   /** Voice identifier used. */
   voice: string;
   /** Duration of the rendered audio in seconds. */
@@ -41,7 +43,7 @@ export interface TtsOptions {
   /** Preferred voice (provider-specific; mapped per provider). */
   voice?: string;
   /** Force a specific provider (skips fallback). Mainly for tests. */
-  provider?: "openai-tts" | "espeak-ng";
+  provider?: TtsProvider;
   /** Words-per-minute pacing for the espeak fallback. */
   espeakWpm?: number;
 }
@@ -72,6 +74,81 @@ function probeDurationSec(p: string): number {
 
 function ensureDir(filePath: string): void {
   fs.mkdirSync(path.dirname(filePath), { recursive: true });
+}
+
+/**
+ * Learner-facing default narration via edge_tts. This matches the workspace's
+ * Doraemon voice path without depending on OpenAI quota. It uses python's
+ * edge_tts package and writes MP3 directly, then validates duration and size so
+ * a partial output never gets recorded as a valid lesson artifact.
+ */
+function synthesizeDoraemonEdge(script: string, outPath: string, voice: string): TtsResult {
+  ensureDir(outPath);
+  const textPath = path.join(
+    os.tmpdir(),
+    `avo-edge-tts-${createHash("sha256").update(script).digest("hex").slice(0, 16)}.txt`
+  );
+  fs.writeFileSync(textPath, script);
+
+  const py = spawnSync(
+    "python3",
+    [
+      "-",
+      textPath,
+      voice,
+      outPath,
+    ],
+    {
+      input: `
+import asyncio
+import sys
+import edge_tts
+
+text_path, voice, out_path = sys.argv[1], sys.argv[2], sys.argv[3]
+with open(text_path, "r", encoding="utf-8") as f:
+    text = f.read()
+
+async def run():
+    communicate = edge_tts.Communicate(text, voice, rate="+5%")
+    await communicate.save(out_path)
+
+asyncio.run(run())
+`,
+      encoding: "utf-8",
+      maxBuffer: 64 * 1024 * 1024,
+    }
+  );
+  try {
+    fs.unlinkSync(textPath);
+  } catch {
+    /* best effort */
+  }
+  if (py.status !== 0) {
+    throw new Error(
+      `edge_tts failed (status ${py.status}): ${py.stderr?.toString() ?? ""}`
+    );
+  }
+  if (!fs.existsSync(outPath) || fs.statSync(outPath).size < 1024) {
+    throw new Error("edge_tts produced an empty or suspiciously small audio file");
+  }
+
+  const durationSec = probeDurationSec(outPath);
+  const wordCount = script.trim().split(/\s+/).filter(Boolean).length;
+  const expectedMinSec = Math.max(3, wordCount * 0.15);
+  if (durationSec > 0 && durationSec < expectedMinSec) {
+    throw new Error(
+      `edge_tts output is too short (${durationSec}s for ${wordCount} words)`
+    );
+  }
+
+  return {
+    filePath: outPath,
+    provider: "doraemon-edge-tts",
+    voice,
+    durationSec,
+    contentHash: sha256File(outPath),
+    bytes: fs.statSync(outPath).size,
+  };
 }
 
 /**
@@ -184,10 +261,21 @@ export function espeakAvailable(): boolean {
   return r.status === 0;
 }
 
+/** Returns true when python edge_tts is importable on this host. */
+export function doraemonEdgeAvailable(): boolean {
+  const r = spawnSync(
+    "python3",
+    ["-c", "import edge_tts"],
+    { encoding: "utf-8" }
+  );
+  return r.status === 0;
+}
+
 /**
  * Synthesize `script` to a real MP3 at `opts.outPath`.
  *
- * Provider order: OpenAI TTS (if key + quota) → espeak-ng offline fallback.
+ * Provider order: Doraemon edge TTS → OpenAI TTS (if key + quota) →
+ * espeak-ng last-resort offline fallback.
  * Set `opts.provider` to force one provider (used by tests).
  */
 export async function synthesizeSpeech(
@@ -197,17 +285,31 @@ export async function synthesizeSpeech(
   const trimmed = (script || "").trim();
   if (!trimmed) throw new Error("synthesizeSpeech: empty script");
 
+  const wantDoraemon = opts.provider === "doraemon-edge-tts";
   const wantOpenAI = opts.provider === "openai-tts";
   const wantEspeak = opts.provider === "espeak-ng";
+  const doraemonVoice = opts.voice ?? "en-US-BrianNeural";
   const openaiVoice = opts.voice ?? "alloy";
   const espeakVoice = opts.voice ?? "en-us";
   const wpm = opts.espeakWpm ?? 165;
 
   // Forced provider (tests / explicit selection).
+  if (wantDoraemon) return synthesizeDoraemonEdge(trimmed, opts.outPath, doraemonVoice);
   if (wantEspeak) return synthesizeEspeak(trimmed, opts.outPath, espeakVoice, wpm);
   if (wantOpenAI) return synthesizeOpenAI(trimmed, opts.outPath, openaiVoice);
 
-  // Default cascade: prefer OpenAI, fall back to offline espeak-ng.
+  // Default cascade: use the learner-facing Doraemon voice first.
+  try {
+    return synthesizeDoraemonEdge(trimmed, opts.outPath, doraemonVoice);
+  } catch (err) {
+    // eslint-disable-next-line no-console
+    console.warn(
+      `[tts] Doraemon edge TTS unavailable, trying fallback providers: ${
+        (err as Error).message
+      }`
+    );
+  }
+
   if (process.env.OPENAI_API_KEY) {
     try {
       return await synthesizeOpenAI(trimmed, opts.outPath, openaiVoice);
