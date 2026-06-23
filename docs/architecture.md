@@ -126,6 +126,35 @@ Generated audio is a permanent runtime artifact, not a disposable cache. The tra
 
 Audio files must not be committed to git. Store them in runtime storage and keep database metadata such as provider, voice, duration, content hash, file path or object key, generated timestamp, and source lesson/script version.
 
+### Generation and serving (implementation)
+
+- **TTS adapter** — `src/lib/audio/tts.ts` is the single boundary for turning an
+  audio script into a real MP3. It tries providers in order: OpenAI TTS when
+  `OPENAI_API_KEY` is set and has quota, then an offline `espeak-ng` + `ffmpeg`
+  fallback (apt: `espeak-ng`) so a deployment always ends up with a real,
+  playable file even with no network/quota. It returns the real provider, voice,
+  duration (via `ffprobe`), and SHA-256 content hash.
+- **Recording** — `src/lib/audio/generate-lesson-audio.ts` reads a lesson's audio
+  activity script, synthesizes the file under `runtime_artifacts/audio/lesson_<id>_audio.mp3`,
+  and upserts the `generated_artifacts` row with the **real** hash/duration
+  (replacing any placeholder row). It is idempotent via `script_version`.
+- **Serving** — `src/app/runtime/[...path]/route.ts` serves files from
+  `runtime_artifacts/` with correct content types and HTTP **Range** support (so
+  the `<audio>` player can seek). It refuses any path that escapes the runtime
+  root. If a referenced audio file is missing it **self-heals**: it reads the
+  lesson's audio script and synthesizes the file on first request, so a freshly
+  deployed/seeded DB never serves a 404 for audio that has metadata.
+- **Durable creation paths** — `pnpm audio:generate [lessonId] [--force]`
+  generates audio for one/all lessons; `pnpm backfill:lessons` upgrades an
+  already-seeded (live) database in place — it seeds a throwaway reference DB
+  from the real seed (single source of truth, no content duplication), copies the
+  enriched lesson content into the live DB, backfills `next_lesson_diagnostics`,
+  and generates real audio. Run `audio:generate` after a fresh seed and
+  `backfill:lessons` to repair an existing demo DB.
+- The seed records audio metadata with `content_hash = NULL` (honest "not yet
+  generated") rather than a fake hash; the real hash is filled when the file is
+  generated.
+
 ## Mastery, Tags, and Progress Graphs
 
 Subjects should expose mastery tracking, tagging, and graphs over time.

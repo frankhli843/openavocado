@@ -9,7 +9,9 @@
     "lint": "next lint",
     "test": "vitest run",
     "test:watch": "vitest",
-    "db:migrate": "tsx scripts/migrate.ts"
+    "db:migrate": "tsx scripts/migrate.ts",
+    "audio:generate": "tsx scripts/generate-lesson-audio.ts",
+    "backfill:lessons": "tsx scripts/backfill-live-lessons.ts"
   },
   "dependencies": {
     "better-sqlite3": "^11.5.0",

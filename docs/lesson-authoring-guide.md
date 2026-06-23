@@ -33,7 +33,14 @@ enforced by `validateGeneratedContent`; the rest is a hard authoring rule.
   substantive `script` (enforced: at least ~20 chars, never a stub/placeholder),
   and the deployment's generator should produce the actual audio artifact at
   lesson-creation time and record it in `generated_artifacts` — not leave a
-  "audio coming soon" message. A lesson without real audio is not done.
+  "audio coming soon" message. A lesson without real audio is not done. The
+  implementation is `src/lib/audio/` (TTS adapter: OpenAI → offline `espeak-ng`
+  fallback) plus the `/runtime/[...path]` route, which **self-heals** a missing
+  file by synthesizing it from the recorded script on first request. Produce/repair
+  audio with `pnpm audio:generate` (fresh DB) or `pnpm backfill:lessons` (existing
+  DB). Verify a lesson's audio actually plays: `GET /runtime/<file_path>` must
+  return **HTTP 200** with an `audio/*` content type — a metadata row pointing at a
+  404 does **not** count as generated audio.
 - **First-class written teaching text** (`reading`), not a transcript dump.
 - **Multiple meaningful visual/interactive explorations when the lesson covers
   multiple concepts.** A multi-concept lesson (3+ goals or mastery targets) must

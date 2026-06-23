@@ -50,6 +50,9 @@ next-env.d.ts
 out/
 .pnpm-store/
 
-# Runtime audio/artifacts
+# Runtime audio/artifacts (generated MP3s live under runtime_artifacts/audio/).
+# Anchor the bare audio/ pattern to the repo root so it does NOT also ignore
+# source directories like src/lib/audio/. Generated audio is still covered by
+# runtime_artifacts/ above and *.mp3 elsewhere in this file.
 runtime_artifacts/
-audio/
+/audio/

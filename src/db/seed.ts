@@ -324,10 +324,14 @@ total = 1000
     ).run(learnerId, mathId, lesson1Id, "assessment_score", 60 + i * 8, d.toISOString());
   }
 
-  // Audio artifact metadata for lesson 1 (file itself not committed)
+  // Audio artifact metadata for lesson 1. The audio file lives in gitignored
+  // runtime storage and is produced by the durable generation path (`pnpm
+  // audio:generate`, or self-healed on first request by the /runtime route).
+  // content_hash is left NULL — the real SHA-256 is filled once the file is
+  // generated, rather than carrying a fake placeholder hash.
   db.prepare(
     `INSERT INTO generated_artifacts (lesson_id, activity_id, artifact_type, provider, voice, duration_sec, content_hash, file_path, source_script, generated_at)
-     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
+     VALUES (?, ?, ?, ?, ?, ?, NULL, ?, ?, ?)`
   ).run(
     lesson1Id,
     audioId,
@@ -335,7 +339,6 @@ total = 1000
     "openai-tts",
     "alloy",
     612.5,
-    "sha256:abc123def456",
     "runtime_artifacts/audio/lesson_1_audio.mp3",
     "Conditional probability is the probability of an event given that another event has occurred...",
     new Date().toISOString()
@@ -934,17 +937,20 @@ def preprocess_image(arr, target_size=224, mean=(0.485, 0.456, 0.406), std=(0.22
     })
   );
 
-  // Generated audio for lesson 4 — durable metadata available at lesson creation
-  // (the audio file itself lives in gitignored runtime storage; only metadata +
-  // source script are recorded here, like lesson 1).
+  // Generated audio metadata for lesson 4 — durable record available at lesson
+  // creation. The audio file lives in gitignored runtime storage and is produced
+  // by the durable generation path (`pnpm audio:generate`, or self-healed on
+  // first request by the /runtime route, which reads the full script from the
+  // audio activity above). content_hash is left NULL until the real file is
+  // generated, rather than carrying a fake placeholder hash.
   db.prepare(
     `INSERT INTO generated_artifacts (lesson_id, activity_id, artifact_type, provider, voice, duration_sec, content_hash, file_path, source_script, generated_at)
      VALUES (
        ?,
        (SELECT id FROM lesson_activities WHERE lesson_id = ? AND activity_type = 'audio' ORDER BY sequence_order ASC LIMIT 1),
-       'audio', 'openai-tts', 'alloy', 600.0, 'sha256:gdm4audio0001',
+       'audio', 'openai-tts', 'alloy', 600.0, NULL,
        'runtime_artifacts/audio/lesson_4_audio.mp3',
-       'A vision model does not see pixels the way you do... (full preprocessing-pipeline walkthrough, tokenization + Gemma contract previewed)',
+       'A vision model does not see pixels the way you do... (full preprocessing-pipeline walkthrough, tokenization + Gemma contract previewed at a high level and explored in a later lesson)',
        datetime('now')
      )`
   ).run(gdmLesson1Id, gdmLesson1Id);
