@@ -23,6 +23,7 @@ import {
   validateMediaContent,
   validatePracticeCodeContent,
   validateNextLessonDiagnostics,
+  validateLessonPartContent,
 } from "@/lib/lesson-content/schema";
 
 /** Minimum audio script length to count as a real, generation-ready script. */
@@ -66,15 +67,18 @@ export const LESSON_QUALITY_BAR_PROMPT = [
   "- NO UNDOCUMENTED ASSUMPTIONS: do not assume domain facts are true unless they are already documented in AvocadoCore context, present in the local SQLite evidence, or verified and recorded in the lesson/task notes.",
   "- DYNAMIC, BESPOKE AUTHORING: do not fill a reusable template. Choose the lesson scope, metaphor, examples, visualizations, practice, quiz, and video because they fit this learner, this topic, and the DB evidence.",
   "- EXAMPLES + METAPHORS: use fitting metaphors and simple examples to make each major step or concept understandable. Multi-step lessons should give each major step its own plain-language handle, metaphor, and easy examples where useful.",
-  "- Audio must be a real walkthrough, not a short caption or table of contents. It must explain the why, connect the steps, and include at least one concrete worked example in plain language.",
+  "- Audio must be a real walkthrough, not a short caption or table of contents. Normal lessons should target at least 10 minutes of substantive Doraemon-voice audio, longer when needed; go shorter only for explicitly short reference/diagnostic content and document why. It must explain the why, connect the steps, and include concrete worked examples in plain language.",
   "- First-class WRITTEN teaching text the learner can study without the audio (headings, a definition, a worked example, a summary) — not a transcript dump.",
   "- MULTIPLE meaningful visual/interactive explorations when the lesson covers multiple concepts. A multi-concept lesson (3+ goals/mastery targets) needs at least TWO distinct visual perspectives; a multi-step lesson should prefer step-specific visuals. One thin widget for many concepts is rejected.",
+  "- LESSON PARTS: break normal lessons into collapsed `lesson_part` activities. Each part must contain written explanation, a per-part audio script, an interactive visualization, and a 10-question MC reinforcement quiz. The UI requires the learner to pass 4 correct answers in a row, then click Mark Part Done to add the checkmark.",
   "- Interactives must deepen understanding, not merely display graphs. Each widget needs a learning objective, learner-controlled variable, visible consequence/failure mode, and written takeaway. Prefer before/after and 'what breaks if...' interactions.",
+  "- AUDIO FOR EVERY VISUALIZATION: every visualization/interactive must have a spoken explanation clip or per-part audio script that explains what to change, what to notice, and what the visual proves. Do not leave visuals as silent graphs.",
   "- YouTube media should be included when a highly relevant video is found. Do NOT include long generic videos as filler. If media is used, it must be short or timestamped to the exact relevant segment, with a reason that tells the learner what to watch for; otherwise omit media.",
   "- PRACTICE/CODE the learner submits: scaffolded, with progressive hints and public + hidden tests, and never an exposed answer.",
   '- ADAPTIVE ASSESSMENT IS REQUIRED for normal generated lessons: include an MC quiz where every question carries a required difficulty (easy|medium|hard) and the virtual "I don\'t know" option, plus freeform questions. Omit the quiz only for explicitly non-assessed reference/diagnostic content and document why.',
   "- SQLITE MASTERY EVIDENCE: lesson generation must use and update structured local DB evidence where appropriate: assessment_results, attempts, progress_points, mastery_signals, generated_artifacts, and next_lesson_jobs. Do not hide durable mastery state in prose.",
-  "- END-OF-LESSON next-lesson diagnostics: what felt unclear, what to cover next, confidence/effort, and a practical objective.",
+  "- CONTINUOUS MODEL NOTES: maintain a concise subject workpad for long-term planning. Compress completed history into brief durable notes and keep next steps, open questions, weak concepts, and planned evidence checks more detailed. Refactor stale detail out instead of appending endless logs.",
+  "- END-OF-LESSON 'help shape your next lesson' diagnostics must be bespoke to the lesson just completed. Ask genuine planning questions that reveal what still feels unclear, what direction would help most, and what the learner wants next; do not reuse generic boilerplate unless no lesson-specific question would help.",
   "- EXPLICIT preview / deeper-later wording: if a concept is intentionally introduced only at a high level, the audio script AND the written text must say so — name it a preview and state it will be explored in more detail in a later lesson. Never leave a glossed-over idea looking fully taught.",
   "The machine-checked gate is validateGeneratedContent (src/lib/lesson-generator/contract.ts); the full standard is docs/lesson-authoring-guide.md. A lesson that fails validateGeneratedContent must be fixed, not shipped.",
   "- KNOWLEDGE GRAPH ORIENTATION: every lesson must include a knowledge_graph_data field (KnowledgeGraphData) showing where this lesson sits in the curriculum — which concepts are covered, which are previewed, and which come later. Validated by validateKnowledgeGraphData.",
@@ -152,7 +156,8 @@ export function buildGeneratorContext(params: {
 
 /**
  * Validates that generated content satisfies the lesson structure requirements.
- * Every lesson must have: audio, interactive, practice_code, assessment (core).
+ * Every lesson must have: audio, lesson_part/reading/interactive teaching,
+ * practice_code, assessment (core).
  */
 export function validateGeneratedContent(
   content: GeneratedLessonContent
@@ -166,13 +171,10 @@ export function validateGeneratedContent(
 
   // Every normal lesson must teach in writing as well as audio, so `reading`
   // joins the required core sections.
-  const coreRequired: ActivityType[] = [
-    "audio",
-    "reading",
-    "interactive",
-    "practice_code",
-    "assessment",
-  ];
+  const usesLessonParts = content.activities.some((a) => a.activity_type === "lesson_part");
+  const coreRequired: ActivityType[] = usesLessonParts
+    ? ["audio", "lesson_part", "practice_code", "assessment"]
+    : ["audio", "reading", "interactive", "practice_code", "assessment"];
   const coreActivities = content.activities
     .filter((a) => a.is_core)
     .map((a) => a.activity_type);
@@ -207,11 +209,13 @@ export function validateGeneratedContent(
   // declarative widget that drives several charts — so a broad lesson is never a
   // single thin widget. (Single-concept lessons are exempt.)
   const interactiveActivities = content.activities.filter((a) => a.activity_type === "interactive");
+  const lessonPartActivities = content.activities.filter((a) => a.activity_type === "lesson_part");
   let perspectives = interactiveActivities.length;
   for (const a of interactiveActivities) {
     const charts = (a.content as Record<string, unknown>)?.charts;
     if (Array.isArray(charts) && charts.length >= 2) perspectives += charts.length - 1;
   }
+  perspectives += lessonPartActivities.length;
   const conceptCount = Math.max(
     Array.isArray(content.goals) ? content.goals.length : 0,
     Array.isArray(content.mastery_targets) ? content.mastery_targets.length : 0
@@ -239,6 +243,17 @@ export function validateGeneratedContent(
       const result = validateWidgetSpec(activity.content, knownWidgetTypes);
       if (!result.valid) {
         for (const e of result.errors) errors.push(`interactive ${label}: ${e}`);
+      }
+    }
+
+    if (activity.activity_type === "lesson_part") {
+      const result = validateLessonPartContent(
+        activity.content,
+        knownWidgetTypes,
+        validateWidgetSpec
+      );
+      if (!result.valid) {
+        for (const e of result.errors) errors.push(`lesson_part ${label}: ${e}`);
       }
     }
 

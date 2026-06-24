@@ -13,7 +13,7 @@ import { createHash } from "crypto";
 import fs from "fs";
 import path from "path";
 
-import { lessonAudioRelPath } from "./runtime-storage";
+import { activityAudioRelPath, lessonAudioRelPath } from "./runtime-storage";
 import { synthesizeSpeech, type TtsProvider } from "./tts";
 
 export interface GenerateResult {
@@ -28,6 +28,8 @@ export interface GenerateResult {
 
 interface AudioActivityRow {
   id: number;
+  activity_type: string;
+  sequence_order: number;
   content: string | null;
 }
 
@@ -49,26 +51,47 @@ export async function generateLessonAudio(
   lessonId: number,
   opts: { force?: boolean; provider?: TtsProvider } = {}
 ): Promise<GenerateResult> {
-  const audio = db
+  const activities = db
     .prepare(
-      `SELECT id, content FROM lesson_activities
-       WHERE lesson_id = ? AND activity_type = 'audio'
-       ORDER BY sequence_order ASC LIMIT 1`
+      `SELECT id, activity_type, sequence_order, content FROM lesson_activities
+       WHERE lesson_id = ? AND activity_type IN ('audio', 'lesson_part')
+       ORDER BY CASE activity_type WHEN 'audio' THEN 0 ELSE 1 END, sequence_order ASC`
     )
-    .get(lessonId) as AudioActivityRow | undefined;
+    .all(lessonId) as AudioActivityRow[];
 
-  if (!audio) return { lessonId, status: "no-audio-activity" };
+  if (activities.length === 0) return { lessonId, status: "no-audio-activity" };
 
+  let primary: GenerateResult | null = null;
+  for (const activity of activities) {
+    const result = await generateActivityAudio(db, lessonId, activity, opts);
+    if (!primary || activity.activity_type === "audio") primary = result;
+  }
+  return primary ?? { lessonId, status: "no-audio-activity" };
+}
+
+async function generateActivityAudio(
+  db: Database.Database,
+  lessonId: number,
+  activity: AudioActivityRow,
+  opts: { force?: boolean; provider?: TtsProvider } = {}
+): Promise<GenerateResult> {
   let script = "";
   try {
-    const parsed = audio.content ? JSON.parse(audio.content) : {};
-    script = (parsed.script ?? "").toString().trim();
+    const parsed = activity.content ? JSON.parse(activity.content) : {};
+    script = (
+      activity.activity_type === "lesson_part"
+        ? parsed.audio?.script ?? ""
+        : parsed.script ?? ""
+    ).toString().trim();
   } catch {
     script = "";
   }
   if (!script) return { lessonId, status: "empty-script" };
 
-  const relPath = lessonAudioRelPath(lessonId);
+  const relPath =
+    activity.activity_type === "audio"
+      ? lessonAudioRelPath(lessonId)
+      : activityAudioRelPath(lessonId, activity.id);
   const absPath = path.join(process.cwd(), relPath);
   const version = scriptVersion(script);
 
@@ -77,10 +100,10 @@ export async function generateLessonAudio(
     const existing = db
       .prepare(
         `SELECT script_version FROM generated_artifacts
-         WHERE lesson_id = ? AND artifact_type = 'audio'
+         WHERE lesson_id = ? AND activity_id = ? AND artifact_type = 'audio'
          ORDER BY generated_at DESC LIMIT 1`
       )
-      .get(lessonId) as { script_version: string | null } | undefined;
+      .get(lessonId, activity.id) as { script_version: string | null } | undefined;
     if (existing && existing.script_version === version) {
       return {
         lessonId,
@@ -102,8 +125,8 @@ export async function generateLessonAudio(
   // never accumulate stale placeholder metadata.
   const tx = db.transaction(() => {
     db.prepare(
-      `DELETE FROM generated_artifacts WHERE lesson_id = ? AND artifact_type = 'audio'`
-    ).run(lessonId);
+      `DELETE FROM generated_artifacts WHERE lesson_id = ? AND activity_id = ? AND artifact_type = 'audio'`
+    ).run(lessonId, activity.id);
     db.prepare(
       `INSERT INTO generated_artifacts
          (lesson_id, activity_id, artifact_type, provider, voice, duration_sec,
@@ -111,7 +134,7 @@ export async function generateLessonAudio(
        VALUES (?, ?, 'audio', ?, ?, ?, ?, ?, ?, ?, datetime('now'))`
     ).run(
       lessonId,
-      audio.id,
+      activity.id,
       result.provider,
       result.voice,
       result.durationSec,

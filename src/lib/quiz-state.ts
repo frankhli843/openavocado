@@ -6,8 +6,9 @@
  * answered incorrectly. A retry item replaces the missed concept obligation;
  * the original question is never marked done until a retry is answered correctly.
  *
- * Pass rule: exactly pass_threshold (default 6) distinct correct answers.
- * A concept is counted only once even if multiple retries were needed.
+ * Pass rule: pass_threshold (default 6) distinct correct answers, or an
+ * optional consecutive_correct_required streak. A concept is counted only once
+ * even if multiple retries were needed.
  *
  * This module contains only pure logic — no React, no side effects.
  * It can be imported by both the component and unit tests.
@@ -105,7 +106,11 @@ export interface QuizSessionState {
   correct_count: number;
   /** Pass threshold. Copied from content spec at session start. */
   pass_threshold: number;
-  /** True when correct_count >= pass_threshold and all retry obligations are settled. */
+  /** Optional streak-based pass rule, used by lesson-part reinforcement checks. */
+  consecutive_correct_required?: number;
+  /** Current consecutive correct-answer streak. Wrong and IDK reset this to 0. */
+  current_streak: number;
+  /** True when the pass rule is met and all retry obligations are settled. */
   passed: boolean;
   /** Feedback currently shown (null when not showing). */
   feedback: QuizFeedback | null;
@@ -132,7 +137,8 @@ export interface QuizSessionState {
  */
 export function initQuizSession(
   questions: MultipleChoiceQuestion[],
-  pass_threshold: number = 6
+  pass_threshold: number = 6,
+  consecutive_correct_required?: number
 ): QuizSessionState {
   return {
     current_index: 0,
@@ -140,6 +146,8 @@ export function initQuizSession(
     correct_ids: [],
     correct_count: 0,
     pass_threshold,
+    consecutive_correct_required,
+    current_streak: 0,
     passed: false,
     feedback: null,
     retry_questions: {},
@@ -188,8 +196,10 @@ export function gradeAnswer(
   };
 
   let { correct_ids, correct_count, queue } = state;
+  let current_streak = state.current_streak ?? 0;
 
   if (correct) {
+    current_streak += 1;
     // Mark the original concept as correctly answered (idempotent).
     const origin_id = item.kind === "original" ? item.question_id : item.origin_question_id;
     if (!correct_ids.includes(origin_id)) {
@@ -197,6 +207,7 @@ export function gradeAnswer(
       correct_count = correct_ids.length;
     }
   } else {
+    current_streak = 0;
     // Schedule a retry. The retry goes to the position just past the remaining
     // items in the current queue (i.e., after all still-pending items), so the
     // learner gets through the rest of the lesson before seeing it again.
@@ -212,18 +223,19 @@ export function gradeAnswer(
     };
   }
 
-  // Check pass condition: correct_count >= threshold and no pending retry obligations.
+  // Check pass condition: configured threshold/streak and no pending retry obligations.
   const unresolvedRetries = queue
     .slice(state.current_index + 1)
     .filter((it) => it.kind === "retry");
   const passed =
-    correct_count >= state.pass_threshold && unresolvedRetries.length === 0 && correct;
+    isPassRuleMet({ ...state, correct_count, current_streak }) && unresolvedRetries.length === 0 && correct;
 
   return {
     ...state,
     queue,
     correct_ids,
     correct_count,
+    current_streak,
     passed,
     feedback,
   };
@@ -238,8 +250,8 @@ export function advanceToNext(state: QuizSessionState): QuizSessionState {
   const next_index = state.current_index + 1;
   const done = next_index >= state.queue.length;
 
-  // Re-evaluate pass: correct_count >= threshold and queue is exhausted.
-  const passed = state.correct_count >= state.pass_threshold && done;
+  // Re-evaluate pass: threshold/streak met and queue is exhausted.
+  const passed = isPassRuleMet(state) && done;
 
   return {
     ...state,
@@ -395,7 +407,14 @@ export function resolveItemQuestion(
  */
 export function checkPassedAfterFeedback(state: QuizSessionState): boolean {
   if (!state.feedback?.correct) return false;
-  return state.correct_count >= state.pass_threshold && !hasUnresolvedRetries(state);
+  return isPassRuleMet(state) && !hasUnresolvedRetries(state);
+}
+
+function isPassRuleMet(state: QuizSessionState): boolean {
+  if (state.consecutive_correct_required && state.consecutive_correct_required > 0) {
+    return (state.current_streak ?? 0) >= state.consecutive_correct_required;
+  }
+  return state.correct_count >= state.pass_threshold;
 }
 
 /**
@@ -433,6 +452,9 @@ export function deserializeQuizState(raw: string | null | undefined): QuizSessio
       typeof parsed.correct_count !== "number"
     ) {
       return null;
+    }
+    if (typeof parsed.current_streak !== "number") {
+      parsed.current_streak = 0;
     }
     return parsed;
   } catch {

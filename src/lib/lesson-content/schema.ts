@@ -417,6 +417,12 @@ export interface MultipleChoiceQuizContent {
    */
   pass_threshold?: number;
   /**
+   * Optional streak-based pass rule. When present, the learner must answer this
+   * many questions correctly in a row, while retry obligations still apply.
+   * Used by lesson-part reinforcement checks.
+   */
+  consecutive_correct_required?: number;
+  /**
    * Whether to render an "I don't know" option on every question. Defaults to
    * true and should stay true — IDK is a product invariant treated as an
    * incorrect-but-high-signal uncertainty answer. The option is a virtual choice
@@ -454,6 +460,21 @@ export function validateMultipleChoiceQuizContent(
   if (c.pass_threshold !== undefined) {
     if (typeof c.pass_threshold !== "number" || !Number.isInteger(c.pass_threshold) || c.pass_threshold < 1) {
       errors.push("quiz pass_threshold must be a positive integer");
+    }
+  }
+
+  if (c.consecutive_correct_required !== undefined) {
+    if (
+      typeof c.consecutive_correct_required !== "number" ||
+      !Number.isInteger(c.consecutive_correct_required) ||
+      c.consecutive_correct_required < 1
+    ) {
+      errors.push("quiz consecutive_correct_required must be a positive integer");
+    } else if (
+      Array.isArray(c.questions) &&
+      c.consecutive_correct_required > c.questions.length
+    ) {
+      errors.push("quiz consecutive_correct_required cannot exceed questions.length");
     }
   }
 
@@ -557,6 +578,79 @@ export interface FreeformQuestion {
 export interface AssessmentContent {
   questions: FreeformQuestion[];
   quiz?: MultipleChoiceQuizContent;
+}
+
+// ─── Lesson parts ────────────────────────────────────────────────────────────
+
+export interface LessonPartAudioContent {
+  script: string;
+  duration_hint?: number;
+}
+
+export interface LessonPartContent {
+  /** Stable id within the lesson, for authoring notes and future analytics. */
+  part_id?: string;
+  /** Written explanation for this part. */
+  reading: ReadingContent;
+  /** Spoken explanation for this part, used as the per-part audio script. */
+  audio: LessonPartAudioContent;
+  /** Interactive exploration for this part. */
+  interactive: unknown;
+  /** Reinforcement quiz for this part. */
+  quiz: MultipleChoiceQuizContent;
+}
+
+/**
+ * Validate a collapsed lesson-part activity. A lesson part bundles the written
+ * teaching, audio script, interactive exploration, and 10-question MC
+ * reinforcement check for one step/concept.
+ */
+export function validateLessonPartContent(
+  content: unknown,
+  knownWidgetTypes?: string[],
+  widgetValidator?: (spec: unknown, knownTypes?: string[]) => { valid: boolean; errors: string[] }
+): { valid: boolean; errors: string[] } {
+  const errors: string[] = [];
+  if (!content || typeof content !== "object") {
+    return { valid: false, errors: ["lesson_part content must be an object"] };
+  }
+  const c = content as Record<string, unknown>;
+
+  const reading = validateReadingContent(c.reading);
+  for (const e of reading.errors) errors.push(`reading: ${e}`);
+
+  const audio = c.audio as Record<string, unknown> | undefined;
+  if (!audio || typeof audio !== "object") {
+    errors.push("audio: lesson_part requires an audio object");
+  } else if (typeof audio.script !== "string" || audio.script.trim().length < 200) {
+    errors.push("audio: lesson_part audio.script must be a substantive per-part script");
+  }
+
+  if (widgetValidator) {
+    const widget = widgetValidator(c.interactive, knownWidgetTypes);
+    for (const e of widget.errors) errors.push(`interactive: ${e}`);
+  } else if (!c.interactive || typeof c.interactive !== "object") {
+    errors.push("interactive: lesson_part requires an interactive widget spec");
+  }
+
+  const quiz = validateMultipleChoiceQuizContent(c.quiz);
+  for (const e of quiz.errors) errors.push(`quiz: ${e}`);
+  const quizObj = c.quiz as Record<string, unknown> | undefined;
+  const questions = Array.isArray(quizObj?.questions) ? quizObj.questions : [];
+  if (questions.length !== 10) {
+    errors.push("quiz: each lesson_part requires exactly 10 multiple-choice questions");
+  }
+  if (quizObj?.pass_threshold !== 4) {
+    errors.push("quiz: each lesson_part requires pass_threshold: 4");
+  }
+  if (quizObj?.consecutive_correct_required !== 4) {
+    errors.push("quiz: each lesson_part requires consecutive_correct_required: 4");
+  }
+  if (quizObj?.idk_option === false) {
+    errors.push('quiz: idk_option must not be false');
+  }
+
+  return { valid: errors.length === 0, errors };
 }
 
 /**

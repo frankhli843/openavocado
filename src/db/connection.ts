@@ -207,7 +207,7 @@ function migrateActivityTypeCheck(db: Database.Database): void {
   const row = db
     .prepare("SELECT sql FROM sqlite_master WHERE type='table' AND name='lesson_activities'")
     .get() as { sql: string } | undefined;
-  if (!row || /'media'/.test(row.sql)) return; // already allows 'media'
+  if (!row || /'lesson_part'/.test(row.sql)) return; // already allows lesson parts
 
   const fkWasOn = (db.pragma("foreign_keys", { simple: true }) as number) === 1;
   if (fkWasOn) db.pragma("foreign_keys = OFF");
@@ -218,7 +218,7 @@ function migrateActivityTypeCheck(db: Database.Database): void {
           id              INTEGER PRIMARY KEY AUTOINCREMENT,
           lesson_id       INTEGER NOT NULL REFERENCES lessons(id) ON DELETE CASCADE,
           activity_type   TEXT    NOT NULL CHECK (activity_type IN (
-                            'audio', 'reading', 'media', 'interactive',
+                            'audio', 'reading', 'media', 'lesson_part', 'interactive',
                             'practice_code', 'assessment',
                             'flashcards', 'case_study', 'diagram',
                             'project', 'debate', 'reference'

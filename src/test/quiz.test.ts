@@ -212,6 +212,36 @@ describe("Pass condition", () => {
     expect(session.passed).toBe(true);
   });
 
+  it("supports lesson-part 4-in-a-row pass rules", () => {
+    const qs = makeQuestions(5);
+    let session = initQuizSession(qs, 4, 4);
+    const counter = { n: 0 };
+
+    for (let i = 0; i < 3; i++) {
+      session = gradeAnswer(session, { kind: "original", question_id: qs[i].id }, 0, qs, counter);
+      expect(session.current_streak).toBe(i + 1);
+      expect(session.passed).toBe(false);
+      session = advanceToNext(session);
+    }
+
+    session = gradeAnswer(session, { kind: "original", question_id: qs[3].id }, 0, qs, counter);
+    expect(session.current_streak).toBe(4);
+    expect(checkPassedAfterFeedback(session)).toBe(true);
+  });
+
+  it("resets lesson-part streak on wrong answers", () => {
+    const qs = makeQuestions(5);
+    let session = initQuizSession(qs, 4, 4);
+    const counter = { n: 0 };
+
+    session = gradeAnswer(session, { kind: "original", question_id: qs[0].id }, 0, qs, counter);
+    session = advanceToNext(session);
+    session = gradeAnswer(session, { kind: "original", question_id: qs[1].id }, 1, qs, counter);
+
+    expect(session.current_streak).toBe(0);
+    expect(session.passed).toBe(false);
+  });
+
   it("does not pass when threshold not yet met", () => {
     const qs = makeQuestions(8);
     let session = initQuizSession(qs, 6);

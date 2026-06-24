@@ -8,6 +8,7 @@ import {
   validateReadingContent,
   validateMediaContent,
   validatePracticeCodeContent,
+  validateLessonPartContent,
   extractYouTubeId,
   resolveYouTubeId,
   buildYouTubeEmbedUrl,
@@ -202,6 +203,50 @@ function richLesson(overrides: Partial<GeneratedLessonContent["activities"][numb
   };
 }
 
+function partQuestions() {
+  return Array.from({ length: 10 }, (_, i) => ({
+    id: `part-q${i + 1}`,
+    concept: "part-concept",
+    difficulty: (i < 3 ? "easy" : i < 7 ? "medium" : "hard") as "easy" | "medium" | "hard",
+    question: `Question ${i + 1}?`,
+    choices: ["Correct", "Wrong A", "Wrong B", "Wrong C"],
+    correct_index: 0,
+    explanation: "The first option is correct for this test fixture.",
+    misconception_target: "fixture misconception",
+  }));
+}
+
+function validLessonPartContent() {
+  return {
+    reading: {
+      intro: "Part intro",
+      blocks: [
+        { type: "paragraph", text: "A real explanation of this part." },
+        { type: "definition", term: "Part", definition: "One focused lesson segment." },
+      ],
+      summary: "Part summary",
+    },
+    audio: {
+      script:
+        "This is a substantive audio script for the visualization. It explains what the learner should change, what they should notice, what failure mode the visualization reveals, and why the visual matters for the concept being taught.",
+      duration_hint: 90,
+    },
+    interactive: {
+      schema_version: "1.0",
+      widget_type: "declarative",
+      instructions: "Move the control and watch the result.",
+      controls: [{ type: "slider", id: "x", label: "X", min: 0, max: 10, step: 1, default: 5 }],
+      outputs: [{ id: "y", label: "Y", formula: "x * 2" }],
+    },
+    quiz: {
+      pass_threshold: 4,
+      consecutive_correct_required: 4,
+      idk_option: true,
+      questions: partQuestions(),
+    },
+  };
+}
+
 describe("validateGeneratedContent — richer lessons", () => {
   it("passes a complete lesson with audio, reading, interactive, code, assessment", () => {
     expect(validateGeneratedContent(richLesson()).valid).toBe(true);
@@ -273,6 +318,37 @@ describe("validateGeneratedContent — richer lessons", () => {
       },
     });
     expect(validateGeneratedContent(lesson).valid).toBe(true);
+  });
+
+  it("passes a lesson-part based lesson and validates the part contract", () => {
+    const lesson = richLesson();
+    lesson.activities = lesson.activities.filter(
+      (a) => a.activity_type !== "reading" && a.activity_type !== "interactive"
+    );
+    lesson.activities.push({
+      activity_type: "lesson_part",
+      is_core: true,
+      sequence_order: 2,
+      title: "Part",
+      content: validLessonPartContent(),
+    });
+
+    const direct = validateLessonPartContent(
+      validLessonPartContent(),
+      ["declarative"],
+      validateWidgetSpec
+    );
+    expect(direct.valid).toBe(true);
+    expect(validateGeneratedContent(lesson).valid).toBe(true);
+  });
+
+  it("rejects lesson parts without 10 questions and 4-in-a-row rule", () => {
+    const content = validLessonPartContent();
+    content.quiz.questions = content.quiz.questions.slice(0, 9);
+    content.quiz.consecutive_correct_required = 3;
+    const r = validateLessonPartContent(content, ["declarative"], validateWidgetSpec);
+    expect(r.valid).toBe(false);
+    expect(r.errors.join(" ")).toMatch(/10 multiple-choice|consecutive_correct_required/);
   });
 
   it("validates next_lesson_diagnostics when provided", () => {

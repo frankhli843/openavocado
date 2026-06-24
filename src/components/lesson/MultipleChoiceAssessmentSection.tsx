@@ -118,7 +118,8 @@ interface QuizEngineProps {
 
 function QuizEngine({ activity, quiz, savedQuizState, onStateChange, onPassedChange, assessContext }: QuizEngineProps) {
   const questions: MultipleChoiceQuestion[] = quiz.questions;
-  const pass_threshold = quiz.pass_threshold ?? 6;
+  const consecutive_required = quiz.consecutive_correct_required;
+  const pass_threshold = quiz.pass_threshold ?? consecutive_required ?? 6;
   const retryCounterRef = useRef<{ n: number }>({ n: 0 });
 
   const [session, setSession] = useState<QuizSessionState>(() => {
@@ -138,7 +139,7 @@ function QuizEngine({ activity, quiz, savedQuizState, onStateChange, onPassedCha
       onPassedChange(restored.passed);
       return restored;
     }
-    const fresh = initQuizSession(questions, pass_threshold);
+    const fresh = initQuizSession(questions, pass_threshold, consecutive_required);
     return fresh;
   });
 
@@ -259,7 +260,11 @@ function QuizEngine({ activity, quiz, savedQuizState, onStateChange, onPassedCha
 
   // ─── Passed screen ────────────────────────────────────────────────────────
 
-  if (session.passed || (isExhausted && session.correct_count >= pass_threshold)) {
+  const thresholdMet = consecutive_required
+    ? (session.current_streak ?? 0) >= consecutive_required
+    : session.correct_count >= pass_threshold;
+
+  if (session.passed || (isExhausted && thresholdMet)) {
     return (
       <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
         <QuizHeader activity={activity} />
@@ -270,12 +275,19 @@ function QuizEngine({ activity, quiz, savedQuizState, onStateChange, onPassedCha
           <div>
             <h3 className="text-lg font-bold text-gray-900">Assessment passed</h3>
             <p className="text-sm text-gray-500 mt-1">
-              You answered {session.correct_count} questions correctly.
+              {consecutive_required
+                ? `You answered ${consecutive_required} questions correctly in a row.`
+                : `You answered ${session.correct_count} questions correctly.`}
               You can now mark the lesson complete.
             </p>
           </div>
           <div className="flex justify-center">
-            <ProgressBar correct={session.correct_count} threshold={pass_threshold} />
+            <ProgressBar
+              correct={session.correct_count}
+              threshold={pass_threshold}
+              streak={session.current_streak ?? 0}
+              consecutiveRequired={consecutive_required}
+            />
           </div>
           <p className="text-xs text-gray-400 mt-2">
             Progress is saved. Use &ldquo;Mark Complete&rdquo; when you&apos;re done with the whole lesson.
@@ -302,6 +314,15 @@ function QuizEngine({ activity, quiz, savedQuizState, onStateChange, onPassedCha
 
   const { question, choices, correct_index, explanation } = currentQuestion;
   const feedback = session.feedback;
+  const nextWouldPass = consecutive_required
+    ? (session.current_streak ?? 0) >= consecutive_required
+    : session.correct_count >= pass_threshold;
+  const nextButtonLabel =
+    session.current_index + 1 >= session.queue.length
+      ? nextWouldPass
+        ? "See results"
+        : "Finish"
+      : "Next question";
 
   // ─── Main quiz card ───────────────────────────────────────────────────────
 
@@ -312,7 +333,12 @@ function QuizEngine({ activity, quiz, savedQuizState, onStateChange, onPassedCha
       <div className="p-6 space-y-5">
         {/* Progress */}
         <div className="flex items-center justify-between">
-          <ProgressBar correct={session.correct_count} threshold={pass_threshold} />
+          <ProgressBar
+            correct={session.correct_count}
+            threshold={pass_threshold}
+            streak={session.current_streak ?? 0}
+            consecutiveRequired={consecutive_required}
+          />
           <span className="text-xs text-gray-400 ml-4 whitespace-nowrap">
             Question {session.current_index + 1} of {session.queue.length}
             {session.queue.length > questions.length ? ` (${session.queue.length - questions.length} retry)` : ""}
@@ -473,11 +499,7 @@ function QuizEngine({ activity, quiz, savedQuizState, onStateChange, onPassedCha
                   : "bg-blue-600 text-white hover:bg-blue-700"
               }`}
             >
-              {session.current_index + 1 >= session.queue.length
-                ? session.correct_count + (feedback.correct ? 1 : 0) >= pass_threshold
-                  ? "See results"
-                  : "Finish"
-                : "Next question"}
+              {nextButtonLabel}
             </button>
           </div>
         )}
@@ -502,8 +524,20 @@ function QuizHeader({ activity }: { activity: LessonActivity }) {
   );
 }
 
-function ProgressBar({ correct, threshold }: { correct: number; threshold: number }) {
-  const pct = Math.min(100, Math.round((correct / threshold) * 100));
+function ProgressBar({
+  correct,
+  threshold,
+  streak,
+  consecutiveRequired,
+}: {
+  correct: number;
+  threshold: number;
+  streak?: number;
+  consecutiveRequired?: number;
+}) {
+  const activeValue = consecutiveRequired ? streak ?? 0 : correct;
+  const activeThreshold = consecutiveRequired ?? threshold;
+  const pct = Math.min(100, Math.round((activeValue / activeThreshold) * 100));
   return (
     <div className="flex items-center gap-2 flex-1 min-w-0">
       <div className="flex-1 min-w-0 bg-gray-100 rounded-full h-2 overflow-hidden">
@@ -513,7 +547,9 @@ function ProgressBar({ correct, threshold }: { correct: number; threshold: numbe
         />
       </div>
       <span className="text-xs font-medium text-gray-600 whitespace-nowrap shrink-0">
-        {correct} / {threshold} correct
+        {consecutiveRequired
+          ? `${streak ?? 0} / ${consecutiveRequired} in a row`
+          : `${correct} / ${threshold} correct`}
       </span>
     </div>
   );

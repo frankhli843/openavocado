@@ -27,6 +27,8 @@ export type {
   PracticeCodeContent,
   MultipleChoiceQuestion,
   MultipleChoiceQuizContent,
+  LessonPartAudioContent,
+  LessonPartContent,
 } from "@/lib/lesson-content/schema";
 
 
@@ -38,6 +40,7 @@ export type ActivityType =
   | "audio"
   | "reading"
   | "media"
+  | "lesson_part"
   | "interactive"
   | "practice_code"
   | "assessment"

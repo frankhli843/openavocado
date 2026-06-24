@@ -101,7 +101,7 @@ CREATE TABLE IF NOT EXISTS lesson_activities (
   id              INTEGER PRIMARY KEY AUTOINCREMENT,
   lesson_id       INTEGER NOT NULL REFERENCES lessons(id) ON DELETE CASCADE,
   activity_type   TEXT    NOT NULL CHECK (activity_type IN (
-                    'audio', 'reading', 'media', 'interactive',
+                    'audio', 'reading', 'media', 'lesson_part', 'interactive',
                     'practice_code', 'assessment',
                     'flashcards', 'case_study', 'diagram',
                     'project', 'debate', 'reference'

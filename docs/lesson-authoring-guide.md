@@ -66,10 +66,20 @@ enforced by `validateGeneratedContent`; the rest is a hard authoring rule.
   would clarify what the step changes or what breaks if skipped.
 - **Audio is a real walkthrough, not a short caption.** The spoken script must be
   detailed enough for the learner to understand the high-level picture, the why,
-  and at least one concrete worked example before using the interactives. It
-  should explicitly bridge concepts in plain language. If it sounds like a quick
-  summary or table of contents, regenerate it.
+  and concrete worked examples before using the interactives. Normal lessons
+  should target at least 10 minutes of substantive Doraemon-voice audio, and may
+  be longer when the topic needs it. Go shorter only for explicitly short
+  reference/diagnostic content and document why. The audio should explicitly
+  bridge concepts in plain language. If it sounds like a quick summary or table
+  of contents, regenerate it.
 - **First-class written teaching text** (`reading`), not a transcript dump.
+- **Collapsed lesson parts for normal lessons.** Break the lesson into
+  `lesson_part` activities whenever the topic has steps or sub-concepts. Each
+  part contains the written explanation, per-part audio script or clip,
+  interactive visualization, and a 10-question MC reinforcement quiz. The
+  learner must pass 4 correct answers in a row and click "Mark Part Done" to
+  add the checkmark. This is in addition to the final end-of-lesson assessment
+  and any practice/code.
 - **Multiple meaningful visual/interactive explorations when the lesson covers
   multiple concepts.** A multi-concept lesson (3+ goals or mastery targets) must
   offer **at least two distinct visual perspectives** — either several
@@ -81,6 +91,11 @@ enforced by `validateGeneratedContent`; the rest is a hard authoring rule.
   objective, a learner-controlled variable, a visible consequence, and a written
   takeaway that explains what changed and why. Prefer "what breaks if..." and
   before/after/counterfactual views over decorative graphs.
+- **Every visualization needs audio.** Each visualization/interactive must have
+  its own spoken explanation clip or a per-part audio script tied directly to
+  that visual. The audio should say what to change, what to watch, what failure
+  mode is being shown, and what the visual proves. Do not leave silent graphs
+  for the learner to interpret alone.
 - **YouTube media should be included when highly relevant.** Look for a video
   when it can deepen the lesson, but do not embed long general videos as filler.
   If a video is used, it must be short or timestamped to the exact relevant
@@ -95,8 +110,18 @@ enforced by `validateGeneratedContent`; the rest is a hard authoring rule.
   `attempts`, `progress_points`, `mastery_signals`, `generated_artifacts`, and
   `next_lesson_jobs`. Track per-lesson and cross-lesson mastery with structured
   rows and tags, not hidden prose.
-- **End-of-lesson next-lesson diagnostics** (`next_lesson_diagnostics`, validated
-  when present; the app applies `DEFAULT_NEXT_LESSON_DIAGNOSTICS` if omitted).
+- **Continuous concise model notes.** Maintain a subject workpad for long-term
+  planning. Compress completed work into short durable notes and keep next-step
+  planning more detailed: open questions, weak concepts, likely directions,
+  useful examples, and planned evidence checks. Refactor stale detail out
+  instead of appending endless logs.
+- **Bespoke end-of-lesson planning diagnostics** (`next_lesson_diagnostics`,
+  validated when present; the app applies `DEFAULT_NEXT_LESSON_DIAGNOSTICS` if
+  omitted). The "help shape your next lesson" questions should be tailored to
+  the lesson just completed and should genuinely help plan the next lesson. Ask
+  what still feels unclear, which direction would help most, and what the
+  learner wants to be able to do next. Do not reuse generic boilerplate prompts
+  when a lesson-specific question would be more useful.
 - **Explicit preview wording for high-level concepts.** If a lesson intentionally
   introduces a concept only at a high level, the **audio script and the written
   text must say so explicitly** — name it a preview and state it will be explored
@@ -209,6 +234,48 @@ Validation **rejects** any `solution`, `answer`, `solution_code`,
 submit code that passes the tests. Passing tests records a mastery signal but
 **never** completes the lesson.
 
+## Lesson parts (`lesson_part` content — required for normal lessons with steps)
+
+Normal lessons should be authored as collapsed lesson parts when the concept has
+separable steps, sub-concepts, or visual explanations. Each part must teach one
+coherent idea and include all four teaching modes:
+
+```json
+{
+  "part_id": "resize",
+  "reading": { "intro": "...", "blocks": [...], "summary": "..." },
+  "audio": {
+    "script": "A spoken explanation tied to this exact visualization...",
+    "duration_hint": 90
+  },
+  "interactive": {
+    "schema_version": "1.0",
+    "widget_type": "declarative",
+    "instructions": "Change the image size and watch what breaks...",
+    "controls": [...],
+    "outputs": [...],
+    "charts": [...]
+  },
+  "quiz": {
+    "pass_threshold": 4,
+    "consecutive_correct_required": 4,
+    "idk_option": true,
+    "questions": [/* exactly 10 questions */]
+  }
+}
+```
+
+Lesson-part rules:
+- Parts are collapsed by default in the UI and show a checkmark only after the
+  learner passes the part quiz and clicks "Mark Part Done".
+- Each part quiz must contain exactly 10 MC questions, `pass_threshold: 4`, and
+  `consecutive_correct_required: 4`. Wrong answers and "I don't know" reset the
+  streak and still create retry obligations.
+- Prefer one visualization per part. If a part contains multiple charts/views,
+  the part audio must explicitly explain each visualization.
+- This per-part reinforcement does not replace the final assessment, final
+  practice/code, or end-of-lesson diagnostics.
+
 ## Multiple-choice quiz (`assessment` content — required for normal lessons)
 
 Normal generated lessons must include an adaptive multiple-choice quiz by
@@ -224,6 +291,7 @@ and the "Mark Complete" button is gated until the learner passes.
   "questions": [...],      // freeform questions (unchanged)
   "quiz": {
     "pass_threshold": 6,   // distinct concepts the learner must get correct (default: 6)
+    "consecutive_correct_required": 4, // optional; used by lesson parts for 4-in-a-row
     "idk_option": true,    // optional; defaults true, must NOT be false (see below)
     "questions": [
       {
@@ -278,6 +346,8 @@ diagnostics are assessed the same way at completion.
 
 - The learner must answer `pass_threshold` **distinct concepts** correctly
   (default: 6). A concept is counted once even if multiple retries were needed.
+- When `consecutive_correct_required` is set, the learner must also satisfy the
+  configured streak rule. Lesson parts require 4 correct answers in a row.
 - A wrong answer schedules a retry: the missed concept returns later in the
   queue in a rephrased form (via `AVOCADOCORE_ACP_ENDPOINT` if configured, or
   a deterministic choice-shuffle fallback). The retry is generated
@@ -334,7 +404,12 @@ deployment configuration.
 
 - [ ] Audio script is comprehensive, not a placeholder.
 - [ ] Reading has headings, a definition, a worked example, and a summary.
-- [ ] At least two visual perspectives on the core concept.
+- [ ] Normal lessons are broken into `lesson_part` activities where appropriate:
+      each part has written explanation, per-part audio, interactive
+      visualization, exactly 10 MC questions, `pass_threshold: 4`, and
+      `consecutive_correct_required: 4`.
+- [ ] At least two visual perspectives on the core concept, and every
+      visualization has an audio explanation clip or per-part audio script.
 - [ ] Media (if used) has reason + fallback and resolves to a valid video id.
 - [ ] Code has a prompt, progressive hints, public + hidden tests, and no
       exposed answer.

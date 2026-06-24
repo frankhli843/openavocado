@@ -46,3 +46,8 @@ export function resolveRuntimeSegments(segments: string[]): string | null {
 export function lessonAudioRelPath(lessonId: number): string {
   return `runtime_artifacts/audio/lesson_${lessonId}_audio.mp3`;
 }
+
+/** Canonical stored file_path for an activity-specific audio clip. */
+export function activityAudioRelPath(lessonId: number, activityId: number): string {
+  return `runtime_artifacts/audio/lesson_${lessonId}_activity_${activityId}_audio.mp3`;
+}
