@@ -1,7 +1,8 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { Suspense, useEffect, useState } from "react";
 import Link from "next/link";
+import { useRouter, useSearchParams } from "next/navigation";
 import type { SubjectSummary, Subject } from "@/types";
 import { SubjectCard } from "@/components/SubjectCard";
 import { LearnerHeader } from "@/components/LearnerHeader";
@@ -10,6 +11,16 @@ import { SubjectForm } from "@/components/SubjectForm";
 import { ProfileSwitcher } from "@/components/ProfileSwitcher";
 
 export default function DashboardPage() {
+  return (
+    <Suspense fallback={<div className="min-h-screen bg-white flex items-center justify-center text-gray-400 text-sm">Loading...</div>}>
+      <DashboardContent />
+    </Suspense>
+  );
+}
+
+function DashboardContent() {
+  const router = useRouter();
+  const searchParams = useSearchParams();
   const [subjects, setSubjects] = useState<SubjectSummary[]>([]);
   const [userId] = useState(1);
   const [learnerId, setLearnerId] = useState<number | null>(null);
@@ -17,8 +28,8 @@ export default function DashboardPage() {
   const [error, setError] = useState<string | null>(null);
   const [busyId, setBusyId] = useState<number | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
-  const [showArchived, setShowArchived] = useState(false);
-  const [showCreateForm, setShowCreateForm] = useState(false);
+  const [showArchived, setShowArchived] = useState(() => searchParams.get("view") === "archived");
+  const [showCreateForm, setShowCreateForm] = useState(() => searchParams.get("new") === "subject");
 
   async function load() {
     if (learnerId == null) return;
@@ -40,8 +51,29 @@ export default function DashboardPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [learnerId]);
 
-  function handleSubjectCreated(subject: Subject) {
+  useEffect(() => {
+    setShowArchived(searchParams.get("view") === "archived");
+    setShowCreateForm(searchParams.get("new") === "subject");
+  }, [searchParams]);
+
+  function openCreateForm() {
+    setShowCreateForm(true);
+    router.replace("/?new=subject", { scroll: false });
+  }
+
+  function closeCreateForm() {
     setShowCreateForm(false);
+    router.replace("/", { scroll: false });
+  }
+
+  function toggleArchived() {
+    const next = !showArchived;
+    setShowArchived(next);
+    router.replace(next ? "/?view=archived#archived-subjects" : "/", { scroll: false });
+  }
+
+  function handleSubjectCreated(subject: Subject) {
+    closeCreateForm();
     setNotice(`Subject "${subject.title}" created. Open it to start generating lessons.`);
     load();
   }
@@ -88,7 +120,7 @@ export default function DashboardPage() {
           <div className="ml-auto flex items-center gap-2 flex-shrink-0">
             <ProfileSwitcher userId={userId} activeId={learnerId} onActiveChange={setLearnerId} />
             <button
-              onClick={() => setShowCreateForm(true)}
+              onClick={openCreateForm}
               className="flex items-center gap-1.5 px-3 sm:px-3.5 py-1.5 text-sm font-medium bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
             >
               <span className="text-lg leading-none">+</span>
@@ -131,7 +163,7 @@ export default function DashboardPage() {
         {!loading && !error && (
           <>
             {activeSubjects.length > 0 && (
-              <section className="mb-10">
+              <section id="active-subjects" className="mb-10 scroll-mt-24">
                 <h2 className="text-sm font-semibold text-gray-500 uppercase tracking-wider mb-4">
                   Active
                 </h2>
@@ -144,9 +176,9 @@ export default function DashboardPage() {
             )}
 
             {archivedSubjects.length > 0 && (
-              <section>
+              <section id="archived-subjects" className="scroll-mt-24">
                 <button
-                  onClick={() => setShowArchived((v) => !v)}
+                  onClick={toggleArchived}
                   className="flex items-center gap-2 text-sm font-semibold text-gray-500 uppercase tracking-wider mb-4 hover:text-gray-700 transition-colors"
                 >
                   <span className={`transition-transform ${showArchived ? "rotate-90" : ""}`}>&#9656;</span>
@@ -168,7 +200,7 @@ export default function DashboardPage() {
                 <p className="text-lg font-medium mb-2">No subjects yet</p>
                 <p className="text-sm mb-4">Create your first subject to get started.</p>
                 <button
-                  onClick={() => setShowCreateForm(true)}
+                  onClick={openCreateForm}
                   className="px-5 py-2.5 text-sm font-medium bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
                 >
                   Create a subject
@@ -184,7 +216,7 @@ export default function DashboardPage() {
         <div
           className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/40 sm:px-4 sm:py-8"
           onClick={(e) => {
-            if (e.target === e.currentTarget) setShowCreateForm(false);
+            if (e.target === e.currentTarget) closeCreateForm();
           }}
         >
           <div
@@ -195,7 +227,7 @@ export default function DashboardPage() {
             <div className="flex items-center justify-between px-5 py-4 sm:px-6 border-b border-gray-100 flex-shrink-0">
               <h2 className="text-base font-semibold text-gray-900">Create a new subject</h2>
               <button
-                onClick={() => setShowCreateForm(false)}
+                onClick={closeCreateForm}
                 className="text-gray-400 hover:text-gray-600 text-xl leading-none"
                 aria-label="Close"
               >
@@ -207,7 +239,7 @@ export default function DashboardPage() {
               <SubjectForm
                 learnerId={learnerId ?? 1}
                 onSave={handleSubjectCreated}
-                onCancel={() => setShowCreateForm(false)}
+                onCancel={closeCreateForm}
               />
             </div>
           </div>

@@ -66,9 +66,11 @@ export function MediaSection({ activity }: MediaSectionProps) {
 function Embed({ embed }: { embed: MediaEmbed }) {
   const videoId = resolveYouTubeId(embed);
   const [failed, setFailed] = useState(false);
+  const firstSegmentStart = embed.relevance === "segments" ? embed.segments?.[0]?.start : undefined;
+  const effectiveStart = embed.start ?? firstSegmentStart;
 
   const watchUrl = videoId
-    ? `https://www.youtube.com/watch?v=${videoId}${embed.start ? `&t=${Math.floor(embed.start)}` : ""}`
+    ? `https://www.youtube.com/watch?v=${videoId}${effectiveStart ? `&t=${Math.floor(effectiveStart)}` : ""}`
     : undefined;
 
   return (
@@ -87,12 +89,13 @@ function Embed({ embed }: { embed: MediaEmbed }) {
         )}
       </div>
       <p className="text-xs text-gray-500 mb-2.5">{embed.reason}</p>
+      <VideoRelevance embed={embed} />
 
       {videoId && !failed ? (
         <div className="relative w-full overflow-hidden rounded-lg border border-gray-200 bg-black" style={{ aspectRatio: "16 / 9" }}>
           <iframe
             className="absolute inset-0 h-full w-full"
-            src={buildYouTubeEmbedUrl(videoId, embed.start)}
+            src={buildYouTubeEmbedUrl(videoId, effectiveStart)}
             title={embed.title}
             loading="lazy"
             allow="accelerometer; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
@@ -119,4 +122,43 @@ function Embed({ embed }: { embed: MediaEmbed }) {
       )}
     </figure>
   );
+}
+
+function VideoRelevance({ embed }: { embed: MediaEmbed }) {
+  if (embed.relevance === "segments" && embed.segments?.length) {
+    return (
+      <div className="mb-3 rounded-lg border border-blue-100 bg-blue-50/50 px-3 py-2.5">
+        <div className="text-xs font-semibold text-blue-700 uppercase tracking-wider mb-1.5">
+          Watch these segments
+        </div>
+        <ul className="space-y-1.5">
+          {embed.segments.map((segment, i) => (
+            <li key={`${segment.start}-${i}`} className="text-xs text-gray-600 leading-relaxed">
+              <span className="font-semibold text-gray-800">
+                {formatTime(segment.start)}
+                {segment.end !== undefined ? `-${formatTime(segment.end)}` : ""}
+              </span>
+              {segment.label ? `: ${segment.label}` : ""}
+              {segment.reason ? `, ${segment.reason}` : ""}
+            </li>
+          ))}
+        </ul>
+      </div>
+    );
+  }
+
+  return (
+    <div className="mb-3 rounded-lg border border-green-100 bg-green-50/50 px-3 py-2 text-xs text-green-700">
+      Whole video is relevant.
+    </div>
+  );
+}
+
+function formatTime(seconds: number): string {
+  const total = Math.max(0, Math.floor(seconds));
+  const h = Math.floor(total / 3600);
+  const m = Math.floor((total % 3600) / 60);
+  const s = total % 60;
+  if (h > 0) return `${h}:${String(m).padStart(2, "0")}:${String(s).padStart(2, "0")}`;
+  return `${m}:${String(s).padStart(2, "0")}`;
 }

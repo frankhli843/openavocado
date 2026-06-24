@@ -20,6 +20,7 @@ export type {
   ReadingBlock,
   ReadingContent,
   MediaProvider,
+  MediaSegment,
   MediaEmbed,
   MediaContent,
   CodeTest,

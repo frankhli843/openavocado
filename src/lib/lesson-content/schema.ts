@@ -116,6 +116,17 @@ export function validateReadingContent(content: unknown): { valid: boolean; erro
 
 export type MediaProvider = "youtube";
 
+export interface MediaSegment {
+  /** Human-readable label, for example "Resize and crop walkthrough". */
+  label?: string;
+  /** Segment start time in seconds. */
+  start: number;
+  /** Optional end time in seconds. */
+  end?: number;
+  /** Why this segment is worth watching. */
+  reason?: string;
+}
+
 export interface MediaEmbed {
   provider: MediaProvider;
   /** Either a video_id or a recognizable YouTube url is required. */
@@ -126,6 +137,10 @@ export interface MediaEmbed {
   reason: string;
   /** Optional start time in seconds. */
   start?: number;
+  /** Whether the whole video is relevant or only selected timestamped segments. */
+  relevance?: "whole" | "segments";
+  /** Required when relevance is "segments"; exact times the learner should watch. */
+  segments?: MediaSegment[];
   /** Shown if the embed cannot load (offline, blocked, removed). */
   fallback_text: string;
 }
@@ -235,6 +250,37 @@ export function validateMediaContent(content: unknown): { valid: boolean; errors
     }
     if (e.start !== undefined && (typeof e.start !== "number" || e.start < 0)) {
       errors.push(`media embeds[${i}] start must be a non-negative number`);
+    }
+    if (e.relevance !== undefined && e.relevance !== "whole" && e.relevance !== "segments") {
+      errors.push(`media embeds[${i}] relevance must be "whole" or "segments"`);
+    }
+    if (e.relevance === "segments") {
+      if (!Array.isArray(e.segments) || e.segments.length === 0) {
+        errors.push(`media embeds[${i}] relevance "segments" requires a non-empty segments array`);
+      } else {
+        for (const [j, rawSegment] of e.segments.entries()) {
+          if (!rawSegment || typeof rawSegment !== "object") {
+            errors.push(`media embeds[${i}].segments[${j}] must be an object`);
+            continue;
+          }
+          const segment = rawSegment as Record<string, unknown>;
+          if (typeof segment.start !== "number" || !Number.isFinite(segment.start) || segment.start < 0) {
+            errors.push(`media embeds[${i}].segments[${j}] start must be a non-negative number`);
+          }
+          if (
+            segment.end !== undefined
+            && (typeof segment.end !== "number" || !Number.isFinite(segment.end) || segment.end <= Number(segment.start))
+          ) {
+            errors.push(`media embeds[${i}].segments[${j}] end must be greater than start`);
+          }
+          if (segment.label !== undefined && typeof segment.label !== "string") {
+            errors.push(`media embeds[${i}].segments[${j}] label must be a string`);
+          }
+          if (segment.reason !== undefined && typeof segment.reason !== "string") {
+            errors.push(`media embeds[${i}].segments[${j}] reason must be a string`);
+          }
+        }
+      }
     }
     const id = resolveYouTubeId(e as Pick<MediaEmbed, "video_id" | "url">);
     if (!id) {

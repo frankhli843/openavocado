@@ -56,6 +56,13 @@ enforced by `validateGeneratedContent`; the rest is a hard authoring rule.
   learner weakness, or next-step need unless it is documented in AvocadoCore
   context, visible in the local SQLite learner evidence, or verified and then
   recorded in task notes / lesson metadata.
+- **Planning stage before authoring.** Before writing lesson content, do a
+  deliberate planning pass over the whole lesson. For active technical domains
+  such as model building, inference, quantization, GGUF conversion, Hugging Face
+  releases, and Gemma contribution practice, perform comprehensive current
+  research from reliable sources first. Record source-backed findings, what has
+  changed since the previous plan, and any uncertainty. Update the subject
+  workpad and long-term plan before generating the lesson itself.
 - **Bespoke authoring, not template filling.** The agent must choose the
   metaphor, examples, visuals, practice, quiz, and video dynamically for the
   topic and learner evidence. Templates may describe the acceptance criteria,
@@ -77,9 +84,10 @@ enforced by `validateGeneratedContent`; the rest is a hard authoring rule.
   `lesson_part` activities whenever the topic has steps or sub-concepts. Each
   part contains the written explanation, per-part audio script or clip,
   interactive visualization, and a 10-question MC reinforcement quiz. The
-  learner must pass 4 correct answers in a row and click "Mark Part Done" to
-  add the checkmark. This is in addition to the final end-of-lesson assessment
-  and any practice/code.
+  learner must pass 4 correct answers in a row for reinforcement. Each section
+  has a done/undone button that the learner may toggle at any time as a personal
+  checklist marker. That marker persists in SQLite but is not a completion gate
+  and does not replace the final end-of-lesson assessment or any practice/code.
 - **Multiple meaningful visual/interactive explorations when the lesson covers
   multiple concepts.** A multi-concept lesson (3+ goals or mastery targets) must
   offer **at least two distinct visual perspectives** — either several
@@ -99,9 +107,16 @@ enforced by `validateGeneratedContent`; the rest is a hard authoring rule.
 - **YouTube media should be included when highly relevant.** Look for a video
   when it can deepen the lesson, but do not embed long general videos as filler.
   If a video is used, it must be short or timestamped to the exact relevant
-  segment, and the `reason` must say what the learner should look for. If no
-  tightly relevant clip exists, omit the media section and teach the concept
-  directly in audio, writing, and interactives.
+  segment, and the `reason` must say what the learner should look for. The
+  lesson must explicitly say whether the whole video is relevant or only
+  specific segments are relevant. For segments, provide precise start/end times
+  and what to watch for in each segment. If no tightly relevant clip exists,
+  omit the media section and teach the concept directly in audio, writing, and
+  interactives.
+- **Deep links everywhere.** Lessons must expose stable section links through a
+  table of contents. Subject tabs, dashboard views, lesson pages, lesson
+  sections, and other major menus should be reachable by URL query or hash so
+  the learner can return to the same context.
 - **Practice/code** the learner submits (scaffolded, no exposed answer).
 - **Adaptive assessment** — an MC quiz (every question carries a required
   `difficulty` and the virtual "I don't know" option) plus freeform questions.
@@ -185,6 +200,12 @@ Media embeds carry an `embeds` array. Each embed:
 - `title`, `reason` (why it helps), and `fallback_text` (shown if the video
   cannot load). All three are required.
 - optional `start` (seconds).
+- optional `relevance: "whole" | "segments"`. Use `"whole"` only when the whole
+  video is worth watching for this lesson. Use `"segments"` when only selected
+  spans are relevant.
+- `segments` when `relevance` is `"segments"`. Each segment needs a non-negative
+  `start`, optional `end` greater than `start`, and should include a label or
+  reason so the learner knows exactly what to watch for.
 
 If a video is unavailable or blocked, the lesson degrades to the fallback text
 plus a "Watch on YouTube" link — it never breaks the page. Pick general,

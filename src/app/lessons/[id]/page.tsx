@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, use } from "react";
+import { useEffect, useState, use, type ReactNode } from "react";
 import Link from "next/link";
 import type { Lesson, LessonActivity, LessonAutosave, GeneratedArtifact, Tag, KnowledgeGraphData } from "@/types";
 import { AudioSection } from "@/components/lesson/AudioSection";
@@ -8,6 +8,7 @@ import { ReadingSection } from "@/components/lesson/ReadingSection";
 import { MediaSection } from "@/components/lesson/MediaSection";
 import { InteractiveSection } from "@/components/lesson/InteractiveSection";
 import { LessonPartSection } from "@/components/lesson/LessonPartSection";
+import { CollapsibleLessonSection } from "@/components/lesson/CollapsibleLessonSection";
 import { PythonSection } from "@/components/lesson/PythonSection";
 import { AssessmentSection } from "@/components/lesson/AssessmentSection";
 import { MultipleChoiceAssessmentSection } from "@/components/lesson/MultipleChoiceAssessmentSection";
@@ -31,6 +32,7 @@ interface LessonData {
 const ACTIVITY_ORDER = ["audio", "reading", "media", "lesson_part", "interactive", "practice_code", "assessment"];
 
 const LEARNER_ID = 1; // TODO: replace with auth session
+const DIAGNOSTICS_ACTIVITY_ID = 0;
 
 export default function LessonPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
@@ -56,8 +58,7 @@ export default function LessonPage({ params }: { params: Promise<{ id: string }>
   // True when the lesson's assessment activity includes a MC quiz.
   const [hasQuiz, setHasQuiz] = useState(false);
   const [partQuizStates, setPartQuizStates] = useState<Record<number, string | null>>({});
-  const [partQuizPassed, setPartQuizPassed] = useState<Record<number, boolean>>({});
-  const [partDone, setPartDone] = useState<Record<number, boolean>>({});
+  const [sectionDone, setSectionDone] = useState<Record<number, boolean>>({});
   const [codeDraft, setCodeDraft] = useState<string>("");
   const [runOutput, setRunOutput] = useState<string>("");
   const [testResults, setTestResults] = useState<Record<string, string>>({});
@@ -84,16 +85,26 @@ export default function LessonPage({ params }: { params: Promise<{ id: string }>
           } catch { /* ignore parse errors */ }
         }
 
-        // Restore autosaved state if available.
-        const latest = json.autosave[0];
-        if (latest) {
-          if (latest.code_draft) setCodeDraft(latest.code_draft);
-          if (latest.run_output) setRunOutput(latest.run_output);
-          if (latest.test_results) setTestResults(JSON.parse(latest.test_results));
-          if (latest.assessment_answers) {
-            const aa = JSON.parse(latest.assessment_answers) as Record<string, string>;
+        // Restore autosaved state per activity. Do not rely on the newest row:
+        // section markers, widget saves, and code saves all write separate rows.
+        const codeAct = json.activities.find((a) => a.activity_type === "practice_code");
+        const codeRow = codeAct
+          ? json.autosave.find((r) => r.activity_id === codeAct.id)
+          : undefined;
+        if (codeRow) {
+          if (codeRow.code_draft) setCodeDraft(codeRow.code_draft);
+          if (codeRow.run_output) setRunOutput(codeRow.run_output);
+          if (codeRow.test_results) setTestResults(JSON.parse(codeRow.test_results));
+          setLastSavedAt(codeRow.saved_at);
+        }
+
+        if (assessmentAct) {
+          const assessmentRow = json.autosave.find((r) => r.activity_id === assessmentAct.id && r.assessment_answers);
+          if (assessmentRow?.assessment_answers) {
+            const aa = JSON.parse(assessmentRow.assessment_answers) as Record<string, string>;
             // __quiz__ holds serialized QuizSessionState; __diag__ holds diagnostic
-            // answers; the rest are freeform assessment answers.
+            // answers; __section_done__ is the user's lightweight checklist marker.
+            // The rest are freeform assessment answers.
             if (aa.__quiz__) {
               setQuizStateSerialized(aa.__quiz__);
               // If the restored quiz is already passed, reflect that in the gate.
@@ -108,35 +119,30 @@ export default function LessonPage({ params }: { params: Promise<{ id: string }>
               } catch { /* ignore */ }
             }
             const rest = Object.fromEntries(
-              Object.entries(aa).filter(([k]) => k !== "__quiz__" && k !== "__diag__")
+              Object.entries(aa).filter(([k]) => k !== "__quiz__" && k !== "__diag__" && k !== "__section_done__")
             ) as Record<string, string>;
             setAssessmentAnswers(rest);
+            setLastSavedAt(assessmentRow.saved_at);
           }
-          setLastSavedAt(latest.saved_at);
         }
 
         // Restore each interactive widget's state, scoped to its own activity row,
         // so multiple visualizations in one lesson restore independently.
         const restored: Record<number, Record<string, number>> = {};
         const restoredPartQuizStates: Record<number, string | null> = {};
-        const restoredPartQuizPassed: Record<number, boolean> = {};
-        const restoredPartDone: Record<number, boolean> = {};
+        const restoredSectionDone: Record<number, boolean> = {};
         for (const act of json.activities) {
-          if (act.activity_type === "lesson_part") {
-            const partRow = json.autosave.find((r) => r.activity_id === act.id && r.assessment_answers);
-            if (partRow?.assessment_answers) {
-              try {
-                const aa = JSON.parse(partRow.assessment_answers) as Record<string, string>;
-                if (aa.__quiz__) {
-                  restoredPartQuizStates[act.id] = aa.__quiz__;
-                  try {
-                    const qs = JSON.parse(aa.__quiz__) as { passed?: boolean };
-                    if (qs.passed) restoredPartQuizPassed[act.id] = true;
-                  } catch { /* ignore malformed quiz state */ }
-                }
-                if (aa.__done__ === "true") restoredPartDone[act.id] = true;
-              } catch { /* ignore malformed part state */ }
-            }
+          const activityRow = json.autosave.find((r) => r.activity_id === act.id && r.assessment_answers);
+          if (activityRow?.assessment_answers) {
+            try {
+              const aa = JSON.parse(activityRow.assessment_answers) as Record<string, string>;
+              if (aa.__section_done__ === "true" || aa.__done__ === "true") {
+                restoredSectionDone[act.id] = true;
+              }
+              if (act.activity_type === "lesson_part" && aa.__quiz__) {
+                restoredPartQuizStates[act.id] = aa.__quiz__;
+              }
+            } catch { /* ignore malformed activity state */ }
           }
           if (act.activity_type !== "interactive" && act.activity_type !== "lesson_part") continue;
           const widgetRow = json.autosave.find((r) => r.activity_id === act.id && r.widget_state);
@@ -148,10 +154,16 @@ export default function LessonPage({ params }: { params: Promise<{ id: string }>
             }
           }
         }
+        const diagnosticRow = json.autosave.find((r) => (r.activity_id ?? 0) === DIAGNOSTICS_ACTIVITY_ID && r.assessment_answers);
+        if (diagnosticRow?.assessment_answers) {
+          try {
+            const aa = JSON.parse(diagnosticRow.assessment_answers) as Record<string, string>;
+            if (aa.__section_done__ === "true") restoredSectionDone[DIAGNOSTICS_ACTIVITY_ID] = true;
+          } catch { /* ignore malformed diagnostic marker */ }
+        }
         setWidgetStates(restored);
         setPartQuizStates(restoredPartQuizStates);
-        setPartQuizPassed(restoredPartQuizPassed);
-        setPartDone(restoredPartDone);
+        setSectionDone(restoredSectionDone);
       } catch (e) {
         setError(e instanceof Error ? e.message : "Failed to load");
       } finally {
@@ -197,6 +209,7 @@ export default function LessonPage({ params }: { params: Promise<{ id: string }>
     const assessmentActivity = data.activities.find((a) => a.activity_type === "assessment");
     const merged: Record<string, string> = { ...assessmentAnswers, __quiz__: serialized };
     if (Object.keys(diagnosticAnswers).length) merged.__diag__ = JSON.stringify(diagnosticAnswers);
+    if (assessmentActivity && sectionDone[assessmentActivity.id]) merged.__section_done__ = "true";
     debouncedSave({
       lesson_id: data.lesson.id,
       learner_id: LEARNER_ID,
@@ -214,6 +227,7 @@ export default function LessonPage({ params }: { params: Promise<{ id: string }>
     const assessmentActivity = data.activities.find((a) => a.activity_type === "assessment");
     const merged: Record<string, string> = { ...assessmentAnswers, __diag__: JSON.stringify(diag) };
     if (quizStateSerialized) merged.__quiz__ = quizStateSerialized;
+    if (assessmentActivity && sectionDone[assessmentActivity.id]) merged.__section_done__ = "true";
     debouncedSave({
       lesson_id: data.lesson.id,
       learner_id: LEARNER_ID,
@@ -229,6 +243,7 @@ export default function LessonPage({ params }: { params: Promise<{ id: string }>
     const merged: Record<string, string> = { ...answers };
     if (quizStateSerialized) merged.__quiz__ = quizStateSerialized;
     if (Object.keys(diagnosticAnswers).length) merged.__diag__ = JSON.stringify(diagnosticAnswers);
+    if (assessmentActivity && sectionDone[assessmentActivity.id]) merged.__section_done__ = "true";
     debouncedSave({
       lesson_id: data.lesson.id,
       learner_id: LEARNER_ID,
@@ -267,7 +282,7 @@ export default function LessonPage({ params }: { params: Promise<{ id: string }>
     if (!data) return;
     setPartQuizStates((prev) => ({ ...prev, [activityId]: serialized }));
     const merged: Record<string, string> = { __quiz__: serialized };
-    if (partDone[activityId]) merged.__done__ = "true";
+    if (sectionDone[activityId]) merged.__section_done__ = "true";
     debouncedSave({
       lesson_id: data.lesson.id,
       learner_id: LEARNER_ID,
@@ -277,16 +292,23 @@ export default function LessonPage({ params }: { params: Promise<{ id: string }>
     });
   }
 
-  function triggerPartDoneAutosave(activityId: number, done: boolean) {
+  function triggerSectionDoneAutosave(activityId: number, done: boolean) {
     if (!data) return;
-    setPartDone((prev) => ({ ...prev, [activityId]: done }));
-    const merged: Record<string, string> = { __done__: done ? "true" : "false" };
-    const quizState = partQuizStates[activityId];
-    if (quizState) merged.__quiz__ = quizState;
+    setSectionDone((prev) => ({ ...prev, [activityId]: done }));
+    const assessmentActivity = data.activities.find((a) => a.activity_type === "assessment");
+    const merged: Record<string, string> = { __section_done__: done ? "true" : "false" };
+    if (activityId === assessmentActivity?.id) {
+      Object.assign(merged, assessmentAnswers);
+      if (quizStateSerialized) merged.__quiz__ = quizStateSerialized;
+      if (Object.keys(diagnosticAnswers).length) merged.__diag__ = JSON.stringify(diagnosticAnswers);
+    } else if (activityId !== DIAGNOSTICS_ACTIVITY_ID) {
+      const quizState = partQuizStates[activityId];
+      if (quizState) merged.__quiz__ = quizState;
+    }
     debouncedSave({
       lesson_id: data.lesson.id,
       learner_id: LEARNER_ID,
-      activity_id: activityId,
+      activity_id: activityId === DIAGNOSTICS_ACTIVITY_ID ? DIAGNOSTICS_ACTIVITY_ID : activityId,
       assessment_answers: merged,
       last_edited_at: new Date().toISOString(),
     });
@@ -363,11 +385,8 @@ export default function LessonPage({ params }: { params: Promise<{ id: string }>
     return (ai === -1 ? 99 : ai) - (bi === -1 ? 99 : bi);
   });
 
-  const lessonParts = activities.filter((a) => a.activity_type === "lesson_part");
-  const allPartsDone = lessonParts.every((part) => partDone[part.id]);
-  const completionBlockedByParts = lessonParts.length > 0 && !allPartsDone;
   const completionBlockedByQuiz = hasQuiz && !quizPassed;
-  const completionBlocked = completionBlockedByParts || completionBlockedByQuiz;
+  const completionBlocked = completionBlockedByQuiz;
 
   const lessonGoals: string[] = lesson.goals ? JSON.parse(lesson.goals) : [];
 
@@ -385,6 +404,99 @@ export default function LessonPage({ params }: { params: Promise<{ id: string }>
   // Context for recording per-question assessment evidence (tags + signals).
   const assessContext = { learnerId: LEARNER_ID, subjectId: lesson.subject_id, lessonId: lesson.id };
 
+  const tocItems = [
+    ...sorted.map((activity) => ({
+      id: activitySectionId(activity),
+      kind: activityKindLabel(activity),
+      title: activitySectionTitle(activity),
+      done: !!sectionDone[activity.id],
+    })),
+    ...(diagnostics.length > 0
+      ? [{
+          id: "section-diagnostics",
+          kind: "Planning",
+          title: "Help shape your next lesson",
+          done: !!sectionDone[DIAGNOSTICS_ACTIVITY_ID],
+        }]
+      : []),
+  ];
+
+  function renderActivity(activity: LessonActivity): ReactNode {
+    if (activity.activity_type === "audio") {
+      const activityArtifact = artifacts.find((a) => a.artifact_type === "audio" && a.activity_id === activity.id);
+      return <AudioSection activity={activity} artifact={activityArtifact} />;
+    }
+    if (activity.activity_type === "reading") {
+      return <ReadingSection activity={activity} />;
+    }
+    if (activity.activity_type === "media") {
+      return <MediaSection activity={activity} />;
+    }
+    if (activity.activity_type === "interactive") {
+      return (
+        <InteractiveSection
+          activity={activity}
+          initialState={widgetStates[activity.id]}
+          onStateChange={(s) => triggerWidgetAutosave(activity.id, s.controls)}
+        />
+      );
+    }
+    if (activity.activity_type === "lesson_part") {
+      const partArtifact = artifacts.find((a) => a.artifact_type === "audio" && a.activity_id === activity.id);
+      return (
+        <LessonPartSection
+          activity={activity}
+          artifact={partArtifact}
+          initialWidgetState={widgetStates[activity.id]}
+          onWidgetStateChange={(s) => triggerWidgetAutosave(activity.id, s.controls)}
+          savedQuizState={partQuizStates[activity.id] ?? null}
+          onQuizStateChange={(serialized) => triggerPartQuizAutosave(activity.id, serialized)}
+          onQuizPassedChange={() => undefined}
+          assessContext={assessContext}
+        />
+      );
+    }
+    if (activity.activity_type === "practice_code") {
+      return (
+        <PythonSection
+          activity={activity}
+          learnerId={LEARNER_ID}
+          initialCode={codeDraft}
+          initialOutput={runOutput}
+          initialTests={testResults}
+          onChange={(code, output, tests) => {
+            setCodeDraft(code);
+            setRunOutput(output);
+            setTestResults(tests);
+            triggerAutosave({ code_draft: code, run_output: output, test_results: tests });
+          }}
+        />
+      );
+    }
+    if (activity.activity_type === "assessment") {
+      return (
+        <div className="space-y-6">
+          <MultipleChoiceAssessmentSection
+            activity={activity}
+            savedQuizState={quizStateSerialized}
+            onStateChange={triggerQuizAutosave}
+            onPassedChange={setQuizPassed}
+            assessContext={assessContext}
+          />
+          <AssessmentSection
+            activity={activity}
+            answers={assessmentAnswers}
+            onChange={(answers) => {
+              setAssessmentAnswers(answers);
+              triggerAssessmentAnswersAutosave(answers);
+            }}
+          />
+        </div>
+      );
+    }
+    return null;
+  }
+
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Sticky top bar */}
@@ -393,6 +505,13 @@ export default function LessonPage({ params }: { params: Promise<{ id: string }>
           <div className="flex items-center gap-2 text-sm text-gray-500 min-w-0">
             <Link href="/" className="hover:text-gray-800 transition-colors shrink-0">
               &#8592; Dashboard
+            </Link>
+            <span className="text-gray-300">/</span>
+            <Link
+              href={`/subjects/${lesson.subject_id}?tab=lessons`}
+              className="hover:text-gray-800 transition-colors shrink-0"
+            >
+              Subject
             </Link>
             <span className="text-gray-300">/</span>
             <span className="truncate text-gray-700 font-medium">{lesson.title}</span>
@@ -424,7 +543,7 @@ export default function LessonPage({ params }: { params: Promise<{ id: string }>
               <button
                 onClick={handleComplete}
                 disabled={completing || lesson.status === "completed" || completionBlocked}
-                title={completionBlockedByParts ? "Complete each lesson part first" : completionBlockedByQuiz ? "Pass the final quiz first" : undefined}
+                title={completionBlockedByQuiz ? "Pass the final quiz first" : undefined}
                 className="px-4 py-1.5 text-sm font-medium bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
               >
                 {completing ? "Completing..." : "Mark Complete"}
@@ -508,112 +627,73 @@ export default function LessonPage({ params }: { params: Promise<{ id: string }>
         {!completed && !discarded && (
           <div className="px-4 py-2.5 bg-blue-50 border border-blue-100 rounded-lg text-xs text-blue-600 flex items-center gap-2">
             <span>&#8505;</span>
-            Progress is saved automatically. Click &quot;Mark Complete&quot; only when you&apos;re done with the whole lesson.
+            Progress is saved automatically. Section checkmarks are just your checklist. Click &quot;Mark Complete&quot; only when you&apos;re done with the whole lesson.
           </div>
+        )}
+
+        {/* Table of contents */}
+        {tocItems.length > 0 && (
+          <nav id="lesson-toc" className="bg-white rounded-xl border border-gray-200 p-4 scroll-mt-24">
+            <div className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-3">
+              Contents
+            </div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+              {tocItems.map((item) => (
+                <a
+                  key={item.id}
+                  href={`#${item.id}`}
+                  className="flex items-center gap-2 rounded-lg border border-gray-100 px-3 py-2 text-sm text-gray-600 hover:border-blue-200 hover:bg-blue-50/40 hover:text-blue-700 transition-colors"
+                >
+                  <span className={item.done ? "text-green-600" : "text-gray-300"} aria-hidden="true">
+                    {item.done ? "✓" : "○"}
+                  </span>
+                  <span className="min-w-0 flex-1 truncate">
+                    <span className="text-gray-400">{item.kind}: </span>
+                    {item.title}
+                  </span>
+                </a>
+              ))}
+            </div>
+          </nav>
         )}
 
         {/* Activities */}
         {sorted.map((activity) => {
-          if (activity.activity_type === "audio") {
-            const activityArtifact = artifacts.find((a) => a.artifact_type === "audio" && a.activity_id === activity.id);
-            return (
-              <AudioSection
-                key={activity.id}
-                activity={activity}
-                artifact={activityArtifact}
-              />
-            );
-          }
-          if (activity.activity_type === "reading") {
-            return <ReadingSection key={activity.id} activity={activity} />;
-          }
-          if (activity.activity_type === "media") {
-            return <MediaSection key={activity.id} activity={activity} />;
-          }
-          if (activity.activity_type === "interactive") {
-            return (
-              <InteractiveSection
-                key={activity.id}
-                activity={activity}
-                initialState={widgetStates[activity.id]}
-                onStateChange={(s) => triggerWidgetAutosave(activity.id, s.controls)}
-              />
-            );
-          }
-          if (activity.activity_type === "lesson_part") {
-            const partArtifact = artifacts.find((a) => a.artifact_type === "audio" && a.activity_id === activity.id);
-            return (
-              <LessonPartSection
-                key={activity.id}
-                activity={activity}
-                artifact={partArtifact}
-                initialWidgetState={widgetStates[activity.id]}
-                onWidgetStateChange={(s) => triggerWidgetAutosave(activity.id, s.controls)}
-                savedQuizState={partQuizStates[activity.id] ?? null}
-                onQuizStateChange={(serialized) => triggerPartQuizAutosave(activity.id, serialized)}
-                quizPassed={!!partQuizPassed[activity.id]}
-                onQuizPassedChange={(passed) => setPartQuizPassed((prev) => ({ ...prev, [activity.id]: passed }))}
-                done={!!partDone[activity.id]}
-                onDoneChange={(done) => triggerPartDoneAutosave(activity.id, done)}
-                assessContext={assessContext}
-              />
-            );
-          }
-          if (activity.activity_type === "practice_code") {
-            return (
-              <PythonSection
-                key={activity.id}
-                activity={activity}
-                learnerId={LEARNER_ID}
-                initialCode={codeDraft}
-                initialOutput={runOutput}
-                initialTests={testResults}
-                onChange={(code, output, tests) => {
-                  setCodeDraft(code);
-                  setRunOutput(output);
-                  setTestResults(tests);
-                  triggerAutosave({ code_draft: code, run_output: output, test_results: tests });
-                }}
-              />
-            );
-          }
-          if (activity.activity_type === "assessment") {
-            return (
-              <div key={activity.id} className="space-y-6">
-                {/* MC quiz — renders only when the activity content includes a "quiz" field */}
-                <MultipleChoiceAssessmentSection
-                  activity={activity}
-                  savedQuizState={quizStateSerialized}
-                  onStateChange={triggerQuizAutosave}
-                  onPassedChange={setQuizPassed}
-                  assessContext={assessContext}
-                />
-                {/* Freeform written response section — always shown */}
-                <AssessmentSection
-                  activity={activity}
-                  answers={assessmentAnswers}
-                  onChange={(answers) => {
-                    setAssessmentAnswers(answers);
-                    triggerAssessmentAnswersAutosave(answers);
-                  }}
-                />
-              </div>
-            );
-          }
-          return null;
+          const body = renderActivity(activity);
+          if (!body) return null;
+          return (
+            <CollapsibleLessonSection
+              key={activity.id}
+              id={activitySectionId(activity)}
+              kind={activityKindLabel(activity)}
+              title={activitySectionTitle(activity)}
+              done={!!sectionDone[activity.id]}
+              onDoneChange={(done) => triggerSectionDoneAutosave(activity.id, done)}
+            >
+              {body}
+            </CollapsibleLessonSection>
+          );
         })}
 
         {/* End-of-lesson next-lesson diagnostics — autosave only, never completes */}
         {diagnostics.length > 0 && !discarded && (
-          <NextLessonDiagnosticsSection
-            diagnostics={diagnostics}
-            answers={diagnosticAnswers}
-            disabled={completed}
-            onChange={(next) => {
-              setDiagnosticAnswers(next);
-              triggerDiagAutosave(next);
-            }}
-          />
+          <CollapsibleLessonSection
+            id="section-diagnostics"
+            kind="Planning"
+            title="Help shape your next lesson"
+            done={!!sectionDone[DIAGNOSTICS_ACTIVITY_ID]}
+            onDoneChange={(done) => triggerSectionDoneAutosave(DIAGNOSTICS_ACTIVITY_ID, done)}
+          >
+            <NextLessonDiagnosticsSection
+              diagnostics={diagnostics}
+              answers={diagnosticAnswers}
+              disabled={completed}
+              onChange={(next) => {
+                setDiagnosticAnswers(next);
+                triggerDiagAutosave(next);
+              }}
+            />
+          </CollapsibleLessonSection>
         )}
 
         {/* Bottom action row */}
@@ -628,7 +708,7 @@ export default function LessonPage({ params }: { params: Promise<{ id: string }>
             <button
               onClick={handleComplete}
               disabled={completing || completionBlocked}
-              title={completionBlockedByParts ? "Complete each lesson part first" : completionBlockedByQuiz ? "Pass the final quiz first" : undefined}
+              title={completionBlockedByQuiz ? "Pass the final quiz first" : undefined}
               className="px-8 py-3 font-semibold bg-green-600 text-white rounded-xl hover:bg-green-700 disabled:opacity-40 disabled:cursor-not-allowed transition-colors shadow-sm"
             >
               {completing ? "Completing..." : "Mark Lesson Complete"}
@@ -668,4 +748,33 @@ function StatusBadge({ status }: { status: string }) {
       {status.replace("_", " ")}
     </span>
   );
+}
+
+function activityKindLabel(activity: LessonActivity): string {
+  switch (activity.activity_type) {
+    case "audio":
+      return "Audio";
+    case "reading":
+      return "Reading";
+    case "media":
+      return "Video";
+    case "lesson_part":
+      return "Lesson part";
+    case "interactive":
+      return "Interactive";
+    case "practice_code":
+      return "Code";
+    case "assessment":
+      return "Assessment";
+    default:
+      return activity.activity_type.replace("_", " ");
+  }
+}
+
+function activitySectionTitle(activity: LessonActivity): string {
+  return activity.title ?? activityKindLabel(activity);
+}
+
+function activitySectionId(activity: LessonActivity): string {
+  return `section-${activity.id}`;
 }

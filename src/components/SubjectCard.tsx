@@ -27,7 +27,7 @@ export function SubjectCard({ subject, onArchiveToggle, busy }: SubjectCardProps
 
   return (
     <div className="relative p-5 bg-white border border-gray-200 rounded-xl hover:border-blue-300 hover:shadow-sm transition-all group">
-      <Link href={`/subjects/${subject.id}`} className="block">
+      <Link href={`/subjects/${subject.id}?tab=lessons`} className="block">
         {/* Header row */}
         <div className="flex items-start justify-between gap-3 mb-3">
           <h3 className="min-w-0 break-words font-semibold text-gray-900 text-base leading-snug group-hover:text-blue-700 transition-colors">

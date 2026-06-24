@@ -80,6 +80,43 @@ describe("validateMediaContent", () => {
     expect(r.valid).toBe(true);
   });
 
+  it("accepts timestamped segment guidance", () => {
+    const r = validateMediaContent({
+      embeds: [{
+        provider: "youtube",
+        video_id: "HZGCoVF3YvM",
+        title: "T",
+        reason: "Watch the transform pipeline.",
+        relevance: "segments",
+        segments: [{ label: "Resize walkthrough", start: 15, end: 180, reason: "Shows the shape mismatch." }],
+        fallback_text: "fb",
+      }],
+    });
+    expect(r.valid).toBe(true);
+  });
+
+  it("rejects segment guidance without exact usable times", () => {
+    const missing = validateMediaContent({
+      embeds: [{ provider: "youtube", video_id: "HZGCoVF3YvM", title: "T", reason: "r", relevance: "segments", fallback_text: "f" }],
+    });
+    expect(missing.valid).toBe(false);
+    expect(missing.errors.join(" ")).toMatch(/segments array/);
+
+    const backwards = validateMediaContent({
+      embeds: [{
+        provider: "youtube",
+        video_id: "HZGCoVF3YvM",
+        title: "T",
+        reason: "r",
+        relevance: "segments",
+        segments: [{ start: 90, end: 30 }],
+        fallback_text: "f",
+      }],
+    });
+    expect(backwards.valid).toBe(false);
+    expect(backwards.errors.join(" ")).toMatch(/end must be greater than start/);
+  });
+
   it("rejects unsupported providers and unresolvable videos", () => {
     expect(validateMediaContent({ embeds: [{ provider: "vimeo", video_id: "x", title: "T", reason: "r", fallback_text: "f" }] }).valid).toBe(false);
     expect(validateMediaContent({ embeds: [{ provider: "youtube", url: "https://evil.com/x", title: "T", reason: "r", fallback_text: "f" }] }).valid).toBe(false);

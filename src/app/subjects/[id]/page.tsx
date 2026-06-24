@@ -1,7 +1,8 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { Suspense, useEffect, useState } from "react";
 import Link from "next/link";
+import { useRouter, useSearchParams } from "next/navigation";
 import { use } from "react";
 import type { Subject, Lesson, MasterySignal, ProgressPoint, SubjectMastery } from "@/types";
 import { LessonList } from "@/components/LessonList";
@@ -34,11 +35,21 @@ interface TagEvidenceRow {
 type TabId = "lessons" | "mastery" | "progress" | "goals" | "criteria";
 
 export default function SubjectPage({ params }: { params: Promise<{ id: string }> }) {
+  return (
+    <Suspense fallback={<div className="min-h-screen bg-white flex items-center justify-center text-gray-400 text-sm">Loading...</div>}>
+      <SubjectContent params={params} />
+    </Suspense>
+  );
+}
+
+function SubjectContent({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
+  const router = useRouter();
+  const searchParams = useSearchParams();
   const [data, setData] = useState<SubjectData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [activeTab, setActiveTab] = useState<TabId>("lessons");
+  const [activeTab, setActiveTab] = useState<TabId>(() => parseTab(searchParams.get("tab")) ?? "lessons");
   const [archiveBusy, setArchiveBusy] = useState(false);
   const [notice, setNotice] = useState<string | null>(null);
   const [showEditForm, setShowEditForm] = useState(false);
@@ -60,6 +71,16 @@ export default function SubjectPage({ params }: { params: Promise<{ id: string }
     load();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [id]);
+
+  useEffect(() => {
+    const nextTab = parseTab(searchParams.get("tab"));
+    if (nextTab && nextTab !== activeTab) setActiveTab(nextTab);
+  }, [searchParams, activeTab]);
+
+  function selectTab(tab: TabId) {
+    setActiveTab(tab);
+    router.replace(`/subjects/${id}?tab=${tab}`, { scroll: false });
+  }
 
   async function toggleArchive() {
     if (!data) return;
@@ -144,7 +165,7 @@ export default function SubjectPage({ params }: { params: Promise<{ id: string }
             {tabs.map((tab) => (
               <button
                 key={tab.id}
-                onClick={() => setActiveTab(tab.id)}
+                onClick={() => selectTab(tab.id)}
                 className={`px-4 py-2.5 text-sm font-medium border-b-2 transition-colors ${
                   activeTab === tab.id
                     ? "border-blue-500 text-blue-700"
@@ -228,7 +249,7 @@ export default function SubjectPage({ params }: { params: Promise<{ id: string }
         )}
 
         {/* Tab content */}
-        <div className="mt-2">
+        <div id={`tab-${activeTab}`} className="mt-2 scroll-mt-24">
           {activeTab === "lessons" && (
             <LessonList
               completed={completedLessons}
@@ -395,4 +416,17 @@ function StatPill({
       <div className="text-xs opacity-70 mt-0.5">{label}</div>
     </div>
   );
+}
+
+function parseTab(value: string | null): TabId | null {
+  if (
+    value === "lessons"
+    || value === "mastery"
+    || value === "progress"
+    || value === "goals"
+    || value === "criteria"
+  ) {
+    return value;
+  }
+  return null;
 }
