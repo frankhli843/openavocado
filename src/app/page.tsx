@@ -10,6 +10,8 @@ import { Logo } from "@/components/Logo";
 import { SubjectForm } from "@/components/SubjectForm";
 import { ProfileSwitcher } from "@/components/ProfileSwitcher";
 
+const subjectListCache = new Map<number, SubjectSummary[]>();
+
 export default function DashboardPage() {
   return (
     <Suspense fallback={<div className="min-h-screen bg-white flex items-center justify-center text-gray-400 text-sm">Loading...</div>}>
@@ -31,25 +33,43 @@ function DashboardContent() {
   const [showArchived, setShowArchived] = useState(() => searchParams.get("view") === "archived");
   const [showCreateForm, setShowCreateForm] = useState(() => searchParams.get("new") === "subject");
 
-  async function load() {
+  async function load(options: { background?: boolean } = {}) {
     if (learnerId == null) return;
     try {
-      setLoading(true);
+      if (!options.background) setLoading(true);
       const res = await fetch(`/api/subjects?learner_id=${learnerId}`);
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
       const data = (await res.json()) as { subjects: SubjectSummary[]; learner_id: number };
+      subjectListCache.set(learnerId, data.subjects);
       setSubjects(data.subjects);
+      setError(null);
     } catch (e) {
       setError(e instanceof Error ? e.message : "Failed to load");
     } finally {
-      setLoading(false);
+      if (!options.background) setLoading(false);
     }
   }
 
   useEffect(() => {
-    load();
+    if (learnerId == null) return;
+    const cached = subjectListCache.get(learnerId);
+    if (cached) {
+      setSubjects(cached);
+      setLoading(false);
+      void load({ background: true });
+      return;
+    }
+    void load();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [learnerId]);
+
+  useEffect(() => {
+    for (const subject of subjects) {
+      if (subject.status !== "archived") {
+        router.prefetch(`/subjects/${subject.id}?tab=lessons`);
+      }
+    }
+  }, [router, subjects]);
 
   useEffect(() => {
     setShowArchived(searchParams.get("view") === "archived");

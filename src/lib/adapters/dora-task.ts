@@ -1,58 +1,228 @@
+import { execFile } from "node:child_process";
+import { existsSync } from "node:fs";
+import { homedir } from "node:os";
+import path from "node:path";
+import { promisify } from "node:util";
 import type {
   CompletionHookAdapter,
   LessonCompletedEvent,
-  RegenerationHookAdapter,
   LessonDiscardedEvent,
+  RegenerationHookAdapter,
+  SubjectCreatedEvent,
 } from "@/types";
 import { LESSON_QUALITY_BAR_PROMPT } from "@/lib/lesson-generator/contract";
+
+const execFileAsync = promisify(execFile);
 
 export const AVOCADOCORE_LESSON_AUTHORING_SKILL =
   "skills/avocadocore-lesson-authoring/SKILL.md";
 
+const KNOWLEDGE_FILES_SECTION = [
+  "RELEVANT KNOWLEDGE FILES:",
+  "- knowledge/projects/avocadocore_dev.md",
+].join("\n");
+
+interface DoraCreateTaskInput {
+  project: string;
+  title: string;
+  acceptance: string;
+  metadata: Record<string, unknown>;
+}
+
+function getConfiguredProject(config?: Record<string, unknown>): string {
+  return (
+    (config?.project as string | undefined) ||
+    process.env.AVOCADOCORE_DORA_PROJECT ||
+    "avocadocore"
+  );
+}
+
+function getConfiguredChannel(config?: Record<string, unknown>): string | undefined {
+  return (
+    (config?.channel as string | undefined) ||
+    process.env.AVOCADOCORE_DORA_CHANNEL
+  );
+}
+
+function getConfiguredEndpoint(config?: Record<string, unknown>): string | undefined {
+  return (
+    (config?.endpoint as string | undefined) ||
+    process.env.AVOCADOCORE_DORA_ENDPOINT ||
+    undefined
+  );
+}
+
+function resolveTodoCli(config?: Record<string, unknown>): string | null {
+  const configured =
+    (config?.todo_cli as string | undefined) ||
+    process.env.AVOCADOCORE_DORA_TODO_CLI;
+  if (configured) return configured;
+
+  const workspace =
+    process.env.OPENCLAW_WORKSPACE ||
+    path.join(homedir(), ".openclaw", "workspace");
+  const candidate = path.join(
+    workspace,
+    "skills",
+    "doramon-todo-loop",
+    "scripts",
+    "todo.sh"
+  );
+  return existsSync(candidate) ? candidate : null;
+}
+
+function appendDoraQualityGate(text: string): string {
+  if (text.toUpperCase().includes("RELEVANT KNOWLEDGE FILES")) return text;
+  return [text, "", KNOWLEDGE_FILES_SECTION].join("\n");
+}
+
+async function createDoraTask(
+  input: DoraCreateTaskInput,
+  config?: Record<string, unknown>
+): Promise<{ ok: boolean; ref?: string; error?: string }> {
+  const endpoint = getConfiguredEndpoint(config);
+  const acceptance = appendDoraQualityGate(input.acceptance);
+
+  if (endpoint) {
+    try {
+      const res = await fetch(endpoint, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          project: input.project,
+          title: input.title,
+          acceptance,
+          origin_platform: "avocadocore",
+          metadata: input.metadata,
+        }),
+      });
+
+      if (!res.ok) {
+        return { ok: false, error: `dora endpoint responded with ${res.status}` };
+      }
+
+      const data = (await res.json()) as { id?: string; todo?: { id?: string } };
+      return { ok: true, ref: data.id || data.todo?.id || `dora-task-${Date.now()}` };
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : String(err);
+      return { ok: false, error: msg };
+    }
+  }
+
+  const todoCli = resolveTodoCli(config);
+  if (!todoCli) {
+    return {
+      ok: false,
+      error:
+        "dora-task adapter: no AVOCADOCORE_DORA_ENDPOINT or todo CLI configured",
+    };
+  }
+
+  try {
+    const { stdout, stderr } = await execFileAsync(
+      "bash",
+      [
+        todoCli,
+        "add",
+        input.project,
+        "--title",
+        input.title,
+        "--acceptance",
+        acceptance,
+        "--origin-platform",
+        "avocadocore",
+        "--origin-channel",
+        "avocadocore",
+        "--origin-preview",
+        input.title,
+        "--created-by",
+        "avocadocore",
+      ],
+      {
+        cwd: process.env.OPENCLAW_WORKSPACE || path.join(homedir(), ".openclaw", "workspace"),
+        timeout: 30_000,
+        maxBuffer: 1024 * 1024,
+      }
+    );
+    const data = JSON.parse(stdout.trim()) as {
+      ok?: boolean;
+      error?: string;
+      todo?: { id?: string };
+    };
+    if (!data.ok) {
+      return { ok: false, error: data.error || stderr || "todo CLI returned ok=false" };
+    }
+    return { ok: true, ref: data.todo?.id || `dora-task-${Date.now()}` };
+  } catch (err) {
+    const msg = err instanceof Error ? err.message : String(err);
+    return { ok: false, error: msg };
+  }
+}
+
+function fmtChannelInstruction(channel?: string): string {
+  return channel
+    ? `After generating the lesson, post a review in <#${channel}> explaining what changed, what evidence drove it, and how the lesson bridges the learner's gaps. Tag the learner in the thread.`
+    : "After generating the lesson, confirm completion in the appropriate channel.";
+}
+
+function buildFirstLessonAcceptance(event: SubjectCreatedEvent, channel?: string): string {
+  const subjectSnapshot = [
+    `Title: ${event.subject_title}`,
+    event.subject_description ? `Description: ${event.subject_description}` : "Description: (none set)",
+    event.subject_goals ? `Goals:\n${event.subject_goals}` : "Goals: (none set)",
+    event.subject_criteria
+      ? `Learner criteria / generator notes:\n${event.subject_criteria}`
+      : "Learner criteria / generator notes: (none set)",
+    `Current level: ${event.current_level}`,
+    event.workpad_summary ? `Current workpad:\n${event.workpad_summary}` : "Current workpad: (none yet)",
+    `Learner profile config: ${event.learner_profile_config ? JSON.stringify(event.learner_profile_config) : "(none)"}`,
+  ].join("\n");
+
+  return [
+    `Read ${AVOCADOCORE_LESSON_AUTHORING_SKILL} before doing any lesson work.`,
+    "",
+    `Generate the FIRST lesson for new subject "${event.subject_title}" (subject ${event.subject_id}, learner ${event.learner_id}).`,
+    "This is the initial lesson, so the worker must not assume a pre-existing curriculum or hidden mastery state. Start by inspecting the local AvocadoCore SQLite database for this subject, learner profile, related subjects, prior cross-subject mastery, and any existing workpad. If the subject has no lessons yet, create lesson 1. If a lesson was already added while this task was waiting, verify it against the quality bar and either repair it or record that no new lesson is needed.",
+    "",
+    "=== SUBJECT SNAPSHOT ===",
+    subjectSnapshot,
+    "",
+    "=== REQUIRED PLANNING STAGE ===",
+    "Before authoring content, do a deliberate planning pass. Read the subject goals and criteria, inspect SQLite evidence, update or create the subject workpad, and identify the highest-value first slice of the subject. For technical subjects, especially model building, inference, quantization, GGUF conversion, Hugging Face release workflows, or Gemma contribution practice, do comprehensive current research before choosing examples or package APIs. Record the source-backed findings in task notes or lesson metadata. Do not guess the current syntax, package names, keyword arguments, flags, or release workflows for external libraries or tools. If the lesson uses an external Python library, CLI, or model package, include enough documentation in code comments and teaching text that the learner can understand the relevant parameters and keywords without already knowing that package.",
+    "",
+    "=== FIRST LESSON DESIGN GOAL ===",
+    "The first lesson should orient the learner to the big picture before diving into details. Explain why the subject matters, what problem the first concept solves, what breaks without it, and how it connects to the learner's long-term goal. Avoid broad survey fluff. Pick a concrete, learnable step that creates useful mental scaffolding and gives the model enough evidence to plan lesson 2.",
+    "",
+    "For the requested model-building and inference track, the first lesson should help the learner understand the lifecycle from data and tokenizer choices through training, inference, quantization, packaging, and release, while still teaching one concrete part deeply enough to practice. The end goal is competence to help the Google Gemma team, so the lesson should point toward real workflows and vocabulary without pretending the learner already knows them.",
+    "",
+    "=== REQUIRED LESSON STRUCTURE ===",
+    "Break normal lessons into collapsed lesson parts. Each part needs first-class written teaching text, a per-part Doraemon voice audio script, an interactive or visual element that deepens understanding, and exactly 10 multiple-choice reinforcement questions requiring 4 correct answers in a row. The done/undone button is only a personal checklist marker and must never gate completion. Add a table of contents and stable deep links for each part and meaningful activity.",
+    "",
+    "Every major step should use a metaphor, at least three simple examples where useful, and a concrete explanation of why the step exists. Visualizations should not be decorative graphs. They should let the learner change something, see a consequence or failure mode, and understand what the step proves. Every visualization must have audio explanation or a per-part audio script explaining what to change, what to notice, and what the visual proves.",
+    "",
+    "=== CODING PRACTICE AND HINTS ===",
+    "If the lesson includes a coding part, provide a scaffolded practice_code activity with public tests and hidden tests. Hints must be progressive and unboxable all the way from high-level nudge to the full answer path. The recommended ladder is: level 1 conceptual hint, level 2 structural plan, level 3 package/API hint, level 4 syntax hint, level 5 near-complete answer, and level 6 complete answer explanation. The learner should be able to keep opening hints until they can finish even if they did not know a keyword, parameter name, or library convention. The starter code and comments should document any external Python library calls used by the exercise, including what important parameters mean and where the learner should change values. Do not assume the learner knows NumPy, PyTorch, Transformers, sentencepiece, gguf tooling, or any package-specific keyword arguments unless that exact usage has already been taught or documented in the lesson.",
+    "",
+    "The current app validator still rejects exposed solution fields in practice_code content, so do not put a top-level solution/answer field in the lesson payload. Put progressive answer support in hints and comments in a way the UI can reveal step by step, and keep tests authoritative.",
+    "",
+    LESSON_QUALITY_BAR_PROMPT,
+    "",
+    "=== COMPLETION REQUIREMENTS ===",
+    "Create or repair the lesson in the real local SQLite database, generate or verify Doraemon voice audio, validate generated content, verify runtime artifact links, and smoke-test the lesson page in the browser. Update the subject workpad with concise long-term planning notes: what this first lesson taught, what remains uncertain, what lesson 2 should likely do, and what evidence should be collected from the learner.",
+    "",
+    fmtChannelInstruction(channel),
+  ].join("\n");
+}
+
 /**
- * Dora-task adapter — creates a Doramon todo-loop task for next-lesson generation.
- *
- * This adapter is deployment-specific. It expects local config (gitignored .env) to
- * provide the Doramon endpoint or CLI path. The reusable repo ships this as a reference
- * implementation, not hardcoded with any personal IDs.
- *
- * Required env vars:
- *   AVOCADOCORE_DORA_ENDPOINT  — HTTP endpoint to POST to (optional, falls back to CLI)
- *   AVOCADOCORE_DORA_PROJECT   — Doramon project slug for next-lesson tasks
- *   AVOCADOCORE_DORA_CHANNEL   — Discord channel ID for post-generation review (optional)
+ * Dora-task adapter - creates a Doramon todo-loop task for next-lesson generation.
  */
 export const doraTaskAdapter: CompletionHookAdapter = {
   name: "dora-task",
   async dispatch(event: LessonCompletedEvent, config?: Record<string, unknown>) {
-    const endpoint =
-      (config?.endpoint as string | undefined) ||
-      process.env.AVOCADOCORE_DORA_ENDPOINT;
-    const project =
-      (config?.project as string | undefined) ||
-      process.env.AVOCADOCORE_DORA_PROJECT ||
-      "avocadocore";
-    const channel =
-      (config?.channel as string | undefined) ||
-      process.env.AVOCADOCORE_DORA_CHANNEL;
+    const project = getConfiguredProject(config);
+    const channel = getConfiguredChannel(config);
 
-    if (!endpoint) {
-      // No endpoint configured — fall back to logging for local development
-      console.warn("[completion:dora-task] No AVOCADOCORE_DORA_ENDPOINT set. Logging event only.");
-      console.log("[completion:dora-task] Event:", JSON.stringify(event, null, 2));
-      return {
-        ok: false,
-        error: "dora-task adapter: no endpoint configured (AVOCADOCORE_DORA_ENDPOINT)",
-      };
-    }
-
-    // Build acceptance criteria for the next-lesson Dora task.
-    // The generator must FIRST use subject-specific evidence (goals, criteria,
-    // workpad, this lesson's answers, quiz, diagnostics, tag+difficulty
-    // performance, mastery signals, completed/discarded lessons, misconceptions).
-    // Profile config + cross-subject history are secondary, used only when they
-    // help find the fastest path to mastery. The pedagogical goal is to find
-    // foundational weaknesses and bridge them with the least learner effort,
-    // while advancing the curriculum when the foundation is solid.
     const fmtTagPerf = event.tag_difficulty_performance.length
       ? event.tag_difficulty_performance
           .map(
@@ -67,148 +237,99 @@ export const doraTaskAdapter: CompletionHookAdapter = {
 
     const acceptance = [
       `Read ${AVOCADOCORE_LESSON_AUTHORING_SKILL} before doing any lesson work.`,
-      ``,
+      "",
       `Generate the next lesson for subject "${event.subject_title}" (learner ${event.learner_id}).`,
-      `Be adaptive to the evidence below — do NOT produce a generic next chapter.`,
-      ``,
-      `=== PEDAGOGICAL GOAL ===`,
-      `Find foundational weaknesses and bridge them as fast as possible with the least learner effort.`,
-      `Advance the curriculum only where the foundation is already solid. Prioritise subject-specific`,
-      `evidence first; use profile config + cross-subject history only if they speed up mastery.`,
-      `Do not assume domain facts unless they are documented in AvocadoCore, present in SQLite evidence,`,
-      `or verified and recorded in the lesson/task notes.`,
-      ``,
-      `=== SUBJECT CONTEXT (use first) ===`,
+      "Be adaptive to the evidence below. Do not produce a generic next chapter.",
+      "",
+      "=== PEDAGOGICAL GOAL ===",
+      "Find foundational weaknesses and bridge them as fast as possible with the least learner effort. Advance the curriculum only where the foundation is already solid. Prioritise subject-specific evidence first. Use profile config and cross-subject history only if they speed up mastery. Do not assume domain facts unless they are documented in AvocadoCore, present in SQLite evidence, or verified and recorded in the lesson/task notes.",
+      "",
+      "=== SUBJECT CONTEXT (use first) ===",
       `Goals: ${event.subject_goals || "(none set)"}`,
       `Learner criteria/notes: ${event.subject_criteria || "(none set)"}`,
-      event.workpad_summary ? `AI workpad (current plan):\n${event.workpad_summary}` : `AI workpad: (none yet)`,
-      ``,
-      `=== THIS LESSON ===`,
+      event.workpad_summary ? `AI workpad (current plan):\n${event.workpad_summary}` : "AI workpad: (none yet)",
+      "",
+      "=== THIS LESSON ===",
       `Prior lesson: "${event.lesson_title}"  | Goals: ${event.lesson_goals.join(", ")}`,
       event.quiz_result
         ? `Quiz: ${event.quiz_result.passed ? "passed" : "not passed"} (${event.quiz_result.correct_count}/${event.quiz_result.pass_threshold})`
-        : `Quiz: (none)`,
-      `Freeform assessment Q&A:`,
+        : "Quiz: (none)",
+      "Freeform assessment Q&A:",
       event.assessment_qa.map((qa) => `  - Q: ${qa.question}\n    A: ${qa.learner_answer}`).join("\n"),
-      ``,
-      `=== TAG + DIFFICULTY PERFORMANCE (the queryable evidence) ===`,
+      "",
+      "=== TAG + DIFFICULTY PERFORMANCE (the queryable evidence) ===",
       fmtTagPerf,
-      ``,
-      `=== END-OF-LESSON DIAGNOSTICS (what the learner wants next) ===`,
+      "",
+      "=== END-OF-LESSON DIAGNOSTICS (what the learner wants next) ===",
       fmtDiagnostics,
-      ``,
-      `=== MASTERY SIGNALS ===`,
+      "",
+      "=== MASTERY SIGNALS ===",
       `Concepts to review: ${event.concepts_to_review.join(", ") || "none"}`,
       `Concepts ready to advance: ${event.concepts_ready_to_advance.join(", ") || "none"}`,
       `Recent misconceptions: ${event.recent_misconceptions.join(", ") || "none"}`,
-      ``,
-      `=== CURRICULUM CONTEXT ===`,
+      "",
+      "=== CURRICULUM CONTEXT ===",
       `Completed lessons: ${event.completed_lessons.map((l) => l.title).join("; ") || "none"}`,
       `Discarded lessons (avoid repeating): ${event.discarded_lessons.map((l) => `${l.title}${l.reason ? ` (${l.reason})` : ""}`).join("; ") || "none"}`,
-      ``,
-      `=== SECONDARY CONTEXT (use only if it helps) ===`,
+      "",
+      "=== SECONDARY CONTEXT (use only if it helps) ===",
       `Profile config: ${event.learner_profile_config ? JSON.stringify(event.learner_profile_config) : "(none)"}`,
       `Cross-subject mastery: ${event.cross_subject_history.map((c) => `${c.subject_title}=${c.mastery_score ?? "n/a"}`).join(", ") || "(none)"}`,
-      ``,
+      "",
+      "=== CODING PRACTICE AND HINTS ===",
+      "For any practice_code activity, hints must be progressive and unboxable all the way to the answer path: conceptual nudge, structural plan, package/API hint, syntax hint, near-complete answer, and complete answer explanation. If an external Python library is used, comments in starter code and teaching text must document the relevant package calls and parameters. Do not assume the learner knows keywords, parameter names, or package conventions.",
+      "",
       LESSON_QUALITY_BAR_PROMPT,
-      ``,
-      `Delivery:`,
-      channel
-        ? `After generating the next lesson, post a review in <#${channel}> explaining which answers were right, which were wrong, why, and how the next lesson bridges the foundational gaps. Tag the learner in the thread.`
-        : `After generating the next lesson, confirm completion in the appropriate channel.`,
+      "",
+      "Delivery:",
+      fmtChannelInstruction(channel),
     ].join("\n");
 
-    try {
-      const res = await fetch(endpoint, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          project,
-          title: `Generate next lesson: ${event.subject_title} (after "${event.lesson_title}")`,
-          acceptance,
-          origin_platform: "avocadocore",
-          metadata: { lesson_completed_event: event },
-        }),
-      });
-
-      if (!res.ok) {
-        return { ok: false, error: `dora endpoint responded with ${res.status}` };
-      }
-
-      const data = (await res.json()) as { id?: string };
-      const ref = data.id || `dora-task-${Date.now()}`;
-      return { ok: true, ref };
-    } catch (err) {
-      const msg = err instanceof Error ? err.message : String(err);
-      return { ok: false, error: msg };
-    }
+    return createDoraTask(
+      {
+        project,
+        title: `Generate next lesson: ${event.subject_title} (after "${event.lesson_title}")`,
+        acceptance,
+        metadata: { lesson_completed_event: event },
+      },
+      config
+    );
   },
 };
 
 /**
- * Dora-task regeneration adapter — creates a Doramon todo-loop task for
- * replacement lesson generation after a learner discards an incomplete lesson.
- *
- * The generated task explicitly passes:
- *  - subject goals and criteria/notes (so the replacement isn't a blind regeneration)
- *  - the discarded lesson metadata and learner's stated reason
- *  - mastery signals and completed lesson history for context
- *  - current workpad summary if available
- *
- * Required env vars: same as doraTaskAdapter (AVOCADOCORE_DORA_ENDPOINT, etc.)
+ * Dora-task regeneration adapter - creates a Doramon todo-loop task for a
+ * replacement lesson after a learner discards an incomplete lesson.
  */
 export const doraTaskRegenerationAdapter: RegenerationHookAdapter = {
   name: "dora-task",
   async dispatch(event: LessonDiscardedEvent, config?: Record<string, unknown>) {
-    const endpoint =
-      (config?.endpoint as string | undefined) ||
-      process.env.AVOCADOCORE_DORA_ENDPOINT;
-    const project =
-      (config?.project as string | undefined) ||
-      process.env.AVOCADOCORE_DORA_PROJECT ||
-      "avocadocore";
-    const channel =
-      (config?.channel as string | undefined) ||
-      process.env.AVOCADOCORE_DORA_CHANNEL;
+    const project = getConfiguredProject(config);
+    const channel = getConfiguredChannel(config);
 
-    if (!endpoint) {
-      console.warn(
-        "[regeneration:dora-task] No AVOCADOCORE_DORA_ENDPOINT set. Logging event only."
-      );
-      console.log("[regeneration:dora-task] Event:", JSON.stringify(event, null, 2));
-      return {
-        ok: false,
-        error: "dora-task regeneration adapter: no endpoint configured (AVOCADOCORE_DORA_ENDPOINT)",
-      };
-    }
-
-    // Build a detailed acceptance task for the replacement lesson.
-    // Critically: include subject criteria + discard reason so the generator
-    // does NOT blindly regenerate the same lesson.
     const acceptance = [
       `Read ${AVOCADOCORE_LESSON_AUTHORING_SKILL} before doing any lesson work.`,
-      ``,
+      "",
       `Generate a REPLACEMENT lesson for subject "${event.subject_title}" (learner ${event.learner_id}).`,
-      ``,
-      `IMPORTANT: The learner discarded the previous lesson. This is NOT a retry of the same lesson.`,
-      `Read the subject context carefully and generate a better-aligned lesson.`,
-      ``,
-      `=== SUBJECT CONTEXT ===`,
+      "",
+      "IMPORTANT: The learner discarded the previous lesson. This is not a retry of the same lesson. Read the subject context carefully and generate a better-aligned lesson.",
+      "",
+      "=== SUBJECT CONTEXT ===",
       `Title: ${event.subject_title}`,
       event.subject_description ? `Description: ${event.subject_description}` : "",
       event.subject_goals ? `Learning goals:\n${event.subject_goals}` : "",
       event.subject_criteria
         ? `Learner criteria / notes for lesson generator:\n${event.subject_criteria}`
-        : "(no learner criteria set — use subject goals and progress signals as the main guide)",
-      ``,
-      `=== DISCARDED LESSON ===`,
+        : "(no learner criteria set - use subject goals and progress signals as the main guide)",
+      "",
+      "=== DISCARDED LESSON ===",
       `Lesson: "${event.discarded_lesson_title}" (id: ${event.discarded_lesson_id})`,
       `Status at discard: ${event.discarded_lesson_status}`,
       event.discard_reason
         ? `Learner's reason for discarding: ${event.discard_reason}`
         : "(learner did not provide a specific reason)",
-      ``,
-      `=== LEARNING PROGRESS ===`,
+      "",
+      "=== LEARNING PROGRESS ===",
       `Mastery score: ${event.mastery_score !== null ? `${event.mastery_score.toFixed(0)}/100` : "not yet measured"}`,
       event.completed_lessons.length > 0
         ? `Completed lessons:\n${event.completed_lessons.map((l) => `  - ${l.title} (${l.completed_at.slice(0, 10)})`).join("\n")}`
@@ -219,55 +340,51 @@ export const doraTaskRegenerationAdapter: RegenerationHookAdapter = {
             .map((s) => `  - [${s.signal_type}] ${s.concept}${s.detail ? `: ${s.detail}` : ""}`)
             .join("\n")}`
         : "No mastery signals recorded yet.",
-      ``,
+      "",
       event.workpad_summary
         ? `=== AI WORKPAD (current plan summary) ===\n${event.workpad_summary}\n`
         : "",
-      `=== INSTRUCTIONS ===`,
-      `Before writing the replacement lesson:`,
-      `1. Review the subject goals and learner criteria above.`,
-      `2. Consider why the learner discarded the previous lesson (reason provided above).`,
-      `3. If the learner gave a specific reason (too easy / too hard / wrong topic / bad style / etc.),`,
-      `   explicitly address that in the replacement.`,
-      `4. Review the AI workpad (if available) for current plan and open questions.`,
-      `5. Update the workpad with what you decided and why, then include the workpad delta in your task notes.`,
-      `6. Generate a lesson that better fits the learner's goals, criteria, and current level.`,
-      ``,
+      "=== INSTRUCTIONS ===",
+      "Before writing the replacement lesson, review the subject goals, learner criteria, discard reason, current workpad, and mastery evidence. If the learner gave a reason such as too easy, too hard, wrong topic, or bad style, explicitly correct that failure mode. Update the workpad with what you decided and why, then generate a lesson that better fits the learner's goals, criteria, and current level.",
+      "",
+      "=== CODING PRACTICE AND HINTS ===",
+      "If the replacement lesson includes code, provide progressive, unboxable hints that can be opened until the learner reaches the full answer path. Do not assume package-specific keywords or parameters are known. Document every external Python library in starter-code comments and teaching text.",
+      "",
       LESSON_QUALITY_BAR_PROMPT,
-      ``,
-      `Completion:`,
+      "",
+      "Completion:",
       channel
-        ? `After generating the replacement lesson, post a summary in <#${channel}> explaining ` +
-          `what changed vs the discarded lesson and how it addresses the learner's feedback. ` +
-          `Tag the learner in the thread.`
-        : `After generating the replacement lesson, confirm completion in the appropriate channel.`,
+        ? `After generating the replacement lesson, post a summary in <#${channel}> explaining what changed vs the discarded lesson and how it addresses the learner's feedback. Tag the learner in the thread.`
+        : "After generating the replacement lesson, confirm completion in the appropriate channel.",
     ]
       .filter((line) => line !== "")
       .join("\n");
 
-    try {
-      const res = await fetch(endpoint, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          project,
-          title: `Generate replacement lesson: ${event.subject_title} (discarded "${event.discarded_lesson_title}")`,
-          acceptance,
-          origin_platform: "avocadocore",
-          metadata: { lesson_discarded_event: event },
-        }),
-      });
-
-      if (!res.ok) {
-        return { ok: false, error: `dora endpoint responded with ${res.status}` };
-      }
-
-      const data = (await res.json()) as { id?: string };
-      const ref = data.id || `dora-regen-task-${Date.now()}`;
-      return { ok: true, ref };
-    } catch (err) {
-      const msg = err instanceof Error ? err.message : String(err);
-      return { ok: false, error: msg };
-    }
+    return createDoraTask(
+      {
+        project,
+        title: `Generate replacement lesson: ${event.subject_title} (discarded "${event.discarded_lesson_title}")`,
+        acceptance,
+        metadata: { lesson_discarded_event: event },
+      },
+      config
+    );
   },
 };
+
+export async function dispatchSubjectCreatedLessonTask(
+  event: SubjectCreatedEvent,
+  config?: Record<string, unknown>
+): Promise<{ ok: boolean; ref?: string; error?: string }> {
+  const project = getConfiguredProject(config);
+  const channel = getConfiguredChannel(config);
+  return createDoraTask(
+    {
+      project,
+      title: `Generate first lesson: ${event.subject_title}`,
+      acceptance: buildFirstLessonAcceptance(event, channel),
+      metadata: { subject_created_event: event },
+    },
+    config
+  );
+}

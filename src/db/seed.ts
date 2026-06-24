@@ -879,33 +879,47 @@ q_star = None
         "Permute: arr.transpose(2, 0, 1) converts HWC → CHW.",
       ],
       hints: [
-        { level: 1, text: "Work step by step: convert dtype first, then normalise, then reorder axes." },
-        { level: 2, text: "np.array(mean) must broadcast correctly against an (H, W, 3) array — reshape to (1, 1, 3)." },
-        { level: 3, text: "arr = arr.astype(np.float32) / 255.0; arr = (arr - np.array(mean).reshape(1,1,3)) / np.array(std).reshape(1,1,3); return arr.transpose(2,0,1)" },
+        { level: 1, text: "Conceptual nudge: do not normalise 0-255 integers directly. First turn each pixel into a decimal in [0.0, 1.0], then subtract the channel mean, divide by the channel std, and finally move RGB channels to the front." },
+        { level: 2, text: "Structural plan: after the crop/pad code, write three blocks: (1) arr = arr.astype(np.float32) / 255.0, (2) build mean_arr and std_arr with shape (1, 1, 3), then compute (arr - mean_arr) / std_arr, (3) return arr.transpose(2, 0, 1)." },
+        { level: 3, text: "NumPy/API hint: astype(np.float32) converts uint8 values into floats. np.array(mean, dtype=np.float32).reshape(1, 1, 3) makes the three RGB means broadcast across an HWC image. transpose(2, 0, 1) changes HWC into CHW." },
+        { level: 4, text: "Syntax hint: mean_arr = np.array(mean, dtype=np.float32).reshape(1, 1, 3); std_arr = np.array(std, dtype=np.float32).reshape(1, 1, 3); arr = (arr - mean_arr) / std_arr." },
+        { level: 5, text: "Near-complete answer: fill the TODOs with arr = arr.astype(np.float32) / 255.0, then mean_arr/std_arr reshaped to (1, 1, 3), then arr = (arr - mean_arr) / std_arr, then arr = arr.transpose(2, 0, 1).astype(np.float32)." },
+        { level: 6, text: "Complete answer explanation: the final core is: arr = arr.astype(np.float32) / 255.0; mean_arr = np.array(mean, dtype=np.float32).reshape(1, 1, 3); std_arr = np.array(std, dtype=np.float32).reshape(1, 1, 3); arr = (arr - mean_arr) / std_arr; return arr.transpose(2, 0, 1).astype(np.float32). The reshape is what lets each RGB channel use its own mean/std across all pixels." },
       ],
       starter_code: `import numpy as np
 
 def preprocess_image(arr, target_size=224, mean=(0.485, 0.456, 0.406), std=(0.229, 0.224, 0.225)):
     """
-    arr: uint8 NumPy array (H, W, 3)
-    Returns: float32 array (3, target_size, target_size)
+    arr: uint8 NumPy array with shape (H, W, 3), where the last axis is RGB channels.
+    target_size: output height and width. This exercise uses a centre crop/pad to keep focus on normalisation.
+    mean/std: one value per RGB channel, already scaled for pixels in [0.0, 1.0].
+    Returns: float32 NumPy array with shape (3, target_size, target_size), also called CHW.
     """
-    # Step 1 — centre-crop to target_size x target_size
+    # Step 1: centre-crop to target_size x target_size.
+    # arr.shape[:2] gives the image height and width. max(0, ...) prevents negative crop starts.
     h, w = arr.shape[:2]
     top  = max(0, (h - target_size) // 2)
     left = max(0, (w - target_size) // 2)
     arr  = arr[top:top+target_size, left:left+target_size]
-    # Pad if smaller (rare for large images, but handle it)
+
+    # If the input is smaller than target_size, pad the bottom/right edges with zeros.
+    # np.pad takes one (before, after) tuple per axis. The channel axis gets (0, 0)
+    # because we never add extra colour channels.
     pad_h = max(0, target_size - arr.shape[0])
     pad_w = max(0, target_size - arr.shape[1])
     if pad_h or pad_w:
-        arr = np.pad(arr, ((0, pad_h), (0, pad_w), (0, 0)), mode='constant')
+        arr = np.pad(arr, ((0, pad_h), (0, pad_w), (0, 0)), mode="constant")
 
-    # TODO: Step 2 — rescale to float32 in [0, 1]
+    # TODO: Step 2: convert uint8 [0, 255] pixels to float32 [0.0, 1.0].
+    # NumPy astype(np.float32) changes the numeric type so division keeps decimals.
 
-    # TODO: Step 3 — normalise using mean and std
+    # TODO: Step 3: normalise using mean and std.
+    # Convert mean/std to arrays and reshape each to (1, 1, 3), so NumPy broadcasts
+    # one RGB channel value across every pixel location in an HWC image.
 
-    # TODO: Step 4 — permute from HWC to CHW
+    # TODO: Step 4: permute from HWC to CHW.
+    # transpose(2, 0, 1) means: new axis 0 = old channel axis, new axis 1 = old height,
+    # new axis 2 = old width. Many model tensors expect channels first.
 
     return arr
 `,

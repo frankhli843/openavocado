@@ -303,7 +303,7 @@ export interface CodeTest {
 }
 
 export interface CodeHint {
-  /** Progressive level: 1 conceptual, 2 structural, 3 syntax. Never the answer. */
+  /** Progressive reveal level, from conceptual nudge through full answer explanation. */
   level: number;
   text: string;
 }
@@ -390,7 +390,9 @@ export function validatePracticeCodeContent(content: unknown): { valid: boolean;
   checkTests(publicTests, "tests");
   checkTests(hiddenTests, "hidden_tests");
 
-  // Hints, when present, must be progressive and textual (never code answers).
+  // Hints, when present, must be progressive and textual. The lesson payload
+  // still cannot expose a top-level solution field, but later hints may reveal
+  // the answer path so a stuck learner can keep unboxing help.
   if (c.hints !== undefined) {
     if (!Array.isArray(c.hints)) {
       errors.push("practice_code hints must be an array");

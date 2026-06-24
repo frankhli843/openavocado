@@ -17,9 +17,9 @@ afterEach(() => {
 });
 
 describe("getCompletionAdapter", () => {
-  it("returns noop adapter when env var is unset", () => {
+  it("returns dora-task adapter when env var is unset", () => {
     vi.stubEnv("AVOCADOCORE_COMPLETION_ADAPTER", "");
-    expect(getCompletionAdapter()).toBe(noopAdapter);
+    expect(getCompletionAdapter()).toBe(doraTaskAdapter);
   });
 
   it("returns noop adapter for 'noop'", () => {
@@ -57,9 +57,9 @@ describe("getCompletionAdapter", () => {
 });
 
 describe("getRegenerationAdapter", () => {
-  it("returns noop regeneration adapter when env var is unset", () => {
+  it("returns dora-task regeneration adapter when env var is unset", () => {
     vi.stubEnv("AVOCADOCORE_COMPLETION_ADAPTER", "");
-    expect(getRegenerationAdapter()).toBe(noopRegenerationAdapter);
+    expect(getRegenerationAdapter()).toBe(doraTaskRegenerationAdapter);
   });
 
   it("returns noop regeneration adapter for 'noop'", () => {
@@ -160,6 +160,9 @@ describe("dora-task prompts embed the lesson quality bar", () => {
     "whole video is relevant",
     "exact timestamped segments",
     "PRACTICE/CODE",
+    "unboxable",
+    "answer path",
+    "external Python library",
     "ADAPTIVE ASSESSMENT IS REQUIRED",
     "SQLITE MASTERY EVIDENCE",
     "CONTINUOUS MODEL NOTES",

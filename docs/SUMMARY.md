@@ -28,7 +28,7 @@ A second pass made lessons no longer audio-only and turned code exercises into g
 - **Written lesson text** (`reading`): first-class teaching content — headings, definitions, worked examples, callouts, lists, and a review summary — usable independently of the audio (`ReadingSection`, `validateReadingContent`). Required core section.
 - **Safe embedded media** (`media`): YouTube embeds built only from a validated 11-char video id via `youtube-nocookie.com`; raw URLs / non-YouTube hosts are rejected. Each embed carries a reason + fallback text and degrades gracefully to a link when blocked (`MediaSection`, `validateMediaContent`).
 - **Multiple visualizations per lesson**: a declarative widget can drive several charts (`charts: []`) — new `table` (frequency grid) and `tree` (population split) chart types join `bar`/`curve` — and a lesson can hold several `interactive` activities, each restoring its own state. The seeded Bayes lesson shows a base-rate simulator driving a bar chart, a frequency table, and a population tree from one slider set, plus a second posterior-vs-prevalence widget.
-- **Scaffolded code submission** (`PythonSection` rewrite): task prompt, constraints, guided steps, progressive hints (conceptual → structural → syntax), starter code, Run vs Submit, public tests, hidden tests (count only), and pass/fail feedback. The final answer is never shown inline; `validatePracticeCodeContent` rejects any exposed-answer field. A passing submission records a `ready_to_advance` mastery signal via `/api/code-submission` but never completes the lesson.
+- **Scaffolded code submission** (`PythonSection` rewrite): task prompt, constraints, guided steps, progressive hints (conceptual → structural → API/package → syntax → near-complete answer → complete answer explanation), starter code, Run vs Submit, public tests, hidden tests (count only), and pass/fail feedback. External Python library calls should be documented in starter comments or teaching text. `validatePracticeCodeContent` rejects top-level exposed-answer fields; answer support is progressively revealed through hints. A passing submission records a `ready_to_advance` mastery signal via `/api/code-submission` but never completes the lesson.
 - **Reversible subject archive**: archive/restore from the dashboard and subject header; archived subjects leave the active grid but keep all lessons, attempts, mastery, and progress (`archived_at` flag, guarded migration).
 - **Per-subject mastery score**: `computeSubjectMastery` yields a 0–100 score with trend, sparkline, signal counts, and a plain-language explanation, shown on subject cards (`MasteryScore`) and the Mastery tab (`MasterySummary`).
 - **Branding**: an on-brand AvocadoCore avocado favicon (`src/app/icon.svg`) and header logo (`Logo`). (A prior logo asset exists in Google Drive; it should replace this when Drive OAuth is restored — both accounts were `invalid_grant` at build time.)
@@ -112,10 +112,11 @@ Controlled by `AVOCADOCORE_COMPLETION_ADAPTER` environment variable:
 
 | Adapter | Behavior |
 |---------|---------|
-| `noop` (default) | Logs the event, no side effects |
+| `dora-task` (default) | Creates a Doramon next-lesson generation task through endpoint or local todo CLI |
+| `noop` | Logs the event, no side effects |
 | `local-queue` | Writes to `next_lesson_jobs` DB table |
 | `webhook` | POSTs JSON to `AVOCADOCORE_WEBHOOK_URL` |
-| `dora-task` | POSTs to `AVOCADOCORE_DORA_ENDPOINT`, creates a Doramon next-lesson generation task |
+| `dora-task` | POSTs to `AVOCADOCORE_DORA_ENDPOINT` or falls back to the local Dora todo CLI |
 
 ---
 
@@ -236,7 +237,7 @@ One declarative widget, one slider set, three live views — a bar chart, a freq
 
 ### Code submission workflow
 
-Before submit: task, constraints, guided steps, progressive hints (0/3), starter code with no answer, public tests pending, and "3 hidden tests · run on submit". After submit: hints revealed, all public + hidden tests green, and "Solution accepted" — the lesson stays in progress (manual completion only).
+Before submit: task, constraints, guided steps, progressive hints, starter code, public tests pending, and "3 hidden tests · run on submit". Later hints can reach the full answer explanation if the learner keeps opening them. After submit: hints revealed, all public + hidden tests green, and "Solution accepted" — the lesson stays in progress (manual completion only).
 
 ![Code exercise — before submit](screenshots/lesson-code-before.png)
 ![Code exercise — after submit](screenshots/lesson-code-after.png)
@@ -321,7 +322,7 @@ Commit `238dbeb`. Adds the full adaptive MC assessment system on top of the exis
 | `pnpm build` | Compiles; `/icon.svg` route emitted |
 | Written text + media (browser) | Reading blocks render; YouTube embed loads from `youtube-nocookie.com`; fallback link present |
 | Multiple visualizations (browser) | Bayes widget shows bar + frequency table + tree from one slider set; second posterior-curve widget; no horizontal scroll |
-| Code submission (browser) | Run/Submit/hints work; Pyodide executed; 3 public + 3 hidden tests passed; "Solution accepted"; answer never shown inline |
+| Code submission (browser) | Run/Submit/hints work; Pyodide executed; 3 public + 3 hidden tests passed; "Solution accepted"; answer path can be progressively revealed through hints |
 | No auto-completion (live API) | Lesson 2 stayed `in_progress` after audio/reading/media/widget/code interaction + a passing submission |
 | Code submission → mastery (live) | Passing submit recorded a `ready_to_advance` signal; lesson not completed |
 | Archive round-trip (live API) | Restore set `status=active`/`archived_at=NULL`; re-archive set `status=archived`/`archived_at` stamped; no data deleted |

@@ -24,20 +24,20 @@ const REGENERATION_ADAPTERS: Record<CompletionAdapter, RegenerationHookAdapter> 
 
 /**
  * Returns the configured completion adapter.
- * Priority: AVOCADOCORE_COMPLETION_ADAPTER env var, then 'noop'.
+ * Priority: AVOCADOCORE_COMPLETION_ADAPTER env var, then 'dora-task'.
  */
 export function getCompletionAdapter(): CompletionHookAdapter {
-  const name = (process.env.AVOCADOCORE_COMPLETION_ADAPTER || "noop") as CompletionAdapter;
+  const name = (process.env.AVOCADOCORE_COMPLETION_ADAPTER || "dora-task") as CompletionAdapter;
   return ADAPTERS[name] ?? ADAPTERS.noop;
 }
 
 /**
  * Returns the configured regeneration adapter for lesson.discarded events.
  * Uses the same adapter name as the completion adapter (same env var).
- * Falls back to noop so a missing config never throws.
+ * Defaults to dora-task so discarded lessons request real replacement tasks.
  */
 export function getRegenerationAdapter(): RegenerationHookAdapter {
-  const name = (process.env.AVOCADOCORE_COMPLETION_ADAPTER || "noop") as CompletionAdapter;
+  const name = (process.env.AVOCADOCORE_COMPLETION_ADAPTER || "dora-task") as CompletionAdapter;
   return REGENERATION_ADAPTERS[name] ?? REGENERATION_ADAPTERS.noop;
 }
 

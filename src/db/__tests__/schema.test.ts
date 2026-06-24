@@ -193,6 +193,18 @@ describe("Schema columns and constraints", () => {
     }).not.toThrow();
   });
 
+  it("next_lesson_jobs accepts subject.created trigger_event", () => {
+    const learnerId = seedLearner(db);
+    const subjectId = seedSubject(db, learnerId);
+    expect(() => {
+      db.prepare(
+        `INSERT INTO next_lesson_jobs
+           (subject_id, trigger_event, adapter, status)
+         VALUES (?, 'subject.created', 'dora-task', 'dispatched')`
+      ).run(subjectId);
+    }).not.toThrow();
+  });
+
   it("subject_workpads table exists with UNIQUE(subject_id, learner_id)", () => {
     const learnerId = seedLearner(db);
     const subjectId = seedSubject(db, learnerId);

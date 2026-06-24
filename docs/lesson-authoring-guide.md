@@ -243,16 +243,22 @@ validation.
 - `starter_code` — scaffolding only.
 - `constraints` and `guided_steps` — rules and an ordered path that guide
   without giving the answer.
-- `hints` — progressive: level 1 conceptual, level 2 structural, level 3
-  syntax. Hints are revealed one at a time. **The final answer is never a hint
-  and never appears inline.**
+- `hints` — progressive and unboxable: start with a conceptual nudge, then a
+  structural plan, then package/API help, then syntax, then a near-complete
+  answer, then a complete answer explanation. Hints are revealed one at a time,
+  and a stuck learner must be able to keep opening hints until they can finish.
+- If a coding exercise uses an external Python library, document the relevant
+  function calls, keyword arguments, and parameters in starter-code comments or
+  the surrounding teaching text. Do not assume the learner already knows package
+  vocabulary such as NumPy/PyTorch/Transformers argument names.
 - `tests` — public tests the learner can see and Run.
 - `hidden_tests` — run on Submit; their assertions are never shown, only a
   pass/fail count.
 
-Validation **rejects** any `solution`, `answer`, `solution_code`,
-`reference_solution`, or `completed_code` field. The learner must write and
-submit code that passes the tests. Passing tests records a mastery signal but
+Validation **rejects** any top-level `solution`, `answer`, `solution_code`,
+`reference_solution`, or `completed_code` field. Progressive answer support
+belongs in hints and comments, revealed step by step. The learner must write
+and submit code that passes the tests. Passing tests records a mastery signal but
 **never** completes the lesson.
 
 ## Lesson parts (`lesson_part` content — required for normal lessons with steps)
@@ -432,8 +438,9 @@ deployment configuration.
 - [ ] At least two visual perspectives on the core concept, and every
       visualization has an audio explanation clip or per-part audio script.
 - [ ] Media (if used) has reason + fallback and resolves to a valid video id.
-- [ ] Code has a prompt, progressive hints, public + hidden tests, and no
-      exposed answer.
+- [ ] Code has a prompt, progressive unboxable hints all the way to the answer
+      explanation, public + hidden tests, comments documenting any external
+      Python library calls, and no top-level exposed solution field.
 - [ ] Assessment questions probe understanding, not recall of the audio.
 - [ ] Adaptive MC quiz present for normal lessons: 8+ questions, unique ids, `pass_threshold` ≤ question count,
       a **required `difficulty`** on every question, `misconception_target` and

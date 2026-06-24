@@ -81,6 +81,7 @@ function LessonRow({ lesson }: { lesson: Lesson }) {
   return (
     <Link
       href={`/lessons/${lesson.id}#lesson-toc`}
+      prefetch
       className="flex items-start gap-3 p-4 border border-gray-100 rounded-lg hover:border-blue-200 hover:bg-blue-50/30 transition-all group"
     >
       {/* Status indicator */}

@@ -116,6 +116,10 @@ function applyAdditiveMigrations(db: Database.Database): void {
   // preserving every row. Same non-destructive pattern as migrateActivityTypeCheck.
   migrateLessonStatusCheck(db);
 
+  // The next_lesson_jobs.trigger_event CHECK constraint cannot be ALTERed in
+  // SQLite. Rebuild when an older DB predates the subject.created trigger.
+  migrateNextLessonJobTriggerCheck(db);
+
   // The lesson_activities.activity_type CHECK constraint cannot be ALTERed in
   // SQLite. When an older DB predates the 'media' activity type, rebuild the
   // table inside a transaction, preserving every row and id. This is the
@@ -196,6 +200,55 @@ function migrateLessonStatusCheck(db: Database.Database): void {
       db.exec("ALTER TABLE lessons__new RENAME TO lessons;");
       db.exec("CREATE INDEX IF NOT EXISTS idx_lessons_subject_id ON lessons(subject_id);");
       db.exec("CREATE INDEX IF NOT EXISTS idx_lessons_status ON lessons(status);");
+    });
+    rebuild();
+  } finally {
+    if (fkWasOn) db.pragma("foreign_keys = ON");
+  }
+}
+
+function migrateNextLessonJobTriggerCheck(db: Database.Database): void {
+  const row = db
+    .prepare("SELECT sql FROM sqlite_master WHERE type='table' AND name='next_lesson_jobs'")
+    .get() as { sql: string } | undefined;
+  if (!row || /'subject\.created'/.test(row.sql)) return;
+
+  const fkWasOn = (db.pragma("foreign_keys", { simple: true }) as number) === 1;
+  if (fkWasOn) db.pragma("foreign_keys = OFF");
+  try {
+    const rebuild = db.transaction(() => {
+      db.exec(`
+        CREATE TABLE next_lesson_jobs__new (
+          id              INTEGER PRIMARY KEY AUTOINCREMENT,
+          subject_id      INTEGER NOT NULL REFERENCES subjects(id) ON DELETE CASCADE,
+          completed_lesson_id INTEGER REFERENCES lessons(id) ON DELETE SET NULL,
+          discarded_lesson_id INTEGER REFERENCES lessons(id) ON DELETE SET NULL,
+          trigger_event   TEXT    NOT NULL DEFAULT 'lesson.completed' CHECK (trigger_event IN ('lesson.completed', 'lesson.discarded', 'subject.created')),
+          adapter         TEXT    NOT NULL DEFAULT 'noop',
+          status          TEXT    NOT NULL DEFAULT 'pending' CHECK (status IN ('pending', 'dispatched', 'completed', 'failed')),
+          payload         TEXT,
+          adapter_ref     TEXT,
+          error           TEXT,
+          dispatched_at   TEXT,
+          completed_at    TEXT,
+          created_at      TEXT    NOT NULL DEFAULT (datetime('now')),
+          updated_at      TEXT    NOT NULL DEFAULT (datetime('now'))
+        );
+      `);
+      db.exec(`
+        INSERT INTO next_lesson_jobs__new
+          (id, subject_id, completed_lesson_id, discarded_lesson_id, trigger_event,
+           adapter, status, payload, adapter_ref, error, dispatched_at, completed_at,
+           created_at, updated_at)
+        SELECT id, subject_id, completed_lesson_id, discarded_lesson_id, trigger_event,
+               adapter, status, payload, adapter_ref, error, dispatched_at, completed_at,
+               created_at, updated_at
+        FROM next_lesson_jobs;
+      `);
+      db.exec("DROP TABLE next_lesson_jobs;");
+      db.exec("ALTER TABLE next_lesson_jobs__new RENAME TO next_lesson_jobs;");
+      db.exec("CREATE INDEX IF NOT EXISTS idx_next_lesson_jobs_subject_id ON next_lesson_jobs(subject_id);");
+      db.exec("CREATE INDEX IF NOT EXISTS idx_next_lesson_jobs_status ON next_lesson_jobs(status);");
     });
     rebuild();
   } finally {

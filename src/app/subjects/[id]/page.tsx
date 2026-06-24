@@ -34,6 +34,8 @@ interface TagEvidenceRow {
 
 type TabId = "lessons" | "mastery" | "progress" | "goals" | "criteria";
 
+const subjectDetailCache = new Map<string, SubjectData>();
+
 export default function SubjectPage({ params }: { params: Promise<{ id: string }> }) {
   return (
     <Suspense fallback={<div className="min-h-screen bg-white flex items-center justify-center text-gray-400 text-sm">Loading...</div>}>
@@ -46,31 +48,48 @@ function SubjectContent({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
   const router = useRouter();
   const searchParams = useSearchParams();
-  const [data, setData] = useState<SubjectData | null>(null);
-  const [loading, setLoading] = useState(true);
+  const [data, setData] = useState<SubjectData | null>(() => subjectDetailCache.get(id) ?? null);
+  const [loading, setLoading] = useState(() => !subjectDetailCache.has(id));
   const [error, setError] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<TabId>(() => parseTab(searchParams.get("tab")) ?? "lessons");
   const [archiveBusy, setArchiveBusy] = useState(false);
   const [notice, setNotice] = useState<string | null>(null);
   const [showEditForm, setShowEditForm] = useState(false);
 
-  async function load() {
+  async function load(options: { background?: boolean } = {}) {
     try {
+      if (!options.background) setLoading(true);
       const res = await fetch(`/api/subjects/${id}`);
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
       const json = (await res.json()) as SubjectData;
+      subjectDetailCache.set(id, json);
       setData(json);
+      setError(null);
     } catch (e) {
       setError(e instanceof Error ? e.message : "Failed to load");
     } finally {
-      setLoading(false);
+      if (!options.background) setLoading(false);
     }
   }
 
   useEffect(() => {
-    load();
+    const cached = subjectDetailCache.get(id);
+    if (cached) {
+      setData(cached);
+      setLoading(false);
+      void load({ background: true });
+      return;
+    }
+    void load();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [id]);
+
+  useEffect(() => {
+    if (!data) return;
+    for (const lesson of data.lessons) {
+      router.prefetch(`/lessons/${lesson.id}`);
+    }
+  }, [data, router]);
 
   useEffect(() => {
     const nextTab = parseTab(searchParams.get("tab"));

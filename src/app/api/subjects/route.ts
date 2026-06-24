@@ -1,8 +1,9 @@
 import { NextResponse } from "next/server";
 import { getDb } from "@/db/connection";
 import { seedDatabase } from "@/db/seed";
+import { dispatchSubjectCreatedLessonTask } from "@/lib/adapters/dora-task";
 import { computeSubjectMastery } from "@/lib/mastery";
-import type { Subject, SubjectSummary } from "@/types";
+import type { LearnerProfile, Subject, SubjectCreatedEvent, SubjectSummary } from "@/types";
 
 /** POST /api/subjects — create a new subject for a learner */
 export async function POST(request: Request) {
@@ -17,7 +18,9 @@ export async function POST(request: Request) {
     }
 
     // Validate learner exists
-    const learner = db.prepare("SELECT id FROM learner_profiles WHERE id = ?").get(learnerId);
+    const learner = db.prepare("SELECT * FROM learner_profiles WHERE id = ?").get(learnerId) as
+      | LearnerProfile
+      | undefined;
     if (!learner) {
       return NextResponse.json({ error: "Learner not found" }, { status: 404 });
     }
@@ -43,7 +46,58 @@ export async function POST(request: Request) {
       .prepare("SELECT * FROM subjects WHERE id = ?")
       .get(result.lastInsertRowid) as Subject;
 
-    return NextResponse.json({ subject }, { status: 201 });
+    let learnerProfileConfig: Record<string, unknown> | null = null;
+    if (learner.config) {
+      try {
+        learnerProfileConfig = JSON.parse(learner.config) as Record<string, unknown>;
+      } catch {
+        learnerProfileConfig = { parse_error: "learner profile config is not valid JSON" };
+      }
+    }
+
+    const event: SubjectCreatedEvent = {
+      event: "subject.created",
+      learner_id: learnerId,
+      subject_id: subject.id,
+      subject_title: subject.title,
+      subject_description: subject.description,
+      subject_goals: subject.goals,
+      subject_criteria: subject.criteria,
+      current_level: subject.current_level,
+      workpad_summary: null,
+      learner_profile_config: learnerProfileConfig,
+      created_at: new Date().toISOString(),
+    };
+
+    const dispatchResult = await dispatchSubjectCreatedLessonTask(event);
+    const jobResult = db
+      .prepare(
+        `INSERT INTO next_lesson_jobs
+           (subject_id, trigger_event, adapter, status, payload, adapter_ref, error, dispatched_at)
+         VALUES (?, 'subject.created', 'dora-task', ?, ?, ?, ?, datetime('now'))`
+      )
+      .run(
+        subject.id,
+        dispatchResult.ok ? "dispatched" : "failed",
+        JSON.stringify(event),
+        dispatchResult.ref ?? null,
+        dispatchResult.error ?? null
+      );
+
+    return NextResponse.json(
+      {
+        subject,
+        next_lesson_job: {
+          id: jobResult.lastInsertRowid,
+          trigger_event: "subject.created",
+          adapter: "dora-task",
+          status: dispatchResult.ok ? "dispatched" : "failed",
+          ref: dispatchResult.ref ?? null,
+          error: dispatchResult.error ?? null,
+        },
+      },
+      { status: 201 }
+    );
   } catch (err) {
     console.error("[api/subjects POST]", err);
     return NextResponse.json({ error: "Failed to create subject" }, { status: 500 });

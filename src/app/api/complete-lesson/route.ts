@@ -338,15 +338,18 @@ export async function POST(request: Request) {
     const dispatchResult = await adapter.dispatch(event);
 
     db.prepare(
-      `INSERT INTO next_lesson_jobs (subject_id, completed_lesson_id, adapter, status, payload, adapter_ref)
-       VALUES (?, ?, ?, ?, ?, ?)`
+      `INSERT INTO next_lesson_jobs
+         (subject_id, completed_lesson_id, trigger_event, adapter, status, payload,
+          adapter_ref, error, dispatched_at)
+       VALUES (?, ?, 'lesson.completed', ?, ?, ?, ?, ?, datetime('now'))`
     ).run(
       lesson.subject_id,
       lesson_id,
       adapter.name,
       dispatchResult.ok ? "dispatched" : "failed",
       JSON.stringify(event),
-      dispatchResult.ref ?? null
+      dispatchResult.ref ?? null,
+      dispatchResult.error ?? null
     );
 
     return NextResponse.json({

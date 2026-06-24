@@ -22,10 +22,11 @@ interface PythonSectionProps {
  *
  * The learner gets a task prompt, constraints, guided steps, progressive hints,
  * starter code, and visible public tests. Running checks the public tests;
- * submitting also runs hidden tests (whose assertions are never shown). The
- * completed solution is never displayed inline — the learner must write and
- * submit code that passes. Drafts, output, and test results autosave; passing
- * tests is recorded as a mastery signal but never auto-completes the lesson.
+ * submitting also runs hidden tests (whose assertions are never shown).
+ * Progressive hints may eventually reveal the answer path, but the learner
+ * still writes and submits code that passes. Drafts, output, and test results
+ * autosave; passing tests is recorded as a mastery signal but never
+ * auto-completes the lesson.
  *
  * The editor uses CodeMirror (via @uiw/react-codemirror) for Python syntax
  * highlighting, auto-indentation, bracket matching, and fullscreen/focus mode.
@@ -540,7 +541,7 @@ export function PythonSection({
               {allPassed ? (
                 <span><strong>Solution accepted.</strong> All public and hidden tests pass. You can still revise, then mark the lesson complete when ready.</span>
               ) : (
-                <span><strong>Not passing yet.</strong> Some tests fail. Use the hints, adjust your code, and submit again — the answer is never shown for you.</span>
+                <span><strong>Not passing yet.</strong> Some tests fail. Open another hint if needed, adjust your code, and submit again.</span>
               )}
             </div>
           )}
