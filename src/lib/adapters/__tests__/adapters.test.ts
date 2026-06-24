@@ -144,7 +144,7 @@ describe("dora-task prompts embed the lesson quality bar", () => {
     "Interactives must deepen understanding",
     "long generic videos",
     "PRACTICE/CODE",
-    "ADAPTIVE ASSESSMENT",
+    "ADAPTIVE ASSESSMENT IS REQUIRED",
     "I don't know",
     "next-lesson diagnostics",
     "preview / deeper-later wording",

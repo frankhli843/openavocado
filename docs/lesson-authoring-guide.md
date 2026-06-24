@@ -184,12 +184,13 @@ Validation **rejects** any `solution`, `answer`, `solution_code`,
 submit code that passes the tests. Passing tests records a mastery signal but
 **never** completes the lesson.
 
-## Multiple-choice quiz (`assessment` content — optional)
+## Multiple-choice quiz (`assessment` content — required for normal lessons)
 
-An `assessment` activity can include an adaptive multiple-choice quiz by adding
-a `quiz` key to its content JSON. When present, the quiz is shown above the
-freeform questions and the "Mark Complete" button is gated until the learner
-passes.
+Normal generated lessons must include an adaptive multiple-choice quiz by
+adding a `quiz` key to the assessment content JSON. Omit the quiz only for
+explicitly non-assessed reference or diagnostic content, and document why in the
+lesson-generation task notes. The quiz is shown above the freeform questions
+and the "Mark Complete" button is gated until the learner passes.
 
 ### Schema
 
@@ -313,7 +314,7 @@ deployment configuration.
 - [ ] Code has a prompt, progressive hints, public + hidden tests, and no
       exposed answer.
 - [ ] Assessment questions probe understanding, not recall of the audio.
-- [ ] If a quiz is included: 8+ questions, unique ids, `pass_threshold` ≤ question count,
+- [ ] Adaptive MC quiz present for normal lessons: 8+ questions, unique ids, `pass_threshold` ≤ question count,
       a **required `difficulty`** on every question, `misconception_target` and
       `rephrase_instructions` on each question.
 - [ ] End-of-lesson `next_lesson_diagnostics` present (or rely on the default set).
@@ -343,7 +344,7 @@ examples, wrong difficulty calibration, audio that sounds robotic or truncated).
 3. **Run the machine checks** before QA:
    ```
    validateGeneratedContent(content)          // must return { valid: true }
-   validateMultipleChoiceQuizContent(quiz)    // must return { valid: true } if quiz present
+   validateMultipleChoiceQuizContent(quiz)    // must return { valid: true } for normal lessons
    validateKnowledgeGraphData(graph)          // must return { valid: true, errors: [] }
    ```
    A lesson that fails any of these must be regenerated or fixed — it cannot
@@ -439,7 +440,7 @@ GENERATION:
 
 MACHINE CHECKS (must all pass before QA):
 - validateGeneratedContent(content) → { valid: true }
-- validateMultipleChoiceQuizContent(quiz) → { valid: true } (if quiz present)
+- validateMultipleChoiceQuizContent(quiz) → { valid: true } (required for normal lessons)
 - validateKnowledgeGraphData(graph) → { valid: true, errors: [] }
 
 IMPLEMENTATION EVIDENCE (required in task notes before QA):
@@ -481,4 +482,3 @@ The reviewer must be a different worker label than the generator. If the same ag
 and reviews, the review is invalid and must be repeated. The reviewer's job is to find
 problems, not confirm that generation ran. A QA reviewer who approves a lesson without
 opening the browser and interacting with every activity has not done QA.
-
