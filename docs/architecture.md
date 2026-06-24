@@ -203,3 +203,10 @@ Recommended event fields:
 - next curriculum targets
 
 The current `lesson.completed` payload is enriched so next-lesson generation can be **adaptive to evidence** rather than a generic course step. Beyond the basics it carries: subject goals + learner criteria, the subject AI workpad summary, the quiz result, **tag + difficulty performance**, the freeform next-lesson diagnostics, recent misconceptions, completed + discarded lesson history, the learner-profile `config`, and a cross-subject mastery snapshot. The `dora-task` adapter prompt is structured to use this in priority order: subject-specific evidence first; profile config and cross-subject history only when they help. Its stated pedagogical goal is to **find foundational weaknesses and bridge them with the least learner effort**, advancing the curriculum only where the foundation is solid.
+
+For Doramon deployments, any task that generates a lesson must begin by reading
+`skills/avocadocore-lesson-authoring/SKILL.md`. This applies to first lessons
+after a new subject is added, next lessons after `lesson.completed`,
+replacement lessons after `lesson.discarded`, and manual backfills. Do not add a
+new-subject generation trigger that uses a separate weaker prompt; it must point
+to the same main skill and use the same SQLite mastery evidence model.

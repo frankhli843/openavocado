@@ -136,8 +136,12 @@ describe("dora-task prompts embed the lesson quality bar", () => {
   // Each required enrichment dimension must be named in the generated task prompt.
   const REQUIRED_MARKERS = [
     "LESSON QUALITY BAR",
+    "skills/avocadocore-lesson-authoring/SKILL.md",
     "Generated audio AVAILABLE AT CREATION",
     "WHY-FIRST TEACHING",
+    "NO UNDOCUMENTED ASSUMPTIONS",
+    "DYNAMIC, BESPOKE AUTHORING",
+    "EXAMPLES + METAPHORS",
     "what breaks or becomes invalid if we skip it",
     "WRITTEN teaching text",
     "MULTIPLE meaningful visual/interactive explorations",
@@ -145,6 +149,7 @@ describe("dora-task prompts embed the lesson quality bar", () => {
     "long generic videos",
     "PRACTICE/CODE",
     "ADAPTIVE ASSESSMENT IS REQUIRED",
+    "SQLITE MASTERY EVIDENCE",
     "I don't know",
     "next-lesson diagnostics",
     "preview / deeper-later wording",

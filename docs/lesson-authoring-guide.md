@@ -29,6 +29,12 @@ A lesson must be enriched, not thin. These are the durable, non-negotiable rules
 every lesson-generation agent/skill must satisfy. The machine-checked subset is
 enforced by `validateGeneratedContent`; the rest is a hard authoring rule.
 
+- **Read the main lesson-authoring skill first.** Any Dora task that generates a
+  first lesson for a new subject, a next lesson after `lesson.completed`, a
+  replacement after `lesson.discarded`, or a manual backfill must start by
+  reading `skills/avocadocore-lesson-authoring/SKILL.md`. That skill is the
+  deployment-level contract for how to use SQLite evidence, mastery signals, and
+  bespoke authoring judgment.
 - **Generated audio is available at creation.** The `audio` activity must carry a
   substantive `script` (enforced: at least ~20 chars, never a stub/placeholder),
   and the deployment's generator should produce the actual audio artifact at
@@ -46,6 +52,18 @@ enforced by `validateGeneratedContent`; the rest is a hard authoring rule.
   decision the learner is trying to understand. For preprocessing-style lessons,
   each step must answer: "what breaks or becomes invalid if we skip this?" A
   lesson that only lists operations is not ready.
+- **No undocumented assumptions.** Do not assume a domain fact, prerequisite,
+  learner weakness, or next-step need unless it is documented in AvocadoCore
+  context, visible in the local SQLite learner evidence, or verified and then
+  recorded in task notes / lesson metadata.
+- **Bespoke authoring, not template filling.** The agent must choose the
+  metaphor, examples, visuals, practice, quiz, and video dynamically for the
+  topic and learner evidence. Templates may describe the acceptance criteria,
+  but the lesson content itself must not be a generic fill-in pattern.
+- **Metaphors, simple examples, and step-specific visuals.** For multi-step
+  lessons, each major step should have a plain-language handle, a fitting
+  metaphor, easy examples, and its own visual/interactive treatment when that
+  would clarify what the step changes or what breaks if skipped.
 - **Audio is a real walkthrough, not a short caption.** The spoken script must be
   detailed enough for the learner to understand the high-level picture, the why,
   and at least one concrete worked example before using the interactives. It
@@ -56,20 +74,27 @@ enforced by `validateGeneratedContent`; the rest is a hard authoring rule.
   multiple concepts.** A multi-concept lesson (3+ goals or mastery targets) must
   offer **at least two distinct visual perspectives** — either several
   `interactive` activities, or one declarative widget driving a `charts: []`
-  array. One thin widget for many concepts is rejected (enforced).
+  array. Multi-step lessons should prefer step-specific visuals. One thin widget
+  for many concepts is rejected (enforced).
 - **Interactive sections must deepen understanding.** A widget is not acceptable
   just because it displays a chart. Each interactive must have a clear learning
   objective, a learner-controlled variable, a visible consequence, and a written
   takeaway that explains what changed and why. Prefer "what breaks if..." and
   before/after/counterfactual views over decorative graphs.
-- **Media is optional and must be directly useful.** Do not embed long general
-  videos as filler. If a video is used, it must be short or timestamped to the
-  exact relevant segment, and the `reason` must say what the learner should look
-  for. If no tightly relevant clip exists, omit the media section and teach the
-  concept directly in audio, writing, and interactives.
+- **YouTube media should be included when highly relevant.** Look for a video
+  when it can deepen the lesson, but do not embed long general videos as filler.
+  If a video is used, it must be short or timestamped to the exact relevant
+  segment, and the `reason` must say what the learner should look for. If no
+  tightly relevant clip exists, omit the media section and teach the concept
+  directly in audio, writing, and interactives.
 - **Practice/code** the learner submits (scaffolded, no exposed answer).
 - **Adaptive assessment** — an MC quiz (every question carries a required
   `difficulty` and the virtual "I don't know" option) plus freeform questions.
+- **Structured SQLite mastery tracking.** Lesson generation and completion must
+  use the local SQLite evidence model efficiently: `assessment_results`,
+  `attempts`, `progress_points`, `mastery_signals`, `generated_artifacts`, and
+  `next_lesson_jobs`. Track per-lesson and cross-lesson mastery with structured
+  rows and tags, not hidden prose.
 - **End-of-lesson next-lesson diagnostics** (`next_lesson_diagnostics`, validated
   when present; the app applies `DEFAULT_NEXT_LESSON_DIAGNOSTICS` if omitted).
 - **Explicit preview wording for high-level concepts.** If a lesson intentionally
@@ -332,14 +357,20 @@ examples, wrong difficulty calibration, audio that sounds robotic or truncated).
 ### Required steps
 
 1. **Create a Dora task** before generation starts. Title: `Generate lesson N
-   for <subject> — <learner>`. The task acceptance criteria must reference this
-   authoring guide and the `validateGeneratedContent` contract. Do not generate
-   ad hoc without a task; the task is the audit trail.
+   for <subject> — <learner>`. The task acceptance criteria must start with
+   `Read skills/avocadocore-lesson-authoring/SKILL.md before doing any lesson
+   work`, then reference this authoring guide and the `validateGeneratedContent`
+   contract. This applies to first lessons after a new subject is added,
+   next lessons after `lesson.completed`, replacements after `lesson.discarded`,
+   and manual backfills. Do not generate ad hoc without a task; the task is the
+   audit trail.
 
 2. **Generate.** Use the deployment's `LessonGeneratorAdapter` (e.g. the
    `dora-task` adapter dispatched from `CompletionHookAdapter` on lesson
    completion). The generator receives the enriched `LessonCompletedEvent` and
-   LESSON_QUALITY_BAR_PROMPT.
+   LESSON_QUALITY_BAR_PROMPT. For a new-subject first lesson, use equivalent
+   subject + learner-profile evidence and create the same style of Dora task;
+   do not invent a separate, weaker prompt.
 
 3. **Run the machine checks** before QA:
    ```
@@ -423,6 +454,9 @@ replacement, or an ad-hoc addition), the task acceptance criteria must include a
 following. Copy and fill in this template:
 
 ```
+MANDATORY FIRST STEP:
+- Read skills/avocadocore-lesson-authoring/SKILL.md before doing any lesson work.
+
 Generate lesson <N> for "<Subject Title>" — learner <profile name or id>.
 
 PEDAGOGICAL INTENT (fill in before generating):
@@ -433,9 +467,13 @@ PEDAGOGICAL INTENT (fill in before generating):
 GENERATION:
 - Use the enriched LessonCompletedEvent / LessonDiscardedEvent context (or equivalent
   subject + learner state) as primary input.
-- The AI author must manually decide the lesson scope, the knowledge graph, the interactives,
-  the worked example in the audio script, and the quiz misconception targets. Do not
-  accept a generic template fill.
+- Query the local SQLite evidence first. Do not assume learner weaknesses,
+  prerequisites, or domain facts unless they are documented in AvocadoCore,
+  visible in SQLite evidence, or verified and recorded in task notes / metadata.
+- The AI author must manually decide the lesson scope, knowledge graph,
+  metaphors, examples, interactives, written explanation, audio walkthrough,
+  video choice, practice, and quiz misconception targets. Do not accept a
+  generic template fill.
 - Embed LESSON_QUALITY_BAR_PROMPT in the generator prompt (src/lib/lesson-generator/contract.ts).
 
 MACHINE CHECKS (must all pass before QA):
@@ -449,6 +487,9 @@ IMPLEMENTATION EVIDENCE (required in task notes before QA):
 - Verify on LIVE or FRESH DB (not a temporary one-off): GET /api/lessons/<id> returns the
   lesson with all activities, generated_artifacts with real audio, and next_lesson_diagnostics.
 - Verify audio route GET /runtime/runtime_artifacts/audio/lesson_<id>_audio.* → HTTP 200, audio/* content-type.
+- Record which SQLite rows were read and written for mastery tracking, including
+  assessment_results, attempts, progress_points, mastery_signals,
+  generated_artifacts, and next_lesson_jobs where applicable.
 
 LIVE / FRESH-DB VERIFICATION (required before QA):
 - Open http://<deployment>/lessons/<id> in the browser.

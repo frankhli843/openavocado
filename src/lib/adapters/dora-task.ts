@@ -6,6 +6,9 @@ import type {
 } from "@/types";
 import { LESSON_QUALITY_BAR_PROMPT } from "@/lib/lesson-generator/contract";
 
+export const AVOCADOCORE_LESSON_AUTHORING_SKILL =
+  "skills/avocadocore-lesson-authoring/SKILL.md";
+
 /**
  * Dora-task adapter — creates a Doramon todo-loop task for next-lesson generation.
  *
@@ -63,6 +66,8 @@ export const doraTaskAdapter: CompletionHookAdapter = {
       : "  (no diagnostics answered)";
 
     const acceptance = [
+      `Read ${AVOCADOCORE_LESSON_AUTHORING_SKILL} before doing any lesson work.`,
+      ``,
       `Generate the next lesson for subject "${event.subject_title}" (learner ${event.learner_id}).`,
       `Be adaptive to the evidence below — do NOT produce a generic next chapter.`,
       ``,
@@ -70,6 +75,8 @@ export const doraTaskAdapter: CompletionHookAdapter = {
       `Find foundational weaknesses and bridge them as fast as possible with the least learner effort.`,
       `Advance the curriculum only where the foundation is already solid. Prioritise subject-specific`,
       `evidence first; use profile config + cross-subject history only if they speed up mastery.`,
+      `Do not assume domain facts unless they are documented in AvocadoCore, present in SQLite evidence,`,
+      `or verified and recorded in the lesson/task notes.`,
       ``,
       `=== SUBJECT CONTEXT (use first) ===`,
       `Goals: ${event.subject_goals || "(none set)"}`,
@@ -179,6 +186,8 @@ export const doraTaskRegenerationAdapter: RegenerationHookAdapter = {
     // Critically: include subject criteria + discard reason so the generator
     // does NOT blindly regenerate the same lesson.
     const acceptance = [
+      `Read ${AVOCADOCORE_LESSON_AUTHORING_SKILL} before doing any lesson work.`,
+      ``,
       `Generate a REPLACEMENT lesson for subject "${event.subject_title}" (learner ${event.learner_id}).`,
       ``,
       `IMPORTANT: The learner discarded the previous lesson. This is NOT a retry of the same lesson.`,
