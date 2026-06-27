@@ -6,6 +6,7 @@ import Database from "better-sqlite3";
 import path from "path";
 import fs from "fs";
 import { readFileSync } from "fs";
+import { scryptSync, randomBytes } from "crypto";
 
 const DB_PATH =
   process.env.AVOCADOCORE_DB_PATH ||
@@ -147,8 +148,6 @@ function applyAuthBootstrap(db: Database.Database): void {
   const existing = db.prepare("SELECT id FROM users WHERE username = ?").get(bootstrapUser);
   if (existing) return; // already created
 
-  // Inline hash to avoid circular import (connection.ts → password.ts → crypto)
-  const { scryptSync, randomBytes } = require("crypto") as typeof import("crypto");
   const salt = randomBytes(16).toString("hex");
   const hash = scryptSync(bootstrapPass, salt, 64).toString("hex");
   const passwordHash = `scrypt:N=32768,r=8,p=1:${salt}:${hash}`;
