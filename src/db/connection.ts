@@ -147,6 +147,89 @@ function applyAdditiveMigrations(db: Database.Database): void {
   db.exec(
     "CREATE INDEX IF NOT EXISTS idx_subject_workpads_subject_learner ON subject_workpads(subject_id, learner_id)"
   );
+
+  // Saved per-lesson chat history + compacted prompt context.
+  db.exec(`
+    CREATE TABLE IF NOT EXISTS lesson_chat_messages (
+      id              INTEGER PRIMARY KEY AUTOINCREMENT,
+      lesson_id       INTEGER NOT NULL REFERENCES lessons(id) ON DELETE CASCADE,
+      learner_id      INTEGER NOT NULL REFERENCES learner_profiles(id) ON DELETE CASCADE,
+      role            TEXT    NOT NULL CHECK (role IN ('user', 'assistant')),
+      content         TEXT    NOT NULL,
+      created_at      TEXT    NOT NULL DEFAULT (datetime('now'))
+    )
+  `);
+  db.exec(`
+    CREATE TABLE IF NOT EXISTS lesson_chat_state (
+      id              INTEGER PRIMARY KEY AUTOINCREMENT,
+      lesson_id       INTEGER NOT NULL REFERENCES lessons(id) ON DELETE CASCADE,
+      learner_id      INTEGER NOT NULL REFERENCES learner_profiles(id) ON DELETE CASCADE,
+      compact_summary TEXT    NOT NULL DEFAULT '',
+      compacted_through_message_id INTEGER,
+      updated_at      TEXT    NOT NULL DEFAULT (datetime('now')),
+      created_at      TEXT    NOT NULL DEFAULT (datetime('now')),
+      UNIQUE (lesson_id, learner_id)
+    )
+  `);
+  db.exec(
+    "CREATE INDEX IF NOT EXISTS idx_lesson_chat_messages_lesson_learner ON lesson_chat_messages(lesson_id, learner_id, id)"
+  );
+
+  // Append-only subject planning/research/lesson-generation journal.
+  db.exec(`
+    CREATE TABLE IF NOT EXISTS subject_journal_entries (
+      id              INTEGER PRIMARY KEY AUTOINCREMENT,
+      subject_id      INTEGER NOT NULL REFERENCES subjects(id) ON DELETE CASCADE,
+      learner_id      INTEGER NOT NULL REFERENCES learner_profiles(id) ON DELETE CASCADE,
+      entry_type      TEXT    NOT NULL DEFAULT 'planning' CHECK (entry_type IN (
+                        'lesson_completion', 'lesson_generation', 'research',
+                        'planning', 'manual', 'lesson_discard'
+                      )),
+      title           TEXT    NOT NULL,
+      content         TEXT    NOT NULL,
+      metadata        TEXT,
+      created_by      TEXT,
+      created_at      TEXT    NOT NULL DEFAULT (datetime('now'))
+    )
+  `);
+  db.exec(
+    "CREATE INDEX IF NOT EXISTS idx_subject_journal_subject_learner ON subject_journal_entries(subject_id, learner_id, id DESC)"
+  );
+
+  // Visual artifact pipeline — DB-backed bespoke React visualization storage.
+  // Stores source, manifest, build status, compiled asset ref, and QA metadata.
+  db.exec(`
+    CREATE TABLE IF NOT EXISTS visual_artifacts (
+      id                  INTEGER PRIMARY KEY AUTOINCREMENT,
+      slug                TEXT    NOT NULL UNIQUE,
+      title               TEXT    NOT NULL,
+      lesson_id           INTEGER REFERENCES lessons(id) ON DELETE SET NULL,
+      activity_id         INTEGER REFERENCES lesson_activities(id) ON DELETE SET NULL,
+      source_react        TEXT    NOT NULL,
+      manifest            TEXT    NOT NULL DEFAULT '{"allowed_imports":["react","lucide-react","recharts"]}',
+      source_hash         TEXT    NOT NULL,
+      build_status        TEXT    NOT NULL DEFAULT 'pending_build'
+                                  CHECK (build_status IN (
+                                    'pending_build', 'building', 'build_failed',
+                                    'pending_qa', 'qa_approved', 'qa_rejected'
+                                  )),
+      compiled_asset_path TEXT,
+      compiled_asset_hash TEXT,
+      build_error         TEXT,
+      build_log           TEXT,
+      built_at            TEXT,
+      qa_notes            TEXT,
+      qa_snapshot_ref     TEXT,
+      qa_screenshot_ref   TEXT,
+      approved_at         TEXT,
+      approved_by         TEXT,
+      created_at          TEXT    NOT NULL DEFAULT (datetime('now')),
+      updated_at          TEXT    NOT NULL DEFAULT (datetime('now'))
+    )
+  `);
+  db.exec("CREATE INDEX IF NOT EXISTS idx_visual_artifacts_slug ON visual_artifacts(slug)");
+  db.exec("CREATE INDEX IF NOT EXISTS idx_visual_artifacts_build_status ON visual_artifacts(build_status)");
+  db.exec("CREATE INDEX IF NOT EXISTS idx_visual_artifacts_lesson_id ON visual_artifacts(lesson_id)");
 }
 
 /**

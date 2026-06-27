@@ -154,10 +154,40 @@ export interface RegisteredWidgetSpec {
   params?: Record<string, unknown>;
 }
 
-export type WidgetSpec = DeclarativeWidgetSpec | RegisteredWidgetSpec;
+/**
+ * DB-backed bespoke artifact spec.
+ *
+ * The lesson generator emits this when it has designed a purpose-built React
+ * component for a specific concept block. The artifact pipeline compiles the
+ * component, runs Chrome MCP QA, and stores the approved bundle in SQLite.
+ * Rendering only happens after qa_approved status is reached.
+ *
+ * Lesson content stores only the stable slug — no code, no build artifacts.
+ */
+export interface BespokeArtifactWidgetSpec {
+  schema_version: string;
+  widget_type: "bespoke-artifact";
+  title?: string;
+  instructions: string;
+  params: {
+    /** Stable slug matching visual_artifacts.slug */
+    artifact_slug: string;
+    /** Minimum iframe height in px (default: 300) */
+    min_height?: number;
+  };
+}
+
+export type WidgetSpec =
+  | DeclarativeWidgetSpec
+  | BespokeArtifactWidgetSpec
+  | RegisteredWidgetSpec;
 
 export function isDeclarativeSpec(spec: WidgetSpec): spec is DeclarativeWidgetSpec {
   return spec.widget_type === "declarative";
+}
+
+export function isBespokeArtifactSpec(spec: WidgetSpec): spec is BespokeArtifactWidgetSpec {
+  return spec.widget_type === "bespoke-artifact";
 }
 
 // ─── Validation ─────────────────────────────────────────────────────────────
@@ -219,6 +249,11 @@ export function validateWidgetSpec(
     return { valid: errors.length === 0, errors };
   }
 
+  if (s.widget_type === "bespoke-artifact") {
+    validateBespokeArtifact(s, errors);
+    return { valid: errors.length === 0, errors };
+  }
+
   // registered widget
   if (knownTypes && !knownTypes.includes(s.widget_type)) {
     errors.push(`Unsupported widget_type "${s.widget_type}"`);
@@ -228,6 +263,23 @@ export function validateWidgetSpec(
     errors.push("Registered widget params must be an object");
   }
   return { valid: errors.length === 0, errors };
+}
+
+function validateBespokeArtifact(s: Record<string, unknown>, errors: string[]): void {
+  const params = s.params;
+  if (!params || typeof params !== "object" || Array.isArray(params)) {
+    errors.push("bespoke-artifact requires a params object");
+    return;
+  }
+  const p = params as Record<string, unknown>;
+  if (typeof p.artifact_slug !== "string" || !p.artifact_slug.trim()) {
+    errors.push("bespoke-artifact params.artifact_slug is required (must match visual_artifacts.slug)");
+  } else if (!/^[a-z0-9-]+$/.test(p.artifact_slug)) {
+    errors.push(`bespoke-artifact params.artifact_slug "${p.artifact_slug}" must be lowercase alphanumeric with hyphens only`);
+  }
+  if (p.min_height !== undefined && typeof p.min_height !== "number") {
+    errors.push("bespoke-artifact params.min_height must be a number if provided");
+  }
 }
 
 function validateDeclarative(s: Record<string, unknown>, errors: string[]): void {

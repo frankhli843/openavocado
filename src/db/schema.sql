@@ -288,6 +288,26 @@ CREATE TABLE IF NOT EXISTS subject_workpads (
   UNIQUE (subject_id, learner_id)
 );
 
+-- ─── SUBJECT JOURNAL ────────────────────────────────────────────────────────
+-- Append-only AI audit log for a subject. Unlike the workpad, these entries
+-- are not overwritten. Agents add entries when lessons complete, plans change,
+-- research affects direction, or a new lesson is generated.
+
+CREATE TABLE IF NOT EXISTS subject_journal_entries (
+  id              INTEGER PRIMARY KEY AUTOINCREMENT,
+  subject_id      INTEGER NOT NULL REFERENCES subjects(id) ON DELETE CASCADE,
+  learner_id      INTEGER NOT NULL REFERENCES learner_profiles(id) ON DELETE CASCADE,
+  entry_type      TEXT    NOT NULL DEFAULT 'planning' CHECK (entry_type IN (
+                    'lesson_completion', 'lesson_generation', 'research',
+                    'planning', 'manual', 'lesson_discard'
+                  )),
+  title           TEXT    NOT NULL,
+  content         TEXT    NOT NULL,
+  metadata        TEXT,
+  created_by      TEXT,
+  created_at      TEXT    NOT NULL DEFAULT (datetime('now'))
+);
+
 -- ─── LESSON AUTOSAVE ───────────────────────────────────────────────────────────
 -- Per-lesson lightweight autosave store (not an immutable audit trail)
 -- Merges the latest in-progress state across all activity types
@@ -314,7 +334,87 @@ CREATE TABLE IF NOT EXISTS lesson_autosave (
   UNIQUE (lesson_id, learner_id, activity_id)
 );
 
+-- ─── LESSON CHAT ─────────────────────────────────────────────────────────────
+-- Per-lesson learner chat for quick questions while studying.
+-- Full messages are preserved. The compact_summary is prompt-context
+-- compaction only, so long conversations stay usable without deleting history.
+
+CREATE TABLE IF NOT EXISTS lesson_chat_messages (
+  id              INTEGER PRIMARY KEY AUTOINCREMENT,
+  lesson_id       INTEGER NOT NULL REFERENCES lessons(id) ON DELETE CASCADE,
+  learner_id      INTEGER NOT NULL REFERENCES learner_profiles(id) ON DELETE CASCADE,
+  role            TEXT    NOT NULL CHECK (role IN ('user', 'assistant')),
+  content         TEXT    NOT NULL,
+  created_at      TEXT    NOT NULL DEFAULT (datetime('now'))
+);
+
+CREATE TABLE IF NOT EXISTS lesson_chat_state (
+  id              INTEGER PRIMARY KEY AUTOINCREMENT,
+  lesson_id       INTEGER NOT NULL REFERENCES lessons(id) ON DELETE CASCADE,
+  learner_id      INTEGER NOT NULL REFERENCES learner_profiles(id) ON DELETE CASCADE,
+  compact_summary TEXT    NOT NULL DEFAULT '',
+  compacted_through_message_id INTEGER,
+  updated_at      TEXT    NOT NULL DEFAULT (datetime('now')),
+  created_at      TEXT    NOT NULL DEFAULT (datetime('now')),
+  UNIQUE (lesson_id, learner_id)
+);
+
+-- ─── VISUAL ARTIFACTS ──────────────────────────────────────────────────────────
+-- DB-backed bespoke React visualization pipeline.
+-- Stores source TSX, manifest, build status, compiled asset reference, and
+-- QA approval metadata. Lessons reference artifacts by slug — no source-code
+-- edit required to deploy a new visualization.
+--
+-- SAFETY CONTRACT:
+-- - Source is NEVER executed from SQLite directly.
+-- - Only qa_approved artifacts have their compiled bundle served to the browser.
+-- - Import allowlist enforced at build time; network/storage APIs blocked.
+-- - Sandbox route checks qa_approved before serving iframe HTML.
+
+CREATE TABLE IF NOT EXISTS visual_artifacts (
+  id                  INTEGER PRIMARY KEY AUTOINCREMENT,
+  -- Stable identifier used in lesson widget specs (widget_type: "bespoke-artifact", params.artifact_slug)
+  slug                TEXT    NOT NULL UNIQUE,
+  title               TEXT    NOT NULL,
+  -- Optional lesson/activity association (informational; artifact is reusable)
+  lesson_id           INTEGER REFERENCES lessons(id) ON DELETE SET NULL,
+  activity_id         INTEGER REFERENCES lesson_activities(id) ON DELETE SET NULL,
+  -- Source React component (TSX). Stored for audit and rebuild; never executed directly.
+  source_react        TEXT    NOT NULL,
+  -- JSON: { allowed_imports: string[], params_schema?: object, runtime_constraints?: object }
+  manifest            TEXT    NOT NULL DEFAULT '{"allowed_imports":["react","lucide-react","recharts"]}',
+  -- SHA-256 of source_react (hex). Used to detect stale compiled assets.
+  source_hash         TEXT    NOT NULL,
+  -- Build lifecycle
+  build_status        TEXT    NOT NULL DEFAULT 'pending_build'
+                              CHECK (build_status IN (
+                                'pending_build', 'building', 'build_failed',
+                                'pending_qa', 'qa_approved', 'qa_rejected'
+                              )),
+  -- Relative path within runtime_artifacts/ (e.g. visual-artifacts/my-slug/abc123.bundle.js)
+  compiled_asset_path TEXT,
+  -- SHA-256 of the compiled bundle (hex). Verified before rendering.
+  compiled_asset_hash TEXT,
+  -- Diagnostics from the last build attempt
+  build_error         TEXT,
+  build_log           TEXT,
+  built_at            TEXT,
+  -- QA evidence
+  qa_notes            TEXT,
+  -- Paths to Chrome MCP snapshot/screenshot stored under state/ or runtime_artifacts/
+  qa_snapshot_ref     TEXT,
+  qa_screenshot_ref   TEXT,
+  approved_at         TEXT,
+  approved_by         TEXT,
+  created_at          TEXT    NOT NULL DEFAULT (datetime('now')),
+  updated_at          TEXT    NOT NULL DEFAULT (datetime('now'))
+);
+
 -- ─── INDEXES ───────────────────────────────────────────────────────────────────
+
+CREATE INDEX IF NOT EXISTS idx_visual_artifacts_slug ON visual_artifacts(slug);
+CREATE INDEX IF NOT EXISTS idx_visual_artifacts_build_status ON visual_artifacts(build_status);
+CREATE INDEX IF NOT EXISTS idx_visual_artifacts_lesson_id ON visual_artifacts(lesson_id);
 
 CREATE INDEX IF NOT EXISTS idx_learner_profiles_user_id ON learner_profiles(user_id);
 CREATE INDEX IF NOT EXISTS idx_subjects_learner_id ON subjects(learner_id);
@@ -328,7 +428,9 @@ CREATE INDEX IF NOT EXISTS idx_progress_points_recorded_at ON progress_points(re
 CREATE INDEX IF NOT EXISTS idx_generated_artifacts_lesson_id ON generated_artifacts(lesson_id);
 CREATE INDEX IF NOT EXISTS idx_next_lesson_jobs_subject_id ON next_lesson_jobs(subject_id);
 CREATE INDEX IF NOT EXISTS idx_lesson_autosave_lesson_learner ON lesson_autosave(lesson_id, learner_id);
+CREATE INDEX IF NOT EXISTS idx_lesson_chat_messages_lesson_learner ON lesson_chat_messages(lesson_id, learner_id, id);
 CREATE INDEX IF NOT EXISTS idx_subject_workpads_subject_learner ON subject_workpads(subject_id, learner_id);
+CREATE INDEX IF NOT EXISTS idx_subject_journal_subject_learner ON subject_journal_entries(subject_id, learner_id, id DESC);
 CREATE INDEX IF NOT EXISTS idx_assessment_results_learner_subject ON assessment_results(learner_id, subject_id);
 CREATE INDEX IF NOT EXISTS idx_assessment_results_lesson ON assessment_results(lesson_id);
 CREATE INDEX IF NOT EXISTS idx_assessment_result_tags_tag ON assessment_result_tags(tag_id);

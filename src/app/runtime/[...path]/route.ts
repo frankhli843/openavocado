@@ -24,6 +24,8 @@ const CONTENT_TYPES: Record<string, string> = {
   ".jpeg": "image/jpeg",
   ".webp": "image/webp",
   ".json": "application/json",
+  // Visual artifact compiled bundles
+  ".js": "application/javascript; charset=utf-8",
 };
 
 function contentTypeFor(filePath: string): string {

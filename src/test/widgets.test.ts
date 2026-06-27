@@ -160,6 +160,85 @@ describe("validateWidgetSpec", () => {
     );
     expect(r.valid).toBe(true);
   });
+
+  it("accepts a well-formed bespoke-artifact spec", () => {
+    const r = validateWidgetSpec({
+      schema_version: "1.0",
+      widget_type: "bespoke-artifact",
+      instructions: "Interact with the visualization.",
+      params: { artifact_slug: "kv-cache-viz", min_height: 400 },
+    });
+    expect(r.valid).toBe(true);
+    expect(r.errors).toEqual([]);
+    expect(r.unsupported).toBeFalsy();
+  });
+
+  it("accepts bespoke-artifact without optional min_height", () => {
+    const r = validateWidgetSpec({
+      schema_version: "1.0",
+      widget_type: "bespoke-artifact",
+      instructions: "Explore.",
+      params: { artifact_slug: "supply-demand-viz" },
+    });
+    expect(r.valid).toBe(true);
+  });
+
+  it("rejects bespoke-artifact with missing artifact_slug", () => {
+    const r = validateWidgetSpec({
+      schema_version: "1.0",
+      widget_type: "bespoke-artifact",
+      instructions: "x",
+      params: {},
+    });
+    expect(r.valid).toBe(false);
+    expect(r.errors.join(" ")).toMatch(/artifact_slug/);
+  });
+
+  it("rejects bespoke-artifact with invalid slug characters", () => {
+    const r = validateWidgetSpec({
+      schema_version: "1.0",
+      widget_type: "bespoke-artifact",
+      instructions: "x",
+      params: { artifact_slug: "My Widget!" },
+    });
+    expect(r.valid).toBe(false);
+    expect(r.errors.join(" ")).toMatch(/lowercase alphanumeric/);
+  });
+
+  it("rejects bespoke-artifact with missing params object", () => {
+    const r = validateWidgetSpec({
+      schema_version: "1.0",
+      widget_type: "bespoke-artifact",
+      instructions: "x",
+    });
+    expect(r.valid).toBe(false);
+    expect(r.errors.join(" ")).toMatch(/params/);
+  });
+
+  it("rejects bespoke-artifact with non-numeric min_height", () => {
+    const r = validateWidgetSpec({
+      schema_version: "1.0",
+      widget_type: "bespoke-artifact",
+      instructions: "x",
+      params: { artifact_slug: "test-slug", min_height: "400" },
+    });
+    expect(r.valid).toBe(false);
+    expect(r.errors.join(" ")).toMatch(/min_height/);
+  });
+
+  // bespoke-artifact is validated by its own branch — unknown type list does NOT affect it
+  it("bespoke-artifact passes even when knownTypes list is provided without it", () => {
+    const r = validateWidgetSpec(
+      {
+        schema_version: "1.0",
+        widget_type: "bespoke-artifact",
+        instructions: "x",
+        params: { artifact_slug: "my-viz" },
+      },
+      ["supply-demand"]
+    );
+    expect(r.valid).toBe(true);
+  });
 });
 
 // ─── Runtime compute ────────────────────────────────────────────────────────
@@ -256,5 +335,26 @@ describe("validateGeneratedContent — interactive widget", () => {
     const r = validateGeneratedContent(baseContent({ widget_type: "declarative" }));
     expect(r.valid).toBe(false);
     expect(r.errors.join(" ")).toMatch(/interactive activity/);
+  });
+
+  it("passes when the interactive uses a valid bespoke-artifact spec", () => {
+    const r = validateGeneratedContent(baseContent({
+      schema_version: "1.0",
+      widget_type: "bespoke-artifact",
+      instructions: "Explore the visualization.",
+      params: { artifact_slug: "my-concept-viz" },
+    }));
+    expect(r.valid).toBe(true);
+  });
+
+  it("fails when bespoke-artifact spec has an invalid slug", () => {
+    const r = validateGeneratedContent(baseContent({
+      schema_version: "1.0",
+      widget_type: "bespoke-artifact",
+      instructions: "Explore.",
+      params: { artifact_slug: "Bad Slug!" },
+    }));
+    expect(r.valid).toBe(false);
+    expect(r.errors.join(" ")).toMatch(/artifact_slug/);
   });
 });
