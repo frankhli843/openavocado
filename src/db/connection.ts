@@ -113,6 +113,57 @@ function applyAdditiveMigrations(db: Database.Database): void {
   db.exec(
     "CREATE INDEX IF NOT EXISTS idx_subject_workpads_subject_learner ON subject_workpads(subject_id, learner_id)"
   );
+
+  // ── Auth: password hashing + sessions (prodavo only, safe no-op on frankavo) ──
+
+  // Password hash column on users (scrypt format, nullable for legacy seed users)
+  if (!hasColumn("users", "password_hash")) {
+    db.exec("ALTER TABLE users ADD COLUMN password_hash TEXT");
+  }
+
+  // Sessions table for auth cookie management
+  db.exec(`
+    CREATE TABLE IF NOT EXISTS sessions (
+      id         INTEGER PRIMARY KEY AUTOINCREMENT,
+      user_id    INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+      token      TEXT    NOT NULL UNIQUE,
+      expires_at TEXT    NOT NULL,
+      created_at TEXT    NOT NULL DEFAULT (datetime('now'))
+    )
+  `);
+  db.exec("CREATE INDEX IF NOT EXISTS idx_sessions_token ON sessions(token)");
+  db.exec("CREATE INDEX IF NOT EXISTS idx_sessions_user_id ON sessions(user_id)");
+  db.exec("CREATE INDEX IF NOT EXISTS idx_sessions_expires ON sessions(expires_at)");
+
+  // Bootstrap admin account from env vars (runs only when vars are set and user absent)
+  applyAuthBootstrap(db);
+}
+
+function applyAuthBootstrap(db: Database.Database): void {
+  const bootstrapUser = process.env.AVOCADOCORE_ADMIN_BOOTSTRAP_USER;
+  const bootstrapPass = process.env.AVOCADOCORE_ADMIN_BOOTSTRAP_PASS;
+  if (!bootstrapUser || !bootstrapPass) return;
+
+  const existing = db.prepare("SELECT id FROM users WHERE username = ?").get(bootstrapUser);
+  if (existing) return; // already created
+
+  // Inline hash to avoid circular import (connection.ts → password.ts → crypto)
+  const { scryptSync, randomBytes } = require("crypto") as typeof import("crypto");
+  const salt = randomBytes(16).toString("hex");
+  const hash = scryptSync(bootstrapPass, salt, 64).toString("hex");
+  const passwordHash = `scrypt:N=32768,r=8,p=1:${salt}:${hash}`;
+
+  const displayName = process.env.AVOCADOCORE_ADMIN_BOOTSTRAP_DISPLAY || bootstrapUser;
+  const email = process.env.AVOCADOCORE_ADMIN_BOOTSTRAP_EMAIL || null;
+
+  const result = db
+    .prepare("INSERT INTO users (username, display_name, email, password_hash) VALUES (?, ?, ?, ?)")
+    .run(bootstrapUser, displayName, email, passwordHash);
+
+  const userId = result.lastInsertRowid as number;
+  db.prepare(
+    "INSERT INTO learner_profiles (user_id, display_name, preferred_lang) VALUES (?, ?, ?)"
+  ).run(userId, displayName, "en");
 }
 
 /**
