@@ -1,0 +1,36 @@
+# devavo — portable Docker-based AvocadoCore without Dora/OpenClaw dependencies.
+# Usage: docker compose up --build
+#
+# For prodavo (hosted deployment on George VPS), see scripts/prodavo-deploy.sh.
+# frankavo runs directly via the avocadocore-demo systemd service — not via Docker.
+
+services:
+  avocadocore:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "3001:3001"
+    volumes:
+      # Persistent DB and runtime artifacts outside the image
+      - avocado_data:/data
+      - avocado_artifacts:/app/runtime_artifacts
+    env_file:
+      - .env.devavo   # create from .env.example; never commit
+    environment:
+      - AVOCADOCORE_DB_PATH=/data/avocadocore.db
+      - AVOCADOCORE_AUTH_REQUIRED=false   # local Docker run: no auth needed
+      - NEXT_PUBLIC_AVOCADOCORE_ENV=devavo
+      - NODE_ENV=production
+      - PORT=3001
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost:3001/api/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 20s
+
+volumes:
+  avocado_data:
+  avocado_artifacts:
