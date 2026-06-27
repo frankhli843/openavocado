@@ -220,6 +220,43 @@ export function approveArtifact(
   return getArtifactBySlug(slug)!;
 }
 
+/**
+ * Attach Chrome MCP QA evidence (snapshot/screenshot references and notes) to
+ * an artifact without changing its build_status. Used when QA evidence is
+ * captured for an artifact that is already approved, or when re-running QA on
+ * an existing artifact. The approval state transition lives in approveArtifact;
+ * this only records observability evidence.
+ */
+export function recordQaEvidence(
+  slug: string,
+  opts: {
+    qa_notes?: string;
+    qa_snapshot_ref?: string;
+    qa_screenshot_ref?: string;
+  }
+): VisualArtifact {
+  const artifact = getArtifactBySlug(slug);
+  if (!artifact) throw new Error(`Artifact not found: ${slug}`);
+
+  db()
+    .prepare(
+      `UPDATE visual_artifacts
+       SET qa_notes = COALESCE(?, qa_notes),
+           qa_snapshot_ref = COALESCE(?, qa_snapshot_ref),
+           qa_screenshot_ref = COALESCE(?, qa_screenshot_ref),
+           updated_at = datetime('now')
+       WHERE slug = ?`
+    )
+    .run(
+      opts.qa_notes ?? null,
+      opts.qa_snapshot_ref ?? null,
+      opts.qa_screenshot_ref ?? null,
+      slug
+    );
+
+  return getArtifactBySlug(slug)!;
+}
+
 /** Reject an artifact after QA. Status moves to qa_rejected. */
 export function rejectArtifact(slug: string, qa_notes: string): VisualArtifact {
   const artifact = getArtifactBySlug(slug);
