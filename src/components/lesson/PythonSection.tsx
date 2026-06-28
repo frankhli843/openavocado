@@ -16,6 +16,7 @@ interface PythonSectionProps {
   initialOutput: string;
   initialTests: Record<string, string>;
   onChange: (code: string, output: string, tests: Record<string, string>) => void;
+  reserveChatRail?: boolean;
 }
 
 type PreviewMode = "desktop" | "phone";
@@ -41,6 +42,7 @@ export function PythonSection({
   initialOutput,
   initialTests,
   onChange,
+  reserveChatRail = false,
 }: PythonSectionProps) {
   const content: PracticeCodeContent = activity.content ? JSON.parse(activity.content) : {};
 
@@ -185,6 +187,9 @@ export function PythonSection({
   const allPassed =
     [...publicTests, ...hiddenTests].length > 0 &&
     [...publicTests, ...hiddenTests].every((t) => testResults[t.id] === "pass");
+  const fullscreenClass = reserveChatRail
+    ? "fixed inset-y-0 left-0 right-0 z-50 bg-white text-gray-900 flex flex-col xl:right-[28rem]"
+    : "fixed inset-0 z-50 bg-white text-gray-900 flex flex-col";
 
   // Shared editor area rendered both inline and in fullscreen overlay
   const editorArea = (
@@ -263,9 +268,9 @@ export function PythonSection({
       {/* Fullscreen overlay */}
       {isFullscreen && (
         <div
-          className="fixed inset-0 z-50 bg-white text-gray-900 flex flex-col"
+          className={fullscreenClass}
           role="dialog"
-          aria-modal="true"
+          aria-modal={!reserveChatRail}
           aria-label="Python code editor fullscreen"
         >
           {/* Fullscreen header */}

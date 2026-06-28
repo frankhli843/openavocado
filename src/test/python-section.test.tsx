@@ -94,4 +94,27 @@ describe("PythonSection", () => {
     expect(container.querySelector('[role="dialog"].bg-white')).toBeInTheDocument();
     await waitFor(() => expect(screen.getAllByText("Python unavailable").length).toBeGreaterThan(0));
   });
+
+  it("reserves the docked lesson chat rail in desktop focus mode", async () => {
+    vi.spyOn(console, "warn").mockImplementation(() => undefined);
+
+    render(
+      <PythonSection
+        activity={practiceActivity()}
+        learnerId={1}
+        initialCode=""
+        initialOutput="sample output"
+        initialTests={{}}
+        onChange={vi.fn()}
+        reserveChatRail
+      />
+    );
+
+    fireEvent.click(screen.getByRole("button", { name: /enter fullscreen/i }));
+
+    const dialog = screen.getByRole("dialog", { name: /python code editor fullscreen/i });
+    expect(dialog).toHaveClass("xl:right-[28rem]");
+    expect(dialog).toHaveAttribute("aria-modal", "false");
+    await waitFor(() => expect(screen.getAllByText("Python unavailable").length).toBeGreaterThan(0));
+  });
 });
