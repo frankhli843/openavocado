@@ -59,14 +59,14 @@ export function AudioSection({ activity, artifact }: AudioSectionProps) {
 
         {/* Transcript / Script */}
         {content.script && (
-          <div>
-            <div className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2">
+          <details className="rounded-lg border border-gray-100 bg-gray-50">
+            <summary className="cursor-pointer select-none px-4 py-3 text-xs font-semibold uppercase tracking-wider text-gray-500 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-300">
               Transcript
-            </div>
-            <div className="text-sm text-gray-600 leading-relaxed bg-gray-50 rounded-lg p-4 border border-gray-100 max-h-64 overflow-y-auto">
+            </summary>
+            <div className="max-h-64 overflow-y-auto border-t border-gray-100 bg-white px-4 py-3 text-sm leading-relaxed text-gray-600">
               {content.script}
             </div>
-          </div>
+          </details>
         )}
       </div>
     </div>

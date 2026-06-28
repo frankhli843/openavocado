@@ -12,6 +12,8 @@ import { ProgressChart } from "@/components/ProgressChart";
 import { GoalsEditor } from "@/components/GoalsEditor";
 import { CriteriaEditor } from "@/components/CriteriaEditor";
 import { SubjectForm } from "@/components/SubjectForm";
+import { SubjectAgentNotes } from "@/components/SubjectAgentNotes";
+import { SubjectJournal } from "@/components/SubjectJournal";
 
 interface SubjectData {
   subject: Subject;
@@ -32,7 +34,7 @@ interface TagEvidenceRow {
   total: number;
 }
 
-type TabId = "lessons" | "mastery" | "progress" | "goals" | "criteria";
+type TabId = "lessons" | "mastery" | "progress" | "goals" | "criteria" | "agent-notes" | "journal";
 
 const subjectDetailCache = new Map<string, SubjectData>();
 
@@ -159,6 +161,8 @@ function SubjectContent({ params }: { params: Promise<{ id: string }> }) {
     { id: "progress", label: "Progress" },
     { id: "goals", label: "Goals" },
     { id: "criteria", label: "Generator notes" },
+    { id: "agent-notes", label: "Agent notes" },
+    { id: "journal", label: "Journal" },
   ];
 
   return (
@@ -292,6 +296,12 @@ function SubjectContent({ params }: { params: Promise<{ id: string }> }) {
           )}
           {activeTab === "criteria" && (
             <CriteriaEditor subjectId={subject.id} initialCriteria={subject.criteria ?? ""} />
+          )}
+          {activeTab === "agent-notes" && (
+            <SubjectAgentNotes subjectId={subject.id} learnerId={subject.learner_id} />
+          )}
+          {activeTab === "journal" && (
+            <SubjectJournal subjectId={subject.id} learnerId={subject.learner_id} />
           )}
         </div>
       </div>
@@ -444,6 +454,8 @@ function parseTab(value: string | null): TabId | null {
     || value === "progress"
     || value === "goals"
     || value === "criteria"
+    || value === "agent-notes"
+    || value === "journal"
   ) {
     return value;
   }

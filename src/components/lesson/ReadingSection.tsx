@@ -3,6 +3,7 @@
 import { useMemo } from "react";
 import type { LessonActivity, ReadingContent, ReadingBlock } from "@/types";
 import { validateReadingContent } from "@/lib/lesson-content/schema";
+import { LessonDiagramsView } from "./LessonDiagrams";
 
 interface ReadingSectionProps {
   activity: LessonActivity;
@@ -54,6 +55,9 @@ export function ReadingSection({ activity }: ReadingSectionProps) {
             {parsed.content.blocks.map((block, i) => (
               <Block key={i} block={block} />
             ))}
+            {parsed.content.diagrams && parsed.content.diagrams.length > 0 && (
+              <LessonDiagramsView diagrams={parsed.content.diagrams} />
+            )}
             {parsed.content.summary && (
               <div className="mt-6 rounded-lg bg-green-50/70 border border-green-100 px-4 py-3">
                 <div className="text-xs font-semibold text-green-700 uppercase tracking-wider mb-1">

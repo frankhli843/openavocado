@@ -67,6 +67,43 @@ enforced by `validateGeneratedContent`; the rest is a hard authoring rule.
   metaphor, examples, visuals, practice, quiz, and video dynamically for the
   topic and learner evidence. Templates may describe the acceptance criteria,
   but the lesson content itself must not be a generic fill-in pattern.
+- **Purpose-built React visuals, not visual templates.** Every visualization
+  must be designed for the exact concept block it supports. Treat a dense block
+  like a small custom learning app: identify the real data, artifact, process,
+  or failure mode in the prose, then show the learner the actual rows, columns,
+  axes, stages, states, transitions, or before/after values. If code is needed,
+  prefer bespoke React for that interactive part, then pass it through a
+  reviewed build boundary and reference it from the lesson by stable component
+  id / widget type plus safe params. The current app path is a reviewed source
+  component wired through the widget registry; a future DB-backed visual system
+  may store source and compiled artifacts in SQLite, but only after build/test
+  approval and sandboxed rendering. Never execute raw React/JS directly from
+  lesson JSON. If a diagram is enough, author a bespoke Mermaid or static
+  diagram tied to the paragraph. Generic bars, relabelable boxes, and template
+  diagrams fail QA unless the lesson is genuinely about quantities, trends, or
+  distributions.
+- **Ground the object before teaching the operation.** Dense technical terms
+  must get a tiny concrete representation before the lesson performs operations
+  on them. If the lesson uses words such as embedding, matrix, tensor, vector,
+  logits, index, prior, likelihood, cache, gradient, loss, or queue, first show
+  what the object is, where it comes from, and how it relates to the previous
+  step. Example: before "embedding lookup", show the embedding matrix as
+  vocabulary-ID rows by hidden-dimension columns, explain that it is learned
+  model weights, and show that tokenizer IDs are row addresses. Do not make the
+  learner learn the object and the operation in the same breath.
+- **Target architecture: dynamic visual components.** The fixed registered
+  widget catalog is a compatibility bridge, not the desired ceiling. The target
+  system should let agents generate per-part React components, store the source
+  and manifest in SQLite, compile them in isolation, attach a build hash and
+  compiled artifact reference, and mark them renderable only after automated
+  checks plus Chrome MCP desktop/mobile verification. Existing registered
+  widgets should eventually migrate into that same artifact/approval model.
+- **Generic visuals are legacy fallback only.** Future normal lesson generation
+  should not use the generic declarative chart renderer as the primary
+  interactive unless the concept is genuinely about quantities, trends, or
+  distributions and the visual has still been purpose-designed for that exact
+  block. The default bar is intensive custom visual design plus Chrome MCP
+  iteration. Visual quality is core lesson quality, not decoration.
 - **Metaphors, simple examples, and step-specific visuals.** For multi-step
   lessons, each major step should have a plain-language handle, a fitting
   metaphor, easy examples, and its own visual/interactive treatment when that
@@ -98,7 +135,15 @@ enforced by `validateGeneratedContent`; the rest is a hard authoring rule.
   just because it displays a chart. Each interactive must have a clear learning
   objective, a learner-controlled variable, a visible consequence, and a written
   takeaway that explains what changed and why. Prefer "what breaks if..." and
-  before/after/counterfactual views over decorative graphs.
+  before/after/counterfactual views over decorative graphs. QA should reject any
+  visual whose labels could be swapped and reused for an unrelated lesson.
+- **Every control must move a visible object.** A dial, slider, toggle, picker,
+  or input fails QA if it only changes a number, caption, or invisible internal
+  state. The controlled thing must be labeled and visibly change at each setting:
+  a context window edge moves, a matrix row lights up, a path reroutes, a chart
+  bar changes, a probability pile reshapes, or a before/after failure appears.
+  Chrome MCP QA for newly created lessons must interact with every control on
+  desktop and mobile and reject controls whose purpose is not visually obvious.
 - **Every visualization needs audio.** Each visualization/interactive must have
   its own spoken explanation clip or a per-part audio script tied directly to
   that visual. The audio should say what to change, what to watch, what failure
@@ -599,6 +644,9 @@ LIVE / FRESH-DB VERIFICATION (required before QA):
 - Take a desktop screenshot (1280px) and a mobile screenshot (390px).
 - Confirm the knowledge graph renders at the top, audio player shows real duration (not 0:00),
   and all activities are visible without horizontal overflow at 390px.
+- If the lesson has a code exercise, use the code exercise Desktop/Phone preview
+  control and verify Phone mode. The code editor, action buttons, hints, output,
+  and tests must remain readable and tappable inside the 390px preview.
 
 MANUAL QA REVIEW (must be done by a DIFFERENT agent/reviewer than the one that generated):
 - Listen to the audio script or play the audio. Substantive? Covers all goals?
@@ -606,6 +654,7 @@ MANUAL QA REVIEW (must be done by a DIFFERENT agent/reviewer than the one that g
 - Read the written section. Stands alone without audio?
 - Interact with every widget. Controls work? Legible at 390px?
 - Attempt the code exercise. Progressive hints? Tests actually test the concept?
+  Phone preview mode present and usable?
 - Answer sample quiz questions. Distractors require real understanding? IDK works?
 - Fill in end-of-lesson diagnostics. Prompts relevant to this lesson?
 - Check knowledge graph. Accurately reflects covered / previewed / later?

@@ -22,6 +22,17 @@ const KNOWLEDGE_FILES_SECTION = [
   "- knowledge/projects/avocadocore_dev.md",
 ].join("\n");
 
+const SUBJECT_NOTES_AND_JOURNAL_REQUIREMENT = [
+  "=== SUBJECT NOTES AND JOURNAL REQUIREMENT ===",
+  "Update the subject workpad as the mutable latest plan, then append at least one subject journal entry as the durable audit log for this run. The journal entry must be readable by the learner in the AvocadoCore subject Journal tab. It should summarize what evidence and research you consulted, what sequencing or master-plan decision you made, why this lesson is the right next move, which weaknesses are being deferred, and what you verified in validators or Chrome MCP. Use POST /api/subjects/:id/journal when the app server is available, or insert into subject_journal_entries directly in SQLite when working offline. Use entry_type 'research' for source-backed findings, 'planning' for sequencing decisions, or 'lesson_generation' for the final lesson creation/repair summary.",
+].join("\n");
+
+const PURPOSE_BUILT_VISUAL_REQUIREMENT = [
+  "=== PURPOSE-BUILT VISUAL REQUIREMENT ===",
+  "Every visualization must be designed for the exact concept block it supports, not chosen from a reusable visual template catalog. Treat each dense block like a small custom learning app: identify the real data, artifact, process, or failure mode in the prose, then show its rows, columns, axes, stages, states, transitions, before/after values, or concrete artifacts. If code is needed, prefer bespoke React for that lesson part. The current safe path is to land it as reviewed source code wired through the AvocadoCore widget registry or equivalent visual-component manifest, then reference a stable component id/widget type from the lesson. Future DB-backed visuals may store source, compiled artifact refs, QA screenshots, and approval metadata in SQLite, but raw React/JS must not execute directly from lesson JSON. If a diagram is enough, author a bespoke Mermaid or static diagram tied to the exact paragraph. QA must reject generic bars, relabelable flow boxes, decorative colored blocks, and any visual whose labels could be swapped to fit an unrelated lesson, unless the lesson is genuinely about quantities, trends, or distributions.",
+  "Before showing operations on a technical object, ground the object itself. If the lesson says embedding lookup, first show what an embedding is, what the embedding matrix looks like in a tiny concrete form, where it comes from, and how tokenizer IDs address rows. Apply the same rule to tensors, matrices, vectors, logits, priors, gradients, caches, queues, losses, and other dense terms. The learner should never have to infer what the thing is while simultaneously learning an operation on it.",
+].join("\n");
+
 interface DoraCreateTaskInput {
   project: string;
   title: string;
@@ -199,6 +210,7 @@ function buildFirstLessonAcceptance(event: SubjectCreatedEvent, channel?: string
     "Break normal lessons into collapsed lesson parts. Each part needs first-class written teaching text, a per-part Doraemon voice audio script, an interactive or visual element that deepens understanding, and exactly 10 multiple-choice reinforcement questions requiring 4 correct answers in a row. The done/undone button is only a personal checklist marker and must never gate completion. Add a table of contents and stable deep links for each part and meaningful activity.",
     "",
     "Every major step should use a metaphor, at least three simple examples where useful, and a concrete explanation of why the step exists. Visualizations should not be decorative graphs. They should let the learner change something, see a consequence or failure mode, and understand what the step proves. Every visualization must have audio explanation or a per-part audio script explaining what to change, what to notice, and what the visual proves.",
+    PURPOSE_BUILT_VISUAL_REQUIREMENT,
     "",
     "=== CODING PRACTICE AND HINTS ===",
     "If the lesson includes a coding part, provide a scaffolded practice_code activity with public tests and hidden tests. Hints must be progressive and unboxable all the way from high-level nudge to the full answer path. The recommended ladder is: level 1 conceptual hint, level 2 structural plan, level 3 package/API hint, level 4 syntax hint, level 5 near-complete answer, and level 6 complete answer explanation. The learner should be able to keep opening hints until they can finish even if they did not know a keyword, parameter name, or library convention. The starter code and comments should document any external Python library calls used by the exercise, including what important parameters mean and where the learner should change values. Do not assume the learner knows NumPy, PyTorch, Transformers, sentencepiece, gguf tooling, or any package-specific keyword arguments unless that exact usage has already been taught or documented in the lesson.",
@@ -209,6 +221,7 @@ function buildFirstLessonAcceptance(event: SubjectCreatedEvent, channel?: string
     "",
     "=== COMPLETION REQUIREMENTS ===",
     "Create or repair the lesson in the real local SQLite database, generate or verify Doraemon voice audio, validate generated content, verify runtime artifact links, and smoke-test the lesson page in the browser. Update the subject workpad with concise long-term planning notes: what this first lesson taught, what remains uncertain, what lesson 2 should likely do, and what evidence should be collected from the learner.",
+    SUBJECT_NOTES_AND_JOURNAL_REQUIREMENT,
     "",
     fmtChannelInstruction(channel),
   ].join("\n");
@@ -281,6 +294,10 @@ export const doraTaskAdapter: CompletionHookAdapter = {
       "",
       LESSON_QUALITY_BAR_PROMPT,
       "",
+      PURPOSE_BUILT_VISUAL_REQUIREMENT,
+      "",
+      SUBJECT_NOTES_AND_JOURNAL_REQUIREMENT,
+      "",
       "Delivery:",
       fmtChannelInstruction(channel),
     ].join("\n");
@@ -351,6 +368,10 @@ export const doraTaskRegenerationAdapter: RegenerationHookAdapter = {
       "If the replacement lesson includes code, provide progressive, unboxable hints that can be opened until the learner reaches the full answer path. Do not assume package-specific keywords or parameters are known. Document every external Python library in starter-code comments and teaching text.",
       "",
       LESSON_QUALITY_BAR_PROMPT,
+      "",
+      PURPOSE_BUILT_VISUAL_REQUIREMENT,
+      "",
+      SUBJECT_NOTES_AND_JOURNAL_REQUIREMENT,
       "",
       "Completion:",
       channel

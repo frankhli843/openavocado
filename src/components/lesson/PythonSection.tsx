@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import dynamic from "next/dynamic";
+import { Maximize2, Minimize2, Monitor, Smartphone } from "lucide-react";
 import type { LessonActivity, PracticeCodeContent, CodeTest } from "@/types";
 import { createPyodideExecutor, stubExecutor, type PythonExecutor } from "@/lib/python-sandbox";
 
@@ -16,6 +17,8 @@ interface PythonSectionProps {
   initialTests: Record<string, string>;
   onChange: (code: string, output: string, tests: Record<string, string>) => void;
 }
+
+type PreviewMode = "desktop" | "phone";
 
 /**
  * Scaffolded code exercise with a real submission workflow.
@@ -58,6 +61,7 @@ export function PythonSection({
   const [executor, setExecutor] = useState<PythonExecutor>(stubExecutor);
   const [pyStatus, setPyStatus] = useState<"loading" | "ready" | "unavailable">("loading");
   const [isFullscreen, setIsFullscreen] = useState(false);
+  const [previewMode, setPreviewMode] = useState<PreviewMode>("desktop");
   const executorRef = useRef(executor);
 
   useEffect(() => {
@@ -230,7 +234,17 @@ export function PythonSection({
         aria-label={isFullscreen ? "Exit fullscreen" : "Enter fullscreen"}
         className="ml-auto px-3 py-1.5 text-sm font-medium text-gray-500 bg-gray-100 border border-gray-200 rounded-lg hover:bg-gray-200 transition-colors"
       >
-        {isFullscreen ? "⊠ Exit focus" : "⊞ Focus"}
+        {isFullscreen ? (
+          <>
+            <Minimize2 className="inline h-3.5 w-3.5 mr-1.5 align-[-2px]" aria-hidden="true" />
+            Exit focus
+          </>
+        ) : (
+          <>
+            <Maximize2 className="inline h-3.5 w-3.5 mr-1.5 align-[-2px]" aria-hidden="true" />
+            Focus
+          </>
+        )}
       </button>
       {hints.length > 0 && (
         <button
@@ -380,35 +394,44 @@ export function PythonSection({
       )}
 
       {/* Inline card (always rendered, editor area hidden when fullscreen so CodeMirror doesn't double-mount) */}
+      <div
+        className={previewMode === "phone" ? "mx-auto w-full max-w-[390px]" : "w-full"}
+        data-preview-mode={previewMode}
+      >
       <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
         {/* Header */}
-        <div className="flex items-center gap-3 px-6 py-4 border-b border-gray-100 bg-gray-50/50">
-          <span className="text-xl" aria-hidden="true">&#128187;</span>
-          <div className="flex-1 min-w-0">
-            <div className="text-xs font-semibold text-gray-400 uppercase tracking-wider">Code Exercise</div>
-            <h2 className="text-sm font-semibold text-gray-800 mt-0.5">
-              {activity.title ?? "Code Exercise"}
-            </h2>
+        <div className="flex flex-col gap-3 px-4 py-4 border-b border-gray-100 bg-gray-50/50 sm:flex-row sm:items-center sm:px-6">
+          <div className="flex items-center gap-3 min-w-0">
+            <span className="text-xl" aria-hidden="true">&#128187;</span>
+            <div className="flex-1 min-w-0">
+              <div className="text-xs font-semibold text-gray-400 uppercase tracking-wider">Code Exercise</div>
+              <h2 className="text-sm font-semibold text-gray-800 mt-0.5">
+                {activity.title ?? "Code Exercise"}
+              </h2>
+            </div>
           </div>
-          <span
-            className={`inline-flex items-center gap-1 text-xs px-2 py-0.5 rounded-full shrink-0 ${
-              pyStatus === "ready"
-                ? "bg-green-50 text-green-700"
-                : pyStatus === "loading"
-                ? "bg-yellow-50 text-yellow-700"
-                : "bg-red-50 text-red-700"
-            }`}
-          >
+          <div className="flex flex-wrap items-center gap-2 sm:ml-auto">
+            <PreviewModeToggle mode={previewMode} onChange={setPreviewMode} />
             <span
-              className={`w-1.5 h-1.5 rounded-full ${
-                pyStatus === "ready" ? "bg-green-500" : pyStatus === "loading" ? "bg-yellow-400 animate-pulse" : "bg-red-400"
+              className={`inline-flex items-center gap-1 text-xs px-2 py-0.5 rounded-full shrink-0 ${
+                pyStatus === "ready"
+                  ? "bg-green-50 text-green-700"
+                  : pyStatus === "loading"
+                  ? "bg-yellow-50 text-yellow-700"
+                  : "bg-red-50 text-red-700"
               }`}
-            />
-            {pyStatus === "ready" ? "Pyodide ready" : pyStatus === "loading" ? "Loading Python..." : "Python unavailable"}
-          </span>
+            >
+              <span
+                className={`w-1.5 h-1.5 rounded-full ${
+                  pyStatus === "ready" ? "bg-green-500" : pyStatus === "loading" ? "bg-yellow-400 animate-pulse" : "bg-red-400"
+                }`}
+              />
+              {pyStatus === "ready" ? "Pyodide ready" : pyStatus === "loading" ? "Loading Python..." : "Python unavailable"}
+            </span>
+          </div>
         </div>
 
-        <div className="p-6 space-y-4">
+        <div className="p-4 space-y-4 sm:p-6">
           {/* Task prompt */}
           {content.prompt && (
             <div className="rounded-lg bg-blue-50/60 border border-blue-100 px-4 py-3">
@@ -551,6 +574,48 @@ export function PythonSection({
           </p>
         </div>
       </div>
+      </div>
     </>
+  );
+}
+
+function PreviewModeToggle({
+  mode,
+  onChange,
+}: {
+  mode: PreviewMode;
+  onChange: (mode: PreviewMode) => void;
+}) {
+  return (
+    <div
+      className="inline-flex h-8 overflow-hidden rounded-lg border border-gray-200 bg-white p-0.5"
+      role="group"
+      aria-label="Code exercise preview mode"
+    >
+      <button
+        type="button"
+        onClick={() => onChange("desktop")}
+        aria-pressed={mode === "desktop"}
+        title="View desktop mode"
+        className={`inline-flex items-center gap-1.5 rounded-md px-2.5 text-xs font-medium transition-colors ${
+          mode === "desktop" ? "bg-gray-900 text-white" : "text-gray-500 hover:bg-gray-50 hover:text-gray-700"
+        }`}
+      >
+        <Monitor className="h-3.5 w-3.5" aria-hidden="true" />
+        Desktop
+      </button>
+      <button
+        type="button"
+        onClick={() => onChange("phone")}
+        aria-pressed={mode === "phone"}
+        title="View phone mode"
+        className={`inline-flex items-center gap-1.5 rounded-md px-2.5 text-xs font-medium transition-colors ${
+          mode === "phone" ? "bg-gray-900 text-white" : "text-gray-500 hover:bg-gray-50 hover:text-gray-700"
+        }`}
+      >
+        <Smartphone className="h-3.5 w-3.5" aria-hidden="true" />
+        Phone
+      </button>
+    </div>
   );
 }

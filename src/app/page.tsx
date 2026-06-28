@@ -1,6 +1,6 @@
 "use client";
 
-import { Suspense, useEffect, useState } from "react";
+import { Suspense, useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import type { SubjectSummary, Subject } from "@/types";
@@ -9,6 +9,7 @@ import { LearnerHeader } from "@/components/LearnerHeader";
 import { Logo } from "@/components/Logo";
 import { SubjectForm } from "@/components/SubjectForm";
 import { ProfileSwitcher } from "@/components/ProfileSwitcher";
+import { readLessonResumeState } from "@/lib/lesson-resume";
 
 const subjectListCache = new Map<number, SubjectSummary[]>();
 
@@ -32,6 +33,19 @@ function DashboardContent() {
   const [notice, setNotice] = useState<string | null>(null);
   const [showArchived, setShowArchived] = useState(() => searchParams.get("view") === "archived");
   const [showCreateForm, setShowCreateForm] = useState(() => searchParams.get("new") === "subject");
+  const checkedResumeRef = useRef(false);
+
+  useEffect(() => {
+    if (checkedResumeRef.current) return;
+    checkedResumeRef.current = true;
+
+    const resume = searchParams.get("resume");
+    const suppressResume = resume === "0" || resume === "false" || searchParams.get("new") || searchParams.get("view");
+    if (suppressResume) return;
+
+    const saved = readLessonResumeState(window.localStorage);
+    if (saved) router.replace(saved.href);
+  }, [router, searchParams]);
 
   async function load(options: { background?: boolean } = {}) {
     if (learnerId == null) return;

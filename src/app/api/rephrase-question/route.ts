@@ -5,7 +5,7 @@ import { makeFallbackRetry, validateRetryQuestion } from "@/lib/quiz-state";
 interface RephraseRequestBody {
   retry_id: string;
   origin_question_id: string;
-  original: Pick<MultipleChoiceQuestion, "question" | "choices" | "correct_index" | "explanation" | "concept" | "misconception_target" | "rephrase_instructions">;
+  original: Pick<MultipleChoiceQuestion, "question" | "choices" | "correct_index" | "correct_indices" | "allow_multiple_correct" | "explanation" | "concept" | "misconception_target" | "rephrase_instructions">;
 }
 
 /**
@@ -98,7 +98,12 @@ async function callAcpEndpoint(
 function buildRephrasePrompt(
   original: RephraseRequestBody["original"]
 ): string {
-  const correct_text = original.choices[original.correct_index];
+  const correctIndices = original.correct_indices?.length
+    ? original.correct_indices
+    : typeof original.correct_index === "number"
+    ? [original.correct_index]
+    : [];
+  const correct_text = correctIndices.map((idx) => original.choices[idx]).join("; ");
   const instructions = original.rephrase_instructions
     ? `\nAuthoring instructions: ${original.rephrase_instructions}`
     : "";
@@ -121,14 +126,14 @@ RULES:
 - Do NOT use the same phrasing as the original question.
 - Do NOT reveal the correct answer in the question text.
 - Keep exactly the same number of choices (${original.choices.length}).
-- Preserve the same correct answer concept.
+- Preserve the same correct answer concept${original.allow_multiple_correct ? "s and select-all behavior" : ""}.
 - Keep the explanation substantive.
 
 Return ONLY a valid JSON object with this shape:
 {
   "question": "...",
   "choices": ["A", "B", "C", "D"],
-  "correct_index": 0,
+  ${original.allow_multiple_correct ? '"allow_multiple_correct": true,\n  "correct_indices": [0, 2],' : '"correct_index": 0,'}
   "explanation": "..."
 }
 No markdown, no extra keys.`;

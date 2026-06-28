@@ -4,6 +4,7 @@ import { getCompletionAdapter } from "@/lib/adapters";
 import { getAssessmentAdapter } from "@/lib/assessment";
 import { loadSubjectTags, persistAssessment } from "@/lib/assessment-store";
 import { deserializeQuizState } from "@/lib/quiz-state";
+import { createSubjectJournalEntry } from "@/lib/subject-journal";
 import type { Difficulty, LessonCompletedEvent, SignalType } from "@/types";
 
 /**
@@ -352,6 +353,26 @@ export async function POST(request: Request) {
       dispatchResult.error ?? null
     );
 
+    createSubjectJournalEntry(db, {
+      subject_id: lesson.subject_id,
+      learner_id,
+      entry_type: "lesson_completion",
+      title: `Completed lesson: ${lesson.title}`,
+      content: buildCompletionJournalContent(event, {
+        adapter: adapter.name,
+        dispatch_ok: dispatchResult.ok,
+        adapter_ref: dispatchResult.ref ?? null,
+        error: dispatchResult.error ?? null,
+      }),
+      metadata: {
+        lesson_id,
+        adapter: adapter.name,
+        dispatch_ok: dispatchResult.ok,
+        adapter_ref: dispatchResult.ref ?? null,
+      },
+      created_by: "avocadocore-complete-lesson",
+    });
+
     return NextResponse.json({
       ok: true,
       lesson_id,
@@ -363,4 +384,66 @@ export async function POST(request: Request) {
     console.error("[api/complete-lesson]", err);
     return NextResponse.json({ error: "Failed to complete lesson" }, { status: 500 });
   }
+}
+
+function buildCompletionJournalContent(
+  event: LessonCompletedEvent,
+  dispatch: {
+    adapter: string;
+    dispatch_ok: boolean;
+    adapter_ref: string | null;
+    error: string | null;
+  }
+): string {
+  const quiz = event.quiz_result
+    ? `${event.quiz_result.passed ? "passed" : "not passed"} (${event.quiz_result.correct_count}/${event.quiz_result.pass_threshold})`
+    : "no final quiz recorded";
+  const diagnosticText = event.next_lesson_diagnostics.length
+    ? event.next_lesson_diagnostics
+        .map((d) => `- ${d.prompt}\n  Answer: ${d.answer}`)
+        .join("\n")
+    : "- No next-lesson diagnostic answers recorded.";
+  const tagText = event.tag_difficulty_performance.length
+    ? event.tag_difficulty_performance
+        .slice(0, 12)
+        .map(
+          (p) =>
+            `- ${p.tag} (${p.difficulty}): ${p.correct} correct, ${p.incorrect} incorrect, ${p.idk} idk, ${p.total} total`
+        )
+        .join("\n")
+    : "- No tag-level performance evidence recorded.";
+  const reviewText = [
+    event.concepts_to_review.length
+      ? `Needs review: ${event.concepts_to_review.join(", ")}`
+      : "Needs review: none recorded",
+    event.concepts_ready_to_advance.length
+      ? `Ready to advance: ${event.concepts_ready_to_advance.join(", ")}`
+      : "Ready to advance: none recorded",
+    event.recent_misconceptions.length
+      ? `Recent misconceptions: ${event.recent_misconceptions.join(", ")}`
+      : "Recent misconceptions: none recorded",
+  ].join("\n");
+  const dispatchText = dispatch.dispatch_ok
+    ? `Next-lesson task dispatched through ${dispatch.adapter}${dispatch.adapter_ref ? `, ref ${dispatch.adapter_ref}` : ""}.`
+    : `Next-lesson dispatch failed through ${dispatch.adapter}: ${dispatch.error ?? "unknown error"}.`;
+
+  return [
+    `Lesson completed at ${event.completed_at}.`,
+    `Quiz result: ${quiz}.`,
+    "",
+    "Learner diagnostics for next planning:",
+    diagnosticText,
+    "",
+    "Mastery direction:",
+    reviewText,
+    "",
+    "Tag and difficulty evidence:",
+    tagText,
+    "",
+    event.workpad_summary
+      ? `Current workpad excerpt before next generation:\n${event.workpad_summary}`
+      : "Current workpad excerpt before next generation: none.",
+    "",
+    dispatchText,
+  ].join("\n");
 }

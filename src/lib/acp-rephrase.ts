@@ -21,7 +21,7 @@ import type { RetryQuestion } from "@/lib/quiz-state";
 export interface RephraseRequest {
   retry_id: string;
   origin_question_id: string;
-  original: Pick<MultipleChoiceQuestion, "question" | "choices" | "correct_index" | "explanation" | "concept" | "misconception_target" | "rephrase_instructions">;
+  original: Pick<MultipleChoiceQuestion, "question" | "choices" | "correct_index" | "correct_indices" | "allow_multiple_correct" | "explanation" | "concept" | "misconception_target" | "rephrase_instructions">;
 }
 
 export interface RephraseResponse {

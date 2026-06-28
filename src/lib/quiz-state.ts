@@ -57,7 +57,11 @@ export interface RetryQuestion {
   /** Choices. Correct answer may be in a different position than the original. */
   choices: string[];
   /** 0-based index of the correct choice in this retry's choices array. */
-  correct_index: number;
+  correct_index?: number;
+  /** 0-based indices of every correct choice for select-all retry questions. */
+  correct_indices?: number[];
+  /** True when the retry should render as select-all-that-apply. */
+  allow_multiple_correct?: boolean;
   /** Explanation — same or improved from the original. */
   explanation: string;
   /** How this retry was produced. */
@@ -71,6 +75,8 @@ export interface QuizFeedback {
   item: QueueItem;
   /** The choice index the learner selected. */
   selected_index: number;
+  /** All choice indices selected by the learner. */
+  selected_indices: number[];
   /** Whether the answer was correct. */
   correct: boolean;
   /** Correct answer text (always shown after submit). */
@@ -170,7 +176,7 @@ export function initQuizSession(
 export function gradeAnswer(
   state: QuizSessionState,
   item: QueueItem,
-  selected_index: number,
+  selected_index: number | number[],
   allQuestions: MultipleChoiceQuestion[],
   retryCounter: { n: number }
 ): QuizSessionState {
@@ -180,14 +186,17 @@ export function gradeAnswer(
 
   // The virtual IDK option sits at index === choices.length, so it can never
   // equal correct_index — IDK always grades as incorrect, but is flagged.
-  const is_idk = isIdkSelection(qDef.choices.length, selected_index);
-  const correct = !is_idk && selected_index === qDef.correct_index;
-  const correct_answer = qDef.choices[qDef.correct_index];
+  const selected_indices = normalizeSelectedIndices(selected_index);
+  const is_idk = selected_indices.includes(idkIndexFor(qDef.choices.length));
+  const correct_indices = getCorrectIndices(qDef);
+  const correct = !is_idk && sameIndexSet(selected_indices, correct_indices);
+  const correct_answer = correct_indices.map((idx) => qDef.choices[idx]).join("; ");
 
   // Build feedback state (will be shown until learner clicks Next).
   const feedback: QuizFeedback = {
     item,
-    selected_index,
+    selected_index: selected_indices[0] ?? -1,
+    selected_indices,
     correct,
     correct_answer,
     explanation: qDef.explanation,
@@ -286,7 +295,9 @@ export function integrateAcpResult(
         concept: acpResult.concept ?? (allQuestions.find((q) => q.id === origin_question_id)?.concept ?? ""),
         question: acpResult.question!,
         choices: acpResult.choices!,
-        correct_index: acpResult.correct_index!,
+        correct_index: acpResult.correct_index,
+        correct_indices: acpResult.correct_indices,
+        allow_multiple_correct: acpResult.allow_multiple_correct,
         explanation: acpResult.explanation!,
         source: "acp",
       };
@@ -333,10 +344,36 @@ export function validateRetryQuestion(
       errors.push("retry choices must not contain duplicates");
     }
   }
-  if (typeof raw.correct_index !== "number" || !Number.isInteger(raw.correct_index) || raw.correct_index < 0) {
-    errors.push("retry correct_index must be a non-negative integer");
-  } else if (Array.isArray(raw.choices) && raw.correct_index >= raw.choices.length) {
-    errors.push("retry correct_index is out of range");
+  const hasCorrectIndex = typeof raw.correct_index === "number";
+  const hasCorrectIndices = Array.isArray(raw.correct_indices);
+  if (!hasCorrectIndex && !hasCorrectIndices) {
+    errors.push("retry needs correct_index or correct_indices");
+  }
+  if (hasCorrectIndex) {
+    if (!Number.isInteger(raw.correct_index) || raw.correct_index! < 0) {
+      errors.push("retry correct_index must be a non-negative integer");
+    } else if (Array.isArray(raw.choices) && raw.correct_index! >= raw.choices.length) {
+      errors.push("retry correct_index is out of range");
+    }
+  }
+  if (hasCorrectIndices) {
+    const indices = raw.correct_indices!;
+    if (indices.length === 0) {
+      errors.push("retry correct_indices must not be empty");
+    }
+    if (!indices.every((idx) => Number.isInteger(idx) && idx >= 0)) {
+      errors.push("retry correct_indices must contain non-negative integers");
+    } else if (Array.isArray(raw.choices)) {
+      for (const idx of indices) {
+        if (idx >= raw.choices.length) errors.push("retry correct_indices contains an out-of-range index");
+      }
+    }
+    if (new Set(indices).size !== indices.length) {
+      errors.push("retry correct_indices must not contain duplicates");
+    }
+  }
+  if (raw.allow_multiple_correct !== undefined && typeof raw.allow_multiple_correct !== "boolean") {
+    errors.push("retry allow_multiple_correct must be boolean when present");
   }
   if (typeof raw.explanation !== "string" || !raw.explanation.trim()) {
     errors.push("retry explanation is empty");
@@ -358,14 +395,26 @@ export function validateRetryQuestion(
 export function makeFallbackRetry(
   retry_id: string,
   origin_question_id: string,
-  original: { question: string; choices: string[]; correct_index: number; explanation: string; concept: string }
+  original: {
+    question: string;
+    choices: string[];
+    correct_index?: number;
+    correct_indices?: number[];
+    allow_multiple_correct?: boolean;
+    explanation: string;
+    concept: string;
+  }
 ): RetryQuestion {
-  const correct_text = original.choices[original.correct_index];
+  const originalCorrectIndices = getCorrectIndices(original);
+  const correctTexts = new Set(originalCorrectIndices.map((idx) => original.choices[idx]));
 
   // Deterministic shuffle based on retry_id hash.
   const seed = stringHash(retry_id);
   const shuffled = deterministicShuffle([...original.choices], seed);
-  const new_correct_index = shuffled.indexOf(correct_text);
+  const new_correct_indices = shuffled
+    .map((choice, index) => (correctTexts.has(choice) ? index : -1))
+    .filter((index) => index >= 0);
+  const allowMultiple = original.allow_multiple_correct === true || originalCorrectIndices.length > 1;
 
   return {
     retry_id,
@@ -373,7 +422,9 @@ export function makeFallbackRetry(
     concept: original.concept,
     question: original.question,
     choices: shuffled,
-    correct_index: new_correct_index,
+    correct_index: allowMultiple ? undefined : new_correct_indices[0],
+    correct_indices: allowMultiple ? new_correct_indices : undefined,
+    allow_multiple_correct: allowMultiple || undefined,
     explanation: original.explanation,
     source: "fallback",
   };
@@ -390,15 +441,39 @@ export function resolveItemQuestion(
   item: QueueItem,
   state: QuizSessionState,
   allQuestions: MultipleChoiceQuestion[]
-): { question: string; choices: string[]; correct_index: number; explanation: string; concept: string } | null {
+): {
+  question: string;
+  choices: string[];
+  correct_index?: number;
+  correct_indices?: number[];
+  allow_multiple_correct?: boolean;
+  explanation: string;
+  concept: string;
+} | null {
   if (item.kind === "original") {
     const q = allQuestions.find((q) => q.id === item.question_id);
     if (!q) return null;
-    return { question: q.question, choices: q.choices, correct_index: q.correct_index, explanation: q.explanation, concept: q.concept };
+    return {
+      question: q.question,
+      choices: q.choices,
+      correct_index: q.correct_index,
+      correct_indices: q.correct_indices,
+      allow_multiple_correct: q.allow_multiple_correct,
+      explanation: q.explanation,
+      concept: q.concept,
+    };
   }
   const rq = state.retry_questions[item.retry_id];
   if (!rq) return null;
-  return { question: rq.question, choices: rq.choices, correct_index: rq.correct_index, explanation: rq.explanation, concept: rq.concept };
+  return {
+    question: rq.question,
+    choices: rq.choices,
+    correct_index: rq.correct_index,
+    correct_indices: rq.correct_indices,
+    allow_multiple_correct: rq.allow_multiple_correct,
+    explanation: rq.explanation,
+    concept: rq.concept,
+  };
 }
 
 /**
@@ -488,4 +563,32 @@ function deterministicShuffle<T>(arr: T[], seed: number): T[] {
     [arr[i], arr[j]] = [arr[j], arr[i]];
   }
   return arr;
+}
+
+export function getCorrectIndices(question: {
+  correct_index?: number;
+  correct_indices?: number[];
+}): number[] {
+  if (Array.isArray(question.correct_indices) && question.correct_indices.length) {
+    return [...question.correct_indices].sort((a, b) => a - b);
+  }
+  if (typeof question.correct_index === "number") return [question.correct_index];
+  return [];
+}
+
+export function isMultiSelectQuestion(question: {
+  correct_indices?: number[];
+  allow_multiple_correct?: boolean;
+}): boolean {
+  return question.allow_multiple_correct === true || (question.correct_indices?.length ?? 0) > 1;
+}
+
+function normalizeSelectedIndices(selected: number | number[]): number[] {
+  const raw = Array.isArray(selected) ? selected : [selected];
+  return [...new Set(raw.filter((idx) => Number.isInteger(idx) && idx >= 0))].sort((a, b) => a - b);
+}
+
+function sameIndexSet(a: number[], b: number[]): boolean {
+  if (a.length !== b.length) return false;
+  return a.every((value, index) => value === b[index]);
 }

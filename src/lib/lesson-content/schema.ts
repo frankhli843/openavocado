@@ -32,8 +32,106 @@ export interface ReadingContent {
   /** Optional short intro shown above the blocks. */
   intro?: string;
   blocks: ReadingBlock[];
+  /** Diagrams attached near the prose they explain. */
+  diagrams?: LessonDiagram[];
   /** Short review/summary so the text is useful for skimming and revision. */
   summary?: string;
+}
+
+export type LessonDiagram =
+  | {
+      kind: "mermaid";
+      title: string;
+      mermaid: string;
+      takeaway: string;
+      caption?: string;
+      support_ref: string;
+    }
+  | {
+      kind: "static";
+      title: string;
+      asset_path: string;
+      alt: string;
+      takeaway?: string;
+      caption?: string;
+      external?: boolean;
+      source_url?: string;
+      license?: string;
+      support_ref: string;
+    };
+
+export function isExternalAssetPath(assetPath: string): boolean {
+  return /^https?:\/\//i.test(assetPath);
+}
+
+export function validateLessonDiagram(
+  diagram: unknown,
+  path = "diagram"
+): { valid: boolean; errors: string[] } {
+  const errors: string[] = [];
+  if (!diagram || typeof diagram !== "object") {
+    return { valid: false, errors: [`${path} must be an object`] };
+  }
+  const d = diagram as Record<string, unknown>;
+  if (d.kind !== "mermaid" && d.kind !== "static") {
+    errors.push(`${path}.kind must be "mermaid" or "static"`);
+  }
+  if (typeof d.title !== "string" || !d.title.trim()) {
+    errors.push(`${path}.title is required`);
+  }
+  if (typeof d.support_ref !== "string" || !d.support_ref.trim()) {
+    errors.push(`${path}.support_ref is required`);
+  }
+  if (d.caption !== undefined && typeof d.caption !== "string") {
+    errors.push(`${path}.caption must be a string when present`);
+  }
+
+  if (d.kind === "mermaid") {
+    if (typeof d.mermaid !== "string" || !d.mermaid.trim()) {
+      errors.push(`${path}.mermaid is required`);
+    }
+    if (typeof d.takeaway !== "string" || !d.takeaway.trim()) {
+      errors.push(`${path}.takeaway is required`);
+    }
+  }
+  if (d.kind === "static") {
+    if (typeof d.asset_path !== "string" || !d.asset_path.trim()) {
+      errors.push(`${path}.asset_path is required`);
+    } else if (isExternalAssetPath(d.asset_path)) {
+      errors.push(`${path}.asset_path must be local/runtime-relative, not an http(s) hotlink`);
+    }
+    if (typeof d.alt !== "string" || !d.alt.trim()) {
+      errors.push(`${path}.alt is required`);
+    }
+    if (d.takeaway !== undefined && typeof d.takeaway !== "string") {
+      errors.push(`${path}.takeaway must be a string when present`);
+    }
+    if (d.external === true) {
+      if (typeof d.source_url !== "string" || !d.source_url.trim()) {
+        errors.push(`${path}.source_url is required for external static diagrams`);
+      }
+      if (typeof d.license !== "string" || !d.license.trim()) {
+        errors.push(`${path}.license is required for external static diagrams`);
+      }
+    }
+  }
+  return { valid: errors.length === 0, errors };
+}
+
+export function validateLessonDiagrams(
+  diagrams: unknown,
+  path = "diagrams"
+): { valid: boolean; errors: string[] } {
+  const errors: string[] = [];
+  if (diagrams === undefined || diagrams === null) return { valid: true, errors };
+  if (!Array.isArray(diagrams)) {
+    return { valid: false, errors: [`${path} must be an array when present`] };
+  }
+  for (const [i, diagram] of diagrams.entries()) {
+    const result = validateLessonDiagram(diagram, `${path}[${i}]`);
+    errors.push(...result.errors);
+  }
+  return { valid: errors.length === 0, errors };
 }
 
 const READING_BLOCK_TYPES = new Set([
@@ -108,6 +206,9 @@ export function validateReadingContent(content: unknown): { valid: boolean; erro
   if (textBlocks < 2) {
     errors.push("reading content needs at least 2 substantive text blocks");
   }
+
+  const diagramResult = validateLessonDiagrams(c.diagrams, "reading.diagrams");
+  errors.push(...diagramResult.errors);
 
   return { valid: errors.length === 0, errors };
 }
@@ -431,8 +532,20 @@ export interface MultipleChoiceQuestion {
   question: string;
   /** Answer options. Must have 2–6 non-empty strings with no duplicates. */
   choices: string[];
-  /** 0-based index of the correct choice in `choices`. */
-  correct_index: number;
+  /** 0-based index of the correct choice in `choices` for classic single-choice questions. */
+  correct_index?: number;
+  /**
+   * 0-based indices of every correct choice for select-all-that-apply questions.
+   * Use with allow_multiple_correct=true. This also supports the "none are
+   * correct" case by making the real "None of the above" choice the only
+   * correct index.
+   */
+  correct_indices?: number[];
+  /**
+   * When true, render as checkbox/select-all. Authors should still vary the
+   * answer pattern: one correct, several correct, or only "None of the above".
+   */
+  allow_multiple_correct?: boolean;
   /** Explanation shown after the learner submits. Reveals why the answer is right. */
   explanation: string;
   /** Concept tag — identifies the learning objective targeted by this question. */
@@ -486,9 +599,24 @@ export interface MultipleChoiceQuizContent {
  */
 export const IDK_LABEL = "I'm not sure / I don't know";
 
+export function isNoneOfTheAboveChoiceText(value: unknown): boolean {
+  if (typeof value !== "string") return false;
+  const normalized = value
+    .trim()
+    .toLowerCase()
+    .replace(/[’']/g, "")
+    .replace(/\s+/g, " ");
+  return (
+    normalized === "none of the above" ||
+    normalized === "none are correct" ||
+    normalized === "none of these" ||
+    normalized === "no statements are correct"
+  );
+}
+
 /**
  * Validate a MultipleChoiceQuizContent spec.
- * Enforces: non-empty questions, unique ids, valid correct_index bounds,
+ * Enforces: non-empty questions, unique ids, valid answer indices,
  * 2–6 distinct choices per question, required fields present, no answer leakage.
  */
 export function validateMultipleChoiceQuizContent(
@@ -573,12 +701,61 @@ export function validateMultipleChoiceQuizContent(
       }
     }
 
-    if (typeof q.correct_index !== "number" || !Number.isInteger(q.correct_index) || q.correct_index < 0) {
-      errors.push(`quiz questions[${i}] correct_index must be a non-negative integer`);
-    } else if (Array.isArray(q.choices) && (q.correct_index as number) >= (q.choices as unknown[]).length) {
-      errors.push(
-        `quiz questions[${i}] correct_index ${q.correct_index} out of range for ${(q.choices as unknown[]).length} choices`
-      );
+    const hasCorrectIndex = typeof q.correct_index === "number";
+    const hasCorrectIndices = Array.isArray(q.correct_indices);
+    const allowMultiple = q.allow_multiple_correct === true || (hasCorrectIndices && (q.correct_indices as unknown[]).length > 1);
+    const choiceCount = Array.isArray(q.choices) ? (q.choices as unknown[]).length : 0;
+
+    if (q.allow_multiple_correct !== undefined && typeof q.allow_multiple_correct !== "boolean") {
+      errors.push(`quiz questions[${i}] allow_multiple_correct must be a boolean when present`);
+    }
+
+    if (!hasCorrectIndex && !hasCorrectIndices) {
+      errors.push(`quiz questions[${i}] needs correct_index or correct_indices`);
+    }
+    if (hasCorrectIndex) {
+      if (!Number.isInteger(q.correct_index) || (q.correct_index as number) < 0) {
+        errors.push(`quiz questions[${i}] correct_index must be a non-negative integer`);
+      } else if (Array.isArray(q.choices) && (q.correct_index as number) >= choiceCount) {
+        errors.push(
+          `quiz questions[${i}] correct_index ${q.correct_index} out of range for ${choiceCount} choices`
+        );
+      }
+    }
+    if (hasCorrectIndices) {
+      const indices = q.correct_indices as unknown[];
+      if (indices.length === 0) {
+        errors.push(`quiz questions[${i}] correct_indices must not be empty`);
+      }
+      if (!indices.every((idx) => typeof idx === "number" && Number.isInteger(idx) && idx >= 0)) {
+        errors.push(`quiz questions[${i}] correct_indices must contain non-negative integers`);
+      } else if (Array.isArray(q.choices)) {
+        for (const idx of indices as number[]) {
+          if (idx >= choiceCount) {
+            errors.push(`quiz questions[${i}] correct_indices contains out-of-range index ${idx}`);
+          }
+        }
+        if (new Set(indices).size !== indices.length) {
+          errors.push(`quiz questions[${i}] correct_indices must not contain duplicates`);
+        }
+      }
+      if ((indices.length > 1 || q.allow_multiple_correct === true) && !allowMultiple) {
+        errors.push(`quiz questions[${i}] multiple correct indices require allow_multiple_correct=true`);
+      }
+    }
+    if (allowMultiple && Array.isArray(q.choices)) {
+      const noneIndex = (q.choices as unknown[]).findIndex(isNoneOfTheAboveChoiceText);
+      if (noneIndex < 0) {
+        errors.push(`quiz questions[${i}] select-all questions must include a real "None of the above" choice`);
+      }
+      const indices = hasCorrectIndices
+        ? (q.correct_indices as number[])
+        : hasCorrectIndex
+        ? [q.correct_index as number]
+        : [];
+      if (indices.includes(noneIndex) && indices.length > 1) {
+        errors.push(`quiz questions[${i}] "None of the above" must be the only correct choice when selected`);
+      }
     }
 
     if (typeof q.explanation !== "string" || !(q.explanation as string).trim()) {
@@ -601,7 +778,43 @@ export function validateMultipleChoiceQuizContent(
 
 // ─── Freeform assessment + end-of-lesson diagnostics ──────────────────────────
 
-export type FreeformAnswerType = "free_text" | "numeric";
+export type FreeformAnswerType =
+  | "free_text"
+  | "numeric"
+  | "fill_blank"
+  | "ordering"
+  | "matching"
+  | "classification"
+  | "multiple_choice";
+
+export interface FillBlankSpec {
+  id: string;
+  label?: string;
+  accepted_answers?: string[];
+  actual_answer?: string;
+}
+
+export interface ClassificationItemSpec {
+  id: string;
+  text: string;
+  category_id?: string;
+}
+
+export interface MatchingPromptSpec {
+  id: string;
+  text: string;
+  correct_option_id?: string;
+}
+
+export interface MatchingOptionSpec {
+  id: string;
+  text: string;
+}
+
+export interface ClassificationCategorySpec {
+  id: string;
+  label: string;
+}
 
 /**
  * A freeform assessment question (non-multiple-choice). Carries an optional
@@ -613,6 +826,15 @@ export interface FreeformQuestion {
   text: string;
   type?: FreeformAnswerType;
   hint?: string;
+  actual_answer?: string;
+  rubric?: string;
+  accepted_answers?: string[];
+  support_ref?: string;
+  blanks?: FillBlankSpec[];
+  items?: Array<string | ClassificationItemSpec>;
+  prompts?: MatchingPromptSpec[];
+  options?: MatchingOptionSpec[];
+  categories?: ClassificationCategorySpec[];
   /** Concept this question targets — used by the assessor to attach tags. */
   concept?: string;
   /** Optional difficulty so freeform evidence is queryable like MC evidence. */
@@ -717,6 +939,15 @@ export function validateAssessmentContent(content: unknown): { valid: boolean; e
   }
 
   const ids = new Set<string>();
+  const freeformTypes: FreeformAnswerType[] = [
+    "free_text",
+    "numeric",
+    "fill_blank",
+    "ordering",
+    "matching",
+    "classification",
+    "multiple_choice",
+  ];
   for (const [i, raw] of c.questions.entries()) {
     if (!raw || typeof raw !== "object") {
       errors.push(`assessment questions[${i}] must be an object`);
@@ -733,8 +964,49 @@ export function validateAssessmentContent(content: unknown): { valid: boolean; e
     if (typeof q.text !== "string" || !q.text.trim()) {
       errors.push(`assessment questions[${i}] missing text`);
     }
-    if (q.type !== undefined && !["free_text", "numeric"].includes(q.type as string)) {
-      errors.push(`assessment questions[${i}] type must be "free_text" or "numeric"`);
+    if (q.type !== undefined && !freeformTypes.includes(q.type as FreeformAnswerType)) {
+      errors.push(`assessment questions[${i}] type must be one of ${freeformTypes.join(", ")}`);
+    }
+    if (q.accepted_answers !== undefined && !isStringArray(q.accepted_answers)) {
+      errors.push(`assessment questions[${i}] accepted_answers must be an array of strings`);
+    }
+    if (q.type === "fill_blank") {
+      if (!Array.isArray(q.blanks) || q.blanks.length === 0) {
+        errors.push(`assessment questions[${i}] fill_blank requires a non-empty blanks array`);
+      } else {
+        validateIdTextObjects(q.blanks, `assessment questions[${i}].blanks`, errors, "id", "label", true);
+      }
+    }
+    if (q.type === "ordering") {
+      if (!Array.isArray(q.items) || q.items.length < 2) {
+        errors.push(`assessment questions[${i}] ordering requires at least 2 items`);
+      } else {
+        validateStringOrIdTextObjects(q.items, `assessment questions[${i}].items`, errors);
+      }
+    }
+    if (q.type === "matching") {
+      if (!Array.isArray(q.prompts) || q.prompts.length < 2) {
+        errors.push(`assessment questions[${i}] matching requires at least 2 prompts`);
+      } else {
+        validateIdTextObjects(q.prompts, `assessment questions[${i}].prompts`, errors);
+      }
+      if (!Array.isArray(q.options) || q.options.length < 2) {
+        errors.push(`assessment questions[${i}] matching requires at least 2 options`);
+      } else {
+        validateIdTextObjects(q.options, `assessment questions[${i}].options`, errors);
+      }
+    }
+    if (q.type === "classification") {
+      if (!Array.isArray(q.items) || q.items.length < 2) {
+        errors.push(`assessment questions[${i}] classification requires at least 2 items`);
+      } else {
+        validateStringOrIdTextObjects(q.items, `assessment questions[${i}].items`, errors);
+      }
+      if (!Array.isArray(q.categories) || q.categories.length < 2) {
+        errors.push(`assessment questions[${i}] classification requires at least 2 categories`);
+      } else {
+        validateIdTextObjects(q.categories, `assessment questions[${i}].categories`, errors, "id", "label");
+      }
     }
     if (
       q.difficulty !== undefined &&
@@ -750,6 +1022,57 @@ export function validateAssessmentContent(content: unknown): { valid: boolean; e
   }
 
   return { valid: errors.length === 0, errors };
+}
+
+function isStringArray(value: unknown): value is string[] {
+  return Array.isArray(value) && value.every((item) => typeof item === "string");
+}
+
+function validateStringOrIdTextObjects(value: unknown[], path: string, errors: string[]) {
+  for (const [index, item] of value.entries()) {
+    if (typeof item === "string") {
+      if (!item.trim()) errors.push(`${path}[${index}] must be a non-empty string`);
+      continue;
+    }
+    if (!item || typeof item !== "object") {
+      errors.push(`${path}[${index}] must be a string or object`);
+      continue;
+    }
+    validateIdTextObjects([item], `${path}[${index}]`, errors);
+  }
+}
+
+function validateIdTextObjects(
+  value: unknown[],
+  path: string,
+  errors: string[],
+  idKey = "id",
+  textKey = "text",
+  textOptional = false
+) {
+  const ids = new Set<string>();
+  for (const [index, item] of value.entries()) {
+    if (!item || typeof item !== "object") {
+      errors.push(`${path}[${index}] must be an object`);
+      continue;
+    }
+    const record = item as Record<string, unknown>;
+    const id = record[idKey];
+    if (typeof id !== "string" || !id.trim()) {
+      errors.push(`${path}[${index}] missing ${idKey}`);
+    } else if (ids.has(id)) {
+      errors.push(`${path}[${index}] duplicate ${idKey} "${id}"`);
+    } else {
+      ids.add(id);
+    }
+    const text = record[textKey];
+    if (!textOptional && (typeof text !== "string" || !text.trim())) {
+      errors.push(`${path}[${index}] missing ${textKey}`);
+    }
+    if (textOptional && text !== undefined && typeof text !== "string") {
+      errors.push(`${path}[${index}] ${textKey} must be a string when present`);
+    }
+  }
 }
 
 /**

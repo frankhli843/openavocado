@@ -3,6 +3,7 @@
 import { useState, useCallback, useRef } from "react";
 import type { LessonActivity } from "@/types";
 import type { MultipleChoiceQuestion, MultipleChoiceQuizContent } from "@/lib/lesson-content/schema";
+import { normalizeQuizChoiceOrder } from "@/lib/lesson-content/quiz-choice-order";
 import {
   type QuizSessionState,
   initQuizSession,
@@ -14,6 +15,8 @@ import {
   deserializeQuizState,
   checkPassedAfterFeedback,
   isIdkSelection,
+  getCorrectIndices,
+  isMultiSelectQuestion,
   IDK_LABEL,
 } from "@/lib/quiz-state";
 import { requestRephrase } from "@/lib/acp-rephrase";
@@ -72,7 +75,7 @@ function parseQuizContent(activity: LessonActivity): MultipleChoiceQuizContent |
     const raw = JSON.parse(activity.content) as Record<string, unknown>;
     const quiz = raw.quiz as MultipleChoiceQuizContent | undefined;
     if (!quiz?.questions?.length) return null;
-    return quiz;
+    return normalizeQuizChoiceOrder(quiz);
   } catch {
     return null;
   }
@@ -143,7 +146,7 @@ function QuizEngine({ activity, quiz, savedQuizState, onStateChange, onPassedCha
     return fresh;
   });
 
-  const [selectedIndex, setSelectedIndex] = useState<number | null>(null);
+  const [selectedIndices, setSelectedIndices] = useState<number[]>([]);
   const [submitted, setSubmitted] = useState(false);
 
   // The current queue item.
@@ -171,17 +174,29 @@ function QuizEngine({ activity, quiz, savedQuizState, onStateChange, onPassedCha
 
   function handleSelect(index: number) {
     if (submitted) return;
-    setSelectedIndex(index);
+    if (!currentQuestion) return;
+    const idkIndex = currentQuestion.choices.length;
+    const multi = isMultiSelectQuestion(currentQuestion);
+    if (!multi || index === idkIndex) {
+      setSelectedIndices([index]);
+      return;
+    }
+    setSelectedIndices((prev) => {
+      const withoutIdk = prev.filter((idx) => idx !== idkIndex);
+      return withoutIdk.includes(index)
+        ? withoutIdk.filter((idx) => idx !== index)
+        : [...withoutIdk, index].sort((a, b) => a - b);
+    });
   }
 
   function handleSubmit() {
-    if (selectedIndex === null || !currentItem || submitted) return;
+    if (selectedIndices.length === 0 || !currentItem || submitted) return;
     setSubmitted(true);
 
     const newSession = gradeAnswer(
       session,
       currentItem,
-      selectedIndex,
+      selectedIndices,
       questions,
       retryCounterRef.current
     );
@@ -201,9 +216,9 @@ function QuizEngine({ activity, quiz, savedQuizState, onStateChange, onPassedCha
           : fb?.is_idk
           ? "idk"
           : "incorrect";
-        const answerText = isIdkSelection(currentQuestion.choices.length, selectedIndex)
+        const answerText = selectedIndices.some((idx) => isIdkSelection(currentQuestion.choices.length, idx))
           ? IDK_LABEL
-          : currentQuestion.choices[selectedIndex] ?? "";
+          : selectedIndices.map((idx) => currentQuestion.choices[idx]).filter(Boolean).join("; ");
         recordMcAssessment(assessContext, originQ, outcome, answerText);
       }
     }
@@ -231,6 +246,8 @@ function QuizEngine({ activity, quiz, savedQuizState, onStateChange, onPassedCha
             question: originalQ.question,
             choices: originalQ.choices,
             correct_index: originalQ.correct_index,
+            correct_indices: originalQ.correct_indices,
+            allow_multiple_correct: originalQ.allow_multiple_correct,
             explanation: originalQ.explanation,
             concept: originalQ.concept,
             misconception_target: originalQ.misconception_target,
@@ -254,7 +271,7 @@ function QuizEngine({ activity, quiz, savedQuizState, onStateChange, onPassedCha
     const finalSession = { ...advanced, passed };
     setSession(finalSession);
     persist(finalSession);
-    setSelectedIndex(null);
+    setSelectedIndices([]);
     setSubmitted(false);
   }
 
@@ -312,7 +329,9 @@ function QuizEngine({ activity, quiz, savedQuizState, onStateChange, onPassedCha
     );
   }
 
-  const { question, choices, correct_index, explanation } = currentQuestion;
+  const { question, choices, explanation } = currentQuestion;
+  const multiSelect = isMultiSelectQuestion(currentQuestion);
+  const correctIndices = getCorrectIndices(currentQuestion);
   const feedback = session.feedback;
   const nextWouldPass = consecutive_required
     ? (session.current_streak ?? 0) >= consecutive_required
@@ -341,7 +360,7 @@ function QuizEngine({ activity, quiz, savedQuizState, onStateChange, onPassedCha
           />
           <span className="text-xs text-gray-400 ml-4 whitespace-nowrap">
             Question {session.current_index + 1} of {session.queue.length}
-            {session.queue.length > questions.length ? ` (${session.queue.length - questions.length} retry)` : ""}
+            {formatRetryCount(session.queue.length - questions.length)}
           </span>
         </div>
 
@@ -364,21 +383,22 @@ function QuizEngine({ activity, quiz, savedQuizState, onStateChange, onPassedCha
         </div>
 
         {/* Choices */}
-        <div className="space-y-2" role="radiogroup" aria-label="Answer choices">
+        <div className="space-y-2" role={multiSelect ? "group" : "radiogroup"} aria-label="Answer choices">
           {choices.map((choice, index) => {
-            const isSelected = selectedIndex === index;
+            const isSelected = selectedIndices.includes(index);
             const showResult = submitted && feedback;
+            const isCorrectChoice = correctIndices.includes(index);
 
             let borderClass = "border-gray-200 hover:bg-gray-50 hover:border-gray-300";
             let bgClass = "bg-white";
             let indicator: React.ReactNode = null;
 
             if (showResult) {
-              if (index === correct_index) {
+              if (isCorrectChoice) {
                 borderClass = "border-green-400";
                 bgClass = "bg-green-50";
                 indicator = <span className="text-green-600 shrink-0">&#10003;</span>;
-              } else if (isSelected && index !== correct_index) {
+              } else if (isSelected) {
                 borderClass = "border-red-300";
                 bgClass = "bg-red-50";
                 indicator = <span className="text-red-500 shrink-0">&#10005;</span>;
@@ -392,20 +412,20 @@ function QuizEngine({ activity, quiz, savedQuizState, onStateChange, onPassedCha
               <button
                 key={index}
                 type="button"
-                role="radio"
+                role={multiSelect ? "checkbox" : "radio"}
                 aria-checked={isSelected}
                 onClick={() => handleSelect(index)}
                 disabled={submitted}
                 className={`w-full flex items-start gap-3 px-4 py-3 rounded-lg border text-left transition-colors text-sm text-gray-700 ${borderClass} ${bgClass} disabled:cursor-default`}
               >
                 <span
-                  className={`mt-0.5 shrink-0 w-5 h-5 rounded-full border-2 flex items-center justify-center text-xs font-bold
+                  className={`mt-0.5 shrink-0 w-5 h-5 ${multiSelect ? "rounded" : "rounded-full"} border-2 flex items-center justify-center text-xs font-bold
                     ${isSelected && !submitted ? "border-blue-500 bg-blue-500 text-white" : "border-gray-300 text-gray-500"}
-                    ${submitted && index === correct_index ? "border-green-500 bg-green-500 text-white" : ""}
-                    ${submitted && isSelected && index !== correct_index ? "border-red-400 bg-red-400 text-white" : ""}
+                    ${submitted && isCorrectChoice ? "border-green-500 bg-green-500 text-white" : ""}
+                    ${submitted && isSelected && !isCorrectChoice ? "border-red-400 bg-red-400 text-white" : ""}
                   `}
                 >
-                  {String.fromCharCode(65 + index)}
+                  {multiSelect && isSelected ? "✓" : String.fromCharCode(65 + index)}
                 </span>
                 <span className="flex-1 leading-relaxed">{choice}</span>
                 {indicator}
@@ -417,7 +437,7 @@ function QuizEngine({ activity, quiz, savedQuizState, onStateChange, onPassedCha
               Treated as incorrect but recorded as high-signal uncertainty. */}
           {(() => {
             const idkIndex = choices.length;
-            const isSelected = selectedIndex === idkIndex;
+            const isSelected = selectedIndices.includes(idkIndex);
             const showResult = submitted && feedback;
             let cls = "border-gray-200 hover:bg-gray-50 hover:border-gray-300 bg-white text-gray-500";
             if (showResult && isSelected) {
@@ -428,7 +448,7 @@ function QuizEngine({ activity, quiz, savedQuizState, onStateChange, onPassedCha
             return (
               <button
                 type="button"
-                role="radio"
+                role={multiSelect ? "checkbox" : "radio"}
                 aria-checked={isSelected}
                 onClick={() => handleSelect(idkIndex)}
                 disabled={submitted}
@@ -448,10 +468,10 @@ function QuizEngine({ activity, quiz, savedQuizState, onStateChange, onPassedCha
           <div className="pt-1">
             <button
               onClick={handleSubmit}
-              disabled={selectedIndex === null}
+              disabled={selectedIndices.length === 0}
               className="w-full sm:w-auto px-6 py-2.5 text-sm font-semibold bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
             >
-              Submit answer
+              {multiSelect ? "Submit selections" : "Submit answer"}
             </button>
           </div>
         )}
@@ -538,6 +558,7 @@ function ProgressBar({
   const activeValue = consecutiveRequired ? streak ?? 0 : correct;
   const activeThreshold = consecutiveRequired ?? threshold;
   const pct = Math.min(100, Math.round((activeValue / activeThreshold) * 100));
+  const label = formatQuizProgressLabel({ correct, threshold, streak, consecutiveRequired });
   return (
     <div className="flex items-center gap-2 flex-1 min-w-0">
       <div className="flex-1 min-w-0 bg-gray-100 rounded-full h-2 overflow-hidden">
@@ -547,10 +568,34 @@ function ProgressBar({
         />
       </div>
       <span className="text-xs font-medium text-gray-600 whitespace-nowrap shrink-0">
-        {consecutiveRequired
-          ? `${streak ?? 0} / ${consecutiveRequired} in a row`
-          : `${correct} / ${threshold} correct`}
+        {label}
       </span>
     </div>
   );
+}
+
+export function formatQuizProgressLabel({
+  correct,
+  threshold,
+  streak,
+  consecutiveRequired,
+}: {
+  correct: number;
+  threshold: number;
+  streak?: number;
+  consecutiveRequired?: number;
+}) {
+  if (!consecutiveRequired) {
+    return `${correct} / ${threshold} correct`;
+  }
+  const currentStreak = streak ?? 0;
+  if (currentStreak >= consecutiveRequired) {
+    return `${currentStreak} in a row (target ${consecutiveRequired})`;
+  }
+  return `${currentStreak} / ${consecutiveRequired} in a row`;
+}
+
+export function formatRetryCount(retryCount: number) {
+  if (retryCount <= 0) return "";
+  return retryCount === 1 ? " (1 retry)" : ` (${retryCount} retries)`;
 }

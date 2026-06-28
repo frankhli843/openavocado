@@ -5,6 +5,7 @@ import type { GeneratedArtifact, LessonActivity, ReadingBlock } from "@/types";
 import type { LessonPartContent } from "@/lib/lesson-content/schema";
 import type { WidgetStateChange } from "./widgets/DeclarativeWidget";
 import { WidgetHost } from "./widgets/WidgetHost";
+import { LessonDiagramsView } from "./LessonDiagrams";
 import {
   MultipleChoiceAssessmentSection,
   type QuizAssessContext,
@@ -59,6 +60,9 @@ export function LessonPartSection({
               {part.reading.blocks.map((block, i) => (
                 <ReadingBlockView key={i} block={block} />
               ))}
+              {part.reading.diagrams && part.reading.diagrams.length > 0 && (
+                <LessonDiagramsView diagrams={part.reading.diagrams} />
+              )}
               {part.reading.summary && (
                 <div className="rounded-lg bg-green-50/70 border border-green-100 px-4 py-3">
                   <div className="text-xs font-semibold text-green-700 uppercase tracking-wider mb-1">
@@ -85,9 +89,14 @@ export function LessonPartSection({
                 Part audio artifact is not generated yet. The script below is the per-part audio source.
               </div>
             )}
-            <div className="text-sm text-gray-600 leading-relaxed bg-gray-50 rounded-lg p-4 border border-gray-100 max-h-56 overflow-y-auto">
-              {part.audio.script}
-            </div>
+            <details className="rounded-lg border border-gray-100 bg-gray-50">
+              <summary className="cursor-pointer select-none px-4 py-3 text-xs font-semibold uppercase tracking-wider text-gray-500 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-300">
+                Transcript
+              </summary>
+              <div className="max-h-56 overflow-y-auto border-t border-gray-100 bg-white px-4 py-3 text-sm leading-relaxed text-gray-600">
+                {part.audio.script}
+              </div>
+            </details>
           </PartBlock>
 
           <PartBlock title="Interactive">

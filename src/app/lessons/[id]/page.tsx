@@ -14,6 +14,8 @@ import { AssessmentSection } from "@/components/lesson/AssessmentSection";
 import { MultipleChoiceAssessmentSection } from "@/components/lesson/MultipleChoiceAssessmentSection";
 import { NextLessonDiagnosticsSection } from "@/components/lesson/NextLessonDiagnosticsSection";
 import { KnowledgeGraphOrientation } from "@/components/lesson/KnowledgeGraphOrientation";
+import { LessonChatModal } from "@/components/lesson/LessonChatModal";
+import { LessonResumeTracker } from "@/components/lesson/LessonResumeTracker";
 import { debounce, postAutosave, type SaveStatus } from "@/lib/autosave";
 import { DiscardLessonModal } from "@/components/DiscardLessonModal";
 import type { NextLessonDiagnostic } from "@/lib/lesson-content/schema";
@@ -29,7 +31,7 @@ interface LessonData {
 
 // Canonical section order. Multiple `interactive` activities keep their relative
 // (stable-sorted) order, so a lesson can show several visualization perspectives.
-const ACTIVITY_ORDER = ["audio", "reading", "media", "lesson_part", "interactive", "practice_code", "assessment"];
+const ACTIVITY_ORDER = ["audio", "reading", "lesson_part", "interactive", "practice_code", "assessment", "media"];
 
 const LEARNER_ID = 1; // TODO: replace with auth session
 const DIAGNOSTICS_ACTIVITY_ID = 0;
@@ -503,7 +505,7 @@ export default function LessonPage({ params }: { params: Promise<{ id: string }>
       <div className="sticky top-0 z-10 bg-white border-b border-gray-200">
         <div className="max-w-4xl mx-auto px-6 h-11 flex items-center justify-between gap-4">
           <div className="flex items-center gap-2 text-sm text-gray-500 min-w-0">
-            <Link href="/" className="hover:text-gray-800 transition-colors shrink-0">
+            <Link href="/?resume=0" className="hover:text-gray-800 transition-colors shrink-0">
               &#8592; Dashboard
             </Link>
             <span className="text-gray-300">/</span>
@@ -731,6 +733,13 @@ export default function LessonPage({ params }: { params: Promise<{ id: string }>
           onCancel={() => setShowDiscardModal(false)}
         />
       )}
+
+      <LessonChatModal
+        lessonId={lesson.id}
+        learnerId={LEARNER_ID}
+        lessonTitle={lesson.title}
+      />
+      <LessonResumeTracker lessonId={lesson.id} sectionIds={tocItems.map((item) => item.id)} />
     </div>
   );
 }

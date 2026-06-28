@@ -132,6 +132,55 @@ describe("gradeAnswer — correct answer", () => {
     const after = gradeAnswer(session, session.queue[0], 0, qs, retryCounter());
     expect(after.queue).toHaveLength(2);
   });
+
+  it("grades select-all questions by exact selected set", () => {
+    const qs: MultipleChoiceQuestion[] = [{
+      id: "multi",
+      question: "Which statements are true?",
+      choices: ["A is true", "B is false", "C is true", "None of the above"],
+      allow_multiple_correct: true,
+      correct_indices: [0, 2],
+      explanation: "A and C are true.",
+      concept: "select-all",
+      difficulty: "medium",
+    }];
+    const session = initQuizSession(qs, 1);
+    const after = gradeAnswer(session, session.queue[0], [0, 2], qs, retryCounter());
+    expect(after.feedback?.correct).toBe(true);
+    expect(after.feedback?.correct_answer).toBe("A is true; C is true");
+  });
+
+  it("allows select-all questions with exactly one real correct answer", () => {
+    const qs: MultipleChoiceQuestion[] = [{
+      id: "single-select-all",
+      question: "Which statement is true?",
+      choices: ["A is false", "B is true", "C is false", "None of the above"],
+      allow_multiple_correct: true,
+      correct_indices: [1],
+      explanation: "Only B is true.",
+      concept: "select-all-single",
+      difficulty: "easy",
+    }];
+    const session = initQuizSession(qs, 1);
+    const after = gradeAnswer(session, session.queue[0], [1], qs, retryCounter());
+    expect(after.feedback?.correct).toBe(true);
+  });
+
+  it("allows no-real-answer select-all questions via None of the above", () => {
+    const qs: MultipleChoiceQuestion[] = [{
+      id: "none",
+      question: "Which statements are true?",
+      choices: ["A is false", "B is false", "C is false", "None of the above"],
+      allow_multiple_correct: true,
+      correct_indices: [3],
+      explanation: "None of the statements are true.",
+      concept: "select-all-none",
+      difficulty: "hard",
+    }];
+    const session = initQuizSession(qs, 1);
+    const after = gradeAnswer(session, session.queue[0], [3], qs, retryCounter());
+    expect(after.feedback?.correct).toBe(true);
+  });
 });
 
 // ─── gradeAnswer — wrong answer ───────────────────────────────────────────────
@@ -176,6 +225,23 @@ describe("gradeAnswer — wrong answer", () => {
     const after = gradeAnswer(session, session.queue[0], 2, qs, retryCounter());
     expect(after.feedback?.correct).toBe(false);
     expect(after.feedback?.correct_answer).toBe("Alpha"); // correct_index=0 → "Alpha"
+  });
+
+  it("marks select-all answers wrong when only part of the set is selected", () => {
+    const qs: MultipleChoiceQuestion[] = [{
+      id: "multi",
+      question: "Which statements are true?",
+      choices: ["A is true", "B is false", "C is true", "None of the above"],
+      allow_multiple_correct: true,
+      correct_indices: [0, 2],
+      explanation: "A and C are true.",
+      concept: "select-all",
+      difficulty: "medium",
+    }];
+    const session = initQuizSession(qs, 1);
+    const after = gradeAnswer(session, session.queue[0], [0], qs, retryCounter());
+    expect(after.feedback?.correct).toBe(false);
+    expect(after.feedback?.correct_answer).toBe("A is true; C is true");
   });
 
   it("retry ids are unique across multiple wrong answers", () => {
@@ -357,7 +423,7 @@ describe("makeFallbackRetry", () => {
 
   it("preserves the correct answer text after shuffle", () => {
     const retry = makeFallbackRetry("retry-q1-1", "q1", original);
-    expect(retry.choices[retry.correct_index]).toBe("4");
+    expect(retry.choices[retry.correct_index ?? -1]).toBe("4");
   });
 
   it("contains all original choices", () => {
@@ -675,5 +741,67 @@ describe("validateMultipleChoiceQuizContent (schema)", () => {
     };
     const result = validateMultipleChoiceQuizContent({ questions: [q] });
     expect(result.valid).toBe(true);
+  });
+
+  it("accepts select-all questions with multiple correct answers", () => {
+    const q = {
+      id: "multi",
+      question: "Select all true statements.",
+      choices: ["A", "B", "C", "None of the above"],
+      allow_multiple_correct: true,
+      correct_indices: [0, 2],
+      explanation: "A and C are true.",
+      concept: "select-all",
+      difficulty: "medium",
+    };
+    const result = validateMultipleChoiceQuizContent({ questions: [q] });
+    expect(result.valid).toBe(true);
+  });
+
+  it("accepts select-all questions with only None of the above correct", () => {
+    const q = {
+      id: "none",
+      question: "Select all true statements.",
+      choices: ["A", "B", "C", "None of the above"],
+      allow_multiple_correct: true,
+      correct_indices: [3],
+      explanation: "None are true.",
+      concept: "select-all-none",
+      difficulty: "hard",
+    };
+    const result = validateMultipleChoiceQuizContent({ questions: [q] });
+    expect(result.valid).toBe(true);
+  });
+
+  it("rejects select-all questions without None of the above", () => {
+    const q = {
+      id: "bad-multi",
+      question: "Select all true statements.",
+      choices: ["A", "B", "C"],
+      allow_multiple_correct: true,
+      correct_indices: [0, 2],
+      explanation: "A and C are true.",
+      concept: "select-all",
+      difficulty: "medium",
+    };
+    const result = validateMultipleChoiceQuizContent({ questions: [q] });
+    expect(result.valid).toBe(false);
+    expect(result.errors.join(" ")).toMatch(/None of the above/);
+  });
+
+  it("rejects None of the above mixed with another correct answer", () => {
+    const q = {
+      id: "bad-none",
+      question: "Select all true statements.",
+      choices: ["A", "B", "None of the above"],
+      allow_multiple_correct: true,
+      correct_indices: [0, 2],
+      explanation: "Contradictory.",
+      concept: "select-all",
+      difficulty: "medium",
+    };
+    const result = validateMultipleChoiceQuizContent({ questions: [q] });
+    expect(result.valid).toBe(false);
+    expect(result.errors.join(" ")).toMatch(/only correct choice/);
   });
 });

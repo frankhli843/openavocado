@@ -335,6 +335,45 @@ export interface LessonAutosave {
   saved_at: string;
 }
 
+export interface LessonChatMessage {
+  id: number;
+  lesson_id: number;
+  learner_id: number;
+  role: "user" | "assistant";
+  content: string;
+  created_at: string;
+}
+
+export interface LessonChatState {
+  id: number;
+  lesson_id: number;
+  learner_id: number;
+  compact_summary: string;
+  compacted_through_message_id: number | null;
+  updated_at: string;
+  created_at: string;
+}
+
+export type SubjectJournalEntryType =
+  | "lesson_completion"
+  | "lesson_generation"
+  | "research"
+  | "planning"
+  | "manual"
+  | "lesson_discard";
+
+export interface SubjectJournalEntry {
+  id: number;
+  subject_id: number;
+  learner_id: number;
+  entry_type: SubjectJournalEntryType;
+  title: string;
+  content: string;
+  metadata: string | null;
+  created_by: string | null;
+  created_at: string;
+}
+
 export interface NextLessonJob {
   id: number;
   subject_id: number;
@@ -414,6 +453,8 @@ export interface LessonGeneratorContext {
 export interface GeneratedLessonContent {
   title: string;
   description: string;
+  /** Learner-facing reason this lesson is the right next move now. */
+  planning_rationale?: string;
   goals: string[];
   tags: string[];
   activities: Array<{
