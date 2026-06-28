@@ -72,19 +72,31 @@ export async function POST(request: Request) {
     const adapterName = process.env.AVOCADOCORE_COMPLETION_ADAPTER || "dora-task";
     const dispatcher = getSubjectCreatedDispatcher();
     const dispatchResult = await dispatcher(event);
+
+    // Status semantics:
+    //   "completed"  — synchronous dispatch finished and produced a lesson_id (e.g. local-queue)
+    //   "dispatched" — async dispatch accepted but work happens later (e.g. dora-task, webhook)
+    //   "failed"     — dispatch returned an error
+    const jobStatus = !dispatchResult.ok
+      ? "failed"
+      : dispatchResult.lesson_id
+      ? "completed"
+      : "dispatched";
+
     const jobResult = db
       .prepare(
         `INSERT INTO next_lesson_jobs
-           (subject_id, trigger_event, adapter, status, payload, adapter_ref, error, dispatched_at)
-         VALUES (?, 'subject.created', ?, ?, ?, ?, ?, datetime('now'))`
+           (subject_id, trigger_event, adapter, status, payload, adapter_ref, error, output_lesson_id, dispatched_at)
+         VALUES (?, 'subject.created', ?, ?, ?, ?, ?, ?, datetime('now'))`
       )
       .run(
         subject.id,
         adapterName,
-        dispatchResult.ok ? "dispatched" : "failed",
+        jobStatus,
         JSON.stringify(event),
         dispatchResult.ref ?? null,
-        dispatchResult.error ?? null
+        dispatchResult.error ?? null,
+        dispatchResult.lesson_id ?? null
       );
 
     return NextResponse.json(
@@ -94,7 +106,7 @@ export async function POST(request: Request) {
           id: jobResult.lastInsertRowid,
           trigger_event: "subject.created",
           adapter: adapterName,
-          status: dispatchResult.ok ? "dispatched" : "failed",
+          status: jobStatus,
           ref: dispatchResult.ref ?? null,
           lesson_id: dispatchResult.lesson_id ?? null,
           error: dispatchResult.error ?? null,
