@@ -93,8 +93,7 @@ export const webhookRegenerationAdapter: RegenerationHookAdapter = {
  * initial assessment. Uses AVOCADOCORE_WEBHOOK_URL by default.
  */
 export const webhookSubjectCreatedDispatcher: SubjectCreatedDispatcher = async (
-  event,
-  _providerConfig
+  event
 ) => {
   const url = process.env.AVOCADOCORE_WEBHOOK_URL;
   if (!url) {

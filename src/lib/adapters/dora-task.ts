@@ -400,8 +400,7 @@ export const doraTaskRegenerationAdapter: RegenerationHookAdapter = {
  * Returns ok=true with a task ref but no lesson_id (lesson is created async by the worker).
  */
 export const doraTaskSubjectCreatedDispatcher: SubjectCreatedDispatcher = async (
-  event,
-  _providerConfig
+  event
 ) => {
   return dispatchSubjectCreatedLessonTask(event);
 };

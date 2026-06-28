@@ -59,8 +59,7 @@ function relevantJobs(jobs: NextLessonJob[]): NextLessonJob[] {
     if (j.status === "completed" && j.completed_at) {
       return now - new Date(j.completed_at).getTime() < 86_400_000;
     }
-    // dispatched jobs without completed_at are in-progress (dora-task async)
-    return j.status === "dispatched";
+    return false;
   });
 }
 
