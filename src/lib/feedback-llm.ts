@@ -511,6 +511,12 @@ async function callOpenAICompatibleChat(
   const headers: Record<string, string> = { "Content-Type": "application/json" };
   if (config.apiKey) headers["Authorization"] = `Bearer ${config.apiKey}`;
 
+  // For local llama.cpp with --reasoning on, cap per-request thinking budget.
+  // budget_tokens: 4096 at 14ms/tok ≈ 57s; 256 caps thinking at ~3.5s while
+  // still giving the model enough context to produce correct, coherent answers.
+  const extraBody = config.provider === "local" ? { budget_tokens: 256 } : {};
+  const timeoutMs = config.provider === "local" ? 120000 : 60000;
+
   const res = await fetch(`${config.baseUrl}/chat/completions`, {
     method: "POST",
     headers,
@@ -522,8 +528,9 @@ async function callOpenAICompatibleChat(
       ],
       max_tokens: maxTokens,
       temperature,
+      ...extraBody,
     }),
-    signal: AbortSignal.timeout(60000),
+    signal: AbortSignal.timeout(timeoutMs),
   });
 
   if (!res.ok) {

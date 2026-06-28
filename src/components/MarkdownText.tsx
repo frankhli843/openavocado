@@ -12,13 +12,21 @@ interface InlineToken {
 type Block =
   | { kind: "paragraph"; text: string }
   | { kind: "ul"; items: string[] }
-  | { kind: "ol"; items: string[] };
+  | { kind: "ol"; items: string[] }
+  | { kind: "codeblock"; lang: string; code: string };
 
 export function MarkdownText({ text, className = "" }: { text: string; className?: string }) {
   const blocks = parseBlocks(text);
   return (
     <div className={`space-y-2 ${className}`}>
       {blocks.map((block, index) => {
+        if (block.kind === "codeblock") {
+          return (
+            <pre key={index} className="overflow-x-auto rounded bg-black/10 p-3 font-mono text-[0.88em]">
+              <code>{block.code}</code>
+            </pre>
+          );
+        }
         if (block.kind === "ul") {
           return (
             <ul key={index} className="m-0 list-disc space-y-1 pl-4">
@@ -64,11 +72,32 @@ function parseBlocks(text: string): Block[] {
     list = null;
   }
 
-  for (const rawLine of text.replace(/\r\n/g, "\n").split("\n")) {
+  const lines = text.replace(/\r\n/g, "\n").split("\n");
+  let i = 0;
+  while (i < lines.length) {
+    const rawLine = lines[i];
     const line = rawLine.trimEnd();
+
+    const fenceStart = line.match(/^```(\w*)$/);
+    if (fenceStart) {
+      flushParagraph();
+      flushList();
+      const lang = fenceStart[1] ?? "";
+      const codeLines: string[] = [];
+      i++;
+      while (i < lines.length && lines[i].trimEnd() !== "```") {
+        codeLines.push(lines[i]);
+        i++;
+      }
+      blocks.push({ kind: "codeblock", lang, code: codeLines.join("\n") });
+      i++;
+      continue;
+    }
+
     if (!line.trim()) {
       flushParagraph();
       flushList();
+      i++;
       continue;
     }
 
@@ -80,6 +109,7 @@ function parseBlocks(text: string): Block[] {
         list = { kind: "ul", items: [] };
       }
       list.items.push(unordered[1]);
+      i++;
       continue;
     }
 
@@ -91,11 +121,13 @@ function parseBlocks(text: string): Block[] {
         list = { kind: "ol", items: [] };
       }
       list.items.push(ordered[1]);
+      i++;
       continue;
     }
 
     flushList();
     paragraph.push(line);
+    i++;
   }
 
   flushParagraph();
