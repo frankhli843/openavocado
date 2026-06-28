@@ -230,6 +230,62 @@ function applyAdditiveMigrations(db: Database.Database): void {
   db.exec("CREATE INDEX IF NOT EXISTS idx_visual_artifacts_slug ON visual_artifacts(slug)");
   db.exec("CREATE INDEX IF NOT EXISTS idx_visual_artifacts_build_status ON visual_artifacts(build_status)");
   db.exec("CREATE INDEX IF NOT EXISTS idx_visual_artifacts_lesson_id ON visual_artifacts(lesson_id)");
+
+  // Harness job lifecycle columns on next_lesson_jobs.
+  // These are additive and nullable so existing rows are unaffected.
+  // harness_status: fine-grained state for the native harness agent flow.
+  if (!hasColumn("next_lesson_jobs", "harness_status")) {
+    db.exec("ALTER TABLE next_lesson_jobs ADD COLUMN harness_status TEXT");
+  }
+  // harness_stage: current stage name within the harness flow (e.g. 'planning', 'generating').
+  if (!hasColumn("next_lesson_jobs", "harness_stage")) {
+    db.exec("ALTER TABLE next_lesson_jobs ADD COLUMN harness_stage TEXT");
+  }
+  // progress_events: JSON array of timestamped progress events for learner-visible status.
+  if (!hasColumn("next_lesson_jobs", "progress_events")) {
+    db.exec("ALTER TABLE next_lesson_jobs ADD COLUMN progress_events TEXT");
+  }
+  // retry_count: number of times the harness has retried this job.
+  if (!hasColumn("next_lesson_jobs", "retry_count")) {
+    db.exec("ALTER TABLE next_lesson_jobs ADD COLUMN retry_count INTEGER NOT NULL DEFAULT 0");
+  }
+  // last_error_detail: last error detail string for display in the UI.
+  if (!hasColumn("next_lesson_jobs", "last_error_detail")) {
+    db.exec("ALTER TABLE next_lesson_jobs ADD COLUMN last_error_detail TEXT");
+  }
+  // provider_name: which provider config was used for this job.
+  if (!hasColumn("next_lesson_jobs", "provider_name")) {
+    db.exec("ALTER TABLE next_lesson_jobs ADD COLUMN provider_name TEXT");
+  }
+  // output_lesson_id: the lesson id produced by this job (for local-queue jobs).
+  if (!hasColumn("next_lesson_jobs", "output_lesson_id")) {
+    db.exec("ALTER TABLE next_lesson_jobs ADD COLUMN output_lesson_id INTEGER REFERENCES lessons(id) ON DELETE SET NULL");
+  }
+
+  // Per-user provider configuration for the native harness.
+  // Credentials (encrypted_api_key) are stored server-side only and never
+  // returned to the browser. The plaintext key is decrypted at job-dispatch
+  // time using AVOCADOCORE_PROVIDER_KEY_SECRET.
+  db.exec(`
+    CREATE TABLE IF NOT EXISTS user_provider_configs (
+      id                INTEGER PRIMARY KEY AUTOINCREMENT,
+      user_id           INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+      provider_name     TEXT    NOT NULL,
+      base_url          TEXT,
+      model             TEXT,
+      encrypted_api_key TEXT,
+      health_status     TEXT    NOT NULL DEFAULT 'unchecked'
+                                CHECK (health_status IN ('unchecked', 'healthy', 'error')),
+      health_error      TEXT,
+      health_checked_at TEXT,
+      created_at        TEXT    NOT NULL DEFAULT (datetime('now')),
+      updated_at        TEXT    NOT NULL DEFAULT (datetime('now')),
+      UNIQUE (user_id, provider_name)
+    )
+  `);
+  db.exec(
+    "CREATE INDEX IF NOT EXISTS idx_user_provider_configs_user_id ON user_provider_configs(user_id)"
+  );
 }
 
 /**

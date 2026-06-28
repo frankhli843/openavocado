@@ -3,6 +3,7 @@ import type {
   LessonCompletedEvent,
   RegenerationHookAdapter,
   LessonDiscardedEvent,
+  SubjectCreatedDispatcher,
 } from "@/types";
 
 /**
@@ -83,4 +84,38 @@ export const webhookRegenerationAdapter: RegenerationHookAdapter = {
       return { ok: false, error: msg };
     }
   },
+};
+
+/**
+ * Webhook subject.created dispatcher — POSTs the subject.created event to a
+ * configured webhook endpoint and waits for a response.
+ * The remote endpoint is responsible for generating the first lesson or
+ * initial assessment. Uses AVOCADOCORE_WEBHOOK_URL by default.
+ */
+export const webhookSubjectCreatedDispatcher: SubjectCreatedDispatcher = async (
+  event,
+  _providerConfig
+) => {
+  const url = process.env.AVOCADOCORE_WEBHOOK_URL;
+  if (!url) {
+    return {
+      ok: false,
+      error:
+        "webhook subject.created dispatcher: no URL configured (AVOCADOCORE_WEBHOOK_URL)",
+    };
+  }
+  try {
+    const res = await fetch(url, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(event),
+    });
+    if (!res.ok) {
+      return { ok: false, error: `webhook responded with ${res.status}` };
+    }
+    return { ok: true, ref: `webhook-subject-${event.subject_id}-${Date.now()}` };
+  } catch (err) {
+    const msg = err instanceof Error ? err.message : String(err);
+    return { ok: false, error: msg };
+  }
 };

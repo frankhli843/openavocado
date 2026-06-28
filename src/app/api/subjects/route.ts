@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { getDb } from "@/db/connection";
 import { seedDatabase } from "@/db/seed";
-import { dispatchSubjectCreatedLessonTask } from "@/lib/adapters/dora-task";
+import { getSubjectCreatedDispatcher } from "@/lib/adapters";
 import { computeSubjectMastery } from "@/lib/mastery";
 import type { LearnerProfile, Subject, SubjectCreatedEvent, SubjectSummary } from "@/types";
 
@@ -69,15 +69,18 @@ export async function POST(request: Request) {
       created_at: new Date().toISOString(),
     };
 
-    const dispatchResult = await dispatchSubjectCreatedLessonTask(event);
+    const adapterName = process.env.AVOCADOCORE_COMPLETION_ADAPTER || "dora-task";
+    const dispatcher = getSubjectCreatedDispatcher();
+    const dispatchResult = await dispatcher(event);
     const jobResult = db
       .prepare(
         `INSERT INTO next_lesson_jobs
            (subject_id, trigger_event, adapter, status, payload, adapter_ref, error, dispatched_at)
-         VALUES (?, 'subject.created', 'dora-task', ?, ?, ?, ?, datetime('now'))`
+         VALUES (?, 'subject.created', ?, ?, ?, ?, ?, datetime('now'))`
       )
       .run(
         subject.id,
+        adapterName,
         dispatchResult.ok ? "dispatched" : "failed",
         JSON.stringify(event),
         dispatchResult.ref ?? null,
@@ -90,9 +93,10 @@ export async function POST(request: Request) {
         next_lesson_job: {
           id: jobResult.lastInsertRowid,
           trigger_event: "subject.created",
-          adapter: "dora-task",
+          adapter: adapterName,
           status: dispatchResult.ok ? "dispatched" : "failed",
           ref: dispatchResult.ref ?? null,
+          lesson_id: dispatchResult.lesson_id ?? null,
           error: dispatchResult.error ?? null,
         },
       },

@@ -49,6 +49,20 @@ export async function GET(
 
     const mastery = computeSubjectMastery(db, subjectId, subject.learner_id);
 
+    // Most recent generation jobs — learner-visible status panel.
+    const generation_jobs = db
+      .prepare(
+        `SELECT id, trigger_event, adapter, status, adapter_ref, error,
+                harness_status, harness_stage, progress_events, retry_count,
+                last_error_detail, provider_name, output_lesson_id,
+                dispatched_at, completed_at, created_at
+         FROM next_lesson_jobs
+         WHERE subject_id = ?
+         ORDER BY created_at DESC
+         LIMIT 5`
+      )
+      .all(subjectId);
+
     // Tag + difficulty evidence — how the learner has done per tag and per
     // difficulty across all assessed answers. Drives the adaptive-evidence view.
     const tag_evidence = db
@@ -76,6 +90,7 @@ export async function GET(
       mastery,
       tags,
       tag_evidence,
+      generation_jobs,
     });
   } catch (err) {
     console.error("[api/subjects/:id]", err);
