@@ -1,7 +1,7 @@
 "use client";
 
 import { FormEvent, KeyboardEvent, useEffect, useRef, useState } from "react";
-import { MessageCircle, Send, X } from "lucide-react";
+import { Maximize2, MessageCircle, Minimize2, Send, X } from "lucide-react";
 import { MarkdownText } from "@/components/MarkdownText";
 import type { LessonChatMessage } from "@/types";
 
@@ -9,9 +9,21 @@ interface LessonChatModalProps {
   lessonId: number;
   learnerId: number;
   lessonTitle: string;
+  activeSectionId?: string | null;
+  activeSectionLabel?: string | null;
+  maximized?: boolean;
+  onMaximizedChange?: (maximized: boolean) => void;
 }
 
-export function LessonChatModal({ lessonId, learnerId, lessonTitle }: LessonChatModalProps) {
+export function LessonChatModal({
+  lessonId,
+  learnerId,
+  lessonTitle,
+  activeSectionId = null,
+  activeSectionLabel = null,
+  maximized = false,
+  onMaximizedChange,
+}: LessonChatModalProps) {
   const [open, setOpen] = useState(false);
   const [loaded, setLoaded] = useState(false);
   const [enabled, setEnabled] = useState(true);
@@ -56,7 +68,12 @@ export function LessonChatModal({ lessonId, learnerId, lessonTitle }: LessonChat
 
   useEffect(() => {
     if (!open) return;
-    scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight });
+    const scrollEl = scrollRef.current;
+    if (scrollEl && typeof scrollEl.scrollTo === "function") {
+      scrollEl.scrollTo({ top: scrollEl.scrollHeight });
+    } else if (scrollEl) {
+      scrollEl.scrollTop = scrollEl.scrollHeight;
+    }
     inputRef.current?.focus();
   }, [open, messages.length]);
 
@@ -71,7 +88,11 @@ export function LessonChatModal({ lessonId, learnerId, lessonTitle }: LessonChat
       const res = await fetch(`/api/lessons/${lessonId}/chat`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ learner_id: learnerId, message }),
+        body: JSON.stringify({
+          learner_id: learnerId,
+          message,
+          current_section_id: activeSectionId,
+        }),
       });
       const json = (await res.json()) as {
         enabled?: boolean;
@@ -96,44 +117,85 @@ export function LessonChatModal({ lessonId, learnerId, lessonTitle }: LessonChat
     }
   }
 
+  function openChat(nextMaximized = false) {
+    onMaximizedChange?.(nextMaximized);
+    setOpen(true);
+  }
+
+  function closeChat() {
+    setOpen(false);
+    onMaximizedChange?.(false);
+  }
+
+  function toggleMaximized() {
+    const next = !maximized;
+    onMaximizedChange?.(next);
+    setOpen(true);
+  }
+
+  const shellClass = maximized
+    ? "fixed inset-0 z-[80] bg-white xl:pointer-events-none xl:bg-transparent"
+    : "fixed inset-0 z-[80] bg-black/25 sm:bg-transparent";
+
+  const panelClass = maximized
+    ? "pointer-events-auto fixed inset-0 flex flex-col overflow-hidden border-gray-200 bg-white shadow-2xl xl:left-auto xl:right-0 xl:top-0 xl:h-screen xl:w-[28rem] xl:border-l"
+    : "fixed inset-x-2 bottom-2 top-14 flex flex-col overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-2xl sm:inset-auto sm:bottom-6 sm:right-6 sm:h-[36rem] sm:w-[25rem] sm:rounded-xl";
+
   return (
     <>
-      <button
-        type="button"
-        onClick={() => setOpen(true)}
-        className="fixed bottom-4 right-4 z-[70] inline-flex h-12 w-12 items-center justify-center rounded-full bg-blue-600 text-white shadow-lg shadow-blue-600/20 transition-colors hover:bg-blue-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-300 sm:bottom-6 sm:right-6"
-        aria-label="Ask a lesson question"
-      >
-        <MessageCircle size={21} aria-hidden="true" />
-      </button>
+      {!open && (
+        <button
+          type="button"
+          onClick={() => openChat(false)}
+          className="fixed bottom-4 right-4 z-[70] inline-flex h-12 w-12 items-center justify-center rounded-full bg-blue-600 text-white shadow-lg shadow-blue-600/20 transition-colors hover:bg-blue-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-300 sm:bottom-6 sm:right-6"
+          aria-label="Ask a lesson question"
+        >
+          <MessageCircle size={21} aria-hidden="true" />
+        </button>
+      )}
 
       {open && (
         <div
-          className="fixed inset-0 z-[80] bg-black/25 sm:bg-transparent"
+          className={shellClass}
           onClick={(e) => {
-            if (e.target === e.currentTarget) setOpen(false);
+            if (!maximized && e.target === e.currentTarget) closeChat();
           }}
         >
           <section
             role="dialog"
-            aria-modal="true"
+            aria-modal={!maximized}
             aria-label="Lesson questions"
-            className="fixed inset-x-2 bottom-2 top-14 flex flex-col overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-2xl sm:inset-auto sm:bottom-6 sm:right-6 sm:h-[36rem] sm:w-[25rem] sm:rounded-xl"
+            className={panelClass}
             onClick={(e) => e.stopPropagation()}
           >
             <header className="flex shrink-0 items-start justify-between gap-3 border-b border-gray-100 px-4 py-3">
               <div className="min-w-0">
                 <h2 className="text-sm font-semibold text-gray-900">Ask about this lesson</h2>
                 <p className="truncate text-xs text-gray-400">{lessonTitle}</p>
+                {activeSectionLabel && (
+                  <p className="truncate text-xs font-medium text-blue-600">
+                    Context: {activeSectionLabel}
+                  </p>
+                )}
               </div>
-              <button
-                type="button"
-                onClick={() => setOpen(false)}
-                className="rounded-lg p-1.5 text-gray-400 hover:bg-gray-100 hover:text-gray-700"
-                aria-label="Close lesson questions"
-              >
-                <X size={18} aria-hidden="true" />
-              </button>
+              <div className="flex shrink-0 items-center gap-1">
+                <button
+                  type="button"
+                  onClick={toggleMaximized}
+                  className="rounded-lg p-1.5 text-gray-400 hover:bg-gray-100 hover:text-gray-700"
+                  aria-label={maximized ? "Return lesson chat to floating window" : "Maximize lesson chat"}
+                >
+                  {maximized ? <Minimize2 size={18} aria-hidden="true" /> : <Maximize2 size={18} aria-hidden="true" />}
+                </button>
+                <button
+                  type="button"
+                  onClick={closeChat}
+                  className="rounded-lg p-1.5 text-gray-400 hover:bg-gray-100 hover:text-gray-700"
+                  aria-label="Close lesson questions"
+                >
+                  <X size={18} aria-hidden="true" />
+                </button>
+              </div>
             </header>
 
             <div ref={scrollRef} className="flex-1 space-y-3 overflow-y-auto px-3 py-4">

@@ -58,9 +58,14 @@ export async function POST(
   try {
     const { id } = await params;
     const lessonId = Number(id);
-    const body = (await request.json()) as { learner_id?: number; message?: string };
+    const body = (await request.json()) as {
+      learner_id?: number;
+      message?: string;
+      current_section_id?: string | null;
+    };
     const learnerId = body.learner_id ?? 1;
     const message = body.message?.trim() ?? "";
+    const currentSectionId = sanitizeSectionId(body.current_section_id);
 
     if (!lessonId || !message) {
       return NextResponse.json({ error: "lesson id and message are required" }, { status: 400 });
@@ -114,7 +119,7 @@ export async function POST(
     const reply = await getLessonChatReply(config, {
       lessonTitle: lesson.title,
       lessonDescription: lesson.description ?? null,
-      lessonContext: buildLessonContext(lesson, activities),
+      lessonContext: buildLessonContext(lesson, activities, currentSectionId),
       compactSummary,
       messages: recentMessages,
     });
@@ -202,8 +207,20 @@ function toLlmMessage(message: LessonChatMessage): LlmChatMessage {
   return { role: message.role, content: message.content };
 }
 
-function buildLessonContext(lesson: Lesson, activities: LessonActivity[]): string {
+function buildLessonContext(lesson: Lesson, activities: LessonActivity[], currentSectionId?: string | null): string {
   const parts: string[] = [];
+  const focusedActivity = activityForSectionId(activities, currentSectionId);
+  if (focusedActivity) {
+    const focusedText = summarizeActivity(focusedActivity);
+    if (focusedText) {
+      parts.push(`Current visible section: ${focusedActivity.title ?? focusedActivity.activity_type}\n${focusedText}`);
+    }
+  } else if (currentSectionId === "section-diagnostics") {
+    parts.push(
+      "Current visible section: Help shape your next lesson\nThe learner is answering end-of-lesson planning questions. Help them connect confusion, interests, and next steps back to this lesson."
+    );
+  }
+
   if (lesson.goals) {
     try {
       const goals = JSON.parse(lesson.goals) as string[];
@@ -226,11 +243,26 @@ function buildLessonContext(lesson: Lesson, activities: LessonActivity[]): strin
   }
 
   for (const activity of activities) {
+    if (focusedActivity && activity.id === focusedActivity.id) continue;
     const text = summarizeActivity(activity);
     if (text) parts.push(text);
   }
 
   return parts.join("\n\n").slice(0, 12000);
+}
+
+function sanitizeSectionId(value: string | null | undefined): string | null {
+  if (!value) return null;
+  const trimmed = value.trim();
+  if (trimmed === "section-diagnostics") return trimmed;
+  return /^section-\d+$/.test(trimmed) ? trimmed : null;
+}
+
+function activityForSectionId(activities: LessonActivity[], sectionId: string | null | undefined): LessonActivity | null {
+  const match = /^section-(\d+)$/.exec(sectionId ?? "");
+  if (!match) return null;
+  const activityId = Number(match[1]);
+  return activities.find((activity) => activity.id === activityId) ?? null;
 }
 
 function summarizeActivity(activity: LessonActivity): string {

@@ -6,9 +6,10 @@ import { buildLessonDeepLink, writeLessonResumeState } from "@/lib/lesson-resume
 interface LessonResumeTrackerProps {
   lessonId: number;
   sectionIds: string[];
+  onActiveSectionChange?: (sectionId: string | null) => void;
 }
 
-export function LessonResumeTracker({ lessonId, sectionIds }: LessonResumeTrackerProps) {
+export function LessonResumeTracker({ lessonId, sectionIds, onActiveSectionChange }: LessonResumeTrackerProps) {
   const sectionKey = useMemo(() => sectionIds.join("|"), [sectionIds]);
 
   useEffect(() => {
@@ -27,6 +28,7 @@ export function LessonResumeTracker({ lessonId, sectionIds }: LessonResumeTracke
         lessonId,
         sectionId,
       });
+      onActiveSectionChange?.(sectionId);
     }
 
     function scrollToSection(sectionId: string | null) {
@@ -70,7 +72,7 @@ export function LessonResumeTracker({ lessonId, sectionIds }: LessonResumeTracke
       window.removeEventListener("hashchange", handleHashChange);
       observer.disconnect();
     };
-  }, [lessonId, sectionKey]);
+  }, [lessonId, onActiveSectionChange, sectionKey]);
 
   return null;
 }

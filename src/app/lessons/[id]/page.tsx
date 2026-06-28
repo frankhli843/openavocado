@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, use, type ReactNode } from "react";
+import { useCallback, useEffect, useState, use, type ReactNode } from "react";
 import Link from "next/link";
 import type { Lesson, LessonActivity, LessonAutosave, GeneratedArtifact, Tag, KnowledgeGraphData } from "@/types";
 import { AudioSection } from "@/components/lesson/AudioSection";
@@ -64,9 +64,15 @@ export default function LessonPage({ params }: { params: Promise<{ id: string }>
   const [codeDraft, setCodeDraft] = useState<string>("");
   const [runOutput, setRunOutput] = useState<string>("");
   const [testResults, setTestResults] = useState<Record<string, string>>({});
+  const [chatMaximized, setChatMaximized] = useState(false);
+  const [activeSectionId, setActiveSectionId] = useState<string | null>(null);
   // Widget state is keyed per interactive activity id so a lesson with several
   // visualizations restores each one independently.
   const [widgetStates, setWidgetStates] = useState<Record<number, Record<string, number>>>({});
+
+  const handleActiveSectionChange = useCallback((sectionId: string | null) => {
+    setActiveSectionId(sectionId);
+  }, []);
 
   useEffect(() => {
     async function load() {
@@ -422,6 +428,8 @@ export default function LessonPage({ params }: { params: Promise<{ id: string }>
         }]
       : []),
   ];
+  const activeSection = tocItems.find((item) => item.id === activeSectionId) ?? tocItems[0] ?? null;
+  const activeSectionLabel = activeSection ? `${activeSection.kind}: ${activeSection.title}` : null;
 
   function renderActivity(activity: LessonActivity): ReactNode {
     if (activity.activity_type === "audio") {
@@ -501,9 +509,10 @@ export default function LessonPage({ params }: { params: Promise<{ id: string }>
 
   return (
     <div className="min-h-screen bg-gray-50">
-      {/* Sticky top bar */}
-      <div className="sticky top-0 z-10 bg-white border-b border-gray-200">
-        <div className="max-w-4xl mx-auto px-6 h-11 flex items-center justify-between gap-4">
+      <div className={chatMaximized ? "transition-[padding] duration-200 xl:pr-[28rem]" : "transition-[padding] duration-200"}>
+        {/* Sticky top bar */}
+        <div className="sticky top-0 z-10 bg-white border-b border-gray-200">
+          <div className="max-w-4xl mx-auto px-6 h-11 flex items-center justify-between gap-4">
           <div className="flex items-center gap-2 text-sm text-gray-500 min-w-0">
             <Link href="/?resume=0" className="hover:text-gray-800 transition-colors shrink-0">
               &#8592; Dashboard
@@ -561,10 +570,10 @@ export default function LessonPage({ params }: { params: Promise<{ id: string }>
             )}
           </div>
         </div>
-      </div>
+        </div>
 
-      {/* Lesson content */}
-      <div className="max-w-4xl mx-auto px-6 py-8 space-y-6">
+        {/* Lesson content */}
+        <div className="max-w-4xl mx-auto px-6 py-8 space-y-6">
         {/* Header */}
         <div className="bg-white rounded-xl border border-gray-200 p-6">
           <div className="flex items-start justify-between gap-4 mb-3">
@@ -717,29 +726,38 @@ export default function LessonPage({ params }: { params: Promise<{ id: string }>
             </button>
           </div>
         )}
-      </div>
+        </div>
 
-      {/* Discard lesson modal */}
-      {showDiscardModal && (
-        <DiscardLessonModal
-          lessonId={lesson.id}
-          lessonTitle={lesson.title}
-          learnerId={LEARNER_ID}
-          onDiscarded={(result) => {
-            setShowDiscardModal(false);
-            setDiscarded(true);
-            setDiscardRegenRef(result.regeneration_job.ref ?? null);
-          }}
-          onCancel={() => setShowDiscardModal(false)}
-        />
-      )}
+        {/* Discard lesson modal */}
+        {showDiscardModal && (
+          <DiscardLessonModal
+            lessonId={lesson.id}
+            lessonTitle={lesson.title}
+            learnerId={LEARNER_ID}
+            onDiscarded={(result) => {
+              setShowDiscardModal(false);
+              setDiscarded(true);
+              setDiscardRegenRef(result.regeneration_job.ref ?? null);
+            }}
+            onCancel={() => setShowDiscardModal(false)}
+          />
+        )}
+      </div>
 
       <LessonChatModal
         lessonId={lesson.id}
         learnerId={LEARNER_ID}
         lessonTitle={lesson.title}
+        activeSectionId={activeSection?.id ?? null}
+        activeSectionLabel={activeSectionLabel}
+        maximized={chatMaximized}
+        onMaximizedChange={setChatMaximized}
       />
-      <LessonResumeTracker lessonId={lesson.id} sectionIds={tocItems.map((item) => item.id)} />
+      <LessonResumeTracker
+        lessonId={lesson.id}
+        sectionIds={tocItems.map((item) => item.id)}
+        onActiveSectionChange={handleActiveSectionChange}
+      />
     </div>
   );
 }
