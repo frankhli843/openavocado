@@ -8,6 +8,7 @@ import type {
   LessonCompletedEvent,
   LessonDiscardedEvent,
   RegenerationHookAdapter,
+  SubjectCreatedDispatcher,
   SubjectCreatedEvent,
 } from "@/types";
 import { LESSON_QUALITY_BAR_PROMPT } from "@/lib/lesson-generator/contract";
@@ -391,6 +392,18 @@ export const doraTaskRegenerationAdapter: RegenerationHookAdapter = {
       config
     );
   },
+};
+
+/**
+ * Dora-task subject.created dispatcher — creates a Doramon todo-loop task so
+ * an ACP worker generates the first lesson for the new subject.
+ * Returns ok=true with a task ref but no lesson_id (lesson is created async by the worker).
+ */
+export const doraTaskSubjectCreatedDispatcher: SubjectCreatedDispatcher = async (
+  event,
+  _providerConfig
+) => {
+  return dispatchSubjectCreatedLessonTask(event);
 };
 
 export async function dispatchSubjectCreatedLessonTask(

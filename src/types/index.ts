@@ -69,6 +69,37 @@ export type ProgressMetric =
 
 export type CompletionAdapter = "dora-task" | "webhook" | "local-queue" | "noop";
 
+/**
+ * Richer job status for the AvocadoCore-native harness workflow.
+ * Stored in next_lesson_jobs.harness_status alongside the legacy status column.
+ */
+export type HarnessJobStatus =
+  | "queued"
+  | "planning"
+  | "running"
+  | "waiting"
+  | "failed"
+  | "qa_needed"
+  | "done"
+  | "cancelled";
+
+/**
+ * Per-user provider configuration stored in user_provider_configs.
+ * Credentials are encrypted at rest; never returned to the browser.
+ */
+export interface UserProviderConfig {
+  id: number;
+  user_id: number;
+  provider_name: string; // e.g. "openai-compatible", "local-deterministic", "gemini"
+  base_url: string | null; // for openai-compatible: endpoint root
+  model: string | null;
+  health_status: "unchecked" | "healthy" | "error";
+  health_error: string | null;
+  has_credentials: boolean; // true if encrypted_credentials is non-null
+  created_at: string;
+  updated_at: string;
+}
+
 // ─── DB Row types ─────────────────────────────────────────────────────────────
 
 export interface User {
@@ -389,6 +420,14 @@ export interface NextLessonJob {
   completed_at: string | null;
   created_at: string;
   updated_at: string;
+  // Native harness extension columns (nullable for backwards compat)
+  harness_status: HarnessJobStatus | null;
+  harness_stage: string | null; // freeform stage label e.g. "creating_lesson"
+  progress_events: string | null; // JSON array of {ts, msg}
+  retry_count: number | null;
+  last_error_detail: string | null;
+  provider_name: string | null;
+  output_lesson_id: number | null;
 }
 
 // ─── View / Aggregate types ───────────────────────────────────────────────────
@@ -639,3 +678,13 @@ export interface RegenerationHookAdapter {
     error?: string;
   }>;
 }
+
+/**
+ * Function type for subject.created first-lesson/assessment dispatch.
+ * Receives the event and optional user provider config.
+ * Returns a result with the job reference or error.
+ */
+export type SubjectCreatedDispatcher = (
+  event: SubjectCreatedEvent,
+  providerConfig?: UserProviderConfig | null
+) => Promise<{ ok: boolean; ref?: string; lesson_id?: number; error?: string }>;

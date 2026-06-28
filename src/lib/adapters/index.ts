@@ -2,11 +2,12 @@ import type {
   CompletionAdapter,
   CompletionHookAdapter,
   RegenerationHookAdapter,
+  SubjectCreatedDispatcher,
 } from "@/types";
-import { noopAdapter, noopRegenerationAdapter } from "./noop";
-import { localQueueAdapter, localQueueRegenerationAdapter } from "./local-queue";
-import { webhookAdapter, webhookRegenerationAdapter } from "./webhook";
-import { doraTaskAdapter, doraTaskRegenerationAdapter } from "./dora-task";
+import { noopAdapter, noopRegenerationAdapter, noopSubjectCreatedDispatcher } from "./noop";
+import { localQueueAdapter, localQueueRegenerationAdapter, localQueueSubjectCreatedDispatcher } from "./local-queue";
+import { webhookAdapter, webhookRegenerationAdapter, webhookSubjectCreatedDispatcher } from "./webhook";
+import { doraTaskAdapter, doraTaskRegenerationAdapter, doraTaskSubjectCreatedDispatcher } from "./dora-task";
 
 const ADAPTERS: Record<CompletionAdapter, CompletionHookAdapter> = {
   noop: noopAdapter,
@@ -20,6 +21,13 @@ const REGENERATION_ADAPTERS: Record<CompletionAdapter, RegenerationHookAdapter> 
   "local-queue": localQueueRegenerationAdapter,
   webhook: webhookRegenerationAdapter,
   "dora-task": doraTaskRegenerationAdapter,
+};
+
+const SUBJECT_CREATED_DISPATCHERS: Record<CompletionAdapter, SubjectCreatedDispatcher> = {
+  noop: noopSubjectCreatedDispatcher,
+  "local-queue": localQueueSubjectCreatedDispatcher,
+  webhook: webhookSubjectCreatedDispatcher,
+  "dora-task": doraTaskSubjectCreatedDispatcher,
 };
 
 /**
@@ -41,10 +49,21 @@ export function getRegenerationAdapter(): RegenerationHookAdapter {
   return REGENERATION_ADAPTERS[name] ?? REGENERATION_ADAPTERS.noop;
 }
 
+/**
+ * Returns the configured subject.created dispatcher.
+ * The dispatcher is responsible for generating the first lesson (or initial
+ * assessment) when a new subject is created. Defaults to dora-task for
+ * frankavo; prodavo uses local-queue for synchronous initial assessment generation.
+ */
+export function getSubjectCreatedDispatcher(): SubjectCreatedDispatcher {
+  const name = (process.env.AVOCADOCORE_COMPLETION_ADAPTER || "dora-task") as CompletionAdapter;
+  return SUBJECT_CREATED_DISPATCHERS[name] ?? SUBJECT_CREATED_DISPATCHERS.noop;
+}
+
 export {
-  noopAdapter, noopRegenerationAdapter,
-  localQueueAdapter, localQueueRegenerationAdapter,
-  webhookAdapter, webhookRegenerationAdapter,
-  doraTaskAdapter, doraTaskRegenerationAdapter,
+  noopAdapter, noopRegenerationAdapter, noopSubjectCreatedDispatcher,
+  localQueueAdapter, localQueueRegenerationAdapter, localQueueSubjectCreatedDispatcher,
+  webhookAdapter, webhookRegenerationAdapter, webhookSubjectCreatedDispatcher,
+  doraTaskAdapter, doraTaskRegenerationAdapter, doraTaskSubjectCreatedDispatcher,
 };
-export { ADAPTERS, REGENERATION_ADAPTERS };
+export { ADAPTERS, REGENERATION_ADAPTERS, SUBJECT_CREATED_DISPATCHERS };

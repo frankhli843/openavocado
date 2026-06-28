@@ -4,7 +4,7 @@ import { Suspense, useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { use } from "react";
-import type { Subject, Lesson, MasterySignal, ProgressPoint, SubjectMastery } from "@/types";
+import type { Subject, Lesson, MasterySignal, ProgressPoint, SubjectMastery, NextLessonJob } from "@/types";
 import { LessonList } from "@/components/LessonList";
 import { MasteryPanel } from "@/components/MasteryPanel";
 import { MasterySummary } from "@/components/MasterySummary";
@@ -14,6 +14,7 @@ import { CriteriaEditor } from "@/components/CriteriaEditor";
 import { SubjectForm } from "@/components/SubjectForm";
 import { SubjectAgentNotes } from "@/components/SubjectAgentNotes";
 import { SubjectJournal } from "@/components/SubjectJournal";
+import { SubjectJobProgress } from "@/components/SubjectJobProgress";
 
 interface SubjectData {
   subject: Subject;
@@ -23,6 +24,7 @@ interface SubjectData {
   mastery?: SubjectMastery;
   tags: Array<{ id: number; name: string; tag_type: string }>;
   tag_evidence?: TagEvidenceRow[];
+  generation_jobs?: NextLessonJob[];
 }
 
 interface TagEvidenceRow {
@@ -274,12 +276,15 @@ function SubjectContent({ params }: { params: Promise<{ id: string }> }) {
         {/* Tab content */}
         <div id={`tab-${activeTab}`} className="mt-2 scroll-mt-24">
           {activeTab === "lessons" && (
-            <LessonList
-              completed={completedLessons}
-              active={activeLessons}
-              queued={queuedLessons}
-              discarded={discardedLessons}
-            />
+            <>
+              <SubjectJobProgress jobs={data.generation_jobs ?? []} />
+              <LessonList
+                completed={completedLessons}
+                active={activeLessons}
+                queued={queuedLessons}
+                discarded={discardedLessons}
+              />
+            </>
           )}
           {activeTab === "mastery" && (
             <>

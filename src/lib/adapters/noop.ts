@@ -3,6 +3,7 @@ import type {
   LessonCompletedEvent,
   RegenerationHookAdapter,
   LessonDiscardedEvent,
+  SubjectCreatedDispatcher,
 } from "@/types";
 
 /**
@@ -32,4 +33,13 @@ export const noopRegenerationAdapter: RegenerationHookAdapter = {
     );
     return { ok: true, ref: `noop-regen-${event.discarded_lesson_id}-${Date.now()}` };
   },
+};
+
+/**
+ * Noop subject-created dispatcher — logs the event without creating any lesson.
+ * Use this when no automation is configured or for tests that isolate the subjects API.
+ */
+export const noopSubjectCreatedDispatcher: SubjectCreatedDispatcher = async (event) => {
+  console.log(`[subject.created:noop] Subject "${event.subject_title}" created — no generation.`);
+  return { ok: true, ref: `noop-subject-${event.subject_id}-${Date.now()}` };
 };

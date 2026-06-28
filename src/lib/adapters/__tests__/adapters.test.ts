@@ -1,16 +1,25 @@
-import { describe, it, expect, afterEach, vi } from "vitest";
+import { describe, it, expect, afterEach, beforeEach, vi } from "vitest";
+import Database from "better-sqlite3";
+import { readFileSync } from "fs";
+import path from "path";
 import {
   getCompletionAdapter,
   getRegenerationAdapter,
+  getSubjectCreatedDispatcher,
   noopAdapter,
   noopRegenerationAdapter,
+  noopSubjectCreatedDispatcher,
   localQueueAdapter,
   localQueueRegenerationAdapter,
+  localQueueSubjectCreatedDispatcher,
   webhookAdapter,
   webhookRegenerationAdapter,
+  webhookSubjectCreatedDispatcher,
   doraTaskAdapter,
   doraTaskRegenerationAdapter,
+  doraTaskSubjectCreatedDispatcher,
 } from "../index";
+import { generateInitialAssessment } from "../../lesson-generator/initial-assessment";
 
 afterEach(() => {
   vi.unstubAllEnvs();
@@ -128,7 +137,316 @@ describe("getRegenerationAdapter", () => {
   });
 });
 
-// The reusable generator paths must hand FUTURE lesson-generation agents the
+// ─── Helpers ────────────────────────────────────────────────────────────────
+
+function makeDb() {
+  const db = new Database(":memory:");
+  db.pragma("journal_mode = WAL");
+  db.pragma("foreign_keys = ON");
+  const schemaPath = path.join(process.cwd(), "src", "db", "schema.sql");
+  const schema = readFileSync(schemaPath, "utf-8");
+  db.exec(schema);
+  // Apply the additive migrations we need (harness cols + user_provider_configs)
+  const hasColumn = (table: string, col: string) =>
+    (db.prepare(`PRAGMA table_info(${table})`).all() as Array<{ name: string }>).some(
+      (c) => c.name === col
+    );
+  const additive = [
+    ["next_lesson_jobs", "trigger_event", "ALTER TABLE next_lesson_jobs ADD COLUMN trigger_event TEXT NOT NULL DEFAULT 'lesson.completed'"],
+    ["next_lesson_jobs", "discarded_lesson_id", "ALTER TABLE next_lesson_jobs ADD COLUMN discarded_lesson_id INTEGER"],
+    ["next_lesson_jobs", "harness_status", "ALTER TABLE next_lesson_jobs ADD COLUMN harness_status TEXT"],
+    ["next_lesson_jobs", "harness_stage", "ALTER TABLE next_lesson_jobs ADD COLUMN harness_stage TEXT"],
+    ["next_lesson_jobs", "progress_events", "ALTER TABLE next_lesson_jobs ADD COLUMN progress_events TEXT"],
+    ["next_lesson_jobs", "retry_count", "ALTER TABLE next_lesson_jobs ADD COLUMN retry_count INTEGER NOT NULL DEFAULT 0"],
+    ["next_lesson_jobs", "last_error_detail", "ALTER TABLE next_lesson_jobs ADD COLUMN last_error_detail TEXT"],
+    ["next_lesson_jobs", "provider_name", "ALTER TABLE next_lesson_jobs ADD COLUMN provider_name TEXT"],
+    ["next_lesson_jobs", "output_lesson_id", "ALTER TABLE next_lesson_jobs ADD COLUMN output_lesson_id INTEGER"],
+  ] as const;
+  for (const [table, col, sql] of additive) {
+    if (!hasColumn(table, col)) db.exec(sql);
+  }
+  return db;
+}
+
+function seedLearner(db: Database.Database) {
+  const userId = db
+    .prepare("INSERT INTO users (username, display_name) VALUES ('test', 'Test')")
+    .run().lastInsertRowid as number;
+  const learnerId = db
+    .prepare("INSERT INTO learner_profiles (user_id, display_name) VALUES (?, 'Learner')")
+    .run(userId).lastInsertRowid as number;
+  return { userId, learnerId };
+}
+
+function seedSubject(db: Database.Database, learnerId: number) {
+  return db
+    .prepare("INSERT INTO subjects (learner_id, title, current_level) VALUES (?, 'Test Subject', 'familiarity')")
+    .run(learnerId).lastInsertRowid as number;
+}
+
+// ─── getSubjectCreatedDispatcher tests ──────────────────────────────────────
+
+describe("getSubjectCreatedDispatcher", () => {
+  afterEach(() => vi.unstubAllEnvs());
+
+  it("returns dora-task dispatcher when env var is unset", () => {
+    vi.stubEnv("AVOCADOCORE_COMPLETION_ADAPTER", "");
+    expect(getSubjectCreatedDispatcher()).toBe(doraTaskSubjectCreatedDispatcher);
+  });
+
+  it("returns noop dispatcher for 'noop'", () => {
+    vi.stubEnv("AVOCADOCORE_COMPLETION_ADAPTER", "noop");
+    expect(getSubjectCreatedDispatcher()).toBe(noopSubjectCreatedDispatcher);
+  });
+
+  it("returns local-queue dispatcher for 'local-queue'", () => {
+    vi.stubEnv("AVOCADOCORE_COMPLETION_ADAPTER", "local-queue");
+    expect(getSubjectCreatedDispatcher()).toBe(localQueueSubjectCreatedDispatcher);
+  });
+
+  it("returns webhook dispatcher for 'webhook'", () => {
+    vi.stubEnv("AVOCADOCORE_COMPLETION_ADAPTER", "webhook");
+    expect(getSubjectCreatedDispatcher()).toBe(webhookSubjectCreatedDispatcher);
+  });
+
+  it("returns dora-task dispatcher for 'dora-task'", () => {
+    vi.stubEnv("AVOCADOCORE_COMPLETION_ADAPTER", "dora-task");
+    expect(getSubjectCreatedDispatcher()).toBe(doraTaskSubjectCreatedDispatcher);
+  });
+
+  it("falls back to noop for unknown adapter name", () => {
+    vi.stubEnv("AVOCADOCORE_COMPLETION_ADAPTER", "unknown-xyz");
+    expect(getSubjectCreatedDispatcher()).toBe(noopSubjectCreatedDispatcher);
+  });
+});
+
+// ─── noop subject.created dispatcher ────────────────────────────────────────
+
+describe("noopSubjectCreatedDispatcher", () => {
+  it("returns ok=true and a ref without side effects", async () => {
+    const event = {
+      event: "subject.created" as const,
+      learner_id: 1,
+      subject_id: 1,
+      subject_title: "Test Subject",
+      subject_description: null,
+      subject_goals: null,
+      subject_criteria: null,
+      current_level: "familiarity" as const,
+      workpad_summary: null,
+      learner_profile_config: null,
+      created_at: new Date().toISOString(),
+    };
+    const result = await noopSubjectCreatedDispatcher(event);
+    expect(result.ok).toBe(true);
+    expect(typeof result.ref).toBe("string");
+    expect(result.lesson_id).toBeUndefined();
+  });
+});
+
+// ─── webhook subject.created dispatcher ─────────────────────────────────────
+
+describe("webhookSubjectCreatedDispatcher", () => {
+  afterEach(() => vi.unstubAllEnvs());
+
+  it("returns error when no URL configured", async () => {
+    vi.stubEnv("AVOCADOCORE_WEBHOOK_URL", "");
+    const event = {
+      event: "subject.created" as const,
+      learner_id: 1,
+      subject_id: 1,
+      subject_title: "Test",
+      subject_description: null,
+      subject_goals: null,
+      subject_criteria: null,
+      current_level: "familiarity" as const,
+      workpad_summary: null,
+      learner_profile_config: null,
+      created_at: new Date().toISOString(),
+    };
+    const result = await webhookSubjectCreatedDispatcher(event);
+    expect(result.ok).toBe(false);
+    expect(result.error).toMatch(/no URL configured/i);
+  });
+
+  it("posts to the webhook URL and returns ok", async () => {
+    vi.stubEnv("AVOCADOCORE_WEBHOOK_URL", "https://hook.example.test/subjects");
+    const fetchMock = vi.fn().mockResolvedValue({ ok: true, status: 200 });
+    vi.stubGlobal("fetch", fetchMock);
+
+    const event = {
+      event: "subject.created" as const,
+      learner_id: 1,
+      subject_id: 42,
+      subject_title: "WebhookSubject",
+      subject_description: null,
+      subject_goals: null,
+      subject_criteria: null,
+      current_level: "familiarity" as const,
+      workpad_summary: null,
+      learner_profile_config: null,
+      created_at: new Date().toISOString(),
+    };
+
+    const result = await webhookSubjectCreatedDispatcher(event);
+    expect(result.ok).toBe(true);
+    expect(typeof result.ref).toBe("string");
+    expect(fetchMock).toHaveBeenCalledWith(
+      "https://hook.example.test/subjects",
+      expect.objectContaining({ method: "POST" })
+    );
+  });
+});
+
+// ─── generateInitialAssessment (unit) ───────────────────────────────────────
+
+describe("generateInitialAssessment", () => {
+  let db: Database.Database;
+
+  beforeEach(() => {
+    db = makeDb();
+    const { learnerId } = seedLearner(db);
+    seedSubject(db, learnerId);
+  });
+
+  it("creates a lesson with sequence_number=0 and 'Initial Assessment:' prefix", () => {
+    const event = {
+      event: "subject.created" as const,
+      learner_id: 1,
+      subject_id: 1,
+      subject_title: "Quantum Mechanics",
+      subject_description: null,
+      subject_goals: "Understand superposition",
+      subject_criteria: null,
+      current_level: "familiarity" as const,
+      workpad_summary: null,
+      learner_profile_config: null,
+      created_at: new Date().toISOString(),
+    };
+    const result = generateInitialAssessment(db, event);
+    expect(result.lesson_id).toBeGreaterThan(0);
+    expect(result.lesson_title).toMatch(/^Initial Assessment:/);
+    expect(result.question_count).toBeGreaterThan(0);
+
+    const lesson = db
+      .prepare("SELECT * FROM lessons WHERE id = ?")
+      .get(result.lesson_id) as { sequence_number: number; status: string };
+    expect(lesson.sequence_number).toBe(0);
+    expect(lesson.status).toBe("queued");
+  });
+
+  it("creates exactly one assessment activity with 6 questions", () => {
+    const event = {
+      event: "subject.created" as const,
+      learner_id: 1,
+      subject_id: 1,
+      subject_title: "Linear Algebra",
+      subject_description: null,
+      subject_goals: null,
+      subject_criteria: null,
+      current_level: "familiarity" as const,
+      workpad_summary: null,
+      learner_profile_config: null,
+      created_at: new Date().toISOString(),
+    };
+    const result = generateInitialAssessment(db, event);
+    expect(result.question_count).toBe(6);
+
+    const activities = db
+      .prepare("SELECT * FROM lesson_activities WHERE lesson_id = ?")
+      .all(result.lesson_id) as Array<{ activity_type: string; content: string }>;
+    expect(activities).toHaveLength(1);
+    expect(activities[0].activity_type).toBe("assessment");
+
+    const content = JSON.parse(activities[0].content) as { questions: unknown[] };
+    expect(content.questions).toHaveLength(6);
+  });
+});
+
+// ─── Initial assessment idempotency (via generateInitialAssessment directly) ─
+//
+// localQueueSubjectCreatedDispatcher calls generateInitialAssessment only when
+// no sequence_number=0 lesson exists. The guard and idempotency pattern are
+// tested here by simulating the dispatcher logic with a real in-memory DB.
+
+describe("initial assessment idempotency guard", () => {
+  let db: Database.Database;
+  let subjectId: number;
+
+  beforeEach(() => {
+    db = makeDb();
+    const { learnerId } = seedLearner(db);
+    subjectId = seedSubject(db, learnerId);
+  });
+
+  const makeEvent = (id: number) => ({
+    event: "subject.created" as const,
+    learner_id: 1,
+    subject_id: id,
+    subject_title: "Idempotency Test Subject",
+    subject_description: null,
+    subject_goals: null,
+    subject_criteria: null,
+    current_level: "familiarity" as const,
+    workpad_summary: null,
+    learner_profile_config: null,
+    created_at: new Date().toISOString(),
+  });
+
+  it("generateInitialAssessment creates exactly one lesson at sequence_number=0", () => {
+    const event = makeEvent(subjectId);
+    const r1 = generateInitialAssessment(db, event);
+    expect(r1.lesson_id).toBeGreaterThan(0);
+
+    // Simulate the idempotency check: a second call should find the existing row
+    const existing = db
+      .prepare("SELECT id FROM lessons WHERE subject_id = ? AND sequence_number = 0 LIMIT 1")
+      .get(subjectId) as { id: number } | undefined;
+
+    expect(existing).toBeDefined();
+    expect(existing?.id).toBe(r1.lesson_id);
+
+    // Verify only one row was created
+    const count = (
+      db
+        .prepare("SELECT COUNT(*) as n FROM lessons WHERE subject_id = ? AND sequence_number = 0")
+        .get(subjectId) as { n: number }
+    ).n;
+    expect(count).toBe(1);
+  });
+
+  it("idempotency: detecting existing sequence_number=0 lesson prevents duplicate creation", () => {
+    const event = makeEvent(subjectId);
+
+    // First creation
+    const r1 = generateInitialAssessment(db, event);
+
+    // The dispatcher checks for existing before creating. Simulating that check:
+    function dispatchWithIdempotencyCheck() {
+      const existing = db
+        .prepare("SELECT id, title FROM lessons WHERE subject_id = ? AND sequence_number = 0 LIMIT 1")
+        .get(event.subject_id) as { id: number; title: string } | undefined;
+      if (existing) {
+        return { ok: true, ref: `local-queue-assessment-existing-${existing.id}`, lesson_id: existing.id };
+      }
+      const r = generateInitialAssessment(db, event);
+      return { ok: true, ref: `local-queue-assessment-${r.lesson_id}`, lesson_id: r.lesson_id };
+    }
+
+    const r2 = dispatchWithIdempotencyCheck();
+    expect(r2.ok).toBe(true);
+    expect(r2.lesson_id).toBe(r1.lesson_id); // same lesson returned
+
+    const count = (
+      db
+        .prepare("SELECT COUNT(*) as n FROM lessons WHERE subject_id = ? AND sequence_number = 0")
+        .get(subjectId) as { n: number }
+    ).n;
+    expect(count).toBe(1); // still only one
+  });
+});
+
+// ─── The reusable generator paths must hand FUTURE lesson-generation agents the
 // enrichment quality bar in the task prompt — not just leave it in the docs.
 // These tests fail if a generator-task prompt stops carrying the requirements,
 // keeping the "every future lesson is enriched" guarantee from regressing.
