@@ -2,14 +2,19 @@ import { describe, it, expect, afterEach, vi } from "vitest";
 import {
   getCompletionAdapter,
   getRegenerationAdapter,
+  getSubjectCreatedDispatcher,
   noopAdapter,
   noopRegenerationAdapter,
+  noopSubjectCreatedDispatcher,
   localQueueAdapter,
   localQueueRegenerationAdapter,
+  localQueueSubjectCreatedDispatcher,
   webhookAdapter,
   webhookRegenerationAdapter,
+  webhookSubjectCreatedDispatcher,
   doraTaskAdapter,
   doraTaskRegenerationAdapter,
+  doraTaskSubjectCreatedDispatcher,
 } from "../index";
 
 afterEach(() => {
@@ -125,5 +130,78 @@ describe("getRegenerationAdapter", () => {
     const result = await noopRegenerationAdapter.dispatch(event);
     expect(result.ok).toBe(true);
     expect(typeof result.ref).toBe("string");
+  });
+});
+
+// ─── Subject Created Dispatcher ───────────────────────────────────────────────
+
+const subjectCreatedEvent = {
+  event: "subject.created" as const,
+  learner_id: 1,
+  subject_id: 42,
+  subject_title: "Test Subject",
+  subject_description: "A test subject for unit testing.",
+  subject_goals: "Learn the fundamentals.",
+  subject_criteria: null,
+  current_level: "familiarity" as const,
+  created_at: new Date().toISOString(),
+};
+
+describe("getSubjectCreatedDispatcher", () => {
+  it("returns noop dispatcher when env var is unset", () => {
+    vi.stubEnv("AVOCADOCORE_COMPLETION_ADAPTER", "");
+    expect(getSubjectCreatedDispatcher()).toBe(noopSubjectCreatedDispatcher);
+  });
+
+  it("returns local-queue dispatcher", () => {
+    vi.stubEnv("AVOCADOCORE_COMPLETION_ADAPTER", "local-queue");
+    expect(getSubjectCreatedDispatcher()).toBe(localQueueSubjectCreatedDispatcher);
+  });
+
+  it("returns webhook dispatcher", () => {
+    vi.stubEnv("AVOCADOCORE_COMPLETION_ADAPTER", "webhook");
+    expect(getSubjectCreatedDispatcher()).toBe(webhookSubjectCreatedDispatcher);
+  });
+
+  it("returns dora-task dispatcher", () => {
+    vi.stubEnv("AVOCADOCORE_COMPLETION_ADAPTER", "dora-task");
+    expect(getSubjectCreatedDispatcher()).toBe(doraTaskSubjectCreatedDispatcher);
+  });
+
+  it("falls back to noop for unknown adapter name", () => {
+    vi.stubEnv("AVOCADOCORE_COMPLETION_ADAPTER", "unknown-thing");
+    expect(getSubjectCreatedDispatcher()).toBe(noopSubjectCreatedDispatcher);
+  });
+
+  it("noop dispatcher returns ok without side effects", async () => {
+    const result = await noopSubjectCreatedDispatcher(subjectCreatedEvent);
+    expect(result.ok).toBe(true);
+    expect(typeof result.ref).toBe("string");
+    expect(result.error).toBeUndefined();
+  });
+
+  it("dora-task dispatcher returns error when no endpoint configured", async () => {
+    vi.stubEnv("AVOCADOCORE_DORA_ENDPOINT", "");
+    const result = await doraTaskSubjectCreatedDispatcher(subjectCreatedEvent);
+    expect(result.ok).toBe(false);
+    expect(result.error).toContain("AVOCADOCORE_DORA_ENDPOINT");
+  });
+
+  it("webhook dispatcher returns error when no URL configured", async () => {
+    vi.stubEnv("AVOCADOCORE_WEBHOOK_URL", "");
+    const result = await webhookSubjectCreatedDispatcher(subjectCreatedEvent);
+    expect(result.ok).toBe(false);
+    expect(result.error).toContain("AVOCADOCORE_WEBHOOK_URL");
+  });
+
+  it("all subject-created dispatchers have the correct function signature", () => {
+    for (const dispatcher of [
+      noopSubjectCreatedDispatcher,
+      localQueueSubjectCreatedDispatcher,
+      webhookSubjectCreatedDispatcher,
+      doraTaskSubjectCreatedDispatcher,
+    ]) {
+      expect(typeof dispatcher).toBe("function");
+    }
   });
 });

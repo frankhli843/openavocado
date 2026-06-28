@@ -2,7 +2,8 @@ import { NextResponse } from "next/server";
 import { getDb } from "@/db/connection";
 import { seedDatabase } from "@/db/seed";
 import { computeSubjectMastery } from "@/lib/mastery";
-import type { Subject, SubjectSummary } from "@/types";
+import { getSubjectCreatedDispatcher } from "@/lib/adapters";
+import type { Subject, SubjectSummary, SubjectCreatedEvent } from "@/types";
 
 /** POST /api/subjects — create a new subject for a learner */
 export async function POST(request: Request) {
@@ -42,6 +43,39 @@ export async function POST(request: Request) {
     const subject = db
       .prepare("SELECT * FROM subjects WHERE id = ?")
       .get(result.lastInsertRowid) as Subject;
+
+    // Dispatch first-lesson generation via the configured adapter.
+    // Non-fatal: subject creation succeeds even if dispatch fails.
+    try {
+      const event: SubjectCreatedEvent = {
+        event: "subject.created",
+        learner_id: learnerId,
+        subject_id: subject.id,
+        subject_title: subject.title,
+        subject_description: subject.description ?? null,
+        subject_goals: subject.goals ?? null,
+        subject_criteria: subject.criteria ?? null,
+        current_level: subject.current_level,
+        created_at: subject.created_at,
+      };
+      const dispatcher = getSubjectCreatedDispatcher();
+      const adapterName = process.env.AVOCADOCORE_COMPLETION_ADAPTER || "noop";
+      const dispatchResult = await dispatcher(event);
+
+      db.prepare(
+        `INSERT INTO next_lesson_jobs (subject_id, trigger_event, adapter, status, payload, adapter_ref, error, dispatched_at)
+         VALUES (?, 'subject.created', ?, ?, ?, ?, ?, datetime('now'))`
+      ).run(
+        subject.id,
+        adapterName,
+        dispatchResult.ok ? "dispatched" : "failed",
+        JSON.stringify(event),
+        dispatchResult.ref ?? null,
+        dispatchResult.error ?? null
+      );
+    } catch (dispatchErr) {
+      console.error("[api/subjects POST] first-lesson dispatch error:", dispatchErr);
+    }
 
     return NextResponse.json({ subject }, { status: 201 });
   } catch (err) {

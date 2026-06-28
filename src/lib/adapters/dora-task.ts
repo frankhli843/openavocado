@@ -3,6 +3,7 @@ import type {
   LessonCompletedEvent,
   RegenerationHookAdapter,
   LessonDiscardedEvent,
+  SubjectCreatedEvent,
 } from "@/types";
 
 /**
@@ -211,3 +212,90 @@ export const doraTaskRegenerationAdapter: RegenerationHookAdapter = {
     }
   },
 };
+
+/**
+ * Dora-task subject.created dispatcher — creates a Doramon todo-loop task
+ * to generate the first lesson for a newly-created subject.
+ *
+ * Required env vars: same as doraTaskAdapter (AVOCADOCORE_DORA_ENDPOINT, etc.)
+ * Falls back to an error (not a silent noop) when no endpoint is configured,
+ * so frankavo admins see a clear misconfiguration signal rather than a silent
+ * dead-end.
+ */
+export async function doraTaskSubjectCreatedDispatcher(
+  event: SubjectCreatedEvent,
+  config?: Record<string, unknown>
+): Promise<{ ok: boolean; ref?: string; error?: string }> {
+  const endpoint =
+    (config?.endpoint as string | undefined) ||
+    process.env.AVOCADOCORE_DORA_ENDPOINT;
+  const project =
+    (config?.project as string | undefined) ||
+    process.env.AVOCADOCORE_DORA_PROJECT ||
+    "avocadocore";
+  const channel =
+    (config?.channel as string | undefined) ||
+    process.env.AVOCADOCORE_DORA_CHANNEL;
+
+  if (!endpoint) {
+    console.warn(
+      "[subject.created:dora-task] No AVOCADOCORE_DORA_ENDPOINT set. Logging event only."
+    );
+    console.log("[subject.created:dora-task] Event:", JSON.stringify(event, null, 2));
+    return {
+      ok: false,
+      error: "dora-task subject.created dispatcher: no endpoint configured (AVOCADOCORE_DORA_ENDPOINT)",
+    };
+  }
+
+  const acceptance = [
+    `Generate the FIRST lesson for subject "${event.subject_title}" (learner ${event.learner_id}).`,
+    ``,
+    `This is a brand-new subject. There are no prior lessons to build on.`,
+    ``,
+    `=== SUBJECT CONTEXT ===`,
+    `Title: ${event.subject_title}`,
+    event.subject_description ? `Description: ${event.subject_description}` : "",
+    event.subject_goals ? `Learning goals:\n${event.subject_goals}` : "",
+    event.subject_criteria
+      ? `Learner criteria / notes for lesson generator:\n${event.subject_criteria}`
+      : "(no learner criteria set — use subject title and goals as the main guide)",
+    `Current level: ${event.current_level}`,
+    ``,
+    `=== INSTRUCTIONS ===`,
+    `Generate an engaging first lesson appropriate for the learner's current level (${event.current_level}).`,
+    `The lesson should orient the learner, introduce foundational concepts, and set expectations for the subject.`,
+    ``,
+    `Completion:`,
+    channel
+      ? `After generating the lesson, post a summary in <#${channel}> explaining what the first lesson covers. Tag the learner.`
+      : `After generating the lesson, confirm completion in the appropriate channel.`,
+  ]
+    .filter((line) => line !== "")
+    .join("\n");
+
+  try {
+    const res = await fetch(endpoint, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        project,
+        title: `Generate first lesson: ${event.subject_title}`,
+        acceptance,
+        origin_platform: "avocadocore",
+        metadata: { subject_created_event: event },
+      }),
+    });
+
+    if (!res.ok) {
+      return { ok: false, error: `dora endpoint responded with ${res.status}` };
+    }
+
+    const data = (await res.json()) as { id?: string };
+    const ref = data.id || `dora-subject-task-${Date.now()}`;
+    return { ok: true, ref };
+  } catch (err) {
+    const msg = err instanceof Error ? err.message : String(err);
+    return { ok: false, error: msg };
+  }
+}

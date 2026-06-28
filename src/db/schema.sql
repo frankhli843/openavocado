@@ -204,7 +204,7 @@ CREATE TABLE IF NOT EXISTS next_lesson_jobs (
   subject_id      INTEGER NOT NULL REFERENCES subjects(id) ON DELETE CASCADE,
   completed_lesson_id INTEGER REFERENCES lessons(id) ON DELETE SET NULL,
   discarded_lesson_id INTEGER REFERENCES lessons(id) ON DELETE SET NULL, -- set when triggered by a discard
-  trigger_event   TEXT    NOT NULL DEFAULT 'lesson.completed' CHECK (trigger_event IN ('lesson.completed', 'lesson.discarded')),
+  trigger_event   TEXT    NOT NULL DEFAULT 'lesson.completed' CHECK (trigger_event IN ('lesson.completed', 'lesson.discarded', 'subject.created')),
   adapter         TEXT    NOT NULL DEFAULT 'noop', -- 'dora-task', 'webhook', 'local-queue', 'noop'
   status          TEXT    NOT NULL DEFAULT 'pending' CHECK (status IN ('pending', 'dispatched', 'completed', 'failed')),
   payload         TEXT,   -- JSON: the event payload (lesson.completed or lesson.discarded)
