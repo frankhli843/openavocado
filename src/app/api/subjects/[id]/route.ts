@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { getDb } from "@/db/connection";
 import { computeSubjectMastery } from "@/lib/mastery";
-import type { Subject, Lesson, MasterySignal, ProgressPoint } from "@/types";
+import type { Subject, Lesson, MasterySignal, ProgressPoint, NextLessonJob } from "@/types";
 
 /** GET /api/subjects/:id — full subject detail with lessons, mastery, progress */
 export async function GET(
@@ -47,6 +47,12 @@ export async function GET(
       )
       .all(subjectId);
 
+    const next_lesson_jobs = db
+      .prepare(
+        `SELECT * FROM next_lesson_jobs WHERE subject_id = ? ORDER BY created_at DESC LIMIT 10`
+      )
+      .all(subjectId) as NextLessonJob[];
+
     const mastery = computeSubjectMastery(db, subjectId, subject.learner_id);
 
     return NextResponse.json({
@@ -56,6 +62,7 @@ export async function GET(
       progress_points,
       mastery,
       tags,
+      next_lesson_jobs,
     });
   } catch (err) {
     console.error("[api/subjects/:id]", err);

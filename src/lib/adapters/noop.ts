@@ -3,6 +3,7 @@ import type {
   LessonCompletedEvent,
   RegenerationHookAdapter,
   LessonDiscardedEvent,
+  SubjectCreatedEvent,
 } from "@/types";
 
 /**
@@ -33,3 +34,17 @@ export const noopRegenerationAdapter: RegenerationHookAdapter = {
     return { ok: true, ref: `noop-regen-${event.discarded_lesson_id}-${Date.now()}` };
   },
 };
+
+/**
+ * Noop subject.created dispatcher — logs the event without triggering any
+ * first-lesson generation. No lesson will appear; use local-queue for
+ * self-hosted deployments or dora-task for automated generation.
+ */
+export async function noopSubjectCreatedDispatcher(
+  event: SubjectCreatedEvent
+): Promise<{ ok: boolean; ref?: string; error?: string }> {
+  console.log(
+    `[subject.created:noop] Subject "${event.subject_title}" created by learner ${event.learner_id}. No first-lesson dispatch configured.`
+  );
+  return { ok: true, ref: `noop-subject-${event.subject_id}-${Date.now()}` };
+}

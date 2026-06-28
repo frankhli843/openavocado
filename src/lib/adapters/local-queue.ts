@@ -3,8 +3,10 @@ import type {
   LessonCompletedEvent,
   RegenerationHookAdapter,
   LessonDiscardedEvent,
+  SubjectCreatedEvent,
 } from "@/types";
 import { getDb } from "@/db/connection";
+import { generateStarterLesson } from "@/lib/lesson-generator/starter-lesson";
 
 /**
  * Local-queue adapter — writes the lesson.completed event to the
@@ -32,6 +34,32 @@ export const localQueueAdapter: CompletionHookAdapter = {
     }
   },
 };
+
+/**
+ * Local-queue subject.created dispatcher — generates a deterministic orientation
+ * lesson synchronously. No LLM or task runner required. Suitable for self-hosted
+ * deployments (devavo, prodavo) where Dora or webhook automation is not available.
+ *
+ * The lesson is created immediately; the learner sees it as soon as the subject
+ * detail page loads.
+ */
+export async function localQueueSubjectCreatedDispatcher(
+  event: SubjectCreatedEvent
+): Promise<{ ok: boolean; ref?: string; error?: string }> {
+  try {
+    const db = getDb();
+    const { lesson_id, lesson_title } = generateStarterLesson(db, event);
+    const ref = `local-queue-starter-lesson-${lesson_id}`;
+    console.log(
+      `[subject.created:local-queue] Created orientation lesson "${lesson_title}" (id ${lesson_id}) for subject ${event.subject_id}`
+    );
+    return { ok: true, ref };
+  } catch (err) {
+    const msg = err instanceof Error ? err.message : String(err);
+    console.error(`[subject.created:local-queue] Error generating starter lesson:`, msg);
+    return { ok: false, error: msg };
+  }
+}
 
 /**
  * Local-queue regeneration adapter — writes the lesson.discarded event to the

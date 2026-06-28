@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { use } from "react";
-import type { Subject, Lesson, MasterySignal, ProgressPoint, SubjectMastery } from "@/types";
+import type { Subject, Lesson, MasterySignal, ProgressPoint, SubjectMastery, NextLessonJob } from "@/types";
 import { LessonList } from "@/components/LessonList";
 import { MasteryPanel } from "@/components/MasteryPanel";
 import { MasterySummary } from "@/components/MasterySummary";
@@ -19,6 +19,7 @@ interface SubjectData {
   progress_points: ProgressPoint[];
   mastery?: SubjectMastery;
   tags: Array<{ id: number; name: string; tag_type: string }>;
+  next_lesson_jobs?: NextLessonJob[];
 }
 
 type TabId = "lessons" | "mastery" | "progress" | "goals" | "criteria";
@@ -225,6 +226,7 @@ export default function SubjectPage({ params }: { params: Promise<{ id: string }
               active={activeLessons}
               queued={queuedLessons}
               discarded={discardedLessons}
+              nextLessonJobs={data.next_lesson_jobs ?? []}
             />
           )}
           {activeTab === "mastery" && (

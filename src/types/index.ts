@@ -252,7 +252,7 @@ export interface NextLessonJob {
   subject_id: number;
   completed_lesson_id: number | null;
   discarded_lesson_id: number | null;
-  trigger_event: "lesson.completed" | "lesson.discarded";
+  trigger_event: "lesson.completed" | "lesson.discarded" | "subject.created";
   adapter: CompletionAdapter;
   status: "pending" | "dispatched" | "completed" | "failed";
   payload: string | null; // JSON
@@ -434,6 +434,25 @@ export interface LessonDiscardedEvent {
   /** Current workpad summary, if available. Passed to help the generator. */
   workpad_summary: string | null;
   discarded_at: string;
+}
+
+// ─── Subject Created Hook Contract ───────────────────────────────────────────
+
+/**
+ * Payload emitted when a learner creates a new subject.
+ * Adapters receive this and dispatch first-lesson generation.
+ */
+export interface SubjectCreatedEvent {
+  event: "subject.created";
+  learner_id: number;
+  subject_id: number;
+  subject_title: string;
+  subject_description: string | null;
+  subject_goals: string | null;
+  /** Learner criteria for lesson generation — passed to the generator. */
+  subject_criteria: string | null;
+  current_level: LevelName;
+  created_at: string;
 }
 
 /**

@@ -1,17 +1,29 @@
 "use client";
 
 import Link from "next/link";
-import type { Lesson } from "@/types";
+import type { Lesson, NextLessonJob } from "@/types";
 
 interface LessonListProps {
   completed: Lesson[];
   active: Lesson[];
   queued: Lesson[];
   discarded?: Lesson[];
+  /** Recent next_lesson_jobs for this subject — used to show honest pending/failed state. */
+  nextLessonJobs?: NextLessonJob[];
 }
 
-export function LessonList({ completed, active, queued, discarded = [] }: LessonListProps) {
-  const isEmpty = completed.length === 0 && active.length === 0 && queued.length === 0 && discarded.length === 0;
+export function LessonList({
+  completed,
+  active,
+  queued,
+  discarded = [],
+  nextLessonJobs = [],
+}: LessonListProps) {
+  const isEmpty =
+    completed.length === 0 &&
+    active.length === 0 &&
+    queued.length === 0 &&
+    discarded.length === 0;
   return (
     <div className="space-y-8">
       {/* In Progress */}
@@ -46,11 +58,50 @@ export function LessonList({ completed, active, queued, discarded = [] }: Lesson
         </Section>
       )}
 
-      {isEmpty && (
-        <div className="py-12 text-center text-gray-400 text-sm">
-          No lessons yet. A lesson will be queued when a next-lesson task runs.
+      {isEmpty && <EmptyLessonsState jobs={nextLessonJobs} />}
+    </div>
+  );
+}
+
+function EmptyLessonsState({ jobs }: { jobs: NextLessonJob[] }) {
+  const subjectCreatedJobs = jobs.filter((j) => j.trigger_event === "subject.created");
+  const pendingOrDispatched = subjectCreatedJobs.some(
+    (j) => j.status === "pending" || j.status === "dispatched"
+  );
+  const failed = subjectCreatedJobs.some((j) => j.status === "failed");
+  const failedJob = subjectCreatedJobs.find((j) => j.status === "failed");
+
+  if (pendingOrDispatched) {
+    return (
+      <div className="py-10 text-center">
+        <div className="inline-flex items-center gap-2 px-4 py-3 rounded-lg bg-blue-50 border border-blue-100 text-blue-700 text-sm">
+          <span className="block w-2 h-2 rounded-full bg-blue-400 animate-pulse shrink-0" />
+          Your first lesson is being prepared. Refresh in a moment.
         </div>
-      )}
+      </div>
+    );
+  }
+
+  if (failed) {
+    return (
+      <div className="py-10 text-center">
+        <div className="inline-flex flex-col items-center gap-2 px-4 py-3 rounded-lg bg-amber-50 border border-amber-100 text-amber-700 text-sm max-w-sm mx-auto">
+          <span className="font-medium">Lesson generation failed</span>
+          {failedJob?.error && (
+            <span className="text-xs text-amber-600 font-mono break-all">{failedJob.error}</span>
+          )}
+          <span className="text-xs text-amber-600 mt-1">
+            Check the server configuration (AVOCADOCORE_COMPLETION_ADAPTER) and try creating the subject again.
+          </span>
+        </div>
+      </div>
+    );
+  }
+
+  // No job at all or noop — generic message
+  return (
+    <div className="py-12 text-center text-gray-400 text-sm">
+      No lessons yet. A lesson will appear here once the lesson generator runs.
     </div>
   );
 }
