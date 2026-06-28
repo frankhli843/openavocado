@@ -101,7 +101,7 @@ export function LessonChatModal({ lessonId, learnerId, lessonTitle }: LessonChat
       <button
         type="button"
         onClick={() => setOpen(true)}
-        className="fixed bottom-4 right-4 z-30 inline-flex h-12 w-12 items-center justify-center rounded-full bg-blue-600 text-white shadow-lg shadow-blue-600/20 transition-colors hover:bg-blue-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-300 sm:bottom-6 sm:right-6"
+        className="fixed bottom-4 right-4 z-[70] inline-flex h-12 w-12 items-center justify-center rounded-full bg-blue-600 text-white shadow-lg shadow-blue-600/20 transition-colors hover:bg-blue-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-300 sm:bottom-6 sm:right-6"
         aria-label="Ask a lesson question"
       >
         <MessageCircle size={21} aria-hidden="true" />
@@ -109,7 +109,7 @@ export function LessonChatModal({ lessonId, learnerId, lessonTitle }: LessonChat
 
       {open && (
         <div
-          className="fixed inset-0 z-40 bg-black/25 sm:bg-transparent"
+          className="fixed inset-0 z-[80] bg-black/25 sm:bg-transparent"
           onClick={(e) => {
             if (e.target === e.currentTarget) setOpen(false);
           }}

@@ -9,17 +9,17 @@
  *
  * Features:
  * - Python syntax highlighting (@codemirror/lang-python)
- * - One Dark theme (@codemirror/theme-one-dark / re-exported by @uiw/react-codemirror)
+ * - Light editor theme, matching AvocadoCore's lesson surface
  * - Auto-indentation (built into CodeMirror's Python extension)
  * - Bracket/paren matching and closing
  * - Tab = 4 spaces (Python convention, via custom keymap)
  * - Accessible: aria-label on the editor root
  *
  * Only imports from directly installed deps:
- *   @codemirror/lang-python, @uiw/react-codemirror (re-exports EditorView, keymap, Prec, oneDark)
+ *   @codemirror/lang-python, @uiw/react-codemirror (re-exports EditorView, keymap, Prec)
  */
 
-import CodeMirror, { keymap, EditorView, Prec, oneDark } from "@uiw/react-codemirror";
+import CodeMirror, { keymap, EditorView, Prec } from "@uiw/react-codemirror";
 import { python } from "@codemirror/lang-python";
 
 interface PythonEditorProps {
@@ -52,7 +52,6 @@ const softWrap = EditorView.lineWrapping;
 
 const PYTHON_EXTENSIONS = [
   python(),
-  oneDark,
   pythonTabKeymap,
   softWrap,
 ];

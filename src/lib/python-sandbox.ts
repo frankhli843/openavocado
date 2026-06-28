@@ -92,8 +92,13 @@ export function createPyodideExecutor(pyodide: PyodideInterface): PythonExecutor
       let stdout = "";
       let stderr = "";
       let error: string | null = null;
+      const testSource = (request.tests ?? []).map((test) => test.assert).join("\n");
 
       try {
+        if (pyodide.loadPackagesFromImports) {
+          await pyodide.loadPackagesFromImports([request.code, testSource].filter(Boolean).join("\n"));
+        }
+
         // Capture stdout/stderr
         pyodide.runPython(`
 import sys, io
@@ -157,4 +162,5 @@ sys.stderr = _stderr_capture
 // Minimal Pyodide type (avoids hard dependency on @types/pyodide)
 interface PyodideInterface {
   runPython(code: string): unknown;
+  loadPackagesFromImports?(code: string): Promise<void>;
 }

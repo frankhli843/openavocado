@@ -6,7 +6,7 @@
  */
 import { afterEach, describe, expect, it, vi } from "vitest";
 import "@testing-library/jest-dom/vitest";
-import { fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import { PythonSection } from "../components/lesson/PythonSection";
 import type { LessonActivity } from "../types";
 
@@ -68,5 +68,30 @@ describe("PythonSection", () => {
     expect(container.querySelector('[data-preview-mode="phone"]')).toBeInTheDocument();
     expect(container.querySelector(".max-w-\\[390px\\]")).toBeInTheDocument();
     await waitFor(() => expect(screen.getByText("Python unavailable")).toBeInTheDocument());
+  });
+
+  it("uses the same light theme in focus mode", async () => {
+    vi.spyOn(console, "warn").mockImplementation(() => undefined);
+
+    const { container } = render(
+      <PythonSection
+        activity={practiceActivity()}
+        learnerId={1}
+        initialCode=""
+        initialOutput="sample output"
+        initialTests={{}}
+        onChange={vi.fn()}
+      />
+    );
+
+    fireEvent.click(screen.getByRole("button", { name: /enter fullscreen/i }));
+
+    const dialog = screen.getByRole("dialog", { name: /python code editor fullscreen/i });
+    expect(dialog).toHaveClass("bg-white");
+    expect(dialog).not.toHaveClass("bg-gray-950");
+    expect(within(dialog).queryByText("Output")?.nextElementSibling).not.toHaveClass("bg-gray-900");
+    expect(within(dialog).getByText("Your task").parentElement).toHaveClass("bg-blue-50/60");
+    expect(container.querySelector('[role="dialog"].bg-white')).toBeInTheDocument();
+    await waitFor(() => expect(screen.getAllByText("Python unavailable").length).toBeGreaterThan(0));
   });
 });

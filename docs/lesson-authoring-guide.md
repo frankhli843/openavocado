@@ -647,6 +647,10 @@ LIVE / FRESH-DB VERIFICATION (required before QA):
 - If the lesson has a code exercise, use the code exercise Desktop/Phone preview
   control and verify Phone mode. The code editor, action buttons, hints, output,
   and tests must remain readable and tappable inside the 390px preview.
+- Run the actual code exercise in the browser. Click Run tests and Submit with
+  the starter or intended solution path, verify public and hidden tests execute,
+  and fix any runtime/package failure such as missing Pyodide packages. A code
+  section that looks correct but has never been executed does not pass QA.
 
 MANUAL QA REVIEW (must be done by a DIFFERENT agent/reviewer than the one that generated):
 - Listen to the audio script or play the audio. Substantive? Covers all goals?
