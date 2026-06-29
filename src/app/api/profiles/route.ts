@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { getDb } from "@/db/connection";
 import { seedDatabase } from "@/db/seed";
 import { serializeConfig, INVALID_CONFIG } from "@/lib/profile-config";
-import { ensureDemoLessonsForLearner } from "@/lib/demo-lessons";
+import { ensureDemoLessonAudioForLearner, ensureDemoLessonsForLearner } from "@/lib/demo-lessons";
 import type { LearnerProfile } from "@/types";
 
 /**
@@ -90,6 +90,7 @@ export async function POST(request: Request) {
       .prepare("SELECT * FROM learner_profiles WHERE id = ?")
       .get(res.lastInsertRowid) as LearnerProfile;
     ensureDemoLessonsForLearner(db, profile.id);
+    await ensureDemoLessonAudioForLearner(db, profile.id);
 
     return NextResponse.json({ profile }, { status: 201 });
   } catch (err) {

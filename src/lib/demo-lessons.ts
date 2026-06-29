@@ -1,4 +1,6 @@
 import type Database from "better-sqlite3";
+import { generateLessonAudio } from "@/lib/audio/generate-lesson-audio";
+import type { TtsProvider } from "@/lib/audio/tts";
 
 const DEMO_SUBJECT_TITLE = "Demo Lesson: Build your own LLM AI";
 const DEMO_GENERATOR = "prodavo-demo-seed/v1";
@@ -45,6 +47,32 @@ export function ensureDemoLessonsForLearner(db: Database.Database, learnerId: nu
   tx();
 
   return subjectId;
+}
+
+export async function ensureDemoLessonAudioForLearner(
+  db: Database.Database,
+  learnerId: number,
+  opts: { provider?: TtsProvider } = {}
+): Promise<void> {
+  const subject = db
+    .prepare("SELECT id FROM subjects WHERE learner_id = ? AND title = ?")
+    .get(learnerId, DEMO_SUBJECT_TITLE) as { id: number } | undefined;
+  if (!subject) return;
+
+  const lessons = db
+    .prepare(
+      `SELECT id, title FROM lessons
+       WHERE subject_id = ? AND generated_by = ?
+       ORDER BY sequence_number ASC`
+    )
+    .all(subject.id, DEMO_GENERATOR) as Array<{ id: number; title: string }>;
+
+  for (const lesson of lessons) {
+    const result = await generateLessonAudio(db, lesson.id, opts);
+    if (result.status === "no-audio-activity" || result.status === "empty-script") {
+      throw new Error(`Demo lesson audio could not be generated for lesson ${lesson.id}: ${result.status}`);
+    }
+  }
 }
 
 function ensureLesson(db: Database.Database, subjectId: number, lesson: LessonSeed): void {

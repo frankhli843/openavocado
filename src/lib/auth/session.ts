@@ -7,7 +7,7 @@ import { cookies } from "next/headers";
 import { getDb } from "@/db/connection";
 import { createHmac, randomBytes } from "crypto";
 import { hashPassword } from "./password";
-import { ensureDemoLessonsForLearner } from "@/lib/demo-lessons";
+import { ensureDemoLessonAudioForLearner, ensureDemoLessonsForLearner } from "@/lib/demo-lessons";
 
 const SESSION_COOKIE = "avocado_session";
 const SESSION_TTL_DAYS = 7;
@@ -118,7 +118,11 @@ export function getSessionToken(cookieHeader: string | null): string | null {
 
 export async function ensureSessionUser(): Promise<SessionUser> {
   const existing = await getSessionUser();
-  if (existing) return ensureActiveLearnerProfile(existing);
+  if (existing) {
+    const user = ensureActiveLearnerProfile(existing);
+    if (user.active_learner_id != null) await ensureDemoLessonAudioForLearner(getDb(), user.active_learner_id);
+    return user;
+  }
   if (process.env.AVOCADOCORE_AUTH_REQUIRED !== "true") {
     const db = getDb();
     let row = db
@@ -146,7 +150,11 @@ export async function ensureSessionUser(): Promise<SessionUser> {
         is_guest: 0,
       };
     }
-    if (row) return ensureActiveLearnerProfile({ ...row, is_guest: Boolean(row.is_guest) });
+    if (row) {
+      const user = ensureActiveLearnerProfile({ ...row, is_guest: Boolean(row.is_guest) });
+      if (user.active_learner_id != null) await ensureDemoLessonAudioForLearner(getDb(), user.active_learner_id);
+      return user;
+    }
   }
   return createGuestSession();
 }
@@ -202,6 +210,7 @@ export async function createGuestSession(): Promise<SessionUser> {
     return { userId, learnerId };
   });
   const { userId, learnerId } = tx();
+  await ensureDemoLessonAudioForLearner(db, learnerId);
   await createSession(userId);
   return {
     id: userId,
