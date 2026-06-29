@@ -155,7 +155,7 @@ export default function RegisterPage() {
         </div>
 
         <p className="mt-4 text-center text-xs text-gray-400">
-          This is an experimental toy project. Data may be reset without notice.
+          Your current guest lessons and progress are preserved when you save this account.
         </p>
       </div>
     </div>

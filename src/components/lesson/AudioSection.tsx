@@ -12,7 +12,9 @@ export function AudioSection({ activity, artifact }: AudioSectionProps) {
     ? JSON.parse(activity.content)
     : {};
 
-  const durationMin = content.duration_hint
+  const durationMin = artifact?.duration_sec
+    ? Math.ceil(artifact.duration_sec / 60)
+    : content.duration_hint
     ? Math.ceil(content.duration_hint / 60)
     : null;
 

@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { getDb } from "@/db/connection";
+import { doraemonEdgeAvailable, espeakAvailable } from "@/lib/audio/tts";
 
 /**
  * GET /api/health
@@ -28,6 +29,8 @@ export async function GET() {
         ? "configured"
         : "missing"
       : "not-required";
+  checks.edge_tts = doraemonEdgeAvailable() ? "ok" : "missing";
+  checks.espeak_ng = espeakAvailable() ? "ok" : "missing";
 
   const allOk = Object.values(checks).every(
     (v) =>
@@ -37,7 +40,8 @@ export async function GET() {
       v === "configured" ||
       v === "not-required" ||
       v === "google-ai-studio" ||
-      v === "unset"
+      v === "unset" ||
+      v === "ok"
   );
 
   return NextResponse.json(

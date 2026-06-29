@@ -107,7 +107,7 @@ function LoginForm() {
         </div>
 
         <p className="mt-4 text-center text-xs text-gray-400">
-          Experimental toy project. Data may be reset without notice.
+          Sign in to continue saved subjects, lessons, and progress.
         </p>
       </div>
     </div>

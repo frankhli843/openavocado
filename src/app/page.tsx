@@ -1,7 +1,6 @@
 "use client";
 
 import { Suspense, useEffect, useRef, useState } from "react";
-import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import type { SubjectSummary, Subject } from "@/types";
 import { SubjectCard } from "@/components/SubjectCard";
@@ -173,10 +172,6 @@ function DashboardContent() {
       <nav className="sticky top-0 z-10 bg-white border-b border-gray-200">
         <div className="max-w-5xl mx-auto px-4 sm:px-6 h-12 flex items-center gap-2 sm:gap-6">
           <Logo size={20} />
-          <div className="flex gap-1">
-            <NavTab href="/" active>Subjects</NavTab>
-            <NavTab href="/progress">Progress</NavTab>
-          </div>
           <div className="ml-auto flex items-center gap-2 flex-shrink-0">
             {currentUser && (
               <ProfileSwitcher userId={currentUser.id} activeId={learnerId} onActiveChange={setLearnerId} />
@@ -308,28 +303,5 @@ function DashboardContent() {
         </div>
       )}
     </div>
-  );
-}
-
-function NavTab({
-  href,
-  active,
-  children,
-}: {
-  href: string;
-  active?: boolean;
-  children: React.ReactNode;
-}) {
-  return (
-    <Link
-      href={href}
-      className={`px-3 py-1.5 text-sm rounded font-medium transition-colors ${
-        active
-          ? "bg-blue-50 text-blue-700"
-          : "text-gray-600 hover:text-gray-900 hover:bg-gray-50"
-      }`}
-    >
-      {children}
-    </Link>
   );
 }
