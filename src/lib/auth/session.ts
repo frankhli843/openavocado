@@ -7,6 +7,7 @@ import { cookies } from "next/headers";
 import { getDb } from "@/db/connection";
 import { createHmac, randomBytes } from "crypto";
 import { hashPassword } from "./password";
+import { ensureDemoLessonsForLearner } from "@/lib/demo-lessons";
 
 const SESSION_COOKIE = "avocado_session";
 const SESSION_TTL_DAYS = 7;
@@ -156,7 +157,10 @@ export function ensureActiveLearnerProfile(user: SessionUser): SessionUser {
     const active = db
       .prepare("SELECT id FROM learner_profiles WHERE id = ? AND user_id = ?")
       .get(user.active_learner_id, user.id) as { id: number } | undefined;
-    if (active) return user;
+    if (active) {
+      ensureDemoLessonsForLearner(db, active.id);
+      return user;
+    }
   }
 
   const existingProfile = db
@@ -172,6 +176,7 @@ export function ensureActiveLearnerProfile(user: SessionUser): SessionUser {
     learnerId,
     user.id
   );
+  ensureDemoLessonsForLearner(db, learnerId);
   return { ...user, active_learner_id: learnerId };
 }
 
@@ -193,6 +198,7 @@ export async function createGuestSession(): Promise<SessionUser> {
       .prepare("INSERT INTO learner_profiles (user_id, display_name, preferred_lang) VALUES (?, ?, 'en')")
       .run(userId, displayName).lastInsertRowid as number;
     db.prepare("UPDATE users SET active_learner_id = ? WHERE id = ?").run(learnerId, userId);
+    ensureDemoLessonsForLearner(db, learnerId);
     return { userId, learnerId };
   });
   const { userId, learnerId } = tx();

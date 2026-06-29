@@ -4,6 +4,7 @@ import { getDb } from "@/db/connection";
 import { hashPassword, validatePassword } from "@/lib/auth/password";
 import { createSession, getSessionUser } from "@/lib/auth/session";
 import { checkRateLimit, rateLimitHeaders } from "@/lib/auth/rate-limit";
+import { ensureDemoLessonsForLearner } from "@/lib/demo-lessons";
 
 /** POST /api/auth/register — self-registration for prodavo. */
 export async function POST(request: NextRequest) {
@@ -64,6 +65,9 @@ export async function POST(request: NextRequest) {
          id
        )`
     ).run(displayName, sessionUser.id, sessionUser.id);
+    if (sessionUser.active_learner_id != null) {
+      ensureDemoLessonsForLearner(db, sessionUser.active_learner_id);
+    }
     return NextResponse.json({
       ok: true,
       username,
@@ -89,6 +93,7 @@ export async function POST(request: NextRequest) {
     .get(userId) as { id: number } | undefined;
   if (profile) {
     db.prepare("UPDATE users SET active_learner_id = ? WHERE id = ?").run(profile.id, userId);
+    ensureDemoLessonsForLearner(db, profile.id);
   }
 
   await createSession(userId);

@@ -49,7 +49,9 @@ export async function GET(
 
     const mastery = computeSubjectMastery(db, subjectId, subject.learner_id);
 
-    // Most recent generation jobs — learner-visible status panel.
+    // Most recent generation job — learner-visible status panel. Older
+    // completed jobs are intentionally hidden so the page does not read like
+    // an audit log after rapid lesson completion.
     const generation_jobs = db
       .prepare(
         `SELECT id, subject_id, completed_lesson_id, discarded_lesson_id,
@@ -60,7 +62,7 @@ export async function GET(
          FROM next_lesson_jobs
          WHERE subject_id = ?
          ORDER BY created_at DESC
-         LIMIT 5`
+         LIMIT 1`
       )
       .all(subjectId);
 

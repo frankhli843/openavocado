@@ -52,7 +52,7 @@ function relevantJobs(jobs: NextLessonJob[]): NextLessonJob[] {
 }
 
 export function SubjectJobProgress({ jobs }: Props) {
-  const visible = relevantJobs(jobs);
+  const visible = relevantJobs(jobs).slice(0, 1);
   if (visible.length === 0) return null;
 
   return (

@@ -44,6 +44,21 @@ describe("ensureActiveLearnerProfile", () => {
       .prepare("SELECT user_id, display_name FROM learner_profiles WHERE id = ?")
       .get(repaired.active_learner_id) as { user_id: number; display_name: string };
     expect(profile).toEqual({ user_id: userId, display_name: "Guest learner" });
+    const demo = db
+      .prepare(
+        `SELECT s.title, COUNT(l.id) AS lesson_count,
+                GROUP_CONCAT(l.sequence_number, ',') AS sequences
+         FROM subjects s
+         JOIN lessons l ON l.subject_id = s.id
+         WHERE s.learner_id = ? AND s.title = 'Demo Lesson: Build your own LLM AI'
+         GROUP BY s.id`
+      )
+      .get(repaired.active_learner_id) as { title: string; lesson_count: number; sequences: string };
+    expect(demo).toEqual({
+      title: "Demo Lesson: Build your own LLM AI",
+      lesson_count: 3,
+      sequences: "1,2,3",
+    });
   });
 
   it("reuses the account's first learner profile when the active pointer is stale", async () => {
@@ -77,5 +92,48 @@ describe("ensureActiveLearnerProfile", () => {
       .prepare("SELECT COUNT(*) AS count FROM learner_profiles WHERE user_id = ?")
       .get(userId) as { count: number };
     expect(profileCount.count).toBe(1);
+    const demoCount = db
+      .prepare(
+        `SELECT COUNT(*) AS count
+         FROM subjects s
+         JOIN lessons l ON l.subject_id = s.id
+         WHERE s.learner_id = ? AND s.title = 'Demo Lesson: Build your own LLM AI'`
+      )
+      .get(existingProfileId) as { count: number };
+    expect(demoCount.count).toBe(3);
+  });
+
+  it("does not duplicate the demo subject when profile repair runs repeatedly", async () => {
+    const { getDb } = await import("@/db/connection");
+    const { ensureActiveLearnerProfile } = await import("./session");
+    const db = getDb();
+    const userId = db
+      .prepare("INSERT INTO users (username, display_name) VALUES (?, ?)")
+      .run("repeat-user", "Repeat User").lastInsertRowid as number;
+    const learnerId = db
+      .prepare("INSERT INTO learner_profiles (user_id, display_name) VALUES (?, ?)")
+      .run(userId, "Repeat User").lastInsertRowid as number;
+    db.prepare("UPDATE users SET active_learner_id = ? WHERE id = ?").run(learnerId, userId);
+
+    const user = {
+      id: userId,
+      username: "repeat-user",
+      display_name: "Repeat User",
+      email: null,
+      active_learner_id: learnerId,
+      is_guest: false,
+    };
+    ensureActiveLearnerProfile(user);
+    ensureActiveLearnerProfile(user);
+
+    const demo = db
+      .prepare(
+        `SELECT COUNT(DISTINCT s.id) AS subject_count, COUNT(l.id) AS lesson_count
+         FROM subjects s
+         JOIN lessons l ON l.subject_id = s.id
+         WHERE s.learner_id = ? AND s.title = 'Demo Lesson: Build your own LLM AI'`
+      )
+      .get(learnerId) as { subject_count: number; lesson_count: number };
+    expect(demo).toEqual({ subject_count: 1, lesson_count: 3 });
   });
 });

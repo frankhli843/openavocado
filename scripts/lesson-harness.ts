@@ -239,11 +239,11 @@ function buildLearnerContext(
 
   const masterySignals = db
     .prepare(
-      `SELECT ms.signal_type, ms.confidence, ms.difficulty, t.name AS concept
+      `SELECT ms.signal_type, ms.confidence, ms.difficulty, COALESCE(t.name, ms.concept) AS concept
        FROM mastery_signals ms
-       JOIN tags t ON t.id = ms.tag_id
+       LEFT JOIN tags t ON t.id = ms.tag_id
        WHERE ms.learner_id = ? AND ms.subject_id = ?
-       ORDER BY ms.recorded_at DESC LIMIT 20`
+       ORDER BY ms.created_at DESC LIMIT 20`
     )
     .all(learnerId, subjectId) as Array<{
       signal_type: string;
@@ -254,13 +254,13 @@ function buildLearnerContext(
 
   const recentAssessments = db
     .prepare(
-      `SELECT ar.question_text, ar.outcome, ar.question_type, ar.concept, ar.difficulty
+      `SELECT ar.question_id, ar.outcome, ar.question_type, ar.concept, ar.difficulty
        FROM assessment_results ar
        WHERE ar.learner_id = ? AND ar.subject_id = ?
-       ORDER BY ar.assessed_at DESC LIMIT 15`
+       ORDER BY ar.created_at DESC LIMIT 15`
     )
     .all(learnerId, subjectId) as Array<{
-      question_text: string;
+      question_id: string;
       outcome: string;
       question_type: string;
       concept: string | null;
@@ -297,7 +297,7 @@ function buildLearnerContext(
     `RECENT ASSESSMENT EVIDENCE (${recentAssessments.length}):`,
     ...recentAssessments.slice(0, 8).map(
       (a) =>
-        `  [${a.outcome}] ${a.question_text.slice(0, 120)} (concept: ${a.concept ?? "?"}, difficulty: ${a.difficulty ?? "?"})`
+        `  [${a.outcome}] ${a.question_id.slice(0, 120)} (concept: ${a.concept ?? "?"}, difficulty: ${a.difficulty ?? "?"})`
     ),
     "",
     workpad ? `WORKPAD (planning notes):\n${workpad.content.slice(0, 1000)}` : "(no workpad yet)",
@@ -801,7 +801,7 @@ async function handleLessonDiscarded(
   const context = buildLearnerContext(db, subjectId, learnerId);
 
   updateJobProgress(db, subjectId, triggerEvent, "authoring", "Calling Gemini to generate replacement lesson");
-  const prompt = buildLessonPrompt(context, event.event, event.lesson_title);
+  const prompt = buildLessonPrompt(context, event.event, event.discarded_lesson_title);
   const raw = await callGemini(prompt);
 
   let draft: GeminiLessonDraft;

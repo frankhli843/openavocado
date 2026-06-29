@@ -25,6 +25,7 @@ import {
   doraTaskSubjectCreatedDispatcher,
 } from "../index";
 import { generateInitialAssessment } from "../../lesson-generator/initial-assessment";
+import type { CompletionAdapter, NextLessonJob } from "../../../types";
 
 afterEach(() => {
   vi.unstubAllEnvs();
@@ -934,33 +935,36 @@ describe("summarizeJobProgress", () => {
     status: "pending" | "dispatched" | "completed" | "failed";
     harness_stage: string | null;
     progress_events: string | null;
-    adapter: string;
+    adapter: CompletionAdapter;
     trigger_event: "lesson.completed" | "lesson.discarded" | "subject.created";
     dispatched_at: string | null;
     created_at: string;
     completed_at: string | null;
     last_error_detail: string | null;
     error: string | null;
-  }>) {
+  }>): NextLessonJob {
     return {
       id: 1,
       subject_id: 1,
-      learner_id: 1,
+      completed_lesson_id: null,
+      discarded_lesson_id: null,
       status: "dispatched" as const,
       harness_stage: null,
       harness_status: null,
       progress_events: null,
       adapter: "agent-harness",
       trigger_event: "lesson.completed" as const,
+      payload: null,
+      adapter_ref: null,
       dispatched_at: new Date(Date.now() - 60_000).toISOString(),
       created_at: new Date(Date.now() - 65_000).toISOString(),
+      updated_at: new Date(Date.now() - 60_000).toISOString(),
       completed_at: null,
       last_error_detail: null,
       error: null,
       retry_count: 0,
       provider_name: null,
       output_lesson_id: null,
-      discarded_lesson_id: null,
       ...overrides,
     };
   }
