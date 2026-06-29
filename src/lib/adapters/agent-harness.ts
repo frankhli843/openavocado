@@ -106,6 +106,9 @@ async function runHarnessCommand(command: string, payload: unknown): Promise<Har
       resolve(parsed);
     });
 
+    child.stdin.on("error", () => {
+      // Ignore EPIPE: child may exit before reading stdin (e.g. `exit 1`).
+    });
     child.stdin.end(JSON.stringify(payload));
   });
 }

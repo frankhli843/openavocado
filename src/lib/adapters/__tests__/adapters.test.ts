@@ -2,6 +2,8 @@ import { describe, it, expect, afterEach, beforeEach, vi } from "vitest";
 import Database from "better-sqlite3";
 import { readFileSync } from "fs";
 import path from "path";
+import { parseJobProgressEvents, summarizeJobProgress } from "../../lesson-jobs/status";
+import { summarizeAiStudioConfig, validateGoogleAiStudioKeyShape } from "../../providers/google-ai-studio";
 import {
   getCompletionAdapter,
   getRegenerationAdapter,
@@ -815,4 +817,433 @@ describe("user_provider_configs cross-user isolation", () => {
       .get(userBId) as { n: number };
     expect(bConfig.n).toBe(1);
   });
+});
+
+// ─── Google AI Studio provider health ───────────────────────────────────────
+
+describe("validateGoogleAiStudioKeyShape", () => {
+  it("accepts AIza-prefixed keys", () => {
+    expect(validateGoogleAiStudioKeyShape("AIzaSyABCDEFGHIJKLMNOPQR")).toBe(true);
+  });
+
+  it("accepts AQ.-prefixed keys", () => {
+    expect(validateGoogleAiStudioKeyShape("AQ.ABCDEFGHIJKLMNOPQRSTUVWXYZabc")).toBe(true);
+  });
+
+  it("rejects short keys", () => {
+    expect(validateGoogleAiStudioKeyShape("AIzaShort")).toBe(false);
+  });
+
+  it("rejects empty / undefined", () => {
+    expect(validateGoogleAiStudioKeyShape("")).toBe(false);
+    expect(validateGoogleAiStudioKeyShape(undefined)).toBe(false);
+    expect(validateGoogleAiStudioKeyShape(null)).toBe(false);
+  });
+
+  it("rejects keys with wrong prefix", () => {
+    expect(validateGoogleAiStudioKeyShape("sk-ABCDEFGHIJKLMNOPQRSTUVWXYZabc")).toBe(false);
+  });
+});
+
+describe("summarizeAiStudioConfig", () => {
+  afterEach(() => vi.unstubAllEnvs());
+
+  it("returns missing when key env var is absent", () => {
+    vi.stubEnv("GOOGLE_AI_STUDIO_API_KEY", "");
+    const result = summarizeAiStudioConfig();
+    expect(result.status).toBe("missing");
+    expect(result.configured).toBe(false);
+    expect(result.checked).toBe(false);
+  });
+
+  it("returns invalid-format when key has bad shape", () => {
+    vi.stubEnv("GOOGLE_AI_STUDIO_API_KEY", "bad-key-format");
+    const result = summarizeAiStudioConfig();
+    expect(result.status).toBe("invalid-format");
+    expect(result.configured).toBe(true);
+    expect(result.error).toBeDefined();
+    // The error must not leak the key value
+    expect(result.error).not.toContain("bad-key-format");
+  });
+
+  it("returns configured-unverified for a plausible key without making an API call", () => {
+    vi.stubEnv("GOOGLE_AI_STUDIO_API_KEY", "AIzaSyABCDEFGHIJKLMNOPQRSTUVWXYZ1234");
+    const result = summarizeAiStudioConfig();
+    expect(result.status).toBe("configured-unverified");
+    expect(result.configured).toBe(true);
+    expect(result.checked).toBe(false);
+  });
+
+  it("includes the configured model name in every health object", () => {
+    vi.stubEnv("GOOGLE_AI_STUDIO_API_KEY", "");
+    vi.stubEnv("GOOGLE_AI_STUDIO_MODEL", "gemini-test-model");
+    const result = summarizeAiStudioConfig();
+    expect(result.model).toBe("gemini-test-model");
+  });
+});
+
+// ─── Job progress event parsing ──────────────────────────────────────────────
+
+describe("parseJobProgressEvents", () => {
+  it("returns empty array for null/undefined/empty", () => {
+    expect(parseJobProgressEvents(null)).toEqual([]);
+    expect(parseJobProgressEvents(undefined)).toEqual([]);
+    expect(parseJobProgressEvents("")).toEqual([]);
+  });
+
+  it("returns empty array for malformed JSON", () => {
+    expect(parseJobProgressEvents("{not json}")).toEqual([]);
+    expect(parseJobProgressEvents("null")).toEqual([]);
+  });
+
+  it("parses a valid progress event array", () => {
+    const raw = JSON.stringify([
+      { ts: "2026-01-01T00:00:00Z", stage: "researching", message: "Querying learner context" },
+      { ts: "2026-01-01T00:00:05Z", stage: "authoring", message: "Calling Gemini API" },
+    ]);
+    const events = parseJobProgressEvents(raw);
+    expect(events).toHaveLength(2);
+    expect(events[0].stage).toBe("researching");
+    expect(events[0].message).toBe("Querying learner context");
+    expect(events[1].stage).toBe("authoring");
+  });
+
+  it("fills in a label when message is absent", () => {
+    const raw = JSON.stringify([
+      { ts: "2026-01-01T00:00:00Z", stage: "generating_audio" },
+    ]);
+    const events = parseJobProgressEvents(raw);
+    expect(events).toHaveLength(1);
+    expect(events[0].message).toBeTruthy();
+  });
+
+  it("skips events with no message and no stage", () => {
+    const raw = JSON.stringify([
+      { ts: "2026-01-01T00:00:00Z" },
+      { ts: "2026-01-01T00:00:05Z", stage: "authoring", message: "Writing" },
+    ]);
+    const events = parseJobProgressEvents(raw);
+    // First event has no stage/message, should be filtered or fallback
+    const authoringEvent = events.find((e) => e.stage === "authoring");
+    expect(authoringEvent).toBeDefined();
+  });
+});
+
+describe("summarizeJobProgress", () => {
+  function makeJob(overrides: Partial<{
+    status: "pending" | "dispatched" | "completed" | "failed";
+    harness_stage: string | null;
+    progress_events: string | null;
+    adapter: string;
+    trigger_event: "lesson.completed" | "lesson.discarded" | "subject.created";
+    dispatched_at: string | null;
+    created_at: string;
+    completed_at: string | null;
+    last_error_detail: string | null;
+    error: string | null;
+  }>) {
+    return {
+      id: 1,
+      subject_id: 1,
+      learner_id: 1,
+      status: "dispatched" as const,
+      harness_stage: null,
+      harness_status: null,
+      progress_events: null,
+      adapter: "agent-harness",
+      trigger_event: "lesson.completed" as const,
+      dispatched_at: new Date(Date.now() - 60_000).toISOString(),
+      created_at: new Date(Date.now() - 65_000).toISOString(),
+      completed_at: null,
+      last_error_detail: null,
+      error: null,
+      retry_count: 0,
+      provider_name: null,
+      output_lesson_id: null,
+      discarded_lesson_id: null,
+      ...overrides,
+    };
+  }
+
+  it("reports 100% and isDone=true for a completed job", () => {
+    const job = makeJob({ status: "completed", completed_at: new Date().toISOString() });
+    const view = summarizeJobProgress(job);
+    expect(view.percent).toBe(100);
+    expect(view.isDone).toBe(true);
+    expect(view.isFailed).toBe(false);
+    expect(view.remainingSeconds).toBe(0);
+  });
+
+  it("reports isFailed=true and surfaces error detail for a failed job", () => {
+    const job = makeJob({ status: "failed", last_error_detail: "Gemini returned HTTP 429" });
+    const view = summarizeJobProgress(job);
+    expect(view.isFailed).toBe(true);
+    expect(view.isDone).toBe(false);
+    expect(view.detail).toContain("Gemini returned HTTP 429");
+    expect(view.remainingSeconds).toBe(0);
+  });
+
+  it("uses harness_stage for the stage label when set", () => {
+    const job = makeJob({ harness_stage: "authoring" });
+    const view = summarizeJobProgress(job);
+    expect(view.stage).toBe("authoring");
+    expect(view.stageLabel).toBe("Authoring lesson");
+  });
+
+  it("falls back to last progress_event stage when harness_stage is null", () => {
+    const events = JSON.stringify([
+      { ts: new Date().toISOString(), stage: "researching", message: "Querying DB" },
+    ]);
+    const job = makeJob({ harness_stage: null, progress_events: events });
+    const view = summarizeJobProgress(job);
+    expect(view.stage).toBe("researching");
+  });
+
+  it("percent is between 5 and 95 for an in-progress job", () => {
+    const job = makeJob({ status: "dispatched" });
+    const view = summarizeJobProgress(job);
+    expect(view.percent).toBeGreaterThanOrEqual(5);
+    expect(view.percent).toBeLessThanOrEqual(95);
+    expect(view.isActive).toBe(true);
+  });
+
+  it("isActive is true for both pending and dispatched statuses", () => {
+    expect(summarizeJobProgress(makeJob({ status: "pending" })).isActive).toBe(true);
+    expect(summarizeJobProgress(makeJob({ status: "dispatched" })).isActive).toBe(true);
+    expect(summarizeJobProgress(makeJob({ status: "completed" })).isActive).toBe(false);
+    expect(summarizeJobProgress(makeJob({ status: "failed" })).isActive).toBe(false);
+  });
+
+  it("events array in view matches parsed progress events", () => {
+    const raw = JSON.stringify([
+      { ts: new Date().toISOString(), stage: "provider.check", message: "Checking API key" },
+      { ts: new Date().toISOString(), stage: "authoring", message: "Writing lesson" },
+    ]);
+    const job = makeJob({ progress_events: raw });
+    const view = summarizeJobProgress(job);
+    expect(view.events).toHaveLength(2);
+    expect(view.events[0].stage).toBe("provider.check");
+    expect(view.events[1].stage).toBe("authoring");
+  });
+});
+
+// ─── agent-harness: dispatch error paths ─────────────────────────────────────
+
+describe("agentHarnessAdapter dispatch error paths", () => {
+  afterEach(() => vi.unstubAllEnvs());
+
+  it("returns ok=false with AVOCADOCORE_AGENT_HARNESS_COMMAND error when command is missing", async () => {
+    vi.stubEnv("AVOCADOCORE_AGENT_HARNESS_COMMAND", "");
+    const event = {
+      event: "lesson.completed" as const,
+      learner_id: 1,
+      subject_id: 1,
+      subject_title: "Test",
+      subject_goals: null,
+      subject_criteria: null,
+      lesson_id: 7,
+      lesson_title: "Prior Work",
+      lesson_goals: [],
+      activities_completed: [],
+      assessment_qa: [],
+      code_attempts: [],
+      mastery_signals: [],
+      concepts_to_review: [],
+      concepts_ready_to_advance: [],
+      next_lesson_diagnostics: [],
+      quiz_result: null,
+      tag_difficulty_performance: [],
+      recent_misconceptions: [],
+      completed_lessons: [],
+      discarded_lessons: [],
+      workpad_summary: null,
+      learner_profile_config: null,
+      cross_subject_history: [],
+      completed_at: new Date().toISOString(),
+    };
+    const result = await agentHarnessAdapter.dispatch(event);
+    expect(result.ok).toBe(false);
+    expect(result.error).toContain("AVOCADOCORE_AGENT_HARNESS_COMMAND");
+  });
+
+  it("returns ok=false when the harness command exits non-zero", async () => {
+    vi.stubEnv("AVOCADOCORE_AGENT_HARNESS_COMMAND", "exit 1");
+    vi.stubEnv("AVOCADOCORE_AGENT_HARNESS_TIMEOUT_MS", "5000");
+    const event = {
+      event: "lesson.completed" as const,
+      learner_id: 1,
+      subject_id: 1,
+      subject_title: "Test",
+      subject_goals: null,
+      subject_criteria: null,
+      lesson_id: 7,
+      lesson_title: "Prior Work",
+      lesson_goals: [],
+      activities_completed: [],
+      assessment_qa: [],
+      code_attempts: [],
+      mastery_signals: [],
+      concepts_to_review: [],
+      concepts_ready_to_advance: [],
+      next_lesson_diagnostics: [],
+      quiz_result: null,
+      tag_difficulty_performance: [],
+      recent_misconceptions: [],
+      completed_lessons: [],
+      discarded_lessons: [],
+      workpad_summary: null,
+      learner_profile_config: null,
+      cross_subject_history: [],
+      completed_at: new Date().toISOString(),
+    };
+    const result = await agentHarnessAdapter.dispatch(event);
+    expect(result.ok).toBe(false);
+    expect(result.error).toMatch(/exited 1/);
+  }, 10_000);
+
+  it("returns ok=false when harness command produces no JSON output", async () => {
+    vi.stubEnv("AVOCADOCORE_AGENT_HARNESS_COMMAND", "echo 'plain text no json here'");
+    vi.stubEnv("AVOCADOCORE_AGENT_HARNESS_TIMEOUT_MS", "5000");
+    const event = {
+      event: "lesson.completed" as const,
+      learner_id: 1,
+      subject_id: 1,
+      subject_title: "Test",
+      subject_goals: null,
+      subject_criteria: null,
+      lesson_id: 7,
+      lesson_title: "Prior Work",
+      lesson_goals: [],
+      activities_completed: [],
+      assessment_qa: [],
+      code_attempts: [],
+      mastery_signals: [],
+      concepts_to_review: [],
+      concepts_ready_to_advance: [],
+      next_lesson_diagnostics: [],
+      quiz_result: null,
+      tag_difficulty_performance: [],
+      recent_misconceptions: [],
+      completed_lessons: [],
+      discarded_lessons: [],
+      workpad_summary: null,
+      learner_profile_config: null,
+      cross_subject_history: [],
+      completed_at: new Date().toISOString(),
+    };
+    const result = await agentHarnessAdapter.dispatch(event);
+    expect(result.ok).toBe(false);
+    expect(result.error).toMatch(/no JSON/i);
+  }, 10_000);
+
+  it("returns ok=false when harness JSON result is missing boolean ok", async () => {
+    vi.stubEnv("AVOCADOCORE_AGENT_HARNESS_COMMAND", 'echo \'{"ref":"test-123"}\'');
+    vi.stubEnv("AVOCADOCORE_AGENT_HARNESS_TIMEOUT_MS", "5000");
+    const event = {
+      event: "lesson.completed" as const,
+      learner_id: 1,
+      subject_id: 1,
+      subject_title: "Test",
+      subject_goals: null,
+      subject_criteria: null,
+      lesson_id: 7,
+      lesson_title: "Prior Work",
+      lesson_goals: [],
+      activities_completed: [],
+      assessment_qa: [],
+      code_attempts: [],
+      mastery_signals: [],
+      concepts_to_review: [],
+      concepts_ready_to_advance: [],
+      next_lesson_diagnostics: [],
+      quiz_result: null,
+      tag_difficulty_performance: [],
+      recent_misconceptions: [],
+      completed_lessons: [],
+      discarded_lessons: [],
+      workpad_summary: null,
+      learner_profile_config: null,
+      cross_subject_history: [],
+      completed_at: new Date().toISOString(),
+    };
+    const result = await agentHarnessAdapter.dispatch(event);
+    expect(result.ok).toBe(false);
+    expect(result.error).toMatch(/missing boolean ok/i);
+  }, 10_000);
+
+  it("returns ok=true when harness outputs a valid result on stdout", async () => {
+    vi.stubEnv("AVOCADOCORE_AGENT_HARNESS_COMMAND", 'echo \'{"ok":true,"ref":"harness-ref-abc","lesson_id":42}\'');
+    vi.stubEnv("AVOCADOCORE_AGENT_HARNESS_TIMEOUT_MS", "5000");
+    const event = {
+      event: "lesson.completed" as const,
+      learner_id: 1,
+      subject_id: 1,
+      subject_title: "Test",
+      subject_goals: null,
+      subject_criteria: null,
+      lesson_id: 7,
+      lesson_title: "Prior Work",
+      lesson_goals: [],
+      activities_completed: [],
+      assessment_qa: [],
+      code_attempts: [],
+      mastery_signals: [],
+      concepts_to_review: [],
+      concepts_ready_to_advance: [],
+      next_lesson_diagnostics: [],
+      quiz_result: null,
+      tag_difficulty_performance: [],
+      recent_misconceptions: [],
+      completed_lessons: [],
+      discarded_lessons: [],
+      workpad_summary: null,
+      learner_profile_config: null,
+      cross_subject_history: [],
+      completed_at: new Date().toISOString(),
+    };
+    const result = await agentHarnessAdapter.dispatch(event);
+    expect(result.ok).toBe(true);
+    expect(result.ref).toBe("harness-ref-abc");
+    expect(result.lesson_id).toBe(42);
+  }, 10_000);
+
+  it("sanitizes API key from harness error output", async () => {
+    const fakeKey = "AIzaSyFAKEKEY1234567890ABCDEF";
+    vi.stubEnv("GOOGLE_AI_STUDIO_API_KEY", fakeKey);
+    // Command that outputs the API key in stderr and exits 1
+    vi.stubEnv("AVOCADOCORE_AGENT_HARNESS_COMMAND", `bash -c 'echo "Error: ${fakeKey}" >&2; exit 1'`);
+    vi.stubEnv("AVOCADOCORE_AGENT_HARNESS_TIMEOUT_MS", "5000");
+    const event = {
+      event: "lesson.completed" as const,
+      learner_id: 1,
+      subject_id: 1,
+      subject_title: "Test",
+      subject_goals: null,
+      subject_criteria: null,
+      lesson_id: 7,
+      lesson_title: "Secrets",
+      lesson_goals: [],
+      activities_completed: [],
+      assessment_qa: [],
+      code_attempts: [],
+      mastery_signals: [],
+      concepts_to_review: [],
+      concepts_ready_to_advance: [],
+      next_lesson_diagnostics: [],
+      quiz_result: null,
+      tag_difficulty_performance: [],
+      recent_misconceptions: [],
+      completed_lessons: [],
+      discarded_lessons: [],
+      workpad_summary: null,
+      learner_profile_config: null,
+      cross_subject_history: [],
+      completed_at: new Date().toISOString(),
+    };
+    const result = await agentHarnessAdapter.dispatch(event);
+    expect(result.ok).toBe(false);
+    // Key MUST NOT appear in the error message
+    expect(result.error).not.toContain(fakeKey);
+    expect(result.error).toContain("[redacted]");
+  }, 10_000);
 });
