@@ -16,10 +16,10 @@ export interface AiStudioHealth {
   error?: string;
 }
 
-const DEFAULT_MODEL = "gemini-2.5-flash";
+const DEFAULT_MODEL = "gemini-flash-latest";
 
 export function getDefaultAiStudioModel(): string {
-  return process.env.GOOGLE_AI_STUDIO_MODEL || process.env.AVOCADOCORE_FEEDBACK_MODEL || DEFAULT_MODEL;
+  return process.env.GOOGLE_AI_STUDIO_MODEL || DEFAULT_MODEL;
 }
 
 export function hasGoogleAiStudioKey(): boolean {
@@ -28,7 +28,7 @@ export function hasGoogleAiStudioKey(): boolean {
 
 export function validateGoogleAiStudioKeyShape(apiKey: string | undefined | null): boolean {
   const key = apiKey?.trim() ?? "";
-  return /^AIza[0-9A-Za-z_-]{20,}$/.test(key);
+  return /^AIza[0-9A-Za-z_-]{20,}$/.test(key) || /^AQ\.[0-9A-Za-z_-]{20,}$/.test(key);
 }
 
 export function summarizeAiStudioConfig(): AiStudioHealth {
@@ -56,12 +56,12 @@ export async function checkGoogleAiStudioUpstream(options: { timeoutMs?: number 
 
   const key = process.env.GOOGLE_AI_STUDIO_API_KEY?.trim() ?? "";
   const model = config.model;
-  const url = `https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(model)}:generateContent?key=${encodeURIComponent(key)}`;
+  const url = `https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(model)}:generateContent`;
 
   try {
     const res = await fetch(url, {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers: { "Content-Type": "application/json", "X-goog-api-key": key },
       body: JSON.stringify({
         contents: [{ role: "user", parts: [{ text: "Reply with ok." }] }],
         generationConfig: { maxOutputTokens: 4 },

@@ -13,11 +13,12 @@ afterEach(() => {
 describe("Google AI Studio provider health", () => {
   it("recognizes expected AI Studio API key shape", () => {
     expect(validateGoogleAiStudioKeyShape("AIzaSyA123456789012345678901234567890123")).toBe(true);
-    expect(validateGoogleAiStudioKeyShape("AQ.not-a-google-api-key")).toBe(false);
+    expect(validateGoogleAiStudioKeyShape("AQ.Ab8RN6I7ApdeTBmHl0K5S8D9FCpM6zskFA1VRceHm6dIDNcJg")).toBe(true);
+    expect(validateGoogleAiStudioKeyShape("AQ.short")).toBe(false);
   });
 
   it("reports invalid-format without making an upstream request", () => {
-    vi.stubEnv("GOOGLE_AI_STUDIO_API_KEY", "AQ.not-a-google-api-key");
+    vi.stubEnv("GOOGLE_AI_STUDIO_API_KEY", "not-a-google-api-key");
 
     const health = summarizeAiStudioConfig();
 
@@ -30,11 +31,17 @@ describe("Google AI Studio provider health", () => {
     vi.stubEnv("GOOGLE_AI_STUDIO_API_KEY", "AIzaSyA123456789012345678901234567890123");
     vi.stubGlobal(
       "fetch",
-      vi.fn(async () => ({
+      vi.fn(async (url: string, init?: RequestInit) => {
+        expect(url).not.toContain("key=");
+        expect((init?.headers as Record<string, string>)["X-goog-api-key"]).toBe(
+          "AIzaSyA123456789012345678901234567890123"
+        );
+        return {
         ok: false,
         status: 400,
         text: async () => "bad key AIzaSyA123456789012345678901234567890123",
-      }))
+        };
+      })
     );
 
     const health = await checkGoogleAiStudioUpstream();
