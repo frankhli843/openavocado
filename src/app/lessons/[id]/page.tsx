@@ -384,7 +384,7 @@ export default function LessonPage({ params }: { params: Promise<{ id: string }>
       <div className="min-h-screen bg-white flex items-center justify-center">
         <div className="text-center">
           <p className="text-red-600 mb-4">{error ?? "Lesson not found"}</p>
-          <Link href="/" className="text-sm text-blue-600 hover:underline">
+          <Link href="/?resume=0" className="text-sm text-blue-600 hover:underline">
             Back to Dashboard
           </Link>
         </div>
@@ -397,7 +397,7 @@ export default function LessonPage({ params }: { params: Promise<{ id: string }>
       <div className="min-h-screen bg-white flex items-center justify-center">
         <div className="text-center">
           <p className="text-red-600 mb-4">No learner profile is available for this account.</p>
-          <Link href="/" className="text-sm text-blue-600 hover:underline">
+          <Link href="/?resume=0" className="text-sm text-blue-600 hover:underline">
             Back to Dashboard
           </Link>
         </div>

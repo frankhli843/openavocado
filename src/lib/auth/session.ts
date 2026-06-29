@@ -20,6 +20,8 @@ export interface SessionUser {
   is_guest: boolean;
 }
 
+type SessionUserRow = Omit<SessionUser, "is_guest"> & { is_guest: number };
+
 function getSecret(): string {
   const secret = process.env.AVOCADOCORE_SESSION_SECRET;
   if (!secret) throw new Error("AVOCADOCORE_SESSION_SECRET is required when auth is enabled");
@@ -100,9 +102,7 @@ export async function getSessionUser(): Promise<SessionUser | null> {
        JOIN users u ON u.id = s.user_id
        WHERE s.token = ? AND s.expires_at > datetime('now')`
     )
-    .get(token) as
-    | (Omit<SessionUser, "is_guest"> & { is_guest: number })
-    | undefined;
+    .get(token) as SessionUserRow | undefined;
 
   return row ? { ...row, is_guest: Boolean(row.is_guest) } : null;
 }
@@ -117,7 +117,7 @@ export function getSessionToken(cookieHeader: string | null): string | null {
 
 export async function ensureSessionUser(): Promise<SessionUser> {
   const existing = await getSessionUser();
-  if (existing) return existing;
+  if (existing) return ensureActiveLearnerProfile(existing);
   if (process.env.AVOCADOCORE_AUTH_REQUIRED !== "true") {
     const db = getDb();
     let row = db
@@ -126,9 +126,7 @@ export async function ensureSessionUser(): Promise<SessionUser> {
                 COALESCE(is_guest, 0) AS is_guest
          FROM users ORDER BY id ASC LIMIT 1`
       )
-      .get() as
-      | (Omit<SessionUser, "is_guest"> & { is_guest: number })
-      | undefined;
+      .get() as SessionUserRow | undefined;
     if (!row) {
       const result = db
         .prepare("INSERT INTO users (username, display_name, is_guest) VALUES ('local-default', 'Local learner', 0)")
@@ -147,9 +145,34 @@ export async function ensureSessionUser(): Promise<SessionUser> {
         is_guest: 0,
       };
     }
-    if (row) return { ...row, is_guest: Boolean(row.is_guest) };
+    if (row) return ensureActiveLearnerProfile({ ...row, is_guest: Boolean(row.is_guest) });
   }
   return createGuestSession();
+}
+
+export function ensureActiveLearnerProfile(user: SessionUser): SessionUser {
+  const db = getDb();
+  if (user.active_learner_id != null) {
+    const active = db
+      .prepare("SELECT id FROM learner_profiles WHERE id = ? AND user_id = ?")
+      .get(user.active_learner_id, user.id) as { id: number } | undefined;
+    if (active) return user;
+  }
+
+  const existingProfile = db
+    .prepare("SELECT id FROM learner_profiles WHERE user_id = ? ORDER BY created_at ASC, id ASC LIMIT 1")
+    .get(user.id) as { id: number } | undefined;
+  const learnerId =
+    existingProfile?.id ??
+    (db
+      .prepare("INSERT INTO learner_profiles (user_id, display_name, preferred_lang) VALUES (?, ?, 'en')")
+      .run(user.id, user.display_name || user.username).lastInsertRowid as number);
+
+  db.prepare("UPDATE users SET active_learner_id = ?, updated_at = datetime('now') WHERE id = ?").run(
+    learnerId,
+    user.id
+  );
+  return { ...user, active_learner_id: learnerId };
 }
 
 export async function createGuestSession(): Promise<SessionUser> {
