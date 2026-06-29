@@ -84,8 +84,11 @@ export async function POST(request: Request) {
       },
       {
         ts: new Date().toISOString(),
-        stage: "generating_lesson",
-        message: "Generating the first lesson",
+        stage: adapterName === "local-queue" ? "local.fixture" : "generating_lesson",
+        message:
+          adapterName === "local-queue"
+            ? "Generating the first lesson with the deterministic local fixture"
+            : "Generating the first lesson",
       },
     ];
     const jobResult = db

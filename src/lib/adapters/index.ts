@@ -8,10 +8,12 @@ import { noopAdapter, noopRegenerationAdapter, noopSubjectCreatedDispatcher } fr
 import { localQueueAdapter, localQueueRegenerationAdapter, localQueueSubjectCreatedDispatcher } from "./local-queue";
 import { webhookAdapter, webhookRegenerationAdapter, webhookSubjectCreatedDispatcher } from "./webhook";
 import { doraTaskAdapter, doraTaskRegenerationAdapter, doraTaskSubjectCreatedDispatcher } from "./dora-task";
+import { agentHarnessAdapter, agentHarnessRegenerationAdapter, agentHarnessSubjectCreatedDispatcher } from "./agent-harness";
 
 const ADAPTERS: Record<CompletionAdapter, CompletionHookAdapter> = {
   noop: noopAdapter,
   "local-queue": localQueueAdapter,
+  "agent-harness": agentHarnessAdapter,
   webhook: webhookAdapter,
   "dora-task": doraTaskAdapter,
 };
@@ -19,6 +21,7 @@ const ADAPTERS: Record<CompletionAdapter, CompletionHookAdapter> = {
 const REGENERATION_ADAPTERS: Record<CompletionAdapter, RegenerationHookAdapter> = {
   noop: noopRegenerationAdapter,
   "local-queue": localQueueRegenerationAdapter,
+  "agent-harness": agentHarnessRegenerationAdapter,
   webhook: webhookRegenerationAdapter,
   "dora-task": doraTaskRegenerationAdapter,
 };
@@ -26,6 +29,7 @@ const REGENERATION_ADAPTERS: Record<CompletionAdapter, RegenerationHookAdapter> 
 const SUBJECT_CREATED_DISPATCHERS: Record<CompletionAdapter, SubjectCreatedDispatcher> = {
   noop: noopSubjectCreatedDispatcher,
   "local-queue": localQueueSubjectCreatedDispatcher,
+  "agent-harness": agentHarnessSubjectCreatedDispatcher,
   webhook: webhookSubjectCreatedDispatcher,
   "dora-task": doraTaskSubjectCreatedDispatcher,
 };
@@ -63,6 +67,7 @@ export function getSubjectCreatedDispatcher(): SubjectCreatedDispatcher {
 export {
   noopAdapter, noopRegenerationAdapter, noopSubjectCreatedDispatcher,
   localQueueAdapter, localQueueRegenerationAdapter, localQueueSubjectCreatedDispatcher,
+  agentHarnessAdapter, agentHarnessRegenerationAdapter, agentHarnessSubjectCreatedDispatcher,
   webhookAdapter, webhookRegenerationAdapter, webhookSubjectCreatedDispatcher,
   doraTaskAdapter, doraTaskRegenerationAdapter, doraTaskSubjectCreatedDispatcher,
 };

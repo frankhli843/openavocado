@@ -28,10 +28,17 @@ const STAGE_LABELS: Record<string, string> = {
   "lesson.discarded": "Reading discard request",
   lesson_completed: "Reading completion",
   "mastery.updated": "Updating mastery",
+  "provider.check": "Checking provider",
+  researching: "Researching",
   planning: "Planning next lesson",
+  authoring: "Authoring lesson",
+  validating: "Validating lesson",
+  "local.fixture": "Local fixture generation",
   generating_lesson: "Generating lesson",
   "lesson.generated": "Lesson ready",
   generating_audio: "Generating audio",
+  "browser.verifying": "Verifying in browser",
+  "repairing": "Repairing lesson",
   finalizing: "Finalizing",
   completed: "Done",
   failed: "Needs attention",
@@ -44,10 +51,17 @@ const STAGE_OFFSETS: Record<string, number> = {
   "lesson.discarded": 5,
   lesson_completed: 5,
   "mastery.updated": 20,
+  "provider.check": 25,
+  researching: 45,
   planning: 35,
+  authoring: 75,
+  validating: 120,
+  "local.fixture": 60,
   generating_lesson: 65,
   "lesson.generated": 130,
   generating_audio: 145,
+  "browser.verifying": 165,
+  repairing: 175,
   finalizing: 175,
   completed: 180,
   failed: 180,
@@ -136,6 +150,7 @@ function estimateTotalSeconds(job: NextLessonJob, stage: string): number {
   const base = DEFAULT_TOTAL_SECONDS[job.trigger_event] ?? 180;
   const stageFloor = (STAGE_OFFSETS[stage] ?? 0) + 15;
   if (job.adapter === "dora-task") return Math.max(base, stageFloor, 20 * 60);
+  if (job.adapter === "agent-harness") return Math.max(base, stageFloor, 15 * 60);
   if (job.adapter === "webhook") return Math.max(base, stageFloor, 5 * 60);
   return Math.max(base, stageFloor);
 }

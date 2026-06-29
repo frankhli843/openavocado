@@ -9,6 +9,7 @@
 import { NextResponse } from "next/server";
 import { getDb } from "@/db/connection";
 import { decryptApiKey, isKeySecretConfigured } from "@/lib/provider-crypto";
+import { checkGoogleAiStudioUpstream, summarizeAiStudioConfig } from "@/lib/providers/google-ai-studio";
 
 type ProviderRow = {
   id: number;
@@ -18,6 +19,38 @@ type ProviderRow = {
   model: string | null;
   encrypted_api_key: string | null;
 };
+
+export async function GET(request: Request) {
+  try {
+    const { searchParams } = new URL(request.url);
+    const providerName = searchParams.get("provider_name") || process.env.AVOCADOCORE_DEFAULT_PROVIDER || "unset";
+    const check = searchParams.get("check") === "1" || searchParams.get("check") === "true";
+
+    if (providerName === "google-ai-studio") {
+      const health = check ? await checkGoogleAiStudioUpstream({ timeoutMs: 8_000 }) : summarizeAiStudioConfig();
+      return NextResponse.json({
+        provider_name: "google-ai-studio",
+        health_status: health.status,
+        configured: health.configured,
+        checked: health.checked,
+        model: health.model,
+        health_error: health.error ?? null,
+      });
+    }
+
+    return NextResponse.json({
+      provider_name: providerName,
+      health_status: providerName === "unset" ? "not-required" : "unsupported",
+      configured: providerName !== "unset",
+      checked: false,
+      model: null,
+      health_error: providerName === "unset" ? null : "Only google-ai-studio default provider health is supported by GET.",
+    });
+  } catch (err) {
+    console.error("[api/provider/health GET]", err);
+    return NextResponse.json({ error: "Health check failed" }, { status: 500 });
+  }
+}
 
 export async function POST(request: Request) {
   try {

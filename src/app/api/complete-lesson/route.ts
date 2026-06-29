@@ -340,6 +340,7 @@ export async function POST(request: Request) {
     };
 
     const adapter = getCompletionAdapter();
+    const generatorStage = adapter.name === "local-queue" ? "local.fixture" : "generating_lesson";
     const progressEvents = [
       {
         ts: new Date().toISOString(),
@@ -353,8 +354,11 @@ export async function POST(request: Request) {
       },
       {
         ts: new Date().toISOString(),
-        stage: "generating_lesson",
-        message: "Generating the next lesson from your latest progress",
+        stage: generatorStage,
+        message:
+          adapter.name === "local-queue"
+            ? "Generating the next lesson with the deterministic local fixture"
+            : "Generating the next lesson from your latest progress",
       },
     ];
     const jobResult = db

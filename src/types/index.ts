@@ -67,7 +67,7 @@ export type ProgressMetric =
   | "review_frequency"
   | "weak_spot_count";
 
-export type CompletionAdapter = "dora-task" | "webhook" | "local-queue" | "noop";
+export type CompletionAdapter = "dora-task" | "webhook" | "local-queue" | "agent-harness" | "noop";
 
 /**
  * Richer job status for the AvocadoCore-native harness workflow.

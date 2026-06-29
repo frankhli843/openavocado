@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { getDb } from "@/db/connection";
 import { doraemonEdgeAvailable, espeakAvailable } from "@/lib/audio/tts";
+import { summarizeAiStudioConfig } from "@/lib/providers/google-ai-studio";
 
 /**
  * GET /api/health
@@ -23,12 +24,14 @@ export async function GET() {
   checks.auth = process.env.AVOCADOCORE_AUTH_REQUIRED === "true" ? "required" : "open";
   const defaultProvider = process.env.AVOCADOCORE_DEFAULT_PROVIDER || "unset";
   checks.default_ai_provider = defaultProvider;
-  checks.ai_studio_key =
-    defaultProvider === "google-ai-studio"
-      ? process.env.GOOGLE_AI_STUDIO_API_KEY
-        ? "configured"
-        : "missing"
-      : "not-required";
+  if (defaultProvider === "google-ai-studio") {
+    const aiStudio = summarizeAiStudioConfig();
+    checks.ai_studio_key = aiStudio.configured ? "configured" : "missing";
+    checks.ai_studio_provider = aiStudio.status;
+  } else {
+    checks.ai_studio_key = "not-required";
+    checks.ai_studio_provider = "not-required";
+  }
   checks.edge_tts = doraemonEdgeAvailable() ? "ok" : "missing";
   checks.espeak_ng = espeakAvailable() ? "ok" : "missing";
 
@@ -40,6 +43,8 @@ export async function GET() {
       v === "configured" ||
       v === "not-required" ||
       v === "google-ai-studio" ||
+      v === "configured-unverified" ||
+      v === "healthy" ||
       v === "unset" ||
       v === "ok"
   );

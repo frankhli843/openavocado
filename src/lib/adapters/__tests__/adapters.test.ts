@@ -12,6 +12,9 @@ import {
   localQueueAdapter,
   localQueueRegenerationAdapter,
   localQueueSubjectCreatedDispatcher,
+  agentHarnessAdapter,
+  agentHarnessRegenerationAdapter,
+  agentHarnessSubjectCreatedDispatcher,
   webhookAdapter,
   webhookRegenerationAdapter,
   webhookSubjectCreatedDispatcher,
@@ -46,6 +49,11 @@ describe("getCompletionAdapter", () => {
     expect(getCompletionAdapter()).toBe(webhookAdapter);
   });
 
+  it("returns agent-harness adapter", () => {
+    vi.stubEnv("AVOCADOCORE_COMPLETION_ADAPTER", "agent-harness");
+    expect(getCompletionAdapter()).toBe(agentHarnessAdapter);
+  });
+
   it("returns dora-task adapter", () => {
     vi.stubEnv("AVOCADOCORE_COMPLETION_ADAPTER", "dora-task");
     expect(getCompletionAdapter()).toBe(doraTaskAdapter);
@@ -57,7 +65,7 @@ describe("getCompletionAdapter", () => {
   });
 
   it("all completion adapters have a name and dispatch function", () => {
-    for (const adapter of [noopAdapter, localQueueAdapter, webhookAdapter, doraTaskAdapter]) {
+    for (const adapter of [noopAdapter, localQueueAdapter, agentHarnessAdapter, webhookAdapter, doraTaskAdapter]) {
       expect(typeof adapter.name).toBe("string");
       expect(adapter.name.length).toBeGreaterThan(0);
       expect(typeof adapter.dispatch).toBe("function");
@@ -86,6 +94,11 @@ describe("getRegenerationAdapter", () => {
     expect(getRegenerationAdapter()).toBe(webhookRegenerationAdapter);
   });
 
+  it("returns agent-harness regeneration adapter", () => {
+    vi.stubEnv("AVOCADOCORE_COMPLETION_ADAPTER", "agent-harness");
+    expect(getRegenerationAdapter()).toBe(agentHarnessRegenerationAdapter);
+  });
+
   it("returns dora-task regeneration adapter", () => {
     vi.stubEnv("AVOCADOCORE_COMPLETION_ADAPTER", "dora-task");
     expect(getRegenerationAdapter()).toBe(doraTaskRegenerationAdapter);
@@ -101,6 +114,7 @@ describe("getRegenerationAdapter", () => {
     const pairs = [
       ["noop", noopAdapter, noopRegenerationAdapter],
       ["local-queue", localQueueAdapter, localQueueRegenerationAdapter],
+      ["agent-harness", agentHarnessAdapter, agentHarnessRegenerationAdapter],
       ["webhook", webhookAdapter, webhookRegenerationAdapter],
       ["dora-task", doraTaskAdapter, doraTaskRegenerationAdapter],
     ] as const;
@@ -226,6 +240,11 @@ describe("getSubjectCreatedDispatcher", () => {
     expect(getSubjectCreatedDispatcher()).toBe(webhookSubjectCreatedDispatcher);
   });
 
+  it("returns agent-harness dispatcher for 'agent-harness'", () => {
+    vi.stubEnv("AVOCADOCORE_COMPLETION_ADAPTER", "agent-harness");
+    expect(getSubjectCreatedDispatcher()).toBe(agentHarnessSubjectCreatedDispatcher);
+  });
+
   it("returns dora-task dispatcher for 'dora-task'", () => {
     vi.stubEnv("AVOCADOCORE_COMPLETION_ADAPTER", "dora-task");
     expect(getSubjectCreatedDispatcher()).toBe(doraTaskSubjectCreatedDispatcher);
@@ -234,6 +253,35 @@ describe("getSubjectCreatedDispatcher", () => {
   it("falls back to noop for unknown adapter name", () => {
     vi.stubEnv("AVOCADOCORE_COMPLETION_ADAPTER", "unknown-xyz");
     expect(getSubjectCreatedDispatcher()).toBe(noopSubjectCreatedDispatcher);
+  });
+});
+
+// ─── agent-harness dispatcher ───────────────────────────────────────────────
+
+describe("agentHarnessSubjectCreatedDispatcher", () => {
+  afterEach(() => vi.unstubAllEnvs());
+
+  it("fails loudly instead of falling back when no harness command is configured", async () => {
+    vi.stubEnv("AVOCADOCORE_AGENT_HARNESS_COMMAND", "");
+    const event = {
+      event: "subject.created" as const,
+      learner_id: 1,
+      subject_id: 1,
+      subject_title: "Test Subject",
+      subject_description: null,
+      subject_goals: null,
+      subject_criteria: null,
+      current_level: "familiarity" as const,
+      workpad_summary: null,
+      learner_profile_config: null,
+      created_at: new Date().toISOString(),
+    };
+
+    const result = await agentHarnessSubjectCreatedDispatcher(event);
+
+    expect(result.ok).toBe(false);
+    expect(result.error).toContain("AVOCADOCORE_AGENT_HARNESS_COMMAND");
+    expect(result.error).toContain("Refusing to fall back");
   });
 });
 
