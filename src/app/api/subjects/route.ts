@@ -3,7 +3,7 @@ import { getDb } from "@/db/connection";
 import { seedDatabase } from "@/db/seed";
 import { getSubjectCreatedDispatcher } from "@/lib/adapters";
 import { computeSubjectMastery } from "@/lib/mastery";
-import type { LearnerProfile, Subject, SubjectCreatedEvent, SubjectSummary } from "@/types";
+import type { LearnerProfile, NextLessonJob, Subject, SubjectCreatedEvent, SubjectSummary } from "@/types";
 
 /** POST /api/subjects — create a new subject for a learner */
 export async function POST(request: Request) {
@@ -71,7 +71,52 @@ export async function POST(request: Request) {
 
     const adapterName = process.env.AVOCADOCORE_COMPLETION_ADAPTER || "dora-task";
     const dispatcher = getSubjectCreatedDispatcher();
+    const progressEvents = [
+      {
+        ts: new Date().toISOString(),
+        stage: "subject.created",
+        message: "Subject created and saved",
+      },
+      {
+        ts: new Date().toISOString(),
+        stage: "planning",
+        message: "Planning the first lesson from your goals",
+      },
+      {
+        ts: new Date().toISOString(),
+        stage: "generating_lesson",
+        message: "Generating the first lesson",
+      },
+    ];
+    const jobResult = db
+      .prepare(
+        `INSERT INTO next_lesson_jobs
+           (subject_id, trigger_event, adapter, status, payload, dispatched_at,
+            harness_status, harness_stage, progress_events)
+         VALUES (?, 'subject.created', ?, 'dispatched', ?, datetime('now'), 'running', 'generating_lesson', ?)`
+      )
+      .run(subject.id, adapterName, JSON.stringify(event), JSON.stringify(progressEvents));
+
     const dispatchResult = await dispatcher(event);
+    progressEvents.push(
+      dispatchResult.ok && dispatchResult.lesson_id
+        ? {
+            ts: new Date().toISOString(),
+            stage: "lesson.generated",
+            message: `Generated first lesson ${dispatchResult.lesson_id}`,
+          }
+        : dispatchResult.ok
+        ? {
+            ts: new Date().toISOString(),
+            stage: "planning",
+            message: "Lesson request accepted by the worker",
+          }
+        : {
+            ts: new Date().toISOString(),
+            stage: "failed",
+            message: dispatchResult.error ?? "First lesson generation failed",
+          }
+    );
 
     // Status semantics:
     //   "completed"  — synchronous dispatch finished and produced a lesson_id (e.g. local-queue)
@@ -83,21 +128,29 @@ export async function POST(request: Request) {
       ? "completed"
       : "dispatched";
 
-    const jobResult = db
-      .prepare(
-        `INSERT INTO next_lesson_jobs
-           (subject_id, trigger_event, adapter, status, payload, adapter_ref, error, output_lesson_id, dispatched_at)
-         VALUES (?, 'subject.created', ?, ?, ?, ?, ?, ?, datetime('now'))`
-      )
-      .run(
-        subject.id,
-        adapterName,
-        jobStatus,
-        JSON.stringify(event),
-        dispatchResult.ref ?? null,
-        dispatchResult.error ?? null,
-        dispatchResult.lesson_id ?? null
-      );
+    db.prepare(
+      `UPDATE next_lesson_jobs
+       SET status = ?,
+           adapter_ref = ?,
+           error = ?,
+           output_lesson_id = ?,
+           completed_at = ?,
+           harness_status = ?,
+           harness_stage = ?,
+           progress_events = ?,
+           updated_at = datetime('now')
+       WHERE id = ?`
+    ).run(
+      jobStatus,
+      dispatchResult.ref ?? null,
+      dispatchResult.error ?? null,
+      dispatchResult.lesson_id ?? null,
+      dispatchResult.ok && dispatchResult.lesson_id ? new Date().toISOString() : null,
+      dispatchResult.ok && dispatchResult.lesson_id ? "done" : dispatchResult.ok ? "waiting" : "failed",
+      dispatchResult.ok && dispatchResult.lesson_id ? "lesson.generated" : dispatchResult.ok ? "planning" : "failed",
+      JSON.stringify(progressEvents),
+      jobResult.lastInsertRowid
+    );
 
     return NextResponse.json(
       {
@@ -157,9 +210,24 @@ export async function GET(request: Request) {
       .all(learnerId) as SubjectSummary[];
 
     // Attach a computed mastery summary to each subject so cards can show a
-    // score + trend at a glance.
+    // score + trend at a glance, plus the most recent generation job so
+    // dashboard cards can explain pending work without opening the subject.
     for (const s of subjects) {
       s.mastery = computeSubjectMastery(db, s.id, learnerId);
+      s.latest_generation_job =
+        (db
+          .prepare(
+            `SELECT id, subject_id, completed_lesson_id, discarded_lesson_id,
+                    trigger_event, adapter, status, payload, adapter_ref, error,
+                    dispatched_at, completed_at, created_at, updated_at,
+                    harness_status, harness_stage, progress_events, retry_count,
+                    last_error_detail, provider_name, output_lesson_id
+             FROM next_lesson_jobs
+             WHERE subject_id = ?
+             ORDER BY created_at DESC
+             LIMIT 1`
+          )
+          .get(s.id) as NextLessonJob | undefined) ?? null;
     }
 
     return NextResponse.json({ subjects, learner_id: learnerId });

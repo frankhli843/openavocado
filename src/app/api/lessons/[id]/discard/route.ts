@@ -140,24 +140,62 @@ export async function POST(
 
     // Dispatch the regeneration adapter
     const adapter = getRegenerationAdapter();
-    const adapterResult = await adapter.dispatch(event);
-
-    // Record a next_lesson_job entry for this regeneration request
+    const progressEvents = [
+      {
+        ts: new Date().toISOString(),
+        stage: "lesson.discarded",
+        message: "Discard request recorded",
+      },
+      {
+        ts: new Date().toISOString(),
+        stage: "planning",
+        message: "Planning a replacement lesson from your feedback",
+      },
+    ];
     const jobResult = db
       .prepare(
         `INSERT INTO next_lesson_jobs
            (subject_id, discarded_lesson_id, trigger_event, adapter, status, payload,
-            adapter_ref, error, dispatched_at)
-         VALUES (?, ?, 'lesson.discarded', ?, ?, ?, ?, ?, datetime('now'))`
+            dispatched_at, harness_status, harness_stage, progress_events)
+         VALUES (?, ?, 'lesson.discarded', ?, 'dispatched', ?, datetime('now'), 'running', 'planning', ?)`
+      )
+      .run(subject.id, lessonId, adapter.name, JSON.stringify(event), JSON.stringify(progressEvents));
+
+    const adapterResult = await adapter.dispatch(event);
+    progressEvents.push(
+      adapterResult.ok
+        ? {
+            ts: new Date().toISOString(),
+            stage: "planning",
+            message: "Replacement lesson request accepted",
+          }
+        : {
+            ts: new Date().toISOString(),
+            stage: "failed",
+            message: adapterResult.error ?? "Replacement lesson generation failed",
+          }
+    );
+
+    db
+      .prepare(
+        `UPDATE next_lesson_jobs
+         SET status = ?,
+             adapter_ref = ?,
+             error = ?,
+             harness_status = ?,
+             harness_stage = ?,
+             progress_events = ?,
+             updated_at = datetime('now')
+         WHERE id = ?`
       )
       .run(
-        subject.id,
-        lessonId,
-        adapter.name,
         adapterResult.ok ? "dispatched" : "failed",
-        JSON.stringify(event),
         adapterResult.ref || null,
-        adapterResult.error || null
+        adapterResult.error || null,
+        adapterResult.ok ? "waiting" : "failed",
+        adapterResult.ok ? "planning" : "failed",
+        JSON.stringify(progressEvents),
+        jobResult.lastInsertRowid
       );
 
     const discardedLesson = db

@@ -340,35 +340,82 @@ export async function POST(request: Request) {
     };
 
     const adapter = getCompletionAdapter();
+    const progressEvents = [
+      {
+        ts: new Date().toISOString(),
+        stage: "lesson_completed",
+        message: "Lesson completion recorded",
+      },
+      {
+        ts: new Date().toISOString(),
+        stage: "mastery.updated",
+        message: "Updated mastery, quiz, code, and diagnostic evidence",
+      },
+      {
+        ts: new Date().toISOString(),
+        stage: "generating_lesson",
+        message: "Generating the next lesson from your latest progress",
+      },
+    ];
+    const jobResult = db
+      .prepare(
+        `INSERT INTO next_lesson_jobs
+           (subject_id, completed_lesson_id, trigger_event, adapter, status, payload,
+            dispatched_at, harness_status, harness_stage, progress_events)
+         VALUES (?, ?, 'lesson.completed', ?, 'dispatched', ?, datetime('now'), 'running', 'generating_lesson', ?)`
+      )
+      .run(
+        lesson.subject_id,
+        lesson_id,
+        adapter.name,
+        JSON.stringify(event),
+        JSON.stringify(progressEvents)
+      );
+    const nextLessonJobId = jobResult.lastInsertRowid as number;
+
     const dispatchResult = await adapter.dispatch(event);
+    progressEvents.push(
+      dispatchResult.ok && dispatchResult.lesson_id
+        ? {
+            ts: new Date().toISOString(),
+            stage: "lesson.generated",
+            message: `Generated next lesson ${dispatchResult.lesson_id}`,
+          }
+        : dispatchResult.ok
+        ? {
+            ts: new Date().toISOString(),
+            stage: "planning",
+            message: "Generation request accepted by the lesson worker",
+          }
+        : {
+            ts: new Date().toISOString(),
+            stage: "failed",
+            message: dispatchResult.error ?? "Next lesson generation failed",
+          }
+    );
 
     db.prepare(
-      `INSERT INTO next_lesson_jobs
-         (subject_id, completed_lesson_id, trigger_event, adapter, status, payload,
-          adapter_ref, error, output_lesson_id, dispatched_at, completed_at,
-          harness_status, harness_stage, progress_events)
-       VALUES (?, ?, 'lesson.completed', ?, ?, ?, ?, ?, ?, datetime('now'), ?, ?, ?, ?)`
+      `UPDATE next_lesson_jobs
+       SET status = ?,
+           adapter_ref = ?,
+           error = ?,
+           output_lesson_id = ?,
+           completed_at = ?,
+           harness_status = ?,
+           harness_stage = ?,
+           progress_events = ?,
+           updated_at = datetime('now')
+       WHERE id = ?`
     ).run(
-      lesson.subject_id,
-      lesson_id,
-      adapter.name,
       dispatchResult.ok && dispatchResult.lesson_id ? "completed" : dispatchResult.ok ? "dispatched" : "failed",
-      JSON.stringify(event),
       dispatchResult.ref ?? null,
       dispatchResult.error ?? null,
       dispatchResult.lesson_id ?? null,
       dispatchResult.ok && dispatchResult.lesson_id ? new Date().toISOString() : null,
-      dispatchResult.ok && dispatchResult.lesson_id ? "done" : null,
-      dispatchResult.ok && dispatchResult.lesson_id ? "lesson.generated" : null,
-      dispatchResult.ok && dispatchResult.lesson_id
-        ? JSON.stringify([
-            {
-              ts: new Date().toISOString(),
-              stage: "completed",
-              message: `Generated next lesson ${dispatchResult.lesson_id}`,
-            },
-          ])
-        : null
+      dispatchResult.ok && dispatchResult.lesson_id ? "done" : dispatchResult.ok ? "waiting" : "failed",
+      dispatchResult.ok && dispatchResult.lesson_id ? "lesson.generated" : dispatchResult.ok ? "planning" : "failed",
+      JSON.stringify(progressEvents),
+      nextLessonJobId
     );
 
     createSubjectJournalEntry(db, {

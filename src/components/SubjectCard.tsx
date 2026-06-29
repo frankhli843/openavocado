@@ -3,6 +3,7 @@
 import Link from "next/link";
 import type { SubjectSummary } from "@/types";
 import { MasteryScore } from "./MasteryScore";
+import { formatDuration, summarizeJobProgress } from "@/lib/lesson-jobs/status";
 
 interface SubjectCardProps {
   subject: SubjectSummary;
@@ -24,6 +25,11 @@ export function SubjectCard({ subject, onArchiveToggle, busy }: SubjectCardProps
       : 0;
 
   const isArchived = subject.status === "archived";
+  const latestJob = subject.latest_generation_job;
+  const jobSummary =
+    latestJob && latestJob.adapter !== "noop" && (latestJob.status === "pending" || latestJob.status === "dispatched" || latestJob.status === "failed")
+      ? summarizeJobProgress(latestJob)
+      : null;
 
   return (
     <div className="relative p-5 bg-white border border-gray-200 rounded-xl hover:border-blue-300 hover:shadow-sm transition-all group">
@@ -51,6 +57,27 @@ export function SubjectCard({ subject, onArchiveToggle, busy }: SubjectCardProps
         <div className="mb-3">
           <MasteryScore mastery={subject.mastery} />
         </div>
+
+        {jobSummary && (
+          <div
+            className={`mb-3 rounded-lg border px-3 py-2 text-xs ${
+              jobSummary.isFailed
+                ? "border-red-200 bg-red-50 text-red-700"
+                : "border-blue-100 bg-blue-50 text-blue-700"
+            }`}
+          >
+            <div className="flex items-center justify-between gap-3">
+              <span className="min-w-0 truncate font-medium">{jobSummary.stageLabel}</span>
+              <span className="shrink-0 opacity-75">
+                {jobSummary.isFailed ? "Needs attention" : `ETA ${formatDuration(jobSummary.remainingSeconds)}`}
+              </span>
+            </div>
+            <div className="mt-1 h-1.5 w-full overflow-hidden rounded-full bg-current/15">
+              <div className="h-full rounded-full bg-current transition-all" style={{ width: `${jobSummary.percent}%` }} />
+            </div>
+            <div className="mt-1 truncate opacity-75">{jobSummary.detail}</div>
+          </div>
+        )}
 
         {/* Stats row */}
         <div className="flex items-center gap-4 text-xs text-gray-500 mb-3">

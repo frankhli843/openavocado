@@ -52,10 +52,11 @@ export async function GET(
     // Most recent generation jobs — learner-visible status panel.
     const generation_jobs = db
       .prepare(
-        `SELECT id, trigger_event, adapter, status, adapter_ref, error,
+        `SELECT id, subject_id, completed_lesson_id, discarded_lesson_id,
+                trigger_event, adapter, status, payload, adapter_ref, error,
+                dispatched_at, completed_at, created_at, updated_at,
                 harness_status, harness_stage, progress_events, retry_count,
-                last_error_detail, provider_name, output_lesson_id,
-                dispatched_at, completed_at, created_at
+                last_error_detail, provider_name, output_lesson_id
          FROM next_lesson_jobs
          WHERE subject_id = ?
          ORDER BY created_at DESC

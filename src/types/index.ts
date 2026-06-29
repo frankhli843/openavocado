@@ -441,6 +441,8 @@ export interface SubjectSummary extends Subject {
   learner_display_name: string;
   /** Computed per-subject mastery summary (score, trend, explanation). */
   mastery?: SubjectMastery;
+  /** Most recent generation job, used for dashboard-level pending-work visibility. */
+  latest_generation_job?: NextLessonJob | null;
 }
 
 export interface LessonDetail extends Lesson {

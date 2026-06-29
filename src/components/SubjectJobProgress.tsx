@@ -10,29 +10,17 @@
  */
 
 import type { NextLessonJob } from "@/types";
+import { formatDuration, summarizeJobProgress } from "@/lib/lesson-jobs/status";
 
 interface Props {
   jobs: NextLessonJob[];
 }
-
-const STATUS_LABEL: Record<string, string> = {
-  pending: "Pending",
-  dispatched: "Dispatched",
-  completed: "Done",
-  failed: "Failed",
-};
 
 const STATUS_COLORS: Record<string, string> = {
   pending: "bg-amber-50 text-amber-700 border-amber-200",
   dispatched: "bg-blue-50 text-blue-700 border-blue-200",
   completed: "bg-green-50 text-green-700 border-green-200",
   failed: "bg-red-50 text-red-700 border-red-200",
-};
-
-const TRIGGER_LABEL: Record<string, string> = {
-  "subject.created": "Initial assessment",
-  "lesson.completed": "Next lesson",
-  "lesson.discarded": "Replacement lesson",
 };
 
 function timeAgo(isoDate: string | null | undefined): string {
@@ -77,24 +65,38 @@ export function SubjectJobProgress({ jobs }: Props) {
 }
 
 function JobRow({ job }: { job: NextLessonJob }) {
+  const summary = summarizeJobProgress(job);
   const statusColor = STATUS_COLORS[job.status] ?? "bg-gray-50 text-gray-600 border-gray-200";
-  const triggerLabel = TRIGGER_LABEL[job.trigger_event] ?? job.trigger_event;
   const when = timeAgo(job.dispatched_at ?? job.created_at);
+  const recentEvents = summary.events.slice(-4);
 
   return (
     <div className={`rounded-xl border px-4 py-3 text-sm ${statusColor}`}>
       <div className="flex items-center justify-between gap-3">
         <div className="flex items-center gap-2 min-w-0">
           <StatusDot status={job.status} />
-          <span className="font-medium truncate">{triggerLabel}</span>
+          <span className="font-medium truncate">{summary.label}</span>
           {job.adapter && job.adapter !== "noop" && (
             <span className="text-xs opacity-60 shrink-0">via {job.adapter}</span>
           )}
         </div>
         <div className="flex items-center gap-2 shrink-0 text-xs opacity-70">
-          {STATUS_LABEL[job.status] ?? job.status}
+          {summary.isDone ? "Ready" : summary.isFailed ? "Failed" : `ETA ${formatDuration(summary.remainingSeconds)}`}
           {when && <span>{when}</span>}
         </div>
+      </div>
+
+      <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs opacity-80">
+        <span className="font-medium">{summary.stageLabel}</span>
+        {!summary.isDone && !summary.isFailed && (
+          <>
+            <span>{summary.percent}%</span>
+            <span>{formatDuration(summary.elapsedSeconds)} elapsed</span>
+          </>
+        )}
+      </div>
+      <div className="mt-2 h-1.5 w-full overflow-hidden rounded-full bg-current/15">
+        <div className="h-full rounded-full bg-current transition-all" style={{ width: `${summary.percent}%` }} />
       </div>
 
       {/* Output lesson link for local-queue synchronous jobs */}
@@ -106,13 +108,6 @@ function JobRow({ job }: { job: NextLessonJob }) {
           >
             Open lesson &#8594;
           </a>
-        </div>
-      )}
-
-      {/* Harness stage progress */}
-      {job.harness_stage && (
-        <div className="mt-1 text-xs opacity-70">
-          Stage: {job.harness_stage}
         </div>
       )}
 
@@ -128,6 +123,17 @@ function JobRow({ job }: { job: NextLessonJob }) {
         <div className="mt-1 text-xs opacity-60">
           Task: {job.adapter_ref}
         </div>
+      )}
+
+      {recentEvents.length > 0 && (
+        <ol className="mt-3 space-y-1 border-t border-current/15 pt-2 text-xs opacity-80">
+          {recentEvents.map((event, index) => (
+            <li key={`${event.ts ?? "event"}-${index}`} className="flex gap-2">
+              <span className="shrink-0 opacity-60">{event.ts ? timeAgo(event.ts) : ""}</span>
+              <span className="min-w-0 break-words">{event.message}</span>
+            </li>
+          ))}
+        </ol>
       )}
     </div>
   );
