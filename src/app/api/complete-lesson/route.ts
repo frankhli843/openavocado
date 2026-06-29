@@ -67,6 +67,10 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Lesson not found" }, { status: 404 });
     }
 
+    if (!db.prepare("SELECT id FROM subjects WHERE id = ? AND learner_id = ?").get(lesson.subject_id, learner_id)) {
+      return NextResponse.json({ error: "Lesson does not belong to this learner" }, { status: 403 });
+    }
+
     if (lesson.status === "completed") {
       return NextResponse.json({ ok: true, message: "Lesson already completed" });
     }
@@ -341,16 +345,30 @@ export async function POST(request: Request) {
     db.prepare(
       `INSERT INTO next_lesson_jobs
          (subject_id, completed_lesson_id, trigger_event, adapter, status, payload,
-          adapter_ref, error, dispatched_at)
-       VALUES (?, ?, 'lesson.completed', ?, ?, ?, ?, ?, datetime('now'))`
+          adapter_ref, error, output_lesson_id, dispatched_at, completed_at,
+          harness_status, harness_stage, progress_events)
+       VALUES (?, ?, 'lesson.completed', ?, ?, ?, ?, ?, ?, datetime('now'), ?, ?, ?, ?)`
     ).run(
       lesson.subject_id,
       lesson_id,
       adapter.name,
-      dispatchResult.ok ? "dispatched" : "failed",
+      dispatchResult.ok && dispatchResult.lesson_id ? "completed" : dispatchResult.ok ? "dispatched" : "failed",
       JSON.stringify(event),
       dispatchResult.ref ?? null,
-      dispatchResult.error ?? null
+      dispatchResult.error ?? null,
+      dispatchResult.lesson_id ?? null,
+      dispatchResult.ok && dispatchResult.lesson_id ? new Date().toISOString() : null,
+      dispatchResult.ok && dispatchResult.lesson_id ? "done" : null,
+      dispatchResult.ok && dispatchResult.lesson_id ? "lesson.generated" : null,
+      dispatchResult.ok && dispatchResult.lesson_id
+        ? JSON.stringify([
+            {
+              ts: new Date().toISOString(),
+              stage: "completed",
+              message: `Generated next lesson ${dispatchResult.lesson_id}`,
+            },
+          ])
+        : null
     );
 
     createSubjectJournalEntry(db, {
@@ -379,6 +397,7 @@ export async function POST(request: Request) {
       adapter: adapter.name,
       dispatch_ok: dispatchResult.ok,
       adapter_ref: dispatchResult.ref,
+      output_lesson_id: dispatchResult.lesson_id ?? null,
     });
   } catch (err) {
     console.error("[api/complete-lesson]", err);

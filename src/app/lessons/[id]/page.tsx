@@ -33,12 +33,20 @@ interface LessonData {
 // (stable-sorted) order, so a lesson can show several visualization perspectives.
 const ACTIVITY_ORDER = ["audio", "reading", "lesson_part", "interactive", "practice_code", "assessment", "media"];
 
-const LEARNER_ID = 1; // TODO: replace with auth session
 const DIAGNOSTICS_ACTIVITY_ID = 0;
+
+interface CurrentUser {
+  id: number;
+  username: string;
+  display_name: string;
+  active_learner_id: number | null;
+  is_guest: boolean;
+}
 
 export default function LessonPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
   const [data, setData] = useState<LessonData | null>(null);
+  const [learnerId, setLearnerId] = useState<number | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [saveStatus, setSaveStatus] = useState<SaveStatus>("idle");
@@ -77,7 +85,14 @@ export default function LessonPage({ params }: { params: Promise<{ id: string }>
   useEffect(() => {
     async function load() {
       try {
-        const res = await fetch(`/api/lessons/${id}`);
+        const meRes = await fetch("/api/auth/me", { cache: "no-store" });
+        if (!meRes.ok) throw new Error(`Account HTTP ${meRes.status}`);
+        const me = (await meRes.json()) as { user: CurrentUser };
+        const activeLearnerId = me.user.active_learner_id;
+        if (activeLearnerId == null) throw new Error("No learner profile is available for this account");
+        setLearnerId(activeLearnerId);
+
+        const res = await fetch(`/api/lessons/${id}?learner_id=${activeLearnerId}`);
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
         const json = (await res.json()) as LessonData;
         setData(json);
@@ -199,11 +214,11 @@ export default function LessonPage({ params }: { params: Promise<{ id: string }>
     test_results?: Record<string, string>;
     assessment_answers?: Record<string, string>;
   }) {
-    if (!data) return;
+    if (!data || learnerId == null) return;
     const codeActivity = data.activities.find((a) => a.activity_type === "practice_code");
     debouncedSave({
       lesson_id: data.lesson.id,
-      learner_id: LEARNER_ID,
+      learner_id: learnerId,
       activity_id: codeActivity?.id,
       ...patch,
       last_edited_at: new Date().toISOString(),
@@ -213,14 +228,14 @@ export default function LessonPage({ params }: { params: Promise<{ id: string }>
   // Quiz state autosave: merges __quiz__ key into the assessment_answers JSON blob,
   // preserving any diagnostic answers already captured.
   function triggerQuizAutosave(serialized: string) {
-    if (!data) return;
+    if (!data || learnerId == null) return;
     const assessmentActivity = data.activities.find((a) => a.activity_type === "assessment");
     const merged: Record<string, string> = { ...assessmentAnswers, __quiz__: serialized };
     if (Object.keys(diagnosticAnswers).length) merged.__diag__ = JSON.stringify(diagnosticAnswers);
     if (assessmentActivity && sectionDone[assessmentActivity.id]) merged.__section_done__ = "true";
     debouncedSave({
       lesson_id: data.lesson.id,
-      learner_id: LEARNER_ID,
+      learner_id: learnerId,
       activity_id: assessmentActivity?.id,
       assessment_answers: merged,
       last_edited_at: new Date().toISOString(),
@@ -231,14 +246,14 @@ export default function LessonPage({ params }: { params: Promise<{ id: string }>
   // Diagnostic autosave: merges __diag__ into the assessment-activity blob,
   // preserving freeform answers + quiz state. Never marks the lesson complete.
   function triggerDiagAutosave(diag: Record<string, string>) {
-    if (!data) return;
+    if (!data || learnerId == null) return;
     const assessmentActivity = data.activities.find((a) => a.activity_type === "assessment");
     const merged: Record<string, string> = { ...assessmentAnswers, __diag__: JSON.stringify(diag) };
     if (quizStateSerialized) merged.__quiz__ = quizStateSerialized;
     if (assessmentActivity && sectionDone[assessmentActivity.id]) merged.__section_done__ = "true";
     debouncedSave({
       lesson_id: data.lesson.id,
-      learner_id: LEARNER_ID,
+      learner_id: learnerId,
       activity_id: assessmentActivity?.id,
       assessment_answers: merged,
       last_edited_at: new Date().toISOString(),
@@ -246,7 +261,7 @@ export default function LessonPage({ params }: { params: Promise<{ id: string }>
   }
 
   function triggerAssessmentAnswersAutosave(answers: Record<string, string>) {
-    if (!data) return;
+    if (!data || learnerId == null) return;
     const assessmentActivity = data.activities.find((a) => a.activity_type === "assessment");
     const merged: Record<string, string> = { ...answers };
     if (quizStateSerialized) merged.__quiz__ = quizStateSerialized;
@@ -254,7 +269,7 @@ export default function LessonPage({ params }: { params: Promise<{ id: string }>
     if (assessmentActivity && sectionDone[assessmentActivity.id]) merged.__section_done__ = "true";
     debouncedSave({
       lesson_id: data.lesson.id,
-      learner_id: LEARNER_ID,
+      learner_id: learnerId,
       activity_id: assessmentActivity?.id,
       assessment_answers: merged,
       last_edited_at: new Date().toISOString(),
@@ -275,11 +290,11 @@ export default function LessonPage({ params }: { params: Promise<{ id: string }>
   );
 
   function triggerWidgetAutosave(activityId: number, state: Record<string, number>) {
-    if (!data) return;
+    if (!data || learnerId == null) return;
     setWidgetStates((prev) => ({ ...prev, [activityId]: state }));
     debouncedWidgetSave({
       lesson_id: data.lesson.id,
-      learner_id: LEARNER_ID,
+      learner_id: learnerId,
       activity_id: activityId,
       widget_state: state,
       last_edited_at: new Date().toISOString(),
@@ -287,13 +302,13 @@ export default function LessonPage({ params }: { params: Promise<{ id: string }>
   }
 
   function triggerPartQuizAutosave(activityId: number, serialized: string) {
-    if (!data) return;
+    if (!data || learnerId == null) return;
     setPartQuizStates((prev) => ({ ...prev, [activityId]: serialized }));
     const merged: Record<string, string> = { __quiz__: serialized };
     if (sectionDone[activityId]) merged.__section_done__ = "true";
     debouncedSave({
       lesson_id: data.lesson.id,
-      learner_id: LEARNER_ID,
+      learner_id: learnerId,
       activity_id: activityId,
       assessment_answers: merged,
       last_edited_at: new Date().toISOString(),
@@ -301,7 +316,7 @@ export default function LessonPage({ params }: { params: Promise<{ id: string }>
   }
 
   function triggerSectionDoneAutosave(activityId: number, done: boolean) {
-    if (!data) return;
+    if (!data || learnerId == null) return;
     setSectionDone((prev) => ({ ...prev, [activityId]: done }));
     const assessmentActivity = data.activities.find((a) => a.activity_type === "assessment");
     const merged: Record<string, string> = { __section_done__: done ? "true" : "false" };
@@ -315,7 +330,7 @@ export default function LessonPage({ params }: { params: Promise<{ id: string }>
     }
     debouncedSave({
       lesson_id: data.lesson.id,
-      learner_id: LEARNER_ID,
+      learner_id: learnerId,
       activity_id: activityId === DIAGNOSTICS_ACTIVITY_ID ? DIAGNOSTICS_ACTIVITY_ID : activityId,
       assessment_answers: merged,
       last_edited_at: new Date().toISOString(),
@@ -323,7 +338,7 @@ export default function LessonPage({ params }: { params: Promise<{ id: string }>
   }
 
   async function handleComplete() {
-    if (!data) return;
+    if (!data || learnerId == null) return;
     setCompleting(true);
     try {
       const codeActivity = data.activities.find((a) => a.activity_type === "practice_code");
@@ -332,7 +347,7 @@ export default function LessonPage({ params }: { params: Promise<{ id: string }>
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           lesson_id: data.lesson.id,
-          learner_id: LEARNER_ID,
+          learner_id: learnerId,
           assessment_answers: assessmentAnswers,
           diagnostic_answers: diagnosticAnswers,
           code_results: codeActivity
@@ -377,6 +392,20 @@ export default function LessonPage({ params }: { params: Promise<{ id: string }>
     );
   }
 
+  if (learnerId == null) {
+    return (
+      <div className="min-h-screen bg-white flex items-center justify-center">
+        <div className="text-center">
+          <p className="text-red-600 mb-4">No learner profile is available for this account.</p>
+          <Link href="/" className="text-sm text-blue-600 hover:underline">
+            Back to Dashboard
+          </Link>
+        </div>
+      </div>
+    );
+  }
+
+  const activeLearnerId = learnerId;
   const { lesson, activities, artifacts, tags: lessonTags, subjectTags } = data;
 
   // Parse authored knowledge graph orientation (optional — falls back to tag-derived view)
@@ -410,7 +439,7 @@ export default function LessonPage({ params }: { params: Promise<{ id: string }>
   })();
 
   // Context for recording per-question assessment evidence (tags + signals).
-  const assessContext = { learnerId: LEARNER_ID, subjectId: lesson.subject_id, lessonId: lesson.id };
+  const assessContext = { learnerId: activeLearnerId, subjectId: lesson.subject_id, lessonId: lesson.id };
 
   const tocItems = [
     ...sorted.map((activity) => ({
@@ -470,7 +499,7 @@ export default function LessonPage({ params }: { params: Promise<{ id: string }>
       return (
         <PythonSection
           activity={activity}
-          learnerId={LEARNER_ID}
+          learnerId={activeLearnerId}
           initialCode={codeDraft}
           initialOutput={runOutput}
           initialTests={testResults}
@@ -734,7 +763,7 @@ export default function LessonPage({ params }: { params: Promise<{ id: string }>
           <DiscardLessonModal
             lessonId={lesson.id}
             lessonTitle={lesson.title}
-            learnerId={LEARNER_ID}
+            learnerId={activeLearnerId}
             onDiscarded={(result) => {
               setShowDiscardModal(false);
               setDiscarded(true);
@@ -747,7 +776,7 @@ export default function LessonPage({ params }: { params: Promise<{ id: string }>
 
       <LessonChatModal
         lessonId={lesson.id}
-        learnerId={LEARNER_ID}
+        learnerId={activeLearnerId}
         lessonTitle={lesson.title}
         activeSectionId={activeSection?.id ?? null}
         activeSectionLabel={activeSectionLabel}

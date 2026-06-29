@@ -294,6 +294,9 @@ function applyAdditiveMigrations(db: Database.Database): void {
   if (!hasColumn("users", "password_hash")) {
     db.exec("ALTER TABLE users ADD COLUMN password_hash TEXT");
   }
+  if (!hasColumn("users", "is_guest")) {
+    db.exec("ALTER TABLE users ADD COLUMN is_guest INTEGER NOT NULL DEFAULT 0");
+  }
 
   // Sessions table for auth cookie management
   db.exec(`

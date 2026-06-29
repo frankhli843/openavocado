@@ -13,6 +13,14 @@ import { readLessonResumeState } from "@/lib/lesson-resume";
 
 const subjectListCache = new Map<number, SubjectSummary[]>();
 
+interface CurrentUser {
+  id: number;
+  username: string;
+  display_name: string;
+  active_learner_id: number | null;
+  is_guest: boolean;
+}
+
 export default function DashboardPage() {
   return (
     <Suspense fallback={<div className="min-h-screen bg-white flex items-center justify-center text-gray-400 text-sm">Loading...</div>}>
@@ -25,7 +33,7 @@ function DashboardContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [subjects, setSubjects] = useState<SubjectSummary[]>([]);
-  const [userId] = useState(1);
+  const [currentUser, setCurrentUser] = useState<CurrentUser | null>(null);
   const [learnerId, setLearnerId] = useState<number | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -34,6 +42,24 @@ function DashboardContent() {
   const [showArchived, setShowArchived] = useState(() => searchParams.get("view") === "archived");
   const [showCreateForm, setShowCreateForm] = useState(() => searchParams.get("new") === "subject");
   const checkedResumeRef = useRef(false);
+
+  useEffect(() => {
+    async function loadSession() {
+      try {
+        const res = await fetch("/api/auth/me", { cache: "no-store" });
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        const data = (await res.json()) as { user: CurrentUser };
+        setCurrentUser(data.user);
+        if (data.user.active_learner_id != null) {
+          setLearnerId(data.user.active_learner_id);
+        }
+      } catch (e) {
+        setError(e instanceof Error ? e.message : "Failed to load account");
+        setLoading(false);
+      }
+    }
+    void loadSession();
+  }, []);
 
   useEffect(() => {
     if (checkedResumeRef.current) return;
@@ -152,7 +178,9 @@ function DashboardContent() {
             <NavTab href="/progress">Progress</NavTab>
           </div>
           <div className="ml-auto flex items-center gap-2 flex-shrink-0">
-            <ProfileSwitcher userId={userId} activeId={learnerId} onActiveChange={setLearnerId} />
+            {currentUser && (
+              <ProfileSwitcher userId={currentUser.id} activeId={learnerId} onActiveChange={setLearnerId} />
+            )}
             <button
               onClick={openCreateForm}
               className="flex items-center gap-1.5 px-3 sm:px-3.5 py-1.5 text-sm font-medium bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"

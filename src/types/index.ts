@@ -602,6 +602,7 @@ export interface CompletionHookAdapter {
   dispatch(event: LessonCompletedEvent, config?: Record<string, unknown>): Promise<{
     ok: boolean;
     ref?: string;
+    lesson_id?: number;
     error?: string;
   }>;
 }

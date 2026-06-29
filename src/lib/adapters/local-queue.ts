@@ -7,6 +7,8 @@ import type {
 } from "@/types";
 import { getDb } from "@/db/connection";
 import { generateInitialAssessment } from "@/lib/lesson-generator/initial-assessment";
+import { generateNextLesson } from "@/lib/lesson-generator/next-lesson";
+import { generateLessonAudio } from "@/lib/audio/generate-lesson-audio";
 
 /**
  * Local-queue adapter — writes the lesson.completed event to the
@@ -18,16 +20,16 @@ export const localQueueAdapter: CompletionHookAdapter = {
   async dispatch(event: LessonCompletedEvent) {
     try {
       const db = getDb();
-      const result = db
-        .prepare(
-          `INSERT INTO next_lesson_jobs (subject_id, completed_lesson_id, trigger_event, adapter, status, payload)
-           VALUES (?, ?, 'lesson.completed', 'local-queue', 'pending', ?)`
-        )
-        .run(event.subject_id, event.lesson_id, JSON.stringify(event));
+      const result = generateNextLesson(db, event);
+      if (process.env.AVOCADOCORE_LOCAL_QUEUE_AUDIO !== "skip") {
+        await generateLessonAudio(db, result.lesson_id);
+      }
 
-      const ref = `local-queue-job-${result.lastInsertRowid}`;
-      console.log(`[completion:local-queue] Enqueued ${ref}`);
-      return { ok: true, ref };
+      const ref = `local-queue-lesson-${result.lesson_id}`;
+      console.log(
+        `[completion:local-queue] Generated ${ref} for subject ${event.subject_id}`
+      );
+      return { ok: true, ref, lesson_id: result.lesson_id };
     } catch (err) {
       const msg = err instanceof Error ? err.message : String(err);
       return { ok: false, error: msg };

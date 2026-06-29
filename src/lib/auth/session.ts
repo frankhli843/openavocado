@@ -6,6 +6,7 @@
 import { cookies } from "next/headers";
 import { getDb } from "@/db/connection";
 import { createHmac, randomBytes } from "crypto";
+import { hashPassword } from "./password";
 
 const SESSION_COOKIE = "avocado_session";
 const SESSION_TTL_DAYS = 7;
@@ -15,6 +16,8 @@ export interface SessionUser {
   username: string;
   display_name: string;
   email: string | null;
+  active_learner_id: number | null;
+  is_guest: boolean;
 }
 
 function getSecret(): string {
@@ -92,13 +95,16 @@ export async function getSessionUser(): Promise<SessionUser | null> {
   const row = db
     .prepare(
       `SELECT u.id, u.username, u.display_name, u.email
+              , u.active_learner_id, COALESCE(u.is_guest, 0) AS is_guest
        FROM sessions s
        JOIN users u ON u.id = s.user_id
        WHERE s.token = ? AND s.expires_at > datetime('now')`
     )
-    .get(token) as SessionUser | undefined;
+    .get(token) as
+    | (Omit<SessionUser, "is_guest"> & { is_guest: number })
+    | undefined;
 
-  return row ?? null;
+  return row ? { ...row, is_guest: Boolean(row.is_guest) } : null;
 }
 
 /** Read session from a raw cookie string (for use in middleware/edge). */
@@ -107,4 +113,73 @@ export function getSessionToken(cookieHeader: string | null): string | null {
   const match = cookieHeader.match(new RegExp(`(?:^|;\\s*)${SESSION_COOKIE}=([^;]+)`));
   if (!match) return null;
   return verify(match[1]);
+}
+
+export async function ensureSessionUser(): Promise<SessionUser> {
+  const existing = await getSessionUser();
+  if (existing) return existing;
+  if (process.env.AVOCADOCORE_AUTH_REQUIRED !== "true") {
+    const db = getDb();
+    let row = db
+      .prepare(
+        `SELECT id, username, display_name, email, active_learner_id,
+                COALESCE(is_guest, 0) AS is_guest
+         FROM users ORDER BY id ASC LIMIT 1`
+      )
+      .get() as
+      | (Omit<SessionUser, "is_guest"> & { is_guest: number })
+      | undefined;
+    if (!row) {
+      const result = db
+        .prepare("INSERT INTO users (username, display_name, is_guest) VALUES ('local-default', 'Local learner', 0)")
+        .run();
+      const userId = result.lastInsertRowid as number;
+      const learnerId = db
+        .prepare("INSERT INTO learner_profiles (user_id, display_name, preferred_lang) VALUES (?, 'Local learner', 'en')")
+        .run(userId).lastInsertRowid as number;
+      db.prepare("UPDATE users SET active_learner_id = ? WHERE id = ?").run(learnerId, userId);
+      row = {
+        id: userId,
+        username: "local-default",
+        display_name: "Local learner",
+        email: null,
+        active_learner_id: learnerId,
+        is_guest: 0,
+      };
+    }
+    if (row) return { ...row, is_guest: Boolean(row.is_guest) };
+  }
+  return createGuestSession();
+}
+
+export async function createGuestSession(): Promise<SessionUser> {
+  const db = getDb();
+  const suffix = randomBytes(5).toString("hex");
+  const username = `guest-${suffix}`;
+  const displayName = "Guest learner";
+  const randomPassword = randomBytes(24).toString("base64url");
+  const passwordHash = hashPassword(randomPassword);
+
+  const tx = db.transaction(() => {
+    const userId = db
+      .prepare(
+        "INSERT INTO users (username, display_name, password_hash, is_guest) VALUES (?, ?, ?, 1)"
+      )
+      .run(username, displayName, passwordHash).lastInsertRowid as number;
+    const learnerId = db
+      .prepare("INSERT INTO learner_profiles (user_id, display_name, preferred_lang) VALUES (?, ?, 'en')")
+      .run(userId, displayName).lastInsertRowid as number;
+    db.prepare("UPDATE users SET active_learner_id = ? WHERE id = ?").run(learnerId, userId);
+    return { userId, learnerId };
+  });
+  const { userId, learnerId } = tx();
+  await createSession(userId);
+  return {
+    id: userId,
+    username,
+    display_name: displayName,
+    email: null,
+    active_learner_id: learnerId,
+    is_guest: true,
+  };
 }

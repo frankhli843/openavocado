@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { NextRequest } from "next/server";
 import { getDb } from "@/db/connection";
 import { hashPassword, validatePassword } from "@/lib/auth/password";
-import { createSession } from "@/lib/auth/session";
+import { createSession, getSessionUser } from "@/lib/auth/session";
 import { checkRateLimit, rateLimitHeaders } from "@/lib/auth/rate-limit";
 
 /** POST /api/auth/register — self-registration for prodavo. */
@@ -47,6 +47,30 @@ export async function POST(request: NextRequest) {
   }
 
   const passwordHash = hashPassword(password);
+  const sessionUser = await getSessionUser();
+
+  if (sessionUser?.is_guest) {
+    db.prepare(
+      `UPDATE users
+       SET username = ?, display_name = ?, email = ?, password_hash = ?,
+           is_guest = 0, updated_at = datetime('now')
+       WHERE id = ?`
+    ).run(username, displayName, email, passwordHash, sessionUser.id);
+    db.prepare(
+      `UPDATE learner_profiles
+       SET display_name = ?, updated_at = datetime('now')
+       WHERE user_id = ? AND id = COALESCE(
+         (SELECT active_learner_id FROM users WHERE id = ?),
+         id
+       )`
+    ).run(displayName, sessionUser.id, sessionUser.id);
+    return NextResponse.json({
+      ok: true,
+      username,
+      display_name: displayName,
+      claimed_guest: true,
+    });
+  }
 
   const result = db
     .prepare(
@@ -60,6 +84,12 @@ export async function POST(request: NextRequest) {
   db.prepare(
     "INSERT INTO learner_profiles (user_id, display_name, preferred_lang) VALUES (?, ?, ?)"
   ).run(userId, displayName, "en");
+  const profile = db
+    .prepare("SELECT id FROM learner_profiles WHERE user_id = ? ORDER BY id ASC LIMIT 1")
+    .get(userId) as { id: number } | undefined;
+  if (profile) {
+    db.prepare("UPDATE users SET active_learner_id = ? WHERE id = ?").run(profile.id, userId);
+  }
 
   await createSession(userId);
 

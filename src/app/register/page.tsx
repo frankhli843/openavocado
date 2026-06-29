@@ -58,7 +58,10 @@ export default function RegisterPage() {
         </div>
 
         <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
-          <h2 className="text-lg font-medium text-gray-900 mb-5">Create account</h2>
+          <h2 className="text-lg font-medium text-gray-900 mb-2">Create account</h2>
+          <p className="mb-5 text-sm leading-relaxed text-gray-500">
+            If you started as a guest, this saves your current lessons and progress under the username and password you choose here.
+          </p>
 
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
@@ -139,7 +142,7 @@ export default function RegisterPage() {
               disabled={loading}
               className="w-full py-2.5 px-4 bg-green-600 hover:bg-green-700 text-white text-sm font-medium rounded-lg transition-colors disabled:opacity-50"
             >
-              {loading ? "Creating account..." : "Create account"}
+              {loading ? "Saving account..." : "Save account"}
             </button>
           </form>
 

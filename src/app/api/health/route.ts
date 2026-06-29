@@ -20,9 +20,24 @@ export async function GET() {
 
   // Auth mode
   checks.auth = process.env.AVOCADOCORE_AUTH_REQUIRED === "true" ? "required" : "open";
+  const defaultProvider = process.env.AVOCADOCORE_DEFAULT_PROVIDER || "unset";
+  checks.default_ai_provider = defaultProvider;
+  checks.ai_studio_key =
+    defaultProvider === "google-ai-studio"
+      ? process.env.GOOGLE_AI_STUDIO_API_KEY
+        ? "configured"
+        : "missing"
+      : "not-required";
 
   const allOk = Object.values(checks).every(
-    (v) => v.startsWith("ok") || v === "required" || v === "open"
+    (v) =>
+      v.startsWith("ok") ||
+      v === "required" ||
+      v === "open" ||
+      v === "configured" ||
+      v === "not-required" ||
+      v === "google-ai-studio" ||
+      v === "unset"
   );
 
   return NextResponse.json(

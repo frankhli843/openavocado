@@ -4,11 +4,13 @@ import type { Lesson, LessonActivity, LessonAutosave, GeneratedArtifact } from "
 
 /** GET /api/lessons/:id — full lesson detail with activities, autosave, artifacts */
 export async function GET(
-  _request: Request,
+  request: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const { id } = await params;
+    const { searchParams } = new URL(request.url);
+    const learnerId = Number(searchParams.get("learner_id") || 0);
     const db = getDb();
     const lessonId = Number(id);
 
@@ -26,11 +28,17 @@ export async function GET(
       )
       .all(lessonId) as LessonActivity[];
 
-    const autosave = db
-      .prepare(
-        "SELECT * FROM lesson_autosave WHERE lesson_id = ? ORDER BY saved_at DESC"
-      )
-      .all(lessonId) as LessonAutosave[];
+    const autosave = learnerId
+      ? (db
+          .prepare(
+            "SELECT * FROM lesson_autosave WHERE lesson_id = ? AND learner_id = ? ORDER BY saved_at DESC"
+          )
+          .all(lessonId, learnerId) as LessonAutosave[])
+      : (db
+          .prepare(
+            "SELECT * FROM lesson_autosave WHERE lesson_id = ? ORDER BY saved_at DESC"
+          )
+          .all(lessonId) as LessonAutosave[]);
 
     const artifacts = db
       .prepare(

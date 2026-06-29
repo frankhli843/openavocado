@@ -10,8 +10,6 @@
  */
 import { NextRequest, NextResponse } from "next/server";
 
-const SESSION_COOKIE = "avocado_session";
-
 // Routes that are always public even when auth is required
 const PUBLIC_PREFIXES = [
   "/api/auth/",
@@ -34,20 +32,6 @@ export function middleware(request: NextRequest) {
 
   const isPublic = PUBLIC_PREFIXES.some((p) => pathname === p || pathname.startsWith(p));
   if (isPublic) return NextResponse.next();
-
-  const hasCookie = request.cookies.has(SESSION_COOKIE);
-
-  if (!hasCookie) {
-    if (pathname.startsWith("/api/")) {
-      return new NextResponse(
-        JSON.stringify({ error: "Authentication required" }),
-        { status: 401, headers: { "Content-Type": "application/json" } }
-      );
-    }
-    const loginUrl = new URL("/login", request.url);
-    loginUrl.searchParams.set("next", pathname);
-    return NextResponse.redirect(loginUrl);
-  }
 
   return NextResponse.next();
 }
