@@ -449,10 +449,10 @@ async function callAnthropicJudge(
 }
 
 async function callGoogle(config: FeedbackConfig, req: FeedbackRequest): Promise<string> {
-  const url = `${config.baseUrl}/v1beta/models/${config.model}:generateContent?key=${config.apiKey}`;
+  const url = `${config.baseUrl}/v1beta/models/${config.model}:generateContent`;
   const res = await fetch(url, {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
+    headers: { "Content-Type": "application/json", "X-goog-api-key": config.apiKey },
     body: JSON.stringify({
       systemInstruction: { parts: [{ text: FEEDBACK_SYSTEM }] },
       contents: [{ parts: [{ text: buildUserPrompt(req) }] }],
@@ -478,10 +478,10 @@ async function callGoogleJudge(
   system = JUDGE_SYSTEM,
   userPrompt = buildJudgePrompt(req)
 ): Promise<string> {
-  const url = `${config.baseUrl}/v1beta/models/${config.model}:generateContent?key=${config.apiKey}`;
+  const url = `${config.baseUrl}/v1beta/models/${config.model}:generateContent`;
   const res = await fetch(url, {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
+    headers: { "Content-Type": "application/json", "X-goog-api-key": config.apiKey },
     body: JSON.stringify({
       systemInstruction: { parts: [{ text: system }] },
       contents: [{ parts: [{ text: userPrompt }] }],
@@ -588,10 +588,10 @@ async function callGoogleChat(
   maxTokens = 1024,
   temperature = 0.4
 ): Promise<string> {
-  const url = `${config.baseUrl}/v1beta/models/${config.model}:generateContent?key=${config.apiKey}`;
+  const url = `${config.baseUrl}/v1beta/models/${config.model}:generateContent`;
   const res = await fetch(url, {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
+    headers: { "Content-Type": "application/json", "X-goog-api-key": config.apiKey },
     body: JSON.stringify({
       systemInstruction: { parts: [{ text: system }] },
       contents: messages.map((m) => ({

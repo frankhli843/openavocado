@@ -170,7 +170,7 @@ async function callGemini(prompt: string): Promise<string> {
   if (!key) throw new Error("GOOGLE_AI_STUDIO_API_KEY is not set");
 
   const model = getGeminiModel();
-  const url = `https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(model)}:generateContent?key=${encodeURIComponent(key)}`;
+  const url = `https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(model)}:generateContent`;
 
   const body = {
     contents: [{ role: "user", parts: [{ text: prompt }] }],
@@ -183,7 +183,7 @@ async function callGemini(prompt: string): Promise<string> {
 
   const res = await fetch(url, {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
+    headers: { "Content-Type": "application/json", "X-goog-api-key": key },
     body: JSON.stringify(body),
     signal: AbortSignal.timeout(90_000),
   });

@@ -1,11 +1,51 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { getAnswerJudgment, parseAnswerJudgment, type AnswerJudgeRequest } from "@/lib/feedback-llm";
+import {
+  getAnswerFeedback,
+  getAnswerJudgment,
+  parseAnswerJudgment,
+  type AnswerJudgeRequest,
+} from "@/lib/feedback-llm";
 
 afterEach(() => {
   vi.restoreAllMocks();
 });
 
 describe("parseAnswerJudgment", () => {
+  it("sends Google API keys in the header instead of the URL", async () => {
+    const apiKey = "AQ.Ab8RN6I7ApdeTBmHl0K5S8D9FCpM6zskFA1VRceHm6dIDNcJg";
+    const fetchMock = vi.spyOn(globalThis, "fetch").mockImplementationOnce(async (url, init) => {
+      expect(String(url)).toBe("https://generativelanguage.googleapis.com/v1beta/models/gemini-flash-latest:generateContent");
+      expect(String(url)).not.toContain(apiKey);
+      expect((init?.headers as Record<string, string>)["X-goog-api-key"]).toBe(apiKey);
+      return new Response(
+        JSON.stringify({
+          candidates: [{ content: { parts: [{ text: "Good start. Add one concrete example." }] } }],
+        }),
+        { status: 200, headers: { "Content-Type": "application/json" } }
+      );
+    });
+
+    const feedback = await getAnswerFeedback(
+      {
+        enabled: true,
+        provider: "google",
+        baseUrl: "https://generativelanguage.googleapis.com",
+        apiKey,
+        model: "gemini-flash-latest",
+      },
+      {
+        lessonTitle: "Tokenization",
+        lessonDescription: null,
+        questionText: "Why do LLMs tokenize text?",
+        questionHint: null,
+        learnerAnswer: "So text can become model inputs.",
+      }
+    );
+
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+    expect(feedback).toMatch(/Good start/);
+  });
+
   it("parses a strict semantic judge JSON response", () => {
     const parsed = parseAnswerJudgment(
       '{"verdict":"correct","confidence":0.91,"feedback":"Same meaning, different wording."}'
