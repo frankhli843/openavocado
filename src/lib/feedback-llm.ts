@@ -12,6 +12,8 @@
  * Environment variables:
  *   AVOCADOCORE_FEEDBACK_PROVIDER  - "local" | "openai" | "anthropic" | "google" (unset = disabled)
  *   AVOCADOCORE_FEEDBACK_BASE_URL  - Base URL for local/openai (default: http://127.0.0.1:8080/v1)
+ *   AVOCADOCORE_FEEDBACK_GOOGLE_BASE_URL / AVOCADOCORE_FEEDBACK_ANTHROPIC_BASE_URL
+ *                                  - Provider-specific cloud endpoint overrides.
  *   AVOCADOCORE_FEEDBACK_API_KEY   - API key for cloud providers
  *   AVOCADOCORE_FEEDBACK_MODEL     - Model name (has sensible defaults per provider)
  */
@@ -40,6 +42,19 @@ const DEFAULT_BASE_URLS: Record<FeedbackProvider, string> = {
   google: "https://generativelanguage.googleapis.com",
 };
 
+function feedbackBaseUrlEnvName(provider: FeedbackProvider): string {
+  return `AVOCADOCORE_FEEDBACK_${provider.toUpperCase()}_BASE_URL`;
+}
+
+function resolveFeedbackBaseUrl(provider: FeedbackProvider): string {
+  const providerSpecific = process.env[feedbackBaseUrlEnvName(provider)];
+  const genericOpenAiCompatible =
+    provider === "local" || provider === "openai"
+      ? process.env.AVOCADOCORE_FEEDBACK_BASE_URL
+      : undefined;
+  return (providerSpecific ?? genericOpenAiCompatible ?? DEFAULT_BASE_URLS[provider]).replace(/\/+$/, "");
+}
+
 export function loadFeedbackConfig(): FeedbackConfig {
   const provider = (process.env.AVOCADOCORE_FEEDBACK_PROVIDER ?? "").trim().toLowerCase();
   if (!provider || !["local", "openai", "anthropic", "google"].includes(provider)) {
@@ -49,7 +64,7 @@ export function loadFeedbackConfig(): FeedbackConfig {
   return {
     enabled: true,
     provider: p,
-    baseUrl: (process.env.AVOCADOCORE_FEEDBACK_BASE_URL ?? DEFAULT_BASE_URLS[p]).replace(/\/+$/, ""),
+    baseUrl: resolveFeedbackBaseUrl(p),
     apiKey: process.env.AVOCADOCORE_FEEDBACK_API_KEY ?? "",
     model: process.env.AVOCADOCORE_FEEDBACK_MODEL ?? DEFAULT_MODELS[p],
   };

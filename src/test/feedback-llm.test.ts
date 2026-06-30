@@ -2,15 +2,44 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import {
   getAnswerFeedback,
   getAnswerJudgment,
+  loadFeedbackConfig,
   parseAnswerJudgment,
   type AnswerJudgeRequest,
 } from "@/lib/feedback-llm";
 
 afterEach(() => {
   vi.restoreAllMocks();
+  delete process.env.AVOCADOCORE_FEEDBACK_PROVIDER;
+  delete process.env.AVOCADOCORE_FEEDBACK_BASE_URL;
+  delete process.env.AVOCADOCORE_FEEDBACK_GOOGLE_BASE_URL;
+  delete process.env.AVOCADOCORE_FEEDBACK_MODEL;
+  delete process.env.AVOCADOCORE_FEEDBACK_API_KEY;
 });
 
 describe("parseAnswerJudgment", () => {
+  it("does not let the generic OpenAI-compatible base URL override Google chat", () => {
+    process.env.AVOCADOCORE_FEEDBACK_PROVIDER = "google";
+    process.env.AVOCADOCORE_FEEDBACK_BASE_URL = "http://127.0.0.1:8080/v1";
+    process.env.AVOCADOCORE_FEEDBACK_API_KEY = "test-key";
+
+    const config = loadFeedbackConfig();
+
+    expect(config.enabled).toBe(true);
+    expect(config.provider).toBe("google");
+    expect(config.baseUrl).toBe("https://generativelanguage.googleapis.com");
+  });
+
+  it("uses the Google-specific base URL override when explicitly provided", () => {
+    process.env.AVOCADOCORE_FEEDBACK_PROVIDER = "google";
+    process.env.AVOCADOCORE_FEEDBACK_BASE_URL = "http://127.0.0.1:8080/v1";
+    process.env.AVOCADOCORE_FEEDBACK_GOOGLE_BASE_URL = "https://example.test/google/";
+    process.env.AVOCADOCORE_FEEDBACK_API_KEY = "test-key";
+
+    const config = loadFeedbackConfig();
+
+    expect(config.baseUrl).toBe("https://example.test/google");
+  });
+
   it("sends Google API keys in the header instead of the URL", async () => {
     const apiKey = "AQ.Ab8RN6I7ApdeTBmHl0K5S8D9FCpM6zskFA1VRceHm6dIDNcJg";
     const fetchMock = vi.spyOn(globalThis, "fetch").mockImplementationOnce(async (url, init) => {
