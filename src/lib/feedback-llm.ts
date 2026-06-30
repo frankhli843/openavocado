@@ -30,7 +30,7 @@ const DEFAULT_MODELS: Record<FeedbackProvider, string> = {
   local: "default",
   openai: "gpt-4o-mini",
   anthropic: "claude-sonnet-4-6-20250514",
-  google: "gemini-2.5-flash",
+  google: "gemma-4-26b-a4b-it",
 };
 
 const DEFAULT_BASE_URLS: Record<FeedbackProvider, string> = {
@@ -466,10 +466,8 @@ async function callGoogle(config: FeedbackConfig, req: FeedbackRequest): Promise
     throw new Error(`Google API error ${res.status}: ${text.slice(0, 200)}`);
   }
 
-  const data = (await res.json()) as {
-    candidates?: Array<{ content?: { parts?: Array<{ text?: string }> } }>;
-  };
-  return data.candidates?.[0]?.content?.parts?.[0]?.text?.trim() ?? "(no feedback generated)";
+  const data = (await res.json()) as GoogleGenerateContentResponse;
+  return extractGoogleText(data)?.trim() ?? "(no feedback generated)";
 }
 
 async function callGoogleJudge(
@@ -495,10 +493,8 @@ async function callGoogleJudge(
     throw new Error(`Google judge API error ${res.status}: ${text.slice(0, 200)}`);
   }
 
-  const data = (await res.json()) as {
-    candidates?: Array<{ content?: { parts?: Array<{ text?: string }> } }>;
-  };
-  return data.candidates?.[0]?.content?.parts?.[0]?.text?.trim() ?? "";
+  const data = (await res.json()) as GoogleGenerateContentResponse;
+  return extractGoogleText(data)?.trim() ?? "";
 }
 
 async function callOpenAICompatibleChat(
@@ -608,10 +604,17 @@ async function callGoogleChat(
     throw new Error(`Google chat API error ${res.status}: ${text.slice(0, 200)}`);
   }
 
-  const data = (await res.json()) as {
-    candidates?: Array<{ content?: { parts?: Array<{ text?: string }> } }>;
-  };
-  return data.candidates?.[0]?.content?.parts?.[0]?.text?.trim() ?? "";
+  const data = (await res.json()) as GoogleGenerateContentResponse;
+  return extractGoogleText(data)?.trim() ?? "";
+}
+
+interface GoogleGenerateContentResponse {
+  candidates?: Array<{ content?: { parts?: Array<{ text?: string; thought?: boolean }> } }>;
+}
+
+function extractGoogleText(data: GoogleGenerateContentResponse): string | null {
+  const parts = data.candidates?.[0]?.content?.parts ?? [];
+  return parts.find((part) => part.text && !part.thought)?.text ?? parts.find((part) => part.text)?.text ?? null;
 }
 
 export async function getAnswerFeedback(config: FeedbackConfig, req: FeedbackRequest): Promise<string> {

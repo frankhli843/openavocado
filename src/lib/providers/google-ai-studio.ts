@@ -16,7 +16,7 @@ export interface AiStudioHealth {
   error?: string;
 }
 
-const DEFAULT_MODEL = "gemini-flash-latest";
+const DEFAULT_MODEL = "gemma-4-26b-a4b-it";
 
 export function getDefaultAiStudioModel(): string {
   return process.env.GOOGLE_AI_STUDIO_MODEL || DEFAULT_MODEL;

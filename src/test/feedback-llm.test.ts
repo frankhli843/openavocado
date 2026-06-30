@@ -14,7 +14,7 @@ describe("parseAnswerJudgment", () => {
   it("sends Google API keys in the header instead of the URL", async () => {
     const apiKey = "AQ.Ab8RN6I7ApdeTBmHl0K5S8D9FCpM6zskFA1VRceHm6dIDNcJg";
     const fetchMock = vi.spyOn(globalThis, "fetch").mockImplementationOnce(async (url, init) => {
-      expect(String(url)).toBe("https://generativelanguage.googleapis.com/v1beta/models/gemini-flash-latest:generateContent");
+      expect(String(url)).toBe("https://generativelanguage.googleapis.com/v1beta/models/gemma-4-26b-a4b-it:generateContent");
       expect(String(url)).not.toContain(apiKey);
       expect((init?.headers as Record<string, string>)["X-goog-api-key"]).toBe(apiKey);
       return new Response(
@@ -31,7 +31,7 @@ describe("parseAnswerJudgment", () => {
         provider: "google",
         baseUrl: "https://generativelanguage.googleapis.com",
         apiKey,
-        model: "gemini-flash-latest",
+        model: "gemma-4-26b-a4b-it",
       },
       {
         lessonTitle: "Tokenization",
@@ -44,6 +44,46 @@ describe("parseAnswerJudgment", () => {
 
     expect(fetchMock).toHaveBeenCalledTimes(1);
     expect(feedback).toMatch(/Good start/);
+  });
+
+  it("ignores Gemma 4 thinking parts when reading Google responses", async () => {
+    const fetchMock = vi.spyOn(globalThis, "fetch").mockResolvedValueOnce(
+      new Response(
+        JSON.stringify({
+          candidates: [
+            {
+              content: {
+                parts: [
+                  { text: "internal reasoning trace", thought: true },
+                  { text: "Actionable learner feedback." },
+                ],
+              },
+            },
+          ],
+        }),
+        { status: 200, headers: { "Content-Type": "application/json" } }
+      )
+    );
+
+    const feedback = await getAnswerFeedback(
+      {
+        enabled: true,
+        provider: "google",
+        baseUrl: "https://generativelanguage.googleapis.com",
+        apiKey: "AQ.Ab8RN6I7ApdeTBmHl0K5S8D9FCpM6zskFA1VRceHm6dIDNcJg",
+        model: "gemma-4-26b-a4b-it",
+      },
+      {
+        lessonTitle: "Tokenization",
+        lessonDescription: null,
+        questionText: "Why do LLMs tokenize text?",
+        questionHint: null,
+        learnerAnswer: "So text can become model inputs.",
+      }
+    );
+
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+    expect(feedback).toBe("Actionable learner feedback.");
   });
 
   it("parses a strict semantic judge JSON response", () => {

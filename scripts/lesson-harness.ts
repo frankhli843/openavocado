@@ -13,7 +13,7 @@
  * Environment:
  *   AVOCADOCORE_DB_PATH           — SQLite DB path (same as app)
  *   GOOGLE_AI_STUDIO_API_KEY      — Gemini API key (server-side only, never logged)
- *   GOOGLE_AI_STUDIO_MODEL        — model name (default: gemini-2.5-flash)
+ *   GOOGLE_AI_STUDIO_MODEL        — model name (default: gemma-4-26b-a4b-it)
  *   AVOCADOCORE_FEEDBACK_PROVIDER — secondary provider config (google = Gemini)
  *   AVOCADOCORE_LOCAL_QUEUE_AUDIO — "skip" to skip audio generation (testing)
  *
@@ -161,7 +161,7 @@ function getGeminiModel(): string {
   return (
     process.env.GOOGLE_AI_STUDIO_MODEL ??
     process.env.AVOCADOCORE_FEEDBACK_MODEL ??
-    "gemini-2.5-flash"
+    "gemma-4-26b-a4b-it"
   );
 }
 
@@ -196,7 +196,7 @@ async function callGemini(prompt: string): Promise<string> {
   }
 
   const data = (await res.json()) as {
-    candidates?: Array<{ content?: { parts?: Array<{ text?: string }> } }>;
+    candidates?: Array<{ content?: { parts?: Array<{ text?: string; thought?: boolean }> } }>;
     error?: { message?: string };
   };
 
@@ -205,7 +205,10 @@ async function callGemini(prompt: string): Promise<string> {
     throw new Error(`Gemini API error: ${safe}`);
   }
 
-  const text = data.candidates?.[0]?.content?.parts?.[0]?.text ?? "";
+  const text =
+    data.candidates?.[0]?.content?.parts?.find((part) => part.text && !part.thought)?.text ??
+    data.candidates?.[0]?.content?.parts?.find((part) => part.text)?.text ??
+    "";
   if (!text) throw new Error("Gemini returned an empty response");
   return text;
 }

@@ -11,6 +11,12 @@ afterEach(() => {
 });
 
 describe("Google AI Studio provider health", () => {
+  it("uses Gemma 4 as the default hosted Google AI Studio model", () => {
+    const health = summarizeAiStudioConfig();
+
+    expect(health.model).toBe("gemma-4-26b-a4b-it");
+  });
+
   it("recognizes expected AI Studio API key shape", () => {
     expect(validateGoogleAiStudioKeyShape("AIzaSyA123456789012345678901234567890123")).toBe(true);
     expect(validateGoogleAiStudioKeyShape("AQ.Ab8RN6I7ApdeTBmHl0K5S8D9FCpM6zskFA1VRceHm6dIDNcJg")).toBe(true);
