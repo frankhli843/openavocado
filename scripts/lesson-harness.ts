@@ -176,7 +176,7 @@ async function callGemini(prompt: string): Promise<string> {
     contents: [{ role: "user", parts: [{ text: prompt }] }],
     generationConfig: {
       responseMimeType: "application/json",
-      maxOutputTokens: 8192,
+      maxOutputTokens: 32768,
       temperature: 0.7,
     },
   };
