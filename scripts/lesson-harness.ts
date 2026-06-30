@@ -165,6 +165,10 @@ function getGeminiModel(): string {
   );
 }
 
+function getGeneratorId(): string {
+  return `agent-harness/google-ai-studio/${getGeminiModel()}/v1`;
+}
+
 async function callGemini(prompt: string): Promise<string> {
   const key = getGeminiKey();
   if (!key) throw new Error("GOOGLE_AI_STUDIO_API_KEY is not set");
@@ -441,7 +445,7 @@ function insertGeneratedLesson(
 
   const sourceContext = {
     trigger: eventType,
-    generated_by: "agent-harness/gemini/v1",
+    generated_by: getGeneratorId(),
     planning_rationale: draft.planning_rationale,
     provider: "google-ai-studio",
     model: getGeminiModel(),
@@ -454,7 +458,7 @@ function insertGeneratedLesson(
       `INSERT INTO lessons
          (subject_id, title, description, status, sequence_number, goals, tags,
           generated_by, generator_version, source_context)
-       VALUES (?, ?, ?, 'queued', ?, ?, ?, 'agent-harness/gemini/v1', '1.0.0', ?)`
+       VALUES (?, ?, ?, 'queued', ?, ?, ?, ?, '1.0.0', ?)`
     )
     .run(
       subjectId,
@@ -463,6 +467,7 @@ function insertGeneratedLesson(
       sequenceNumber,
       goals,
       JSON.stringify(draft.concept_tags),
+      getGeneratorId(),
       JSON.stringify(sourceContext)
     );
 
@@ -649,7 +654,7 @@ function upsertWorkpad(
   draft: GeminiLessonDraft
 ): void {
   const addition = [
-    `## ${new Date().toISOString()} agent-harness/gemini generation`,
+    `## ${new Date().toISOString()} ${getGeneratorId()} generation`,
     `Generated lesson: ${draft.title} (id ${lessonId})`,
     `Planning rationale: ${draft.planning_rationale}`,
     `Concept tags: ${draft.concept_tags.join(", ")}`,
@@ -665,16 +670,16 @@ function upsertWorkpad(
   if (existing) {
     db.prepare(
       `UPDATE subject_workpads
-       SET content = ?, version = ?, last_updated_by = 'agent-harness/gemini/v1',
+       SET content = ?, version = ?, last_updated_by = ?,
            last_updated_for = 'lesson_generation', updated_at = datetime('now')
        WHERE id = ?`
-    ).run(`${existing.content}\n\n${addition}`, existing.version + 1, existing.id);
+    ).run(`${existing.content}\n\n${addition}`, existing.version + 1, getGeneratorId(), existing.id);
   } else {
     db.prepare(
       `INSERT INTO subject_workpads
          (subject_id, learner_id, content, last_updated_by, last_updated_for)
-       VALUES (?, ?, ?, 'agent-harness/gemini/v1', 'lesson_generation')`
-    ).run(subjectId, learnerId, addition);
+       VALUES (?, ?, ?, ?, 'lesson_generation')`
+    ).run(subjectId, learnerId, addition, getGeneratorId());
   }
 }
 
