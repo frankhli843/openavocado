@@ -269,6 +269,11 @@ enforced by `validateGeneratedContent`; the rest is a hard authoring rule.
   text must say so explicitly** — name it a preview and state it will be explored
   in more detail in a later lesson, so the learner is never left thinking a
   glossed-over idea was fully taught. (Reviewed by hand; not auto-detectable.)
+- **Audio plus visual side-by-side orientation.** The top-level audio activity
+  must include a bespoke `orientation_visual`, and every lesson-part audio
+  segment must include `audio.synced_visual`. The learner should see the paired
+  visual beside the audio player on desktop and immediately below it on mobile,
+  not only after scrolling through the transcript or opening a later activity.
 - **Knowledge graph orientation (`knowledge_graph_data`).** Every lesson must
   include a `KnowledgeGraphData` object (see `src/types/index.ts`) that shows
   where this lesson sits in the subject curriculum. Think of it as a subject map

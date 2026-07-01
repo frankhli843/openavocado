@@ -228,14 +228,20 @@ export async function GET(request: Request) {
       s.latest_generation_job =
         (db
           .prepare(
-            `SELECT id, subject_id, completed_lesson_id, discarded_lesson_id,
-                    trigger_event, adapter, status, payload, adapter_ref, error,
-                    dispatched_at, completed_at, created_at, updated_at,
-                    harness_status, harness_stage, progress_events, retry_count,
-                    last_error_detail, provider_name, output_lesson_id
-             FROM next_lesson_jobs
-             WHERE subject_id = ?
-             ORDER BY created_at DESC
+            `SELECT j.id, j.subject_id, j.completed_lesson_id, j.discarded_lesson_id,
+                    j.trigger_event, j.adapter, j.status, j.payload, j.adapter_ref, j.error,
+                    j.dispatched_at, j.completed_at, j.created_at, j.updated_at,
+                    j.harness_status, j.harness_stage, j.progress_events, j.retry_count,
+                    j.last_error_detail, j.provider_name, j.output_lesson_id
+             FROM next_lesson_jobs j
+             LEFT JOIN lessons output_lesson ON output_lesson.id = j.output_lesson_id
+             WHERE j.subject_id = ?
+               AND NOT (
+                 j.status = 'completed'
+                 AND j.output_lesson_id IS NOT NULL
+                 AND COALESCE(output_lesson.status, 'queued') != 'queued'
+               )
+             ORDER BY j.created_at DESC
              LIMIT 1`
           )
           .get(s.id) as NextLessonJob | undefined) ?? null;

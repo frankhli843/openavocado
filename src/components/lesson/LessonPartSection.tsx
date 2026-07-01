@@ -81,43 +81,47 @@ export function LessonPartSection({
       ) : (
         <>
           <PartBlock title="Audio">
-            {artifact?.file_path ? (
-              <div className="space-y-2">
-                <audio
-                  ref={audioRef}
-                  controls
-                  className="w-full h-10"
-                  src={`/runtime/${artifact.file_path}`}
-                  onLoadedMetadata={(event) => setAudioDuration(event.currentTarget.duration || 0)}
-                  onTimeUpdate={(event) => setAudioTime(event.currentTarget.currentTime)}
-                >
-                  Your browser does not support audio playback.
-                </audio>
-                <div className="text-xs text-gray-400">
-                  {artifact.voice ? `Voice: ${artifact.voice}` : "Generated audio"}
-                </div>
+            <div className={syncedVisual ? "grid min-w-0 gap-5 xl:grid-cols-[minmax(18rem,0.7fr)_minmax(0,1.3fr)] xl:items-start" : "min-w-0 space-y-3"}>
+              <div className="min-w-0 space-y-3">
+                {artifact?.file_path ? (
+                  <div className="space-y-2">
+                    <audio
+                      ref={audioRef}
+                      controls
+                      className="h-10 w-full min-w-0 max-w-full"
+                      src={`/runtime/${artifact.file_path}`}
+                      onLoadedMetadata={(event) => setAudioDuration(event.currentTarget.duration || 0)}
+                      onTimeUpdate={(event) => setAudioTime(event.currentTarget.currentTime)}
+                    >
+                      Your browser does not support audio playback.
+                    </audio>
+                    <div className="text-xs text-gray-400">
+                      {artifact.voice ? `Voice: ${artifact.voice}` : "Generated audio"}
+                    </div>
+                  </div>
+                ) : (
+                  <div className="border-l-2 border-amber-200 bg-amber-50/70 px-3 py-2 text-xs text-amber-700">
+                    Part audio artifact is not generated yet. The script below is the per-part audio source.
+                  </div>
+                )}
+                <details className="border-t border-gray-100 pt-3">
+                  <summary className="cursor-pointer select-none py-2 text-xs font-semibold uppercase tracking-wider text-gray-500 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-300">
+                    Transcript
+                  </summary>
+                  <div className="mt-2 max-h-56 overflow-y-auto border-t border-gray-100 pt-3 text-sm leading-relaxed text-gray-600">
+                    {part.audio.transcript ?? part.audio.script}
+                  </div>
+                </details>
               </div>
-            ) : (
-              <div className="border-l-2 border-amber-200 bg-amber-50/70 px-3 py-2 text-xs text-amber-700">
-                Part audio artifact is not generated yet. The script below is the per-part audio source.
-              </div>
-            )}
-            {syncedVisual && (
-              <AudioSyncedLessonVisual
-                visual={syncedVisual}
-                currentTime={audioTime}
-                duration={audioDuration || part.audio.duration_hint || 154}
-                onSeek={seekAudio}
-              />
-            )}
-            <details className="border-t border-gray-100 pt-3">
-              <summary className="cursor-pointer select-none py-2 text-xs font-semibold uppercase tracking-wider text-gray-500 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-300">
-                Transcript
-              </summary>
-              <div className="mt-2 max-h-56 overflow-y-auto border-t border-gray-100 pt-3 text-sm leading-relaxed text-gray-600">
-                {part.audio.transcript ?? part.audio.script}
-              </div>
-            </details>
+              {syncedVisual && (
+                <AudioSyncedLessonVisual
+                  visual={syncedVisual}
+                  currentTime={audioTime}
+                  duration={audioDuration || part.audio.duration_hint || 154}
+                  onSeek={seekAudio}
+                />
+              )}
+            </div>
           </PartBlock>
 
           <PartBlock title="Written explanation">
@@ -317,7 +321,7 @@ function AudioSyncedLessonVisual({
     cues.some((item) => item.label.toLowerCase().includes("attention") || item.label.toLowerCase().includes("mlp"));
 
   return (
-    <div className="mt-4 border-t border-gray-100 pt-4">
+    <div className="min-w-0 border-t border-gray-100 pt-4 xl:border-t-0 xl:pt-0">
       <div className="border-b border-gray-100 pb-3">
         <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
           <div>
@@ -335,7 +339,7 @@ function AudioSyncedLessonVisual({
         </div>
       </div>
 
-      <div className="grid gap-4 pt-4 pb-16 sm:pb-0 lg:grid-cols-[minmax(0,1fr)_17rem]">
+      <div className="grid min-w-0 gap-4 pt-4 pb-16 sm:pb-0 2xl:grid-cols-[minmax(0,1fr)_17rem]">
         <div className="space-y-4">
           <div className="grid grid-cols-2 gap-2 sm:grid-cols-4 lg:grid-cols-7">
             {pipelineCues.map((stage, index) => {

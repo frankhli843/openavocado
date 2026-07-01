@@ -63,6 +63,7 @@ interface GeminiLessonDraft {
   title: string;
   description: string;
   audio_script: string;
+  orientation_visual?: Record<string, unknown>;
   reading_intro: string;
   reading_blocks: ReadingBlock[];
   reading_summary: string;
@@ -426,6 +427,7 @@ ${COMPREHENSIVE_LESSON_PLAN_TEMPLATE}
 Non-negotiable lesson-depth rules:
 - NEW VISUALS MUST BE BESPOKE ARTIFACTS. Do not author new lesson visuals as registered widgets or generic declarative widgets. The production path is: generate a self-contained React visual artifact, store it in visual_artifacts, build it, open the sandbox URL with Chrome MCP, take desktop and mobile screenshots, record QA evidence, approve it, then reference it from lesson JSON as widget_type "bespoke-artifact" with params.artifact_slug.
 - EVERY AUDIO SEGMENT NEEDS A TRANSCRIPT AND TIMED VISUAL SCENE. Treat audio_script as a learner-visible transcript. For lesson parts, include a synced visual plan whose cues cover the audio duration and change the scene as playback advances. The cues must show what the section receives, what changes during the narration, and what is passed forward.
+- AUDIO + INTERACTIVE SIDE-BY-SIDE FOR ORIENTATION. The top-level audio activity must include orientation_visual, and every lesson_part audio segment must include audio.synced_visual. The learner should see the paired visual beside the audio on desktop and immediately below it on mobile. Do not make the learner listen to a long orientation before they can see the moving object, pipeline, matrix, or state transition being described.
 - USE A MANIM / 3BLUE1BROWN SCENE MINDSET. Build visuals as staged objects and transformations, not text cards. Define positions, tables, matrices, arrows, moving focus, camera/framing emphasis, before/after states, and visible consequences. Multiple coordinated components are preferred when they clarify the concept.
 - DEFINE MAJOR NOUNS UNLESS EVIDENCE PROVES THEY ARE KNOWN. Do not assume the learner understands terms such as transformer block, attention, MLP, residual stream, normalization, logits, loss, gradient, KV cache, matrix, vector, tensor, prior, likelihood, or cache from a title or curriculum outline alone.
 - MECHANISM-LEVEL DETAIL, NOT COMPRESSED SUMMARIES. A sentence like "attention mixes context, the MLP transforms each token, residuals keep signal, and the output head produces logits" is an outline, not teaching. Expand dense mechanisms into a concrete micro-trace with tiny labeled dimensions and before/after state.
@@ -452,6 +454,12 @@ Return ONLY a valid JSON object matching this exact schema (no markdown, no pros
   "planning_rationale": "2-3 sentences explaining why this is the right next lesson for this specific learner right now",
   "comprehensive_lesson_plan": "Full evolving subject roadmap following the Comprehensive Avo Lesson Plan template. Must satisfy the template word-count floors, near-term detail, 1,000-word future horizon milestone requirement, and references/evidence ledger.",
   "audio_script": "Full audio narration script (800-1200 words, conversational, addresses learner directly)",
+  "orientation_visual": {
+    "schema_version": "1.0",
+    "widget_type": "bespoke-artifact",
+    "instructions": "Paired visual shown alongside the top-level audio. Show the lesson map, pipeline stage, state object, or worked example that the audio is orienting around.",
+    "params": { "artifact_slug": "approved-orientation-artifact-slug" }
+  },
   "reading_intro": "Opening paragraph for the reading section (2-3 sentences)",
   "reading_blocks": [
     {
@@ -698,6 +706,16 @@ function insertGeneratedLesson(
   );
   let sequence = 3;
 
+  const audioContent: Record<string, unknown> = {
+    script: draft.audio_script,
+    transcript: draft.audio_script,
+    duration_hint: Math.round(draft.audio_script.split(/\s+/).length / 150) * 60,
+    planning_rationale: draft.planning_rationale,
+  };
+  if (draft.orientation_visual) {
+    audioContent.orientation_visual = draft.orientation_visual;
+  }
+
   // 1. Audio activity
   insertActivity.run(
     lessonId,
@@ -705,11 +723,7 @@ function insertGeneratedLesson(
     1,
     1,
     `Audio: ${draft.title}`,
-    JSON.stringify({
-      script: draft.audio_script,
-      duration_hint: Math.round(draft.audio_script.split(/\s+/).length / 150) * 60,
-      planning_rationale: draft.planning_rationale,
-    })
+    JSON.stringify(audioContent)
   );
 
   // 2. Reading activity

@@ -72,7 +72,7 @@ export function LlmLifecycleWidget({
   }
 
   return (
-    <div className="space-y-5">
+    <div className="min-w-0 space-y-5">
       {focus === "roadmap" && <RoadmapView values={values} update={update} />}
       {focus === "storage" && <StorageView values={values} update={update} />}
       {focus === "tokenization" && <TokenizationView values={values} update={update} />}
@@ -98,13 +98,13 @@ function RoadmapView({ values, update }: ViewProps) {
   const index = clampInt(values.stage, 0, STAGES.length - 1);
   const stage = STAGES[index];
   return (
-    <div className="space-y-4">
-      <div className="rounded-lg border border-gray-100 bg-white p-2.5">
+    <div className="min-w-0 space-y-4">
+      <div className="min-w-0 rounded-lg border border-gray-100 bg-white p-2.5">
         <div className="mb-2 flex items-center justify-between gap-3">
           <div className="text-sm font-medium text-gray-700">Lifecycle stage</div>
           <div className="text-[11px] font-semibold uppercase tracking-wide text-gray-400">POTTERS</div>
         </div>
-        <div className="overflow-x-auto pb-0.5" role="radiogroup" aria-label="Lifecycle stage">
+        <div className="min-w-0 overflow-x-auto pb-0.5" role="radiogroup" aria-label="Lifecycle stage">
           <div className="grid min-w-max grid-cols-7 gap-1">
             {STAGES.map((s, i) => (
               <button
@@ -133,7 +133,7 @@ function RoadmapView({ values, update }: ViewProps) {
         <InsightCard title={`${stage.letter}: ${stage.label} contract`} body={stage.contract} tone="blue" />
         <InsightCard title="What breaks if skipped" body={stage.failure} tone="amber" />
       </div>
-      <p className="text-sm leading-relaxed text-gray-700">
+      <p className="break-words text-sm leading-relaxed text-gray-700">
         POTTERS is the map: Plan, Organize data, Tokenize, Train, Evaluate, Reduce, Serve. Every stage changes the
         artifact handed to the next stage. The visualization is a contract chain, not a score chart.
       </p>
@@ -149,7 +149,7 @@ function StorageView({ values, update }: ViewProps) {
   const filled = Math.ceil(used * blocks);
   const fits = storageGb <= gpuGb;
   return (
-    <div className="space-y-5">
+    <div className="min-w-0 space-y-5">
       <div className="grid gap-4 sm:grid-cols-2">
         <Slider control={sliders.modelB} value={values.modelB} onChange={(v) => update("modelB", v)} />
         <Slider control={sliders.bits} value={values.bits} onChange={(v) => update("bits", v)} />
@@ -199,7 +199,7 @@ function TokenizationView({ values, update }: ViewProps) {
         ? ["Gemma", "-", "4", "runtime", "serves", "tokens"]
         : ["Gemma-4", "runtime", "serves", "multimodal", "tokens"];
   return (
-    <div className="space-y-5">
+    <div className="min-w-0 space-y-5">
       <div className="grid gap-4 sm:grid-cols-2">
         <Slider control={sliders.vocab} value={values.vocab} onChange={(v) => update("vocab", v)} />
         <Slider control={sliders.textChars} value={values.textChars} onChange={(v) => update("textChars", v)} />
@@ -232,9 +232,9 @@ function TokenizationView({ values, update }: ViewProps) {
 
 function NumberTile({ label, value, danger }: { label: string; value: string; danger?: boolean }) {
   return (
-    <div className={`rounded-lg border px-3 py-3 ${danger ? "border-red-100 bg-red-50" : "border-gray-100 bg-gray-50/70"}`}>
+    <div className={`min-w-0 rounded-lg border px-3 py-3 ${danger ? "border-red-100 bg-red-50" : "border-gray-100 bg-gray-50/70"}`}>
       <div className={`text-[11px] font-medium ${danger ? "text-red-500" : "text-gray-500"}`}>{label}</div>
-      <div className={`mt-1 text-xl font-semibold tabular-nums ${danger ? "text-red-800" : "text-gray-900"}`}>{value}</div>
+      <div className={`mt-1 break-words text-xl font-semibold tabular-nums ${danger ? "text-red-800" : "text-gray-900"}`}>{value}</div>
     </div>
   );
 }
@@ -242,9 +242,9 @@ function NumberTile({ label, value, danger }: { label: string; value: string; da
 function InsightCard({ title, body, tone }: { title: string; body: string; tone: "blue" | "amber" }) {
   const cls = tone === "blue" ? "border-blue-100 bg-blue-50/70 text-blue-900" : "border-amber-100 bg-amber-50/70 text-amber-900";
   return (
-    <div className={`rounded-xl border px-4 py-3 ${cls}`}>
-      <div className="text-sm font-semibold">{title}</div>
-      <p className="mt-1 text-sm leading-relaxed">{body}</p>
+    <div className={`min-w-0 rounded-xl border px-4 py-3 ${cls}`}>
+      <div className="break-words text-sm font-semibold">{title}</div>
+      <p className="mt-1 break-words text-sm leading-relaxed">{body}</p>
     </div>
   );
 }
