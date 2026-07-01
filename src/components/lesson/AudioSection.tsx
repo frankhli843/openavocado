@@ -1,7 +1,10 @@
 "use client";
 
+import { useRef, useState } from "react";
 import type { LessonActivity, GeneratedArtifact } from "@/types";
+import type { AudioSyncedVisualContent } from "@/lib/lesson-content/schema";
 import { WidgetHost } from "./widgets/WidgetHost";
+import { AudioSyncedLessonVisual } from "./LessonPartSection";
 
 interface AudioSectionProps {
   activity: LessonActivity;
@@ -13,12 +16,23 @@ export function AudioSection({ activity, artifact }: AudioSectionProps) {
     ? JSON.parse(activity.content)
     : {};
   const orientationVisual = content.orientation_visual;
+  const audioRef = useRef<HTMLAudioElement | null>(null);
+  const [audioTime, setAudioTime] = useState(0);
+  const [audioDuration, setAudioDuration] = useState(0);
+  const syncedOrientation = isAudioSyncedVisual(orientationVisual) ? orientationVisual : null;
+  const widgetOrientation = syncedOrientation ? null : orientationVisual;
 
   const durationMin = artifact?.duration_sec
     ? Math.ceil(artifact.duration_sec / 60)
     : content.duration_hint
     ? Math.ceil(content.duration_hint / 60)
     : null;
+  const seekAudio = (time: number) => {
+    if (!audioRef.current) return;
+    audioRef.current.currentTime = time;
+    setAudioTime(time);
+    void audioRef.current.play().catch(() => undefined);
+  };
 
   return (
     <div className="border-t border-gray-100 pt-4">
@@ -43,9 +57,12 @@ export function AudioSection({ activity, artifact }: AudioSectionProps) {
             {artifact?.file_path ? (
               <div>
                 <audio
+                  ref={audioRef}
                   controls
                   className="h-10 w-full min-w-0 max-w-full"
                   src={`/runtime/${artifact.file_path}`}
+                  onLoadedMetadata={(event) => setAudioDuration(event.currentTarget.duration || 0)}
+                  onTimeUpdate={(event) => setAudioTime(event.currentTarget.currentTime)}
                 >
                   Your browser does not support audio playback.
                 </audio>
@@ -76,18 +93,31 @@ export function AudioSection({ activity, artifact }: AudioSectionProps) {
             )}
           </div>
 
-          {orientationVisual ? (
+          {syncedOrientation ? (
+            <AudioSyncedLessonVisual
+              visual={syncedOrientation}
+              currentTime={audioTime}
+              duration={audioDuration || content.duration_hint || 154}
+              onSeek={seekAudio}
+            />
+          ) : widgetOrientation ? (
             <div className="min-w-0 border-t border-gray-100 pt-4 xl:border-l xl:border-t-0 xl:pl-5 xl:pt-0">
               <div className="mb-3 text-xs font-semibold uppercase tracking-wider text-blue-600">
                 Interactive orientation
               </div>
-              <WidgetHost spec={orientationVisual} />
+              <WidgetHost spec={widgetOrientation} />
             </div>
           ) : null}
         </div>
       </div>
     </div>
   );
+}
+
+function isAudioSyncedVisual(value: unknown): value is AudioSyncedVisualContent {
+  if (!value || typeof value !== "object") return false;
+  const candidate = value as { cues?: unknown };
+  return Array.isArray(candidate.cues);
 }
 
 function SectionIcon({ type }: { type: string }) {

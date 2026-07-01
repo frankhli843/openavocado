@@ -270,10 +270,26 @@ enforced by `validateGeneratedContent`; the rest is a hard authoring rule.
   in more detail in a later lesson, so the learner is never left thinking a
   glossed-over idea was fully taught. (Reviewed by hand; not auto-detectable.)
 - **Audio plus visual side-by-side orientation.** The top-level audio activity
-  must include a bespoke `orientation_visual`, and every lesson-part audio
+  must include a focused timed `orientation_visual`, and every lesson-part audio
   segment must include `audio.synced_visual`. The learner should see the paired
   visual beside the audio player on desktop and immediately below it on mobile,
   not only after scrolling through the transcript or opening a later activity.
+- **Top-level audio uses the same synced pattern as lesson parts.** The first
+  audio activity's `orientation_visual` should be a timed cue scene, not just a
+  static widget beside the player. Use the same learner behavior as
+  `audio.synced_visual`: progress follows playback time, each cue has
+  `start`, `end`, `label`, `headline`, `narration`, `receive`, `transform`, and
+  `pass`, and clicking a cue seeks the audio to that beat.
+- **Audio-adjacent visuals are scoped to that audio segment.** The visual shown
+  beside or immediately below an audio player should show only the object,
+  stage, state transition, or tiny worked example that the current audio is
+  narrating, with only minimal before/after handoff context. Do not reuse a
+  broad whole-lesson map, all-step simulator, complete curriculum graph, or
+  later exploratory interactive beside the audio when most of it is not being
+  discussed in that audio. Put broad exploratory interactives after the
+  audio/text block as their own activity; the audio-adjacent visual should be a
+  focused subset or dedicated bespoke artifact with timed states matching the
+  spoken beats.
 - **Knowledge graph orientation (`knowledge_graph_data`).** Every lesson must
   include a `KnowledgeGraphData` object (see `src/types/index.ts`) that shows
   where this lesson sits in the subject curriculum. Think of it as a subject map

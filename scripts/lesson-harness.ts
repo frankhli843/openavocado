@@ -427,7 +427,8 @@ ${COMPREHENSIVE_LESSON_PLAN_TEMPLATE}
 Non-negotiable lesson-depth rules:
 - NEW VISUALS MUST BE BESPOKE ARTIFACTS. Do not author new lesson visuals as registered widgets or generic declarative widgets. The production path is: generate a self-contained React visual artifact, store it in visual_artifacts, build it, open the sandbox URL with Chrome MCP, take desktop and mobile screenshots, record QA evidence, approve it, then reference it from lesson JSON as widget_type "bespoke-artifact" with params.artifact_slug.
 - EVERY AUDIO SEGMENT NEEDS A TRANSCRIPT AND TIMED VISUAL SCENE. Treat audio_script as a learner-visible transcript. For lesson parts, include a synced visual plan whose cues cover the audio duration and change the scene as playback advances. The cues must show what the section receives, what changes during the narration, and what is passed forward.
-- AUDIO + INTERACTIVE SIDE-BY-SIDE FOR ORIENTATION. The top-level audio activity must include orientation_visual, and every lesson_part audio segment must include audio.synced_visual. The learner should see the paired visual beside the audio on desktop and immediately below it on mobile. Do not make the learner listen to a long orientation before they can see the moving object, pipeline, matrix, or state transition being described.
+- AUDIO + INTERACTIVE SIDE-BY-SIDE FOR ORIENTATION. The top-level audio activity must include orientation_visual using the same timed cue scene pattern as lesson parts, and every lesson_part audio segment must include audio.synced_visual. The learner should see the paired visual beside the audio on desktop and immediately below it on mobile. Do not make the learner listen to a long orientation before they can see the moving object, pipeline, matrix, or state transition being described.
+- AUDIO-ADJACENT VISUALS MUST BE SCOPED TO THE CURRENT AUDIO. The visual beside an audio player should show only the object, stage, state transition, or tiny example that the audio is currently narrating, with minimal before/after handoff context. Do not put a broad whole-lesson map, all-step simulator, or later exploratory interactive beside the audio if most of it is unrelated to the spoken segment. Use a dedicated focused orientation artifact or timed synced scene for the audio, then place the broader exploratory interactive later in its own lesson activity.
 - USE A MANIM / 3BLUE1BROWN SCENE MINDSET. Build visuals as staged objects and transformations, not text cards. Define positions, tables, matrices, arrows, moving focus, camera/framing emphasis, before/after states, and visible consequences. Multiple coordinated components are preferred when they clarify the concept.
 - DEFINE MAJOR NOUNS UNLESS EVIDENCE PROVES THEY ARE KNOWN. Do not assume the learner understands terms such as transformer block, attention, MLP, residual stream, normalization, logits, loss, gradient, KV cache, matrix, vector, tensor, prior, likelihood, or cache from a title or curriculum outline alone.
 - MECHANISM-LEVEL DETAIL, NOT COMPRESSED SUMMARIES. A sentence like "attention mixes context, the MLP transforms each token, residuals keep signal, and the output head produces logits" is an outline, not teaching. Expand dense mechanisms into a concrete micro-trace with tiny labeled dimensions and before/after state.
@@ -455,10 +456,20 @@ Return ONLY a valid JSON object matching this exact schema (no markdown, no pros
   "comprehensive_lesson_plan": "Full evolving subject roadmap following the Comprehensive Avo Lesson Plan template. Must satisfy the template word-count floors, near-term detail, 1,000-word future horizon milestone requirement, and references/evidence ledger.",
   "audio_script": "Full audio narration script (800-1200 words, conversational, addresses learner directly)",
   "orientation_visual": {
-    "schema_version": "1.0",
-    "widget_type": "bespoke-artifact",
-    "instructions": "Paired visual shown alongside the top-level audio. Show the lesson map, pipeline stage, state object, or worked example that the audio is orienting around.",
-    "params": { "artifact_slug": "approved-orientation-artifact-slug" }
+    "strategy": "timeline",
+    "artifact_slug": "focused-audio-orientation-scene-slug",
+    "cues": [
+      {
+        "start": 0,
+        "end": 8,
+        "label": "Current beat",
+        "headline": "What the audio is saying now",
+        "narration": "Short transcript-aligned visual note",
+        "receive": "what enters this beat",
+        "transform": "what changes in this beat",
+        "pass": "what moves forward"
+      }
+    ]
   },
   "reading_intro": "Opening paragraph for the reading section (2-3 sentences)",
   "reading_blocks": [

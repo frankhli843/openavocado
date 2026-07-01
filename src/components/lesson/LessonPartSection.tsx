@@ -274,7 +274,7 @@ const HIDDEN_STATE_AUDIO_CUES: AudioSyncedVisualCue[] = [
   },
 ];
 
-function AudioSyncedLessonVisual({
+export function AudioSyncedLessonVisual({
   visual,
   currentTime,
   duration,
