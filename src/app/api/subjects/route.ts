@@ -34,7 +34,7 @@ export async function POST(request: Request) {
     const criteria = typeof body.criteria === "string" ? body.criteria.trim() || null : null;
     const currentLevel = body.current_level || "familiarity";
 
-    const validLevels = ["familiarity", "competence", "mastery"];
+    const validLevels = ["familiarity", "competence", "mastery", "post_mastery"];
     if (!validLevels.includes(currentLevel)) {
       return NextResponse.json({ error: `current_level must be one of: ${validLevels.join(", ")}` }, { status: 400 });
     }

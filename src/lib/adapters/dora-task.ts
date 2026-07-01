@@ -204,6 +204,7 @@ function buildFirstLessonAcceptance(event: SubjectCreatedEvent, channel?: string
     "",
     "=== FIRST LESSON DESIGN GOAL ===",
     "The first lesson should orient the learner to the big picture before diving into details. Explain why the subject matters, what problem the first concept solves, what breaks without it, and how it connects to the learner's long-term goal. Avoid broad survey fluff. Pick a concrete, learnable step that creates useful mental scaffolding and gives the model enough evidence to plan lesson 2.",
+    "Phase behavior: familiarity lessons focus on high-level concepts, vocabulary, and how pieces relate. Competence lessons move into important details, mechanisms, edge cases, and practice. Mastery lessons emphasize transfer and integration. Post-mastery lessons are paper-driven and must center a recent, relevant, well-cited or frontier paper with clear citations.",
     "",
     "For the requested model-building and inference track, the first lesson should help the learner understand the lifecycle from data and tokenizer choices through training, inference, quantization, packaging, and release, while still teaching one concrete part deeply enough to practice. The end goal is competence to help the Google Gemma team, so the lesson should point toward real workflows and vocabulary without pretending the learner already knows them.",
     "",
@@ -261,7 +262,15 @@ export const doraTaskAdapter: CompletionHookAdapter = {
       "=== SUBJECT CONTEXT (use first) ===",
       `Goals: ${event.subject_goals || "(none set)"}`,
       `Learner criteria/notes: ${event.subject_criteria || "(none set)"}`,
+      `Current phase after completion: ${event.current_level}`,
+      `Level progression: ${event.level_progression.reason}`,
       event.workpad_summary ? `AI workpad (current plan):\n${event.workpad_summary}` : "AI workpad: (none yet)",
+      "",
+      "=== PHASE-SPECIFIC AUTHORING ===",
+      "Familiarity means teach the high-level concepts, vocabulary, and relationships. Competence means move into the important details, mechanisms, edge cases, and practice. Mastery means emphasize transfer, integration, and harder evidence.",
+      event.current_level === "post_mastery"
+        ? "Post-mastery is now active. The next lesson must find a recent, relevant, well-cited or frontier paper, cite it clearly, explain why it matters for this subject, and teach what the paper adds beyond the learner's mastered foundation. Do not generate another fundamentals lesson unless the evidence below proves a blocking gap."
+        : "Do not jump into frontier-paper study until the stored current phase is post_mastery.",
       "",
       "=== THIS LESSON ===",
       `Prior lesson: "${event.lesson_title}"  | Goals: ${event.lesson_goals.join(", ")}`,

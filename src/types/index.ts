@@ -41,7 +41,7 @@ export type {
 } from "@/lib/lesson-content/schema";
 
 
-export type LevelName = "familiarity" | "competence" | "mastery";
+export type LevelName = "familiarity" | "competence" | "mastery" | "post_mastery";
 export type SubjectStatus = "active" | "paused" | "completed" | "archived";
 export type LessonStatus = "queued" | "in_progress" | "completed" | "skipped" | "discarded";
 
@@ -188,6 +188,41 @@ export interface SubjectMastery {
     review_needed: number;
     ready_to_advance: number;
   };
+}
+
+export interface LevelProgression {
+  previous_level: LevelName;
+  current_level: LevelName;
+  recommended_level: LevelName;
+  next_level: LevelName | null;
+  graduated: boolean;
+  progress_percent: number;
+  reason: string;
+  frontier_mode: boolean;
+  evidence: {
+    completed_lessons: number;
+    total_lessons: number;
+    mastery_score: number | null;
+    assessment_total: number;
+    assessment_accuracy: number | null;
+    hard_assessment_total: number;
+    hard_assessment_accuracy: number | null;
+    positive_signals: number;
+    review_signals: number;
+    passed_code_submissions: number;
+    total_code_submissions: number;
+  };
+  gates: Array<{
+    label: string;
+    passed: boolean;
+    detail: string;
+  }>;
+  phases: Array<{
+    level: LevelName;
+    label: string;
+    status: "completed" | "current" | "locked";
+    summary: string;
+  }>;
 }
 
 export interface Lesson {
@@ -551,6 +586,8 @@ export interface LessonCompletedEvent {
   /** Subject-level goals + learner criteria — primary context for the next lesson. */
   subject_goals: string | null;
   subject_criteria: string | null;
+  current_level: LevelName;
+  level_progression: LevelProgression;
   lesson_id: number;
   lesson_title: string;
   lesson_goals: string[];

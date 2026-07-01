@@ -6,6 +6,43 @@ import { describe, it, expect, beforeEach, afterEach } from "vitest";
 import Database from "better-sqlite3";
 import { readFileSync } from "fs";
 import path from "path";
+import type { LevelProgression } from "@/types";
+
+const TEST_LEVEL_PROGRESSION: LevelProgression = {
+  previous_level: "familiarity",
+  current_level: "familiarity",
+  recommended_level: "familiarity",
+  next_level: "competence",
+  graduated: false,
+  progress_percent: 0,
+  reason: "Holding at Familiarity for test fixture.",
+  frontier_mode: false,
+  evidence: {
+    completed_lessons: 0,
+    total_lessons: 0,
+    mastery_score: null,
+    assessment_total: 0,
+    assessment_accuracy: null,
+    hard_assessment_total: 0,
+    hard_assessment_accuracy: null,
+    positive_signals: 0,
+    review_signals: 0,
+    passed_code_submissions: 0,
+    total_code_submissions: 0,
+  },
+  gates: [],
+  phases: [
+    { level: "familiarity", label: "Familiarity", status: "current", summary: "High-level concepts" },
+    { level: "competence", label: "Competence", status: "locked", summary: "Important details" },
+    { level: "mastery", label: "Mastery", status: "locked", summary: "Transfer" },
+    { level: "post_mastery", label: "Post-mastery", status: "locked", summary: "Frontier papers" },
+  ],
+};
+
+const TEST_COMPLETION_LEVEL_FIELDS = {
+  current_level: TEST_LEVEL_PROGRESSION.current_level,
+  level_progression: TEST_LEVEL_PROGRESSION,
+};
 
 function createTestDb(): Database.Database {
   const db = new Database(":memory:");
@@ -211,6 +248,7 @@ describe("Completion adapter contract", () => {
       learner_id: 1,
       subject_id: 1,
       subject_title: "Test",
+      ...TEST_COMPLETION_LEVEL_FIELDS,
       lesson_id: 1,
       lesson_title: "Test Lesson",
       lesson_goals: [],
@@ -244,6 +282,7 @@ describe("Completion adapter contract", () => {
       learner_id: 1,
       subject_id: 1,
       subject_title: "Test",
+      ...TEST_COMPLETION_LEVEL_FIELDS,
       lesson_id: 1,
       lesson_title: "Test Lesson",
       lesson_goals: [],

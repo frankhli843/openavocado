@@ -25,7 +25,43 @@ import {
   doraTaskSubjectCreatedDispatcher,
 } from "../index";
 import { generateInitialAssessment } from "../../lesson-generator/initial-assessment";
-import type { CompletionAdapter, NextLessonJob } from "../../../types";
+import type { CompletionAdapter, LevelProgression, NextLessonJob } from "../../../types";
+
+const DEFAULT_LEVEL_PROGRESSION: LevelProgression = {
+  previous_level: "familiarity",
+  current_level: "familiarity",
+  recommended_level: "familiarity",
+  next_level: "competence",
+  graduated: false,
+  progress_percent: 0,
+  reason: "Holding at Familiarity for test fixture.",
+  frontier_mode: false,
+  evidence: {
+    completed_lessons: 0,
+    total_lessons: 0,
+    mastery_score: null,
+    assessment_total: 0,
+    assessment_accuracy: null,
+    hard_assessment_total: 0,
+    hard_assessment_accuracy: null,
+    positive_signals: 0,
+    review_signals: 0,
+    passed_code_submissions: 0,
+    total_code_submissions: 0,
+  },
+  gates: [],
+  phases: [
+    { level: "familiarity", label: "Familiarity", status: "current", summary: "High-level concepts" },
+    { level: "competence", label: "Competence", status: "locked", summary: "Important details" },
+    { level: "mastery", label: "Mastery", status: "locked", summary: "Transfer" },
+    { level: "post_mastery", label: "Post-mastery", status: "locked", summary: "Frontier papers" },
+  ],
+};
+
+const DEFAULT_COMPLETION_LEVEL_FIELDS = {
+  current_level: DEFAULT_LEVEL_PROGRESSION.current_level,
+  level_progression: DEFAULT_LEVEL_PROGRESSION,
+};
 
 afterEach(() => {
   vi.unstubAllEnvs();
@@ -617,6 +653,7 @@ describe("dora-task prompts embed the lesson quality bar", () => {
       subject_title: "Bayesian Reasoning",
       subject_goals: "Understand base rates",
       subject_criteria: null,
+      ...DEFAULT_COMPLETION_LEVEL_FIELDS,
       lesson_id: 7,
       lesson_title: "Priors",
       lesson_goals: ["priors"],
@@ -1076,6 +1113,7 @@ describe("agentHarnessAdapter dispatch error paths", () => {
       subject_title: "Test",
       subject_goals: null,
       subject_criteria: null,
+      ...DEFAULT_COMPLETION_LEVEL_FIELDS,
       lesson_id: 7,
       lesson_title: "Prior Work",
       lesson_goals: [],
@@ -1111,6 +1149,7 @@ describe("agentHarnessAdapter dispatch error paths", () => {
       subject_title: "Test",
       subject_goals: null,
       subject_criteria: null,
+      ...DEFAULT_COMPLETION_LEVEL_FIELDS,
       lesson_id: 7,
       lesson_title: "Prior Work",
       lesson_goals: [],
@@ -1146,6 +1185,7 @@ describe("agentHarnessAdapter dispatch error paths", () => {
       subject_title: "Test",
       subject_goals: null,
       subject_criteria: null,
+      ...DEFAULT_COMPLETION_LEVEL_FIELDS,
       lesson_id: 7,
       lesson_title: "Prior Work",
       lesson_goals: [],
@@ -1181,6 +1221,7 @@ describe("agentHarnessAdapter dispatch error paths", () => {
       subject_title: "Test",
       subject_goals: null,
       subject_criteria: null,
+      ...DEFAULT_COMPLETION_LEVEL_FIELDS,
       lesson_id: 7,
       lesson_title: "Prior Work",
       lesson_goals: [],
@@ -1216,6 +1257,7 @@ describe("agentHarnessAdapter dispatch error paths", () => {
       subject_title: "Test",
       subject_goals: null,
       subject_criteria: null,
+      ...DEFAULT_COMPLETION_LEVEL_FIELDS,
       lesson_id: 7,
       lesson_title: "Prior Work",
       lesson_goals: [],
@@ -1255,6 +1297,7 @@ describe("agentHarnessAdapter dispatch error paths", () => {
       subject_title: "Test",
       subject_goals: null,
       subject_criteria: null,
+      ...DEFAULT_COMPLETION_LEVEL_FIELDS,
       lesson_id: 7,
       lesson_title: "Secrets",
       lesson_goals: [],

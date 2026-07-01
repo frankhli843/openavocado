@@ -5,7 +5,38 @@ import path from "path";
 
 import { generateInitialAssessment } from "./initial-assessment";
 import { generateNextLesson } from "./next-lesson";
-import type { LessonCompletedEvent, SubjectCreatedEvent } from "@/types";
+import type { LessonCompletedEvent, LevelProgression, SubjectCreatedEvent } from "@/types";
+
+const TEST_LEVEL_PROGRESSION: LevelProgression = {
+  previous_level: "familiarity",
+  current_level: "familiarity",
+  recommended_level: "familiarity",
+  next_level: "competence",
+  graduated: false,
+  progress_percent: 0,
+  reason: "Holding at Familiarity for test fixture.",
+  frontier_mode: false,
+  evidence: {
+    completed_lessons: 0,
+    total_lessons: 0,
+    mastery_score: null,
+    assessment_total: 0,
+    assessment_accuracy: null,
+    hard_assessment_total: 0,
+    hard_assessment_accuracy: null,
+    positive_signals: 0,
+    review_signals: 0,
+    passed_code_submissions: 0,
+    total_code_submissions: 0,
+  },
+  gates: [],
+  phases: [
+    { level: "familiarity", label: "Familiarity", status: "current", summary: "High-level concepts" },
+    { level: "competence", label: "Competence", status: "locked", summary: "Important details" },
+    { level: "mastery", label: "Mastery", status: "locked", summary: "Transfer" },
+    { level: "post_mastery", label: "Post-mastery", status: "locked", summary: "Frontier papers" },
+  ],
+};
 
 function makeDb() {
   const db = new Database(":memory:");
@@ -55,6 +86,8 @@ function lessonCompletedEvent(learnerId: number, subjectId: number, lessonId: nu
     subject_title: "Transformer attention",
     subject_goals: "Understand attention with visuals",
     subject_criteria: null,
+    current_level: "familiarity",
+    level_progression: TEST_LEVEL_PROGRESSION,
     lesson_id: lessonId,
     lesson_title: "Initial Assessment: Transformer attention",
     lesson_goals: ["Calibrate existing knowledge depth"],

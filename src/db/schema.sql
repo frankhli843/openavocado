@@ -47,7 +47,7 @@ CREATE TABLE IF NOT EXISTS subjects (
   status          TEXT    NOT NULL DEFAULT 'active' CHECK (status IN ('active', 'paused', 'completed', 'archived')),
   goals           TEXT,   -- editable long-form goals text
   criteria        TEXT,   -- learner notes for the lesson generator: what to optimize for, preferred style, constraints, context
-  current_level   TEXT    NOT NULL DEFAULT 'familiarity' CHECK (current_level IN ('familiarity', 'competence', 'mastery')),
+  current_level   TEXT    NOT NULL DEFAULT 'familiarity' CHECK (current_level IN ('familiarity', 'competence', 'mastery', 'post_mastery')),
   archived_at     TEXT,   -- set when a subject is archived (reversible); NULL when active
   created_at      TEXT    NOT NULL DEFAULT (datetime('now')),
   updated_at      TEXT    NOT NULL DEFAULT (datetime('now'))

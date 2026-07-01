@@ -94,6 +94,11 @@ function applyAdditiveMigrations(db: Database.Database): void {
     db.exec("ALTER TABLE subjects ADD COLUMN criteria TEXT");
   }
 
+  // Allow the adaptive model to move beyond mastery into current-paper study.
+  // SQLite cannot ALTER CHECK constraints, so rebuild older subject tables that
+  // only permit familiarity/competence/mastery.
+  migrateSubjectCurrentLevelCheck(db);
+
   // Soft-delete tracking for discarded incomplete lessons.
   if (!hasColumn("lessons", "discarded_at")) {
     db.exec("ALTER TABLE lessons ADD COLUMN discarded_at TEXT");
@@ -339,6 +344,47 @@ function applyAuthBootstrap(db: Database.Database): void {
   db.prepare(
     "INSERT INTO learner_profiles (user_id, display_name, preferred_lang) VALUES (?, ?, ?)"
   ).run(userId, displayName, "en");
+}
+
+function migrateSubjectCurrentLevelCheck(db: Database.Database): void {
+  const row = db
+    .prepare("SELECT sql FROM sqlite_master WHERE type='table' AND name='subjects'")
+    .get() as { sql: string } | undefined;
+  if (!row || /'post_mastery'/.test(row.sql)) return;
+
+  const fkWasOn = (db.pragma("foreign_keys", { simple: true }) as number) === 1;
+  if (fkWasOn) db.pragma("foreign_keys = OFF");
+  try {
+    const rebuild = db.transaction(() => {
+      db.exec(`
+        CREATE TABLE subjects__new (
+          id              INTEGER PRIMARY KEY AUTOINCREMENT,
+          learner_id      INTEGER NOT NULL REFERENCES learner_profiles(id) ON DELETE CASCADE,
+          title           TEXT    NOT NULL,
+          description     TEXT,
+          status          TEXT    NOT NULL DEFAULT 'active' CHECK (status IN ('active', 'paused', 'completed', 'archived')),
+          goals           TEXT,
+          criteria        TEXT,
+          current_level   TEXT    NOT NULL DEFAULT 'familiarity' CHECK (current_level IN ('familiarity', 'competence', 'mastery', 'post_mastery')),
+          archived_at     TEXT,
+          created_at      TEXT    NOT NULL DEFAULT (datetime('now')),
+          updated_at      TEXT    NOT NULL DEFAULT (datetime('now'))
+        );
+      `);
+      db.exec(`
+        INSERT INTO subjects__new
+          (id, learner_id, title, description, status, goals, criteria, current_level, archived_at, created_at, updated_at)
+        SELECT id, learner_id, title, description, status, goals, criteria, current_level, archived_at, created_at, updated_at
+        FROM subjects;
+      `);
+      db.exec("DROP TABLE subjects;");
+      db.exec("ALTER TABLE subjects__new RENAME TO subjects;");
+      db.exec("CREATE INDEX IF NOT EXISTS idx_subjects_learner_id ON subjects(learner_id);");
+    });
+    rebuild();
+  } finally {
+    if (fkWasOn) db.pragma("foreign_keys = ON");
+  }
 }
 
 /**

@@ -4,7 +4,7 @@ import { Suspense, useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { use } from "react";
-import type { Subject, Lesson, MasterySignal, ProgressPoint, SubjectMastery, NextLessonJob } from "@/types";
+import type { Subject, Lesson, MasterySignal, ProgressPoint, SubjectMastery, NextLessonJob, LevelProgression } from "@/types";
 import { LessonList } from "@/components/LessonList";
 import { MasteryPanel } from "@/components/MasteryPanel";
 import { MasterySummary } from "@/components/MasterySummary";
@@ -22,6 +22,7 @@ interface SubjectData {
   mastery_signals: MasterySignal[];
   progress_points: ProgressPoint[];
   mastery?: SubjectMastery;
+  level_progression?: LevelProgression;
   tags: Array<{ id: number; name: string; tag_type: string }>;
   tag_evidence?: TagEvidenceRow[];
   generation_jobs?: NextLessonJob[];
@@ -168,11 +169,11 @@ function SubjectContent({ params }: { params: Promise<{ id: string }> }) {
   ];
 
   return (
-    <div className="min-h-screen bg-white">
+    <div className="min-h-screen overflow-x-hidden bg-white">
       {/* Sticky back + nav */}
       <div className="sticky top-0 z-10 bg-white border-b border-gray-200">
         {/* Breadcrumb bar */}
-        <div className="max-w-5xl mx-auto px-4 sm:px-6 h-10 flex items-center gap-2 text-sm">
+        <div className="mx-auto flex h-10 max-w-5xl min-w-0 items-center gap-2 px-4 text-sm sm:px-6">
           <Link
             href="/"
             className="text-gray-500 hover:text-gray-800 flex items-center gap-1 transition-colors"
@@ -185,8 +186,8 @@ function SubjectContent({ params }: { params: Promise<{ id: string }> }) {
         </div>
 
         {/* Tab bar — horizontal scroll on mobile */}
-        <div className="border-t border-gray-100 overflow-x-auto">
-          <div className="max-w-5xl mx-auto px-4 sm:px-6 flex gap-0 w-max min-w-full">
+        <div className="max-w-full overflow-x-auto border-t border-gray-100">
+          <div className="mx-auto flex w-max min-w-full max-w-5xl gap-0 px-4 sm:px-6">
             {tabs.map((tab) => (
               <button
                 key={tab.id}
@@ -208,7 +209,7 @@ function SubjectContent({ params }: { params: Promise<{ id: string }> }) {
       </div>
 
       {/* Subject header */}
-      <div className="max-w-5xl mx-auto px-4 sm:px-6 py-6">
+      <div className="mx-auto max-w-5xl min-w-0 px-4 py-6 sm:px-6">
         <div className="flex flex-col gap-3 mb-6 sm:flex-row sm:items-start sm:justify-between sm:gap-4">
           <div className="min-w-0">
             <div className="flex flex-wrap items-baseline gap-2 mb-1">
@@ -258,6 +259,8 @@ function SubjectContent({ params }: { params: Promise<{ id: string }> }) {
             {notice}
           </div>
         )}
+
+        <LevelProgressionPanel progression={data.level_progression} currentLevel={subject.current_level} />
 
         {/* Tags */}
         {tags.length > 0 && (
@@ -413,11 +416,130 @@ function TagEvidencePanel({ evidence }: { evidence: TagEvidenceRow[] }) {
   );
 }
 
+function LevelProgressionPanel({
+  progression,
+  currentLevel,
+}: {
+  progression?: LevelProgression;
+  currentLevel: string;
+}) {
+  const levelLabels: Record<string, string> = {
+    familiarity: "Familiarity",
+    competence: "Competence",
+    mastery: "Mastery",
+    post_mastery: "Post-mastery",
+  };
+  const phases =
+    progression?.phases ??
+    (["familiarity", "competence", "mastery", "post_mastery"] as const).map((level) => ({
+      level,
+      label: levelLabels[level],
+      status: level === currentLevel ? "current" : "locked",
+      summary: "",
+    }));
+  const next = progression?.next_level ? levelLabels[progression.next_level] : null;
+  const percent = progression?.progress_percent ?? 0;
+
+  return (
+    <section className="mb-6 w-full min-w-0 overflow-hidden rounded-xl border border-gray-200 bg-white p-4 sm:p-5">
+      <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+        <div className="min-w-0">
+          <div className="text-xs font-semibold uppercase text-gray-400">
+            Learning phase
+          </div>
+          <h2 className="mt-1 break-words text-base font-semibold text-gray-900">
+            {levelLabels[currentLevel] ?? currentLevel}
+          </h2>
+          <p className="mt-1 break-words text-sm leading-relaxed text-gray-600">
+            {progression?.reason ??
+              "The app will update this level after enough lesson and assessment evidence is available."}
+          </p>
+        </div>
+        <div className="w-full rounded-lg bg-gray-50 px-3 py-2 text-sm sm:w-auto sm:shrink-0">
+          <div className="text-xs text-gray-400">{next ? `Next: ${next}` : "Highest phase"}</div>
+          <div className="mt-0.5 font-semibold text-gray-900">
+            {progression?.frontier_mode ? "Paper-driven" : `${percent}% ready`}
+          </div>
+        </div>
+      </div>
+
+      <div className="divide-y divide-gray-200 border-t border-gray-200 sm:grid sm:grid-cols-4 sm:divide-x sm:divide-y-0">
+        {phases.map((phase) => {
+          const active = phase.status === "current";
+          const complete = phase.status === "completed";
+          return (
+            <div
+              key={phase.level}
+              className="min-w-0 py-3 sm:px-3"
+            >
+              <div className="flex items-center gap-2">
+                <span
+                  className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-xs font-bold ${
+                    complete
+                      ? "bg-green-600 text-white"
+                      : active
+                      ? "bg-blue-600 text-white"
+                      : "bg-gray-200 text-gray-500"
+                  }`}
+                >
+                  {complete ? "✓" : active ? "●" : ""}
+                </span>
+                <span
+                  className={`min-w-0 break-words text-sm font-semibold ${
+                    active ? "text-blue-800" : complete ? "text-green-800" : "text-gray-900"
+                  }`}
+                >
+                  {phase.label}
+                </span>
+              </div>
+              {phase.summary && (
+                <p className="mt-2 break-words text-xs leading-relaxed text-gray-600">{phase.summary}</p>
+              )}
+            </div>
+          );
+        })}
+      </div>
+
+      {progression?.frontier_mode && (
+        <div className="mt-4 rounded-lg border border-emerald-200 bg-emerald-50 p-3 text-sm leading-relaxed text-emerald-800">
+          Post-mastery lessons should now center on recent, relevant, well-cited frontier papers and explain what the paper adds beyond the mastered foundation.
+        </div>
+      )}
+
+      {progression && progression.gates.length > 0 && (
+        <div className="mt-4 divide-y divide-gray-200 border-t border-gray-200">
+          {progression.gates.map((gate) => (
+            <div
+              key={gate.label}
+              className="flex min-w-0 flex-col gap-1 py-3 text-sm sm:flex-row sm:items-center sm:justify-between sm:gap-4"
+            >
+              <div className="flex min-w-0 items-start gap-2">
+                <span
+                  className={`mt-1 h-2 w-2 shrink-0 rounded-full ${
+                    gate.passed ? "bg-green-500" : "bg-amber-500"
+                  }`}
+                />
+                <div className="min-w-0">
+                  <div className="break-words font-medium text-gray-900">
+                    {gate.passed ? "Ready" : "Needs evidence"}: {gate.label}
+                  </div>
+                  <div className="mt-0.5 break-words text-xs text-gray-500">{gate.detail}</div>
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+    </section>
+  );
+}
+
 function LevelBadge({ level }: { level: string }) {
   const styles: Record<string, string> = {
     familiarity: "bg-blue-50 text-blue-700 border-blue-100",
     competence: "bg-purple-50 text-purple-700 border-purple-100",
     mastery: "bg-green-50 text-green-700 border-green-100",
+    post_mastery: "bg-emerald-50 text-emerald-700 border-emerald-100",
   };
   return (
     <span

@@ -20,9 +20,10 @@ interface SubjectFormProps {
 }
 
 const LEVEL_OPTIONS: { value: LevelName; label: string; hint: string }[] = [
-  { value: "familiarity", label: "Familiarity", hint: "New to this subject — building vocabulary and orientation" },
-  { value: "competence", label: "Competence", hint: "Some experience — deepening understanding and practice" },
-  { value: "mastery", label: "Mastery", hint: "Strong foundation — synthesising, transferring, and applying" },
+  { value: "familiarity", label: "Familiarity", hint: "High-level concepts, vocabulary, and how the pieces relate" },
+  { value: "competence", label: "Competence", hint: "Important details, mechanisms, edge cases, and practice" },
+  { value: "mastery", label: "Mastery", hint: "Strong foundation, transfer, integration, and harder evidence" },
+  { value: "post_mastery", label: "Post-mastery", hint: "Relevant frontier papers and well-cited current research" },
 ];
 
 export function SubjectForm({ initial, learnerId, onSave, onCancel }: SubjectFormProps) {

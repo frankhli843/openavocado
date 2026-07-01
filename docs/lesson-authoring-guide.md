@@ -63,6 +63,13 @@ enforced by `validateGeneratedContent`; the rest is a hard authoring rule.
   research from reliable sources first. Record source-backed findings, what has
   changed since the previous plan, and any uncertainty. Update the subject
   workpad and long-term plan before generating the lesson itself.
+- **Follow the subject phase.** Familiarity lessons focus on high-level
+  concepts, vocabulary, and how the pieces relate. Competence lessons move into
+  the important details, mechanisms, edge cases, and practice. Mastery lessons
+  emphasize transfer, integration, and harder evidence. Post-mastery lessons
+  are paper-driven: find a recent, relevant, well-cited or frontier paper, cite
+  it clearly, explain why it matters for the subject, and teach what it adds
+  beyond the learner's mastered foundation.
 - **Bespoke authoring, not template filling.** The agent must choose the
   metaphor, examples, visuals, practice, quiz, and video dynamically for the
   topic and learner evidence. Templates may describe the acceptance criteria,

@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { getDb } from "@/db/connection";
 import { computeSubjectMastery } from "@/lib/mastery";
+import { evaluateSubjectLevelProgression } from "@/lib/level-progression";
 import { reconcileMaterializedLessonJobs } from "@/lib/lesson-jobs/reconcile";
 import type { Subject, Lesson, MasterySignal, ProgressPoint } from "@/types";
 
@@ -50,6 +51,7 @@ export async function GET(
       .all(subjectId);
 
     const mastery = computeSubjectMastery(db, subjectId, subject.learner_id);
+    const level_progression = evaluateSubjectLevelProgression(db, subjectId, subject.learner_id);
 
     // Most recent generation job — learner-visible status panel. Older
     // completed jobs are intentionally hidden so the page does not read like
@@ -93,6 +95,7 @@ export async function GET(
       mastery_signals,
       progress_points,
       mastery,
+      level_progression,
       tags,
       tag_evidence,
       generation_jobs,

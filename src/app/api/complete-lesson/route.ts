@@ -5,6 +5,7 @@ import { getAssessmentAdapter } from "@/lib/assessment";
 import { loadSubjectTags, persistAssessment } from "@/lib/assessment-store";
 import { deserializeQuizState } from "@/lib/quiz-state";
 import { createSubjectJournalEntry } from "@/lib/subject-journal";
+import { evaluateSubjectLevelProgression } from "@/lib/level-progression";
 import type { Difficulty, LessonCompletedEvent, SignalType } from "@/types";
 
 /**
@@ -310,6 +311,11 @@ export async function POST(request: Request) {
       ).run(learner_id, lesson.subject_id, lesson_id, testScore);
     }
 
+    const level_progression = evaluateSubjectLevelProgression(db, lesson.subject_id, learner_id, {
+      persist: true,
+      completedLessonId: lesson_id,
+    });
+
     const goals: string[] = lesson.goals ? JSON.parse(lesson.goals) : [];
     const event: LessonCompletedEvent = {
       event: "lesson.completed",
@@ -318,6 +324,8 @@ export async function POST(request: Request) {
       subject_title: lesson.subject_title,
       subject_goals: lesson.subject_goals,
       subject_criteria: lesson.subject_criteria,
+      current_level: level_progression.current_level,
+      level_progression,
       lesson_id,
       lesson_title: lesson.title,
       lesson_goals: goals,
@@ -350,7 +358,9 @@ export async function POST(request: Request) {
       {
         ts: new Date().toISOString(),
         stage: "mastery.updated",
-        message: "Updated mastery, quiz, code, and diagnostic evidence",
+        message: level_progression.graduated
+          ? `Updated mastery evidence and graduated to ${level_progression.current_level.replace("_", " ")}`
+          : "Updated mastery, level, quiz, code, and diagnostic evidence",
       },
       {
         ts: new Date().toISOString(),
@@ -449,6 +459,7 @@ export async function POST(request: Request) {
       dispatch_ok: dispatchResult.ok,
       adapter_ref: dispatchResult.ref,
       output_lesson_id: dispatchResult.lesson_id ?? null,
+      level_progression,
     });
   } catch (err) {
     console.error("[api/complete-lesson]", err);
@@ -499,6 +510,8 @@ function buildCompletionJournalContent(
 
   return [
     `Lesson completed at ${event.completed_at}.`,
+    `Current level after completion: ${event.current_level}.`,
+    `Level progression: ${event.level_progression.reason}`,
     `Quiz result: ${quiz}.`,
     "",
     "Learner diagnostics for next planning:",
