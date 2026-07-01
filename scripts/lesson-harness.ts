@@ -189,7 +189,7 @@ async function callGemini(prompt: string): Promise<string> {
     method: "POST",
     headers: { "Content-Type": "application/json", "X-goog-api-key": key },
     body: JSON.stringify(body),
-    signal: AbortSignal.timeout(90_000),
+    signal: AbortSignal.timeout(300_000),
   });
 
   if (!res.ok) {
