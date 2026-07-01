@@ -1,6 +1,6 @@
 "use client";
 
-import { Suspense, useEffect, useRef, useState } from "react";
+import { Suspense, useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { use } from "react";
@@ -60,7 +60,6 @@ function SubjectContent({ params }: { params: Promise<{ id: string }> }) {
   const [archiveBusy, setArchiveBusy] = useState(false);
   const [notice, setNotice] = useState<string | null>(null);
   const [showEditForm, setShowEditForm] = useState(false);
-  const tabScrollerRef = useRef<HTMLDivElement | null>(null);
 
   async function load(options: { background?: boolean } = {}) {
     try {
@@ -101,11 +100,6 @@ function SubjectContent({ params }: { params: Promise<{ id: string }> }) {
     const nextTab = parseTab(searchParams.get("tab"));
     if (nextTab && nextTab !== activeTab) setActiveTab(nextTab);
   }, [searchParams, activeTab]);
-
-  useEffect(() => {
-    const activeButton = tabScrollerRef.current?.querySelector<HTMLElement>(`[data-tab-id="${activeTab}"]`);
-    activeButton?.scrollIntoView({ behavior: "smooth", block: "nearest", inline: "center" });
-  }, [activeTab]);
 
   function selectTab(tab: TabId) {
     setActiveTab(tab);
@@ -188,15 +182,14 @@ function SubjectContent({ params }: { params: Promise<{ id: string }> }) {
           <span className="text-gray-700 font-medium truncate max-w-xs">{subject.title}</span>
         </div>
 
-        {/* Tab bar — horizontal scroll on mobile */}
-        <div ref={tabScrollerRef} className="max-w-full overflow-x-auto border-t border-gray-100">
-          <div className="mx-auto flex w-max min-w-full max-w-5xl gap-0 px-4 sm:px-6">
+        {/* Tab bar */}
+        <div className="border-t border-gray-100">
+          <div className="mx-auto grid max-w-5xl grid-cols-2 gap-0 px-4 sm:flex sm:px-6">
             {tabs.map((tab) => (
               <button
                 key={tab.id}
-                data-tab-id={tab.id}
                 onClick={() => selectTab(tab.id)}
-                className={`shrink-0 whitespace-nowrap px-4 py-2.5 text-sm font-medium border-b-2 transition-colors ${
+                className={`min-w-0 whitespace-normal px-2 py-2.5 text-center text-sm font-medium leading-tight border-b-2 transition-colors sm:shrink-0 sm:whitespace-nowrap sm:px-4 ${
                   activeTab === tab.id
                     ? "border-blue-500 text-blue-700"
                     : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-200"
