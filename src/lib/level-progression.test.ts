@@ -2,7 +2,10 @@ import { describe, expect, it } from "vitest";
 import Database from "better-sqlite3";
 import { readFileSync } from "fs";
 import path from "path";
-import { evaluateSubjectLevelProgression } from "@/lib/level-progression";
+import {
+  evaluateSubjectLevelProgression,
+  evaluateSubjectLevelProgressionWithAi,
+} from "@/lib/level-progression";
 import type { LevelName } from "@/types";
 
 function makeDb() {
@@ -18,137 +21,146 @@ function seedLearner(db: Database.Database) {
     .prepare("INSERT INTO users (username, display_name) VALUES ('phase-user', 'Phase User')")
     .run().lastInsertRowid as number;
   return db
-    .prepare("INSERT INTO learner_profiles (user_id, display_name) VALUES (?, 'Phase Learner')")
-    .run(userId).lastInsertRowid as number;
+    .prepare(
+      "INSERT INTO learner_profiles (user_id, display_name, config) VALUES (?, 'Phase Learner', ?)"
+    )
+    .run(userId, JSON.stringify({ style: "visual, concrete examples first" })).lastInsertRowid as number;
 }
 
 function seedSubject(db: Database.Database, learnerId: number, level: LevelName) {
   return db
-    .prepare("INSERT INTO subjects (learner_id, title, current_level) VALUES (?, 'Transformers', ?)")
-    .run(learnerId, level).lastInsertRowid as number;
+    .prepare(
+      `INSERT INTO subjects (learner_id, title, description, goals, criteria, current_level)
+       VALUES (?, 'Model Building and Inference', 'Learn to build and reason about LLM systems', ?, ?, ?)`
+    )
+    .run(
+      learnerId,
+      "Understand LLMs well enough to contribute to Gemma work.",
+      "Prefer audio-first, visual mechanisms, and code reinforcement.",
+      level
+    ).lastInsertRowid as number;
 }
 
-function seedCompletedLessons(db: Database.Database, subjectId: number, count: number) {
-  for (let i = 1; i <= count; i++) {
-    db.prepare(
-      "INSERT INTO lessons (subject_id, title, status, sequence_number, completed_at) VALUES (?, ?, 'completed', ?, datetime('now'))"
-    ).run(subjectId, `Lesson ${i}`, i);
-  }
+function seedCompletedLesson(db: Database.Database, subjectId: number, sequence: number, title: string) {
+  return db
+    .prepare(
+      `INSERT INTO lessons
+         (subject_id, title, description, status, sequence_number, completed_at, goals, tags)
+       VALUES (?, ?, ?, 'completed', ?, datetime('now'), ?, ?)`
+    )
+    .run(
+      subjectId,
+      title,
+      `Completed ${title}`,
+      sequence,
+      JSON.stringify(["Understand a high-level part of the LLM pipeline"]),
+      JSON.stringify(["llm-from-scratch", "transformer-architecture"])
+    ).lastInsertRowid as number;
 }
 
-function seedMastery(db: Database.Database, learnerId: number, subjectId: number, score: number) {
+function seedEvidence(db: Database.Database, learnerId: number, subjectId: number) {
+  const lessonId = seedCompletedLesson(db, subjectId, 1, "Tokenization and Architecture Bridge");
+  seedCompletedLesson(db, subjectId, 2, "Hidden States and Transformer Blocks");
+  seedCompletedLesson(db, subjectId, 3, "Training vs Inference Map");
+
   db.prepare(
-    "INSERT INTO progress_points (learner_id, subject_id, metric, value) VALUES (?, ?, 'mastery', ?)"
-  ).run(learnerId, subjectId, score);
-}
+    "INSERT INTO progress_points (learner_id, subject_id, metric, value) VALUES (?, ?, 'mastery', 63)"
+  ).run(learnerId, subjectId);
 
-function seedAssessment(
-  db: Database.Database,
-  learnerId: number,
-  subjectId: number,
-  rows: Array<{ difficulty: "easy" | "medium" | "hard"; outcome: "correct" | "incorrect" | "idk" }>
-) {
-  rows.forEach((row, index) => {
+  for (let i = 0; i < 8; i++) {
     db.prepare(
       `INSERT INTO assessment_results
-         (learner_id, subject_id, question_id, question_type, concept, difficulty, outcome)
-       VALUES (?, ?, ?, 'mc', 'phase-evidence', ?, ?)`
-    ).run(learnerId, subjectId, `q-${index}`, row.difficulty, row.outcome);
-  });
-}
+         (learner_id, subject_id, lesson_id, question_id, question_type, concept, difficulty, outcome, answer_text)
+       VALUES (?, ?, ?, ?, 'freeform', 'transformer-architecture', 'hard', 'correct', ?)`
+    ).run(learnerId, subjectId, lessonId, `hard-${i}`, "A transformer block changes hidden-state values but keeps token positions.");
+  }
 
-function seedSignals(db: Database.Database, learnerId: number, subjectId: number, positive: number, review: number) {
-  for (let i = 0; i < positive; i++) {
+  for (let i = 0; i < 6; i++) {
     db.prepare(
-      `INSERT INTO mastery_signals (learner_id, subject_id, signal_type, concept, confidence)
-       VALUES (?, ?, 'strength', 'phase-evidence', 0.9)`
-    ).run(learnerId, subjectId);
+      `INSERT INTO mastery_signals (learner_id, subject_id, lesson_id, signal_type, concept, detail, confidence)
+       VALUES (?, ?, ?, 'strength', 'llm-pipeline-stages', 'High-level pipeline answer was coherent.', 0.8)`
+    ).run(learnerId, subjectId, lessonId);
   }
-  for (let i = 0; i < review; i++) {
-    db.prepare(
-      `INSERT INTO mastery_signals (learner_id, subject_id, signal_type, concept, confidence)
-       VALUES (?, ?, 'review_needed', 'phase-evidence', 0.2)`
-    ).run(learnerId, subjectId);
-  }
-}
 
-function seedPassingCodeSubmissions(db: Database.Database, learnerId: number, subjectId: number, count: number) {
-  const lessonId = db
-    .prepare("INSERT INTO lessons (subject_id, title, status, sequence_number) VALUES (?, 'Code lesson', 'completed', 99)")
-    .run(subjectId).lastInsertRowid as number;
-  const activityId = db
-    .prepare(
-      "INSERT INTO lesson_activities (lesson_id, activity_type, title, sequence_order) VALUES (?, 'practice_code', 'Integrator', 1)"
-    )
-    .run(lessonId).lastInsertRowid as number;
-  for (let i = 0; i < count; i++) {
-    db.prepare(
-      "INSERT INTO attempts (activity_id, learner_id, attempt_type, result, is_final) VALUES (?, ?, 'submit', '{}', 1)"
-    ).run(activityId, learnerId);
-  }
+  db.prepare(
+    `INSERT INTO subject_workpads (subject_id, learner_id, content, last_updated_by, last_updated_for)
+     VALUES (?, ?, ?, 'test', 'lesson_generation')`
+  ).run(subjectId, learnerId, "# Comprehensive Avo Lesson Plan\n\nThe existing plan says tokenizer, transformer, training, inference, and quantization are still being mapped.");
 }
 
 describe("evaluateSubjectLevelProgression", () => {
-  it("graduates familiarity to competence when enough evidence is present", () => {
+  it("does not graduate from deterministic evidence counts without an AI phase decision", () => {
     const db = makeDb();
     const learnerId = seedLearner(db);
     const subjectId = seedSubject(db, learnerId, "familiarity");
-    seedCompletedLessons(db, subjectId, 2);
-    seedMastery(db, learnerId, subjectId, 61);
-    seedAssessment(db, learnerId, subjectId, [
-      { difficulty: "easy", outcome: "correct" },
-      { difficulty: "medium", outcome: "correct" },
-      { difficulty: "medium", outcome: "correct" },
-      { difficulty: "hard", outcome: "incorrect" },
-    ]);
+    seedEvidence(db, learnerId, subjectId);
 
-    const progression = evaluateSubjectLevelProgression(db, subjectId, learnerId, { persist: true });
+    const progression = evaluateSubjectLevelProgression(db, subjectId, learnerId);
     const row = db.prepare("SELECT current_level FROM subjects WHERE id = ?").get(subjectId) as { current_level: string };
-
-    expect(progression.graduated).toBe(true);
-    expect(progression.current_level).toBe("competence");
-    expect(row.current_level).toBe("competence");
-  });
-
-  it("holds at familiarity when lesson history is thin", () => {
-    const db = makeDb();
-    const learnerId = seedLearner(db);
-    const subjectId = seedSubject(db, learnerId, "familiarity");
-    seedCompletedLessons(db, subjectId, 1);
-    seedMastery(db, learnerId, subjectId, 88);
-
-    const progression = evaluateSubjectLevelProgression(db, subjectId, learnerId, { persist: true });
 
     expect(progression.graduated).toBe(false);
     expect(progression.current_level).toBe("familiarity");
-    expect(progression.gates.find((gate) => gate.label === "Lesson evidence")?.passed).toBe(false);
+    expect(progression.reason).toContain("AI phase evaluator");
+    expect(row.current_level).toBe("familiarity");
   });
 
-  it("graduates mastery to post-mastery when hard evidence and applied practice are strong", () => {
+  it("does not recalibrate through the async completion path when the AI evaluator is unavailable", async () => {
     const db = makeDb();
     const learnerId = seedLearner(db);
-    const subjectId = seedSubject(db, learnerId, "mastery");
-    seedCompletedLessons(db, subjectId, 8);
-    seedMastery(db, learnerId, subjectId, 93);
-    seedSignals(db, learnerId, subjectId, 6, 1);
-    seedAssessment(db, learnerId, subjectId, [
-      { difficulty: "hard", outcome: "correct" },
-      { difficulty: "hard", outcome: "correct" },
-      { difficulty: "hard", outcome: "correct" },
-      { difficulty: "hard", outcome: "correct" },
-      { difficulty: "hard", outcome: "incorrect" },
-    ]);
-    seedPassingCodeSubmissions(db, learnerId, subjectId, 2);
+    const subjectId = seedSubject(db, learnerId, "competence");
+    seedEvidence(db, learnerId, subjectId);
 
-    const progression = evaluateSubjectLevelProgression(db, subjectId, learnerId, { persist: true });
+    const progression = await evaluateSubjectLevelProgressionWithAi(db, subjectId, learnerId, {
+      persist: true,
+      completedLessonId: 1,
+    });
+    const row = db.prepare("SELECT current_level FROM subjects WHERE id = ?").get(subjectId) as { current_level: string };
     const journal = db
-      .prepare("SELECT title, content FROM subject_journal_entries WHERE subject_id = ?")
-      .get(subjectId) as { title: string; content: string };
+      .prepare("SELECT title, content, metadata, created_by FROM subject_journal_entries WHERE subject_id = ?")
+      .get(subjectId) as { title: string; content: string; metadata: string; created_by: string };
 
-    expect(progression.graduated).toBe(true);
-    expect(progression.current_level).toBe("post_mastery");
-    expect(progression.frontier_mode).toBe(true);
-    expect(journal.title).toContain("Post-mastery");
-    expect(journal.content).toContain("frontier");
+    expect(progression.graduated).toBe(false);
+    expect(progression.current_level).toBe("competence");
+    expect(progression.reason).toContain("AI phase evaluator is unavailable");
+    expect(row.current_level).toBe("competence");
+    expect(journal.created_by).toBe("avocadocore-ai-phase-evaluator");
+    expect(journal.title).toBe("AI phase review unavailable");
+    expect(journal.content).toContain("AI phase evaluator is not configured");
+    expect(JSON.parse(journal.metadata).evaluator_error).toContain("not configured");
+  });
+
+  it("reads the latest persisted AI phase decision for display", async () => {
+    const db = makeDb();
+    const learnerId = seedLearner(db);
+    const subjectId = seedSubject(db, learnerId, "competence");
+    seedEvidence(db, learnerId, subjectId);
+
+    db.prepare(
+      `INSERT INTO subject_journal_entries
+         (subject_id, learner_id, entry_type, title, content, metadata, created_by)
+       VALUES (?, ?, 'planning', 'AI phase review', 'AI review', ?, 'avocadocore-ai-phase-evaluator')`
+    ).run(
+      subjectId,
+      learnerId,
+      JSON.stringify({
+        kind: "ai_phase_decision",
+        decision: {
+          current_level: "familiarity",
+          recommended_level: "familiarity",
+          should_change_level: true,
+          confidence: 0.8,
+          reason: "Use familiarity until the full LLM lifecycle map is demonstrated.",
+          missing_evidence: ["checkpointing", "serving"],
+          next_lesson_directive: "Teach the lifecycle map.",
+        },
+      })
+    );
+
+    const progression = evaluateSubjectLevelProgression(db, subjectId, learnerId);
+
+    expect(progression.current_level).toBe("familiarity");
+    expect(progression.recommended_level).toBe("familiarity");
+    expect(progression.reason).toContain("full LLM lifecycle map");
+    expect(progression.gates.find((gate) => gate.label === "AI phase review")?.passed).toBe(true);
   });
 });

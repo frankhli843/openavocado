@@ -28,6 +28,7 @@
 import { getDb, closeDb } from "../src/db/connection";
 import { generateInitialAssessment } from "../src/lib/lesson-generator/initial-assessment";
 import { generateLessonAudio } from "../src/lib/audio/generate-lesson-audio";
+import { COMPREHENSIVE_LESSON_PLAN_TEMPLATE } from "../src/lib/lesson-generator/plan-template";
 import type Database from "better-sqlite3";
 import type {
   SubjectCreatedEvent,
@@ -71,6 +72,7 @@ interface GeminiLessonDraft {
   quiz_questions: QuizQuestion[];
   next_lesson_diagnostics: DiagnosticQuestion[];
   planning_rationale: string;
+  comprehensive_lesson_plan: string;
   concept_tags: string[];
 }
 
@@ -374,7 +376,7 @@ function buildLearnerContext(
         `  [${a.outcome}] ${a.question_id.slice(0, 120)} (concept: ${a.concept ?? "?"}, difficulty: ${a.difficulty ?? "?"})`
     ),
     "",
-    workpad ? `WORKPAD (planning notes):\n${workpad.content.slice(0, 1000)}` : "(no workpad yet)",
+    workpad ? `WORKPAD (current evolving plan):\n${workpad.content.slice(0, 6000)}` : "(no workpad yet)",
   ];
 
   return lines.filter((l) => l !== "").join("\n");
@@ -403,6 +405,7 @@ ${trigger}
 Generate a high-quality adaptive lesson for this learner. The lesson must:
 - Be pedagogically grounded in the learner's actual evidence (mastery signals, assessment results, completed lessons)
 - Include a clear planning_rationale explaining WHY this lesson is the right next step NOW
+- Before authoring the lesson, update the evolving comprehensive subject plan using the required template below. The JSON response must include that full plan in comprehensive_lesson_plan, not only the short planning_rationale.
 - Start from a concept audit: list the major nouns and mechanisms the lesson will rely on, treat a concept as known only when assessment answers, mastery signals, completed lesson content, or profile criteria prove it, and define every unproven prerequisite before using it
 - Have a rich audio script (target 800-1200 words — the learner will listen to this as their primary learning)
 - Include 8-12 substantive reading blocks that teach the concept clearly with definitions, worked examples, mechanism traces, and explicit preview/deeper-later language when needed
@@ -417,6 +420,8 @@ Generate a high-quality adaptive lesson for this learner. The lesson must:
 - Include 8-10 final multiple-choice quiz questions grounded in taught material
 - Include 2 next-lesson diagnostic questions (look-ahead probes, NOT graded)
 - Be specific to this subject and learner — avoid generic filler content
+
+${COMPREHENSIVE_LESSON_PLAN_TEMPLATE}
 
 Non-negotiable lesson-depth rules:
 - NEW VISUALS MUST BE BESPOKE ARTIFACTS. Do not author new lesson visuals as registered widgets or generic declarative widgets. The production path is: generate a self-contained React visual artifact, store it in visual_artifacts, build it, open the sandbox URL with Chrome MCP, take desktop and mobile screenshots, record QA evidence, approve it, then reference it from lesson JSON as widget_type "bespoke-artifact" with params.artifact_slug.
@@ -445,6 +450,7 @@ Return ONLY a valid JSON object matching this exact schema (no markdown, no pros
   "title": "Specific lesson title (not generic)",
   "description": "2-3 sentence description of what this lesson covers and why",
   "planning_rationale": "2-3 sentences explaining why this is the right next lesson for this specific learner right now",
+  "comprehensive_lesson_plan": "Full evolving subject roadmap following the Comprehensive Avo Lesson Plan template. Must satisfy the template word-count floors, near-term detail, 1,000-word future horizon milestone requirement, and references/evidence ledger.",
   "audio_script": "Full audio narration script (800-1200 words, conversational, addresses learner directly)",
   "reading_intro": "Opening paragraph for the reading section (2-3 sentences)",
   "reading_blocks": [
@@ -657,6 +663,7 @@ function insertGeneratedLesson(
     trigger: eventType,
     generated_by: getGeneratorId(),
     planning_rationale: draft.planning_rationale,
+    comprehensive_lesson_plan_excerpt: draft.comprehensive_lesson_plan?.slice(0, 2000) ?? null,
     provider: "google-ai-studio",
     model: getGeminiModel(),
     concept_tags: draft.concept_tags,
@@ -667,8 +674,8 @@ function insertGeneratedLesson(
     .prepare(
       `INSERT INTO lessons
          (subject_id, title, description, status, sequence_number, goals, tags,
-          generated_by, generator_version, source_context)
-       VALUES (?, ?, ?, 'queued', ?, ?, ?, ?, '1.0.0', ?)`
+          generated_by, generator_version, source_context, planning_rationale)
+       VALUES (?, ?, ?, 'queued', ?, ?, ?, ?, '1.0.0', ?, ?)`
     )
     .run(
       subjectId,
@@ -678,7 +685,8 @@ function insertGeneratedLesson(
       goals,
       JSON.stringify(draft.concept_tags),
       getGeneratorId(),
-      JSON.stringify(sourceContext)
+      JSON.stringify(sourceContext),
+      draft.planning_rationale
     );
 
   const lessonId = Number(lessonResult.lastInsertRowid);
@@ -952,12 +960,15 @@ function upsertWorkpad(
   lessonId: number,
   draft: GeminiLessonDraft
 ): void {
+  const comprehensivePlan = draft.comprehensive_lesson_plan?.trim();
   const addition = [
     `## ${new Date().toISOString()} ${getGeneratorId()} generation`,
     `Generated lesson: ${draft.title} (id ${lessonId})`,
     `Planning rationale: ${draft.planning_rationale}`,
     `Concept tags: ${draft.concept_tags.join(", ")}`,
     `Provider: google-ai-studio / ${getGeminiModel()}`,
+    "",
+    comprehensivePlan || "Comprehensive lesson plan was missing from provider output and must be regenerated before production use.",
   ].join("\n");
 
   const existing = db

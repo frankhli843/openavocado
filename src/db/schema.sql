@@ -89,6 +89,7 @@ CREATE TABLE IF NOT EXISTS lessons (
   generated_by    TEXT,   -- agent/skill identifier
   generator_version TEXT,
   source_context  TEXT,   -- JSON: what signals triggered this lesson
+  planning_rationale TEXT, -- learner-visible reason this lesson was selected now
   created_at      TEXT    NOT NULL DEFAULT (datetime('now')),
   updated_at      TEXT    NOT NULL DEFAULT (datetime('now'))
 );

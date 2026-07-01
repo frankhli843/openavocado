@@ -74,9 +74,7 @@ export function SubjectAgentNotes({ subjectId, learnerId }: SubjectAgentNotesPro
       </div>
       <div className="px-4 py-4 sm:px-5">
         {content ? (
-          <div className="max-h-[70vh] overflow-auto rounded-lg bg-gray-50 p-4 text-sm leading-6 text-gray-700">
-            <MarkdownText text={content} />
-          </div>
+          <CollapsibleMarkdownSections content={content} />
         ) : (
           <p className="rounded-lg bg-gray-50 p-4 text-sm text-gray-500">
             No subject workpad notes yet. Future lesson generation tasks will maintain the living plan here.
@@ -85,4 +83,65 @@ export function SubjectAgentNotes({ subjectId, learnerId }: SubjectAgentNotesPro
       </div>
     </section>
   );
+}
+
+interface MarkdownSection {
+  title: string;
+  body: string;
+}
+
+function CollapsibleMarkdownSections({ content }: { content: string }) {
+  const sections = splitMarkdownSections(content);
+  if (sections.length <= 1 && sections[0]?.title === "Agent Notes") {
+    return (
+      <div className="max-h-[70vh] overflow-auto rounded-lg bg-gray-50 p-4 text-sm leading-6 text-gray-700">
+        <MarkdownText text={content} />
+      </div>
+    );
+  }
+
+  return (
+    <div className="max-h-[72vh] space-y-2 overflow-auto rounded-lg bg-gray-50 p-2 text-sm leading-6 text-gray-700 sm:p-3">
+      {sections.map((section, index) => (
+        <details
+          key={`${section.title}-${index}`}
+          open={index === 0}
+          className="rounded-md border border-gray-200 bg-white"
+        >
+          <summary className="cursor-pointer select-none px-3 py-2 text-sm font-semibold text-gray-800 marker:text-gray-400">
+            <span className="break-words">{section.title}</span>
+          </summary>
+          <div className="border-t border-gray-100 px-3 py-3">
+            <MarkdownText text={section.body || "_No details recorded yet._"} />
+          </div>
+        </details>
+      ))}
+    </div>
+  );
+}
+
+function splitMarkdownSections(content: string): MarkdownSection[] {
+  const lines = content.replace(/\r\n/g, "\n").split("\n");
+  const sections: MarkdownSection[] = [];
+  let current: MarkdownSection = { title: "Agent Notes", body: "" };
+
+  for (const line of lines) {
+    const heading = line.match(/^(#{1,3})\s+(.+)$/);
+    if (heading) {
+      if (current.body.trim() || sections.length > 0) {
+        sections.push({ ...current, body: current.body.trim() });
+      }
+      current = {
+        title: heading[2].trim(),
+        body: "",
+      };
+      continue;
+    }
+    current.body += `${line}\n`;
+  }
+
+  if (current.body.trim() || sections.length === 0) {
+    sections.push({ ...current, body: current.body.trim() });
+  }
+  return sections;
 }

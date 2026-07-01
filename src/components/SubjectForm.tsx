@@ -147,13 +147,13 @@ export function SubjectForm({ initial, learnerId, onSave, onCancel }: SubjectFor
         />
       </div>
 
-      {/* Criteria / notes for lesson generator */}
+      {/* Preferences */}
       <div>
         <label className="block text-sm font-medium text-gray-700 mb-1.5">
-          Notes for the lesson generator
+          Preferences
         </label>
         <p className="text-xs text-gray-500 mb-2">
-          Tell the lesson generator how you learn best. Be specific: preferred style, topics to emphasize or avoid,
+          Tell Avo how you learn best. Be specific: preferred style, topics to emphasize or avoid,
           current project context, exam deadlines, things that haven&apos;t worked before. This is read alongside your
           goals every time a new lesson is generated.
         </p>

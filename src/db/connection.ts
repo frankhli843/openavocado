@@ -72,6 +72,9 @@ function applyAdditiveMigrations(db: Database.Database): void {
   if (!hasColumn("lessons", "knowledge_graph_data")) {
     db.exec("ALTER TABLE lessons ADD COLUMN knowledge_graph_data TEXT");
   }
+  if (!hasColumn("lessons", "planning_rationale")) {
+    db.exec("ALTER TABLE lessons ADD COLUMN planning_rationale TEXT");
+  }
 
   // Difficulty + tag link on mastery signals so tag-plus-difficulty evidence is
   // queryable. SQLite allows adding columns with a CHECK that permits NULL.

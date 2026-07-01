@@ -158,5 +158,8 @@ describe("generateNextLesson", () => {
       .prepare("SELECT content FROM subject_workpads WHERE subject_id = ? AND learner_id = ?")
       .get(subjectId, learnerId) as { content: string } | undefined;
     expect(workpad?.content).toContain(`Generated next lesson: ${next.lesson_title}`);
+    expect(workpad?.content).toContain("Comprehensive Avo Lesson Plan");
+    expect(workpad?.content).toContain("Long-Term Horizon");
+    expect(workpad?.content).toContain("Milestone E, post-mastery frontier papers");
   });
 });

@@ -18,6 +18,7 @@
 import type { LessonGeneratorContext, GeneratedLessonContent, ActivityType, LevelName } from "@/types";
 import { validateWidgetSpec, WIDGET_SCHEMA_VERSION } from "@/lib/widgets/schema";
 import { REGISTERED_WIDGETS } from "@/lib/widgets/registry";
+import { COMPREHENSIVE_LESSON_PLAN_TEMPLATE } from "@/lib/lesson-generator/plan-template";
 import {
   validateReadingContent,
   validateMediaContent,
@@ -67,6 +68,7 @@ export const LESSON_QUALITY_BAR_PROMPT = [
   "- WHY-FIRST TEACHING: before formulas or implementation details, explain the high-level purpose and the specific mismatch/failure mode this lesson resolves. Each major step must answer: what breaks or becomes invalid if we skip it?",
   "- NO UNDOCUMENTED ASSUMPTIONS: do not assume domain facts are true unless they are already documented in AvocadoCore context, present in the local SQLite evidence, or verified and recorded in the lesson/task notes.",
   "- PLANNING STAGE BEFORE AUTHORING: before writing lesson content, do comprehensive current research for the topic, especially when it touches active model-building, inference, quantization, GGUF, Hugging Face, or Gemma practice. Record source-backed findings, update the subject workpad and long-term plan, then author the lesson from that plan.",
+  COMPREHENSIVE_LESSON_PLAN_TEMPLATE,
   "- DYNAMIC, BESPOKE AUTHORING: do not fill a reusable template. Choose the lesson scope, metaphor, examples, visualizations, practice, quiz, and video because they fit this learner, this topic, and the DB evidence.",
   "- PURPOSE-BUILT REACT VISUALS: every visual must be designed for the exact concept block it supports. Treat each dense block like a small custom learning app: identify the real data/artifact/process in the prose, then show its rows, columns, axes, states, transitions, failure points, or before/after values. For new generated lessons, all interactives must be DB-backed bespoke-artifact components. Do not use registered widgets or the generic declarative widget path for new lesson authoring. Do not execute raw React/JS directly from lesson JSON or SQLite. Generic bars, relabelable flow boxes, and template-looking diagrams fail QA unless the lesson is genuinely about generic quantities, trends, or distributions and has still been implemented as a bespoke artifact.",
   "- CONCEPT GROUNDING BEFORE OPERATIONS: before a lesson says to look up, add, optimize, sample, cache, classify, normalize, or compare a technical object, first show what that object is, where it comes from, and how it relates to the previous step. Terms like embedding, matrix, tensor, vector, logits, index, prior, likelihood, gradient, loss, and cache must get a tiny concrete representation before operations are performed on them. Example: for embedding lookup, show the embedding matrix as vocabulary-ID rows by hidden-dimension columns, explain that it is learned model weights, show that tokenizer IDs are row addresses, then show the selected row becoming the embedding vector.",

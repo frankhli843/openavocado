@@ -5,7 +5,7 @@ import { getAssessmentAdapter } from "@/lib/assessment";
 import { loadSubjectTags, persistAssessment } from "@/lib/assessment-store";
 import { deserializeQuizState } from "@/lib/quiz-state";
 import { createSubjectJournalEntry } from "@/lib/subject-journal";
-import { evaluateSubjectLevelProgression } from "@/lib/level-progression";
+import { evaluateSubjectLevelProgressionWithAi } from "@/lib/level-progression";
 import type { Difficulty, LessonCompletedEvent, SignalType } from "@/types";
 
 /**
@@ -311,7 +311,7 @@ export async function POST(request: Request) {
       ).run(learner_id, lesson.subject_id, lesson_id, testScore);
     }
 
-    const level_progression = evaluateSubjectLevelProgression(db, lesson.subject_id, learner_id, {
+    const level_progression = await evaluateSubjectLevelProgressionWithAi(db, lesson.subject_id, learner_id, {
       persist: true,
       completedLessonId: lesson_id,
     });

@@ -37,7 +37,7 @@ interface TagEvidenceRow {
   total: number;
 }
 
-type TabId = "lessons" | "mastery" | "progress" | "goals" | "criteria" | "agent-notes" | "journal";
+type TabId = "lessons" | "mastery" | "context" | "ai-work";
 
 const subjectDetailCache = new Map<string, SubjectData>();
 
@@ -161,11 +161,8 @@ function SubjectContent({ params }: { params: Promise<{ id: string }> }) {
   const tabs: Array<{ id: TabId; label: string; count?: number }> = [
     { id: "lessons", label: "Lessons", count: lessons.length },
     { id: "mastery", label: "Mastery", count: mastery_signals.length },
-    { id: "progress", label: "Progress" },
-    { id: "goals", label: "Goals" },
-    { id: "criteria", label: "Generator notes" },
-    { id: "agent-notes", label: "Agent notes" },
-    { id: "journal", label: "Journal" },
+    { id: "context", label: "Goals & Preferences" },
+    { id: "ai-work", label: "AI Work" },
   ];
 
   return (
@@ -260,8 +257,6 @@ function SubjectContent({ params }: { params: Promise<{ id: string }> }) {
           </div>
         )}
 
-        <LevelProgressionPanel progression={data.level_progression} currentLevel={subject.current_level} />
-
         {/* Tags */}
         {tags.length > 0 && (
           <div className="flex flex-wrap gap-1.5 mb-6">
@@ -290,26 +285,25 @@ function SubjectContent({ params }: { params: Promise<{ id: string }> }) {
             </>
           )}
           {activeTab === "mastery" && (
-            <>
+            <div className="space-y-5">
+              <LevelProgressionPanel progression={data.level_progression} currentLevel={subject.current_level} />
               <MasterySummary mastery={data.mastery} />
+              <ProgressChart points={progress_points} />
               <TagEvidencePanel evidence={data.tag_evidence ?? []} />
               <MasteryPanel signals={mastery_signals} />
-            </>
+            </div>
           )}
-          {activeTab === "progress" && (
-            <ProgressChart points={progress_points} />
+          {activeTab === "context" && (
+            <div className="space-y-8">
+              <GoalsEditor subjectId={subject.id} initialGoals={subject.goals ?? ""} />
+              <CriteriaEditor subjectId={subject.id} initialCriteria={subject.criteria ?? ""} />
+            </div>
           )}
-          {activeTab === "goals" && (
-            <GoalsEditor subjectId={subject.id} initialGoals={subject.goals ?? ""} />
-          )}
-          {activeTab === "criteria" && (
-            <CriteriaEditor subjectId={subject.id} initialCriteria={subject.criteria ?? ""} />
-          )}
-          {activeTab === "agent-notes" && (
-            <SubjectAgentNotes subjectId={subject.id} learnerId={subject.learner_id} />
-          )}
-          {activeTab === "journal" && (
-            <SubjectJournal subjectId={subject.id} learnerId={subject.learner_id} />
+          {activeTab === "ai-work" && (
+            <div className="space-y-5">
+              <SubjectAgentNotes subjectId={subject.id} learnerId={subject.learner_id} />
+              <SubjectJournal subjectId={subject.id} learnerId={subject.learner_id} />
+            </div>
           )}
         </div>
       </div>
@@ -575,14 +569,14 @@ function StatPill({
 }
 
 function parseTab(value: string | null): TabId | null {
+  if (value === "goals" || value === "criteria") return "context";
+  if (value === "progress") return "mastery";
+  if (value === "agent-notes" || value === "journal") return "ai-work";
   if (
     value === "lessons"
     || value === "mastery"
-    || value === "progress"
-    || value === "goals"
-    || value === "criteria"
-    || value === "agent-notes"
-    || value === "journal"
+    || value === "context"
+    || value === "ai-work"
   ) {
     return value;
   }

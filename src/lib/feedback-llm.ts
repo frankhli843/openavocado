@@ -118,6 +118,20 @@ export interface CodeFeedbackRequest {
   allPassed: boolean;
 }
 
+export interface PhaseDecisionRequest {
+  evidencePacket: string;
+}
+
+export interface PhaseDecision {
+  current_level: "familiarity" | "competence" | "mastery" | "post_mastery";
+  recommended_level: "familiarity" | "competence" | "mastery" | "post_mastery";
+  should_change_level: boolean;
+  confidence: number;
+  reason: string;
+  missing_evidence: string[];
+  next_lesson_directive: string;
+}
+
 const LOCAL_CHAT_CONTEXT_CHAR_LIMIT = 3000;
 const LOCAL_CHAT_SUMMARY_CHAR_LIMIT = 700;
 const LOCAL_CHAT_MESSAGE_CHAR_LIMIT = 700;
@@ -192,6 +206,32 @@ Return learner-facing feedback only.
 - Do not reveal hidden test assertions or invent hidden-test details.
 - Do not provide a full corrected solution unless the submitted code is already essentially correct.
 - Prefer a hint over a rewrite.`;
+
+const PHASE_DECISION_SYSTEM = `You are AvocadoCore's adaptive learning phase evaluator.
+
+Use the AvocadoCore adaptive-planning skill mentally before deciding:
+1. Query and inspect all available evidence for this user and subject from the supplied evidence packet, including subject goals and criteria, learner profile preferences, completed and discarded lesson history, lesson plans, knowledge graphs, assessments, diagnostics, mastery signals, code attempts, workpad, journal notes, generation jobs, and cross-subject history when present.
+2. Treat the packet as the source of truth. If some evidence is missing, name that missing evidence instead of guessing.
+3. Compare the learner's demonstrated understanding against the subject's long-term goal, not just the latest lesson.
+4. Decide the phase from semantic evidence and trajectory. Do not use fixed numeric thresholds. Do not graduate because a count is high.
+
+Phase meanings:
+- familiarity: high-level concepts, vocabulary, purpose, and how pieces relate. Stay here until the learner has a coherent subject map, not merely one local concept.
+- competence: important details, mechanisms, edge cases, and practice. Use only when the learner has demonstrated the high-level map well enough that future lessons should mainly deepen details.
+- mastery: transfer, integration, debugging, and harder evidence across contexts.
+- post_mastery: frontier-paper mode, only after strong mastered foundation and enough evidence that ordinary lessons are no longer the right next move.
+
+Return ONLY compact JSON:
+{"current_level":"familiarity|competence|mastery|post_mastery","recommended_level":"familiarity|competence|mastery|post_mastery","should_change_level":false,"confidence":0.0,"reason":"learner-facing explanation","missing_evidence":["specific missing evidence"],"next_lesson_directive":"specific instruction for the next lesson planner"}
+
+Rules:
+- You may keep the current phase, advance, or recalibrate downward if the stored phase is ahead of the evidence.
+- Prefer holding or recalibrating over premature graduation.
+- If evidence confirms only high-level understanding of the earliest concepts in a broad subject, keep or return to familiarity and instruct the next lesson to continue mapping missing high-level stages.
+- A preview in a lesson is not proof of understanding.
+- A completed lesson is not proof of competence by itself.
+- Mention the exact missing concepts or stages when possible.
+- Keep reason under 500 characters and next_lesson_directive under 700 characters.`;
 
 function buildUserPrompt(req: FeedbackRequest): string {
   const parts = [`Lesson: ${req.lessonTitle}`];
@@ -287,6 +327,51 @@ function buildCodeFeedbackPrompt(req: CodeFeedbackRequest): string {
     `Hidden test summary: ${hiddenLine}`,
     `Overall status: ${req.allPassed ? "all tests passed" : "some tests failed"}`,
   ].filter((line): line is string => Boolean(line)).join("\n\n");
+}
+
+function parsePhaseDecision(raw: string): PhaseDecision {
+  const text = raw.trim();
+  const jsonText = text.match(/\{[\s\S]*\}/)?.[0] ?? text;
+  let parsed: unknown;
+  try {
+    parsed = JSON.parse(jsonText);
+  } catch {
+    throw new Error(`Phase evaluator returned malformed JSON: ${text.slice(0, 200)}`);
+  }
+  const obj = parsed as Record<string, unknown>;
+  const levels = ["familiarity", "competence", "mastery", "post_mastery"] as const;
+  const currentLevel = levels.includes(obj.current_level as PhaseDecision["current_level"])
+    ? (obj.current_level as PhaseDecision["current_level"])
+    : null;
+  const recommendedLevel = levels.includes(obj.recommended_level as PhaseDecision["recommended_level"])
+    ? (obj.recommended_level as PhaseDecision["recommended_level"])
+    : null;
+  if (!currentLevel || !recommendedLevel) {
+    throw new Error(`Phase evaluator returned invalid levels: ${text.slice(0, 200)}`);
+  }
+  return {
+    current_level: currentLevel,
+    recommended_level: recommendedLevel,
+    should_change_level: obj.should_change_level === true,
+    confidence:
+      typeof obj.confidence === "number" && Number.isFinite(obj.confidence)
+        ? Math.max(0, Math.min(1, obj.confidence))
+        : 0,
+    reason:
+      typeof obj.reason === "string" && obj.reason.trim()
+        ? stripTrailingMeta(obj.reason).slice(0, 500)
+        : "AI phase evaluator did not provide a reason.",
+    missing_evidence: Array.isArray(obj.missing_evidence)
+      ? obj.missing_evidence
+          .filter((item): item is string => typeof item === "string" && item.trim().length > 0)
+          .map((item) => item.trim().slice(0, 240))
+          .slice(0, 8)
+      : [],
+    next_lesson_directive:
+      typeof obj.next_lesson_directive === "string" && obj.next_lesson_directive.trim()
+        ? stripTrailingMeta(obj.next_lesson_directive).slice(0, 700)
+        : "Plan the next lesson from the learner's unresolved evidence.",
+  };
 }
 
 export function parseAnswerJudgment(raw: string): AnswerJudgment {
@@ -677,6 +762,91 @@ async function callGoogleChat(
   return extractGoogleText(data)?.trim() ?? "";
 }
 
+async function callOpenAICompatiblePhaseDecision(
+  config: FeedbackConfig,
+  req: PhaseDecisionRequest
+): Promise<string> {
+  const headers: Record<string, string> = { "Content-Type": "application/json" };
+  if (config.apiKey) headers["Authorization"] = `Bearer ${config.apiKey}`;
+
+  const isLocal = config.provider === "local";
+  const res = await fetch(`${config.baseUrl}/chat/completions`, {
+    method: "POST",
+    headers,
+    body: JSON.stringify({
+      model: config.model,
+      messages: [
+        { role: "system", content: PHASE_DECISION_SYSTEM },
+        { role: "user", content: req.evidencePacket },
+      ],
+      max_tokens: isLocal ? 700 : 1200,
+      temperature: 0.1,
+      response_format: { type: "json_object" },
+      ...(isLocal ? { budget_tokens: 0, chat_template_kwargs: { enable_thinking: false } } : {}),
+    }),
+    signal: AbortSignal.timeout(isLocal ? 30000 : 60000),
+  });
+
+  if (!res.ok) {
+    const text = await res.text().catch(() => "");
+    throw new Error(`LLM phase evaluator API error ${res.status}: ${text.slice(0, 200)}`);
+  }
+
+  const data = (await res.json()) as {
+    choices?: Array<{ message?: { content?: string; reasoning_content?: string } }>;
+  };
+  return data.choices?.[0]?.message?.content?.trim()
+    ?? data.choices?.[0]?.message?.reasoning_content?.trim()
+    ?? "";
+}
+
+async function callAnthropicPhaseDecision(
+  config: FeedbackConfig,
+  req: PhaseDecisionRequest
+): Promise<string> {
+  const res = await fetch(`${config.baseUrl}/v1/messages`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "x-api-key": config.apiKey,
+      "anthropic-version": "2023-06-01",
+    },
+    body: JSON.stringify({
+      model: config.model,
+      max_tokens: 1200,
+      temperature: 0.1,
+      system: PHASE_DECISION_SYSTEM,
+      messages: [{ role: "user", content: req.evidencePacket }],
+    }),
+    signal: AbortSignal.timeout(60000),
+  });
+
+  if (!res.ok) {
+    const text = await res.text().catch(() => "");
+    throw new Error(`Anthropic phase evaluator API error ${res.status}: ${text.slice(0, 200)}`);
+  }
+
+  const data = (await res.json()) as { content?: Array<{ text?: string }> };
+  return data.content?.[0]?.text?.trim() ?? "";
+}
+
+async function callGooglePhaseDecision(
+  config: FeedbackConfig,
+  req: PhaseDecisionRequest
+): Promise<string> {
+  const data = await fetchGoogleGenerateContent(
+    config,
+    {
+      systemInstruction: { parts: [{ text: PHASE_DECISION_SYSTEM }] },
+      contents: [{ parts: [{ text: req.evidencePacket }] }],
+      generationConfig: { maxOutputTokens: 1200, temperature: 0.1, responseMimeType: "application/json" },
+    },
+    "Google phase evaluator API error",
+    60000
+  );
+  return extractGoogleText(data)?.trim() ?? "";
+}
+
 interface GoogleGenerateContentResponse {
   candidates?: Array<{ content?: { parts?: Array<{ text?: string; thought?: boolean }> } }>;
 }
@@ -791,6 +961,25 @@ export async function getCodeFeedback(config: FeedbackConfig, req: CodeFeedbackR
     0.25
   );
   return feedback.trim() || "I could not generate code feedback for this submission.";
+}
+
+export async function getPhaseDecision(config: FeedbackConfig, req: PhaseDecisionRequest): Promise<PhaseDecision> {
+  let raw = "";
+  switch (config.provider) {
+    case "local":
+    case "openai":
+      raw = await callOpenAICompatiblePhaseDecision(config, req);
+      break;
+    case "anthropic":
+      raw = await callAnthropicPhaseDecision(config, req);
+      break;
+    case "google":
+      raw = await callGooglePhaseDecision(config, req);
+      break;
+    default:
+      throw new Error(`Unknown feedback provider: ${config.provider}`);
+  }
+  return parsePhaseDecision(raw);
 }
 
 async function callJudgeRaw(

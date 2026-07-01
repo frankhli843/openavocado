@@ -10,8 +10,8 @@ interface CriteriaEditorProps {
 }
 
 /**
- * Inline editor for subject.criteria — the learner's notes for the lesson
- * generator. Saves via PATCH /api/subjects/:id.
+ * Inline editor for subject.criteria, the learner's generation preferences.
+ * Saves via PATCH /api/subjects/:id.
  */
 export function CriteriaEditor({ subjectId, initialCriteria, onSaved }: CriteriaEditorProps) {
   const [criteria, setCriteria] = useState(initialCriteria);
@@ -42,9 +42,9 @@ export function CriteriaEditor({ subjectId, initialCriteria, onSaved }: Criteria
 
   return (
     <div className="max-w-2xl">
-      <h3 className="text-sm font-semibold text-gray-700 mb-1.5">Notes for the lesson generator</h3>
+      <h3 className="text-sm font-semibold text-gray-700 mb-1.5">Preferences</h3>
       <p className="text-xs text-gray-500 mb-3 leading-relaxed">
-        Tell the lesson generator how you learn best: preferred style, topics to emphasize or skip,
+        Tell Avo how you learn best: preferred style, topics to emphasize or skip,
         current project or exam context, things that haven&apos;t worked before. This is read alongside your
         goals every time a new lesson is generated or a lesson is regenerated after discard.
       </p>
@@ -65,14 +65,14 @@ export function CriteriaEditor({ subjectId, initialCriteria, onSaved }: Criteria
       />
       <div className="mt-2 flex items-center justify-between">
         <span className={`text-xs transition-colors ${error ? "text-red-600" : saved ? "text-green-600" : "text-gray-400"}`}>
-          {error ? error : saved ? "Saved" : "Changes affect future lessons only — past lessons are unaffected."}
+          {error ? error : saved ? "Saved" : "Preferences affect future lessons only — past lessons are unaffected."}
         </span>
         <button
           onClick={handleSave}
           disabled={saving}
           className="px-4 py-1.5 text-sm font-medium bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 transition-colors"
         >
-          {saving ? "Saving..." : "Save notes"}
+          {saving ? "Saving..." : "Save preferences"}
         </button>
       </div>
     </div>

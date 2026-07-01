@@ -12,6 +12,7 @@ import type {
   SubjectCreatedEvent,
 } from "@/types";
 import { LESSON_QUALITY_BAR_PROMPT } from "@/lib/lesson-generator/contract";
+import { COMPREHENSIVE_LESSON_PLAN_TEMPLATE } from "@/lib/lesson-generator/plan-template";
 
 const execFileAsync = promisify(execFile);
 
@@ -25,7 +26,8 @@ const KNOWLEDGE_FILES_SECTION = [
 
 const SUBJECT_NOTES_AND_JOURNAL_REQUIREMENT = [
   "=== SUBJECT NOTES AND JOURNAL REQUIREMENT ===",
-  "Update the subject workpad as the mutable latest plan, then append at least one subject journal entry as the durable audit log for this run. The journal entry must be readable by the learner in the AvocadoCore subject Journal tab. It should summarize what evidence and research you consulted, what sequencing or master-plan decision you made, why this lesson is the right next move, which weaknesses are being deferred, and what you verified in validators or Chrome MCP. Use POST /api/subjects/:id/journal when the app server is available, or insert into subject_journal_entries directly in SQLite when working offline. Use entry_type 'research' for source-backed findings, 'planning' for sequencing decisions, or 'lesson_generation' for the final lesson creation/repair summary.",
+  "Update the subject workpad as the mutable latest comprehensive plan, then append at least one subject journal entry as the durable audit log for this run. The journal entry must be readable by the learner in the AvocadoCore AI Work tab. It should summarize what evidence and research you consulted, what sequencing or master-plan decision you made, why this lesson is the right next move, which weaknesses are being deferred, and what you verified in validators or Chrome MCP. Use POST /api/subjects/:id/journal when the app server is available, or insert into subject_journal_entries directly in SQLite when working offline. Use entry_type 'research' for source-backed findings, 'planning' for sequencing decisions, or 'lesson_generation' for the final lesson creation/repair summary.",
+  COMPREHENSIVE_LESSON_PLAN_TEMPLATE,
 ].join("\n");
 
 const PURPOSE_BUILT_VISUAL_REQUIREMENT = [
@@ -183,8 +185,8 @@ function buildFirstLessonAcceptance(event: SubjectCreatedEvent, channel?: string
     event.subject_description ? `Description: ${event.subject_description}` : "Description: (none set)",
     event.subject_goals ? `Goals:\n${event.subject_goals}` : "Goals: (none set)",
     event.subject_criteria
-      ? `Learner criteria / generator notes:\n${event.subject_criteria}`
-      : "Learner criteria / generator notes: (none set)",
+      ? `Learner preferences:\n${event.subject_criteria}`
+      : "Learner preferences: (none set)",
     `Current level: ${event.current_level}`,
     event.workpad_summary ? `Current workpad:\n${event.workpad_summary}` : "Current workpad: (none yet)",
     `Learner profile config: ${event.learner_profile_config ? JSON.stringify(event.learner_profile_config) : "(none)"}`,
@@ -261,7 +263,7 @@ export const doraTaskAdapter: CompletionHookAdapter = {
       "",
       "=== SUBJECT CONTEXT (use first) ===",
       `Goals: ${event.subject_goals || "(none set)"}`,
-      `Learner criteria/notes: ${event.subject_criteria || "(none set)"}`,
+      `Learner preferences: ${event.subject_criteria || "(none set)"}`,
       `Current phase after completion: ${event.current_level}`,
       `Level progression: ${event.level_progression.reason}`,
       event.workpad_summary ? `AI workpad (current plan):\n${event.workpad_summary}` : "AI workpad: (none yet)",
@@ -346,8 +348,8 @@ export const doraTaskRegenerationAdapter: RegenerationHookAdapter = {
       event.subject_description ? `Description: ${event.subject_description}` : "",
       event.subject_goals ? `Learning goals:\n${event.subject_goals}` : "",
       event.subject_criteria
-        ? `Learner criteria / notes for lesson generator:\n${event.subject_criteria}`
-        : "(no learner criteria set - use subject goals and progress signals as the main guide)",
+        ? `Learner preferences:\n${event.subject_criteria}`
+        : "(no learner preferences set - use subject goals and progress signals as the main guide)",
       "",
       "=== DISCARDED LESSON ===",
       `Lesson: "${event.discarded_lesson_title}" (id: ${event.discarded_lesson_id})`,
