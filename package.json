@@ -12,7 +12,9 @@
     "check:lesson": "tsx scripts/check-lesson-complete.ts",
     "db:migrate": "tsx scripts/migrate.ts",
     "audio:generate": "tsx scripts/generate-lesson-audio.ts",
-    "backfill:lessons": "tsx scripts/backfill-live-lessons.ts"
+    "backfill:lessons": "tsx scripts/backfill-live-lessons.ts",
+    "backfill:demo-lessons": "tsx scripts/backfill-demo-lessons.ts",
+    "seed:demo-artifacts": "tsx scripts/seed-demo-visual-artifacts.ts"
   },
   "dependencies": {
     "@codemirror/lang-python": "^6.2.1",
