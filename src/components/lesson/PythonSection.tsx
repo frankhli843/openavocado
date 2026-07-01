@@ -18,6 +18,7 @@ interface PythonSectionProps {
   initialTests: Record<string, string>;
   onChange: (code: string, output: string, tests: Record<string, string>) => void;
   reserveChatRail?: boolean;
+  embedded?: boolean;
   lessonTitle?: string;
   lessonDescription?: string | null;
 }
@@ -46,6 +47,7 @@ export function PythonSection({
   initialTests,
   onChange,
   reserveChatRail = false,
+  embedded = false,
   lessonTitle = "Untitled lesson",
   lessonDescription = null,
 }: PythonSectionProps) {
@@ -230,7 +232,7 @@ export function PythonSection({
     : "fixed inset-0 z-50 bg-white text-gray-900 flex flex-col";
 
   const codeFeedbackPanel = (codeFeedbackLoading || codeFeedback) ? (
-    <div className="rounded-lg border border-blue-100 bg-blue-50/60 px-4 py-3 text-sm text-blue-950">
+    <div className="border-l-2 border-blue-400 bg-blue-50/60 px-3 py-3 text-sm text-blue-950">
       <div className="mb-1 text-xs font-semibold uppercase tracking-wider text-blue-700">AI code feedback</div>
       {codeFeedbackLoading ? (
         <p>Reading your code and test output...</p>
@@ -241,15 +243,15 @@ export function PythonSection({
   ) : null;
 
   const optionalNotice = (
-    <div className="rounded-lg border border-sky-100 bg-sky-50/70 px-4 py-3 text-sm leading-6 text-sky-950">
+    <div className="border-l-2 border-sky-300 bg-sky-50/70 px-3 py-3 text-sm leading-6 text-sky-950">
       <strong className="font-semibold">Optional coding reinforcement.</strong>{" "}
       This section is meant to deepen the lesson if you already have some coding experience. You can skip it and still complete the lesson.
     </div>
   );
 
   const walkthroughPanel = content.walkthrough?.steps?.length ? (
-    <div className="rounded-lg border border-gray-100 bg-white">
-      <div className="border-b border-gray-100 px-4 py-3">
+    <div className="border-t border-gray-100 pt-3">
+      <div className="pb-3">
         <div className="text-xs font-semibold uppercase tracking-wider text-gray-400">Walkthrough</div>
         <h3 className="mt-0.5 text-sm font-semibold text-gray-800">
           {content.walkthrough.title ?? "How to think about this exercise"}
@@ -257,7 +259,7 @@ export function PythonSection({
       </div>
       <div className="divide-y divide-gray-100">
         {content.walkthrough.steps.map((step, index) => (
-          <div key={`${step.title}-${index}`} className="grid gap-3 px-4 py-3 sm:grid-cols-[1.3fr_1fr]">
+          <div key={`${step.title}-${index}`} className="grid gap-3 py-3 sm:grid-cols-[1.3fr_1fr]">
             <div>
               <div className="text-sm font-semibold text-gray-800">
                 {index + 1}. {step.title}
@@ -265,7 +267,7 @@ export function PythonSection({
               <p className="mt-1 text-sm leading-6 text-gray-600">{step.detail}</p>
             </div>
             {(step.input || step.output || step.visual) && (
-              <div className="rounded-lg border border-gray-100 bg-gray-50/70 p-3 text-xs leading-5 text-gray-600">
+              <div className="border-l-2 border-gray-200 bg-gray-50/70 px-3 py-2 text-xs leading-5 text-gray-600">
                 {step.visual && <div className="mb-2 font-medium text-gray-700">{step.visual}</div>}
                 {step.input && (
                   <div className="grid grid-cols-[4.5rem_1fr] gap-2">
@@ -288,28 +290,28 @@ export function PythonSection({
   ) : null;
 
   const ioExamplesPanel = content.io_examples?.length ? (
-    <div className="rounded-lg border border-emerald-100 bg-emerald-50/40">
-      <div className="border-b border-emerald-100 px-4 py-3">
+    <div className="border-t border-emerald-100 bg-emerald-50/30 pt-3">
+      <div className="pb-3">
         <div className="text-xs font-semibold uppercase tracking-wider text-emerald-700">Expected inputs and outputs</div>
         <p className="mt-1 text-sm leading-6 text-emerald-950">
           Use these examples to check the behavior before thinking about syntax.
         </p>
       </div>
-      <div className="grid gap-3 p-3 sm:grid-cols-2">
+      <div className="grid min-w-0 gap-3 pb-3 sm:grid-cols-2">
         {content.io_examples.map((example) => (
-          <div key={example.label} className="rounded-lg border border-emerald-100 bg-white p-3">
-            <div className="text-sm font-semibold text-gray-800">{example.label}</div>
-            <div className="mt-2 grid gap-2 text-xs">
-              <div>
+          <div key={example.label} className="min-w-0 border-l-2 border-emerald-300 bg-white/70 px-3 py-2">
+            <div className="break-words text-sm font-semibold text-gray-800">{example.label}</div>
+            <div className="mt-2 grid min-w-0 gap-2 text-xs">
+              <div className="min-w-0">
                 <div className="mb-1 font-semibold uppercase tracking-wide text-gray-400">Input</div>
-                <pre className="overflow-x-auto rounded bg-gray-50 px-3 py-2 font-mono text-gray-700">{example.input}</pre>
+                <pre className="overflow-x-auto whitespace-pre-wrap break-words bg-gray-50 px-3 py-2 font-mono text-gray-700">{example.input}</pre>
               </div>
-              <div>
+              <div className="min-w-0">
                 <div className="mb-1 font-semibold uppercase tracking-wide text-gray-400">Expected output</div>
-                <pre className="overflow-x-auto rounded bg-emerald-50 px-3 py-2 font-mono text-emerald-900">{example.expected_output}</pre>
+                <pre className="overflow-x-auto whitespace-pre-wrap break-words bg-emerald-50 px-3 py-2 font-mono text-emerald-900">{example.expected_output}</pre>
               </div>
             </div>
-            {example.explanation && <p className="mt-2 text-xs leading-5 text-gray-500">{example.explanation}</p>}
+            {example.explanation && <p className="mt-2 break-words text-xs leading-5 text-gray-500">{example.explanation}</p>}
           </div>
         ))}
       </div>
@@ -317,16 +319,16 @@ export function PythonSection({
   ) : null;
 
   const visualizationPanel = content.visualization?.items?.length ? (
-    <div className="rounded-lg border border-indigo-100 bg-indigo-50/40 px-4 py-3">
+    <div className="border-t border-indigo-100 bg-indigo-50/30 px-0 py-3">
       <div className="text-xs font-semibold uppercase tracking-wider text-indigo-700">Code behavior map</div>
       <h3 className="mt-0.5 text-sm font-semibold text-gray-800">{content.visualization.title}</h3>
       {content.visualization.description && (
         <p className="mt-1 text-sm leading-6 text-gray-600">{content.visualization.description}</p>
       )}
-      <div className="mt-3 grid gap-2 sm:grid-cols-3">
+      <div className="mt-3 grid min-w-0 gap-2 sm:grid-cols-3">
         {content.visualization.items.map((item, index) => (
-          <div key={`${item.label}-${index}`} className="relative rounded-lg border border-indigo-100 bg-white p-3">
-            <div className={`mb-2 inline-flex rounded-full px-2 py-0.5 text-[11px] font-semibold uppercase tracking-wide ${
+          <div key={`${item.label}-${index}`} className="relative min-w-0 border-l-2 border-indigo-300 bg-white/70 px-3 py-2">
+            <div className={`mb-2 inline-flex px-2 py-0.5 text-[11px] font-semibold uppercase tracking-wide ${
               item.role === "input"
                 ? "bg-blue-50 text-blue-700"
                 : item.role === "output"
@@ -335,9 +337,9 @@ export function PythonSection({
             }`}>
               {item.role ?? "step"}
             </div>
-            <div className="text-sm font-semibold text-gray-800">{item.label}</div>
+            <div className="break-words text-sm font-semibold text-gray-800">{item.label}</div>
             <code className="mt-1 block break-words font-mono text-xs leading-5 text-gray-700">{item.value}</code>
-            {item.note && <p className="mt-2 text-xs leading-5 text-gray-500">{item.note}</p>}
+            {item.note && <p className="mt-2 break-words text-xs leading-5 text-gray-500">{item.note}</p>}
           </div>
         ))}
       </div>
@@ -349,18 +351,18 @@ export function PythonSection({
       <div className="text-xs font-semibold uppercase tracking-wider text-gray-400">
         {isPhonePreview ? "Reference answers" : "Full code examples"}
       </div>
-      <div className={`grid gap-3 ${isPhonePreview ? "grid-cols-1" : "lg:grid-cols-2"}`}>
+      <div className={`grid min-w-0 gap-3 ${isPhonePreview ? "grid-cols-1" : "lg:grid-cols-2"}`}>
         {content.worked_examples.map((example) => (
           <details
             key={example.label}
             open={isPhonePreview}
-            className="rounded-lg border border-gray-100 bg-gray-50/50"
+            className="min-w-0 border-l-2 border-gray-200 bg-gray-50/50"
           >
-            <summary className="cursor-pointer select-none px-3 py-2 text-sm font-semibold text-gray-700">
+            <summary className="cursor-pointer select-none break-words px-3 py-2 text-sm font-semibold text-gray-700">
               {example.title ?? (example.label === "concise" ? "Best concise version" : "Basic readable version")}
             </summary>
             {example.explanation && (
-              <p className="border-t border-gray-100 px-3 py-2 text-xs leading-5 text-gray-500">
+              <p className="break-words border-t border-gray-100 px-3 py-2 text-xs leading-5 text-gray-500">
                 {example.explanation}
               </p>
             )}
@@ -511,7 +513,7 @@ export function PythonSection({
               {hintsShown > 0 && (
                 <div className="space-y-1.5">
                   {hints.slice(0, hintsShown).map((h, i) => (
-                    <div key={i} className="rounded-lg bg-amber-50 border border-amber-100 px-3 py-2 text-sm text-amber-900">
+                    <div key={i} className="border-l-2 border-amber-300 bg-amber-50 px-3 py-2 text-sm text-amber-900">
                       <span className="font-semibold mr-1.5">Hint {h.level ?? i + 1}:</span>
                       {h.text}
                     </div>
@@ -521,7 +523,7 @@ export function PythonSection({
               {(output || running || submitting) && (
                 <div>
                   <div className="text-xs text-gray-400 mb-1.5 font-mono">Output</div>
-                  <pre className="w-full min-h-12 px-4 py-3 bg-white border border-gray-200 rounded-lg text-xs font-mono text-gray-700 overflow-x-auto whitespace-pre-wrap">
+                  <pre className="w-full min-h-12 border-l-2 border-gray-200 bg-white px-3 py-3 text-xs font-mono text-gray-700 overflow-x-auto whitespace-pre-wrap">
                     {running || submitting ? "Running..." : output}
                   </pre>
                 </div>
@@ -599,9 +601,11 @@ export function PythonSection({
         className={previewMode === "phone" ? "mx-auto w-full max-w-[390px] pb-20" : "w-full"}
         data-preview-mode={previewMode}
       >
-      <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
+      <div className={embedded ? "border-t border-gray-100 pt-4" : "bg-white rounded-xl border border-gray-200 overflow-hidden"}>
         {/* Header */}
-        <div className="flex flex-col gap-3 px-4 py-4 border-b border-gray-100 bg-gray-50/50 sm:flex-row sm:items-center sm:px-6">
+        <div className={`flex flex-col gap-3 border-b border-gray-100 py-4 sm:flex-row sm:items-center ${
+          embedded ? "px-0 bg-transparent" : "px-4 bg-gray-50/50 sm:px-6"
+        }`}>
           <div className="flex items-center gap-3 min-w-0">
             <span className="text-xl" aria-hidden="true">&#128187;</span>
             <div className="flex-1 min-w-0">
@@ -634,12 +638,16 @@ export function PythonSection({
           </div>
         </div>
 
-        <div className={`space-y-4 ${isPhonePreview ? "p-3 text-[15px]" : "p-4 sm:p-6"}`}>
+        <div className={`space-y-4 ${
+          isPhonePreview
+            ? embedded ? "py-3 text-[15px]" : "p-3 text-[15px]"
+            : embedded ? "py-4" : "p-4 sm:p-6"
+        }`}>
           {optionalNotice}
 
           {/* Task prompt */}
           {content.prompt && (
-            <div className="rounded-lg bg-blue-50/60 border border-blue-100 px-4 py-3">
+            <div className="border-l-2 border-blue-400 bg-blue-50/60 px-3 py-3">
               <div className="text-xs font-semibold text-blue-700 uppercase tracking-wider mb-1">Your task</div>
               <p className="text-sm text-gray-700 leading-relaxed whitespace-pre-wrap">{content.prompt}</p>
             </div>
@@ -657,7 +665,7 @@ export function PythonSection({
 
           {/* Guided steps */}
           {guidedSteps.length > 0 && (
-            <details className="rounded-lg border border-gray-100 bg-gray-50/40 px-4 py-2.5">
+            <details className="border-t border-gray-100 bg-gray-50/40 py-2.5">
               <summary className="text-sm font-medium text-gray-700 cursor-pointer select-none">
                 Guided steps
               </summary>
@@ -672,7 +680,7 @@ export function PythonSection({
           {visualizationPanel}
           {isPhonePreview && workedExamples}
           {isPhonePreview && !workedExamples && (
-            <div className="rounded-lg border border-amber-100 bg-amber-50 px-4 py-3 text-sm leading-6 text-amber-900">
+            <div className="border-l-2 border-amber-300 bg-amber-50 px-3 py-3 text-sm leading-6 text-amber-900">
               Reference answers have not been generated for this older coding exercise yet.
             </div>
           )}
@@ -684,7 +692,7 @@ export function PythonSection({
             </div>
           )}
           {isFullscreen && !isPhonePreview && (
-            <div className="rounded-lg bg-gray-50 border border-gray-200 px-4 py-3 text-sm text-gray-500 text-center">
+            <div className="border-l-2 border-gray-200 bg-gray-50 px-3 py-3 text-sm text-gray-500 text-center">
               Editor open in focus mode &mdash; press <kbd className="bg-white border border-gray-200 text-gray-600 px-1 rounded text-xs">Esc</kbd> or click <strong>⊠ Exit focus</strong> to return.
             </div>
           )}
@@ -700,7 +708,7 @@ export function PythonSection({
           {!isFullscreen && !isPhonePreview && hintsShown > 0 && (
             <div className="space-y-1.5">
               {hints.slice(0, hintsShown).map((h, i) => (
-                <div key={i} className="rounded-lg bg-amber-50 border border-amber-100 px-3 py-2 text-sm text-amber-900">
+                <div key={i} className="border-l-2 border-amber-300 bg-amber-50 px-3 py-2 text-sm text-amber-900">
                   <span className="font-semibold mr-1.5">Hint {h.level ?? i + 1}:</span>
                   {h.text}
                 </div>
@@ -712,7 +720,7 @@ export function PythonSection({
           {!isFullscreen && !isPhonePreview && (output || running || submitting) && (
             <div>
               <div className="text-xs text-gray-400 mb-1.5 font-mono">Output</div>
-              <pre className="w-full min-h-12 px-4 py-3 bg-gray-50 border border-gray-100 rounded-lg text-xs font-mono text-gray-700 overflow-x-auto whitespace-pre-wrap">
+              <pre className="w-full min-h-12 border-l-2 border-gray-200 bg-gray-50 px-3 py-3 text-xs font-mono text-gray-700 overflow-x-auto whitespace-pre-wrap">
                 {running || submitting ? "Running..." : output}
               </pre>
             </div>

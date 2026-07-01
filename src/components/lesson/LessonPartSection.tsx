@@ -72,7 +72,7 @@ export function LessonPartSection({
   };
 
   return (
-    <div className="p-6 space-y-6">
+    <div className="space-y-5 px-3 py-4 sm:space-y-6 sm:p-6">
       {parsed.error || !part ? (
         <div role="alert" className="rounded-lg border border-amber-200 bg-amber-50 px-4 py-4 text-sm text-amber-800">
           <div className="font-semibold mb-1">This lesson part could not be loaded</div>
@@ -98,7 +98,7 @@ export function LessonPartSection({
                 </div>
               </div>
             ) : (
-              <div className="rounded-lg border border-amber-100 bg-amber-50 px-4 py-3 text-xs text-amber-700">
+              <div className="border-l-2 border-amber-200 bg-amber-50/70 px-3 py-2 text-xs text-amber-700">
                 Part audio artifact is not generated yet. The script below is the per-part audio source.
               </div>
             )}
@@ -110,11 +110,11 @@ export function LessonPartSection({
                 onSeek={seekAudio}
               />
             )}
-            <details className="rounded-lg border border-gray-100 bg-gray-50">
-              <summary className="cursor-pointer select-none px-4 py-3 text-xs font-semibold uppercase tracking-wider text-gray-500 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-300">
+            <details className="border-t border-gray-100 pt-3">
+              <summary className="cursor-pointer select-none py-2 text-xs font-semibold uppercase tracking-wider text-gray-500 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-300">
                 Transcript
               </summary>
-              <div className="max-h-56 overflow-y-auto border-t border-gray-100 bg-white px-4 py-3 text-sm leading-relaxed text-gray-600">
+              <div className="mt-2 max-h-56 overflow-y-auto border-t border-gray-100 pt-3 text-sm leading-relaxed text-gray-600">
                 {part.audio.transcript ?? part.audio.script}
               </div>
             </details>
@@ -132,7 +132,7 @@ export function LessonPartSection({
                 <LessonDiagramsView diagrams={part.reading.diagrams} />
               )}
               {part.reading.summary && (
-                <div className="rounded-lg bg-green-50/70 border border-green-100 px-4 py-3">
+                <div className="border-l-2 border-green-300 bg-green-50/70 px-3 py-3">
                   <div className="text-xs font-semibold text-green-700 uppercase tracking-wider mb-1">
                     In short
                   </div>
@@ -168,6 +168,7 @@ export function LessonPartSection({
                 initialCode={part.code.starter_code ?? ""}
                 initialOutput=""
                 initialTests={{}}
+                embedded
                 onChange={() => undefined}
               />
             </PartBlock>
@@ -316,8 +317,8 @@ function AudioSyncedLessonVisual({
     cues.some((item) => item.label.toLowerCase().includes("attention") || item.label.toLowerCase().includes("mlp"));
 
   return (
-    <div className="rounded-xl border border-blue-100 bg-white shadow-sm overflow-hidden">
-      <div className="border-b border-blue-50 bg-blue-50/70 px-4 py-3">
+    <div className="mt-4 border-t border-gray-100 pt-4">
+      <div className="border-b border-gray-100 pb-3">
         <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
           <div>
             <div className="text-xs font-semibold uppercase tracking-wider text-blue-600">
@@ -329,12 +330,12 @@ function AudioSyncedLessonVisual({
             {formatTime(currentTime)} / {formatTime(safeDuration)}
           </div>
         </div>
-        <div className="mt-3 h-2 rounded-full bg-white">
+        <div className="mt-3 h-2 rounded-full bg-gray-100">
           <div className="h-2 rounded-full bg-blue-600" style={{ width: `${progressPct}%` }} />
         </div>
       </div>
 
-      <div className="grid gap-4 p-4 pb-16 sm:pb-4 lg:grid-cols-[minmax(0,1fr)_17rem]">
+      <div className="grid gap-4 pt-4 pb-16 sm:pb-0 lg:grid-cols-[minmax(0,1fr)_17rem]">
         <div className="space-y-4">
           <div className="grid grid-cols-2 gap-2 sm:grid-cols-4 lg:grid-cols-7">
             {pipelineCues.map((stage, index) => {
@@ -343,12 +344,12 @@ function AudioSyncedLessonVisual({
               return (
                 <div
                   key={`${stage.start}-${stage.label}`}
-                  className={`rounded-lg border px-2 py-2 text-center text-xs font-medium ${
+                  className={`border-b-2 px-1 py-2 text-center text-xs font-medium ${
                     active
-                      ? "border-blue-400 bg-blue-600 text-white shadow-sm"
+                      ? "border-blue-600 bg-blue-50 text-blue-900"
                       : done
-                      ? "border-blue-100 bg-blue-50 text-blue-700"
-                      : "border-gray-100 bg-gray-50 text-gray-400"
+                      ? "border-blue-200 bg-blue-50/40 text-blue-700"
+                      : "border-gray-100 bg-gray-50/40 text-gray-400"
                   }`}
                 >
                   {stage.label}
@@ -364,7 +365,7 @@ function AudioSyncedLessonVisual({
           </div>
 
           {hiddenStateScene ? (
-            <div className="rounded-xl border border-gray-100 bg-gray-50/70 p-3">
+            <div className="border-t border-gray-100 pt-3">
               <div className="mb-2 text-xs font-semibold uppercase tracking-wider text-gray-400">
                 Tiny hidden-state trace
               </div>
@@ -372,10 +373,10 @@ function AudioSyncedLessonVisual({
                 {rows.map((row, rowIndex) => (
                   <div
                     key={`${row.token}-${rowIndex}`}
-                    className={`grid grid-cols-[4.5rem_minmax(0,1fr)] items-center gap-3 rounded-lg border px-3 py-2 ${
+                    className={`grid grid-cols-[4.5rem_minmax(0,1fr)] items-center gap-3 border-l-2 px-2 py-2 sm:px-3 ${
                       row.active
-                        ? "border-blue-100 bg-white"
-                        : "border-gray-100 bg-white/60 opacity-60"
+                        ? "border-blue-400 bg-blue-50/40"
+                        : "border-gray-100 bg-gray-50/60 opacity-60"
                     }`}
                   >
                     <div className="text-xs font-semibold text-gray-600">{row.token}</div>
@@ -409,7 +410,7 @@ function AudioSyncedLessonVisual({
         </div>
 
         <div className="space-y-2">
-          <div className="rounded-lg border border-gray-100 bg-gray-50 px-3 py-3 text-sm leading-6 text-gray-600">
+          <div className="border-l-2 border-gray-200 bg-gray-50/60 px-3 py-2 text-sm leading-6 text-gray-600">
             {cue.narration}
           </div>
           <div className="grid max-h-[28rem] gap-2 overflow-y-auto pr-1 sm:grid-cols-2 lg:grid-cols-1">
@@ -420,9 +421,9 @@ function AudioSyncedLessonVisual({
                   key={item.label}
                   type="button"
                   onClick={() => onSeek(item.start)}
-                  className={`rounded-lg border px-3 py-2 text-left transition-colors ${
+                  className={`border-l-2 px-3 py-2 text-left transition-colors ${
                     active
-                      ? "border-blue-300 bg-blue-50 text-blue-900"
+                      ? "border-blue-500 bg-blue-50 text-blue-900"
                       : "border-gray-100 bg-white text-gray-600 hover:border-blue-200 hover:bg-blue-50/40"
                   }`}
                 >
@@ -473,7 +474,7 @@ function TransformerBlockScene({
     [22, 62, 48, 86],
   ];
   return (
-    <div className="rounded-xl border border-gray-100 bg-gray-50/70 p-3">
+    <div className="border-t border-gray-100 pt-3">
       <div className="mb-3 flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <div className="text-xs font-semibold uppercase tracking-wider text-gray-400">
@@ -566,8 +567,8 @@ function TransformerBlockScene({
               {rows.map((row, index) => (
                 <div
                   key={row.token}
-                  className={`rounded-lg border px-2 py-2 text-center text-xs ${
-                    phase === "output" ? "border-blue-200 bg-blue-50 text-blue-800" : "border-gray-100 bg-white text-gray-500"
+                  className={`border-l-2 px-2 py-2 text-center text-xs ${
+                    phase === "output" ? "border-blue-400 bg-blue-50 text-blue-800" : "border-gray-100 bg-gray-50 text-gray-500"
                   }`}
                 >
                   row {index + 1}
@@ -587,7 +588,7 @@ function TransformerBlockScene({
 
 function SceneStage({ active, label, children }: { active: boolean; label: string; children: ReactNode }) {
   return (
-    <div className={`rounded-xl border p-3 transition-colors ${active ? "border-blue-200 bg-white shadow-sm" : "border-gray-100 bg-white/70"}`}>
+    <div className={`border-l-2 px-3 py-3 transition-colors ${active ? "border-blue-500 bg-blue-50/40" : "border-gray-100 bg-gray-50/50"}`}>
       <div className={`mb-2 text-xs font-semibold uppercase tracking-wider ${active ? "text-blue-600" : "text-gray-400"}`}>
         {label}
       </div>
@@ -599,11 +600,11 @@ function SceneStage({ active, label, children }: { active: boolean; label: strin
 function FragmentRow({ label, values, active }: { label: string; values: number[]; active: boolean }) {
   return (
     <>
-      <div className="rounded bg-white px-1 py-1 font-semibold text-gray-500">{label}</div>
+      <div className="bg-white/70 px-1 py-1 font-semibold text-gray-500">{label}</div>
       {values.map((value, index) => (
-        <div key={index} className="h-7 rounded bg-white">
+        <div key={index} className="h-7 bg-white/70">
           <div
-            className={`h-full rounded transition-all duration-500 ${active ? "bg-blue-500" : "bg-gray-200"}`}
+            className={`h-full transition-all duration-500 ${active ? "bg-blue-500" : "bg-gray-200"}`}
             style={{ width: `${value}%`, opacity: active ? Math.max(0.25, value / 100) : 0.45 }}
           />
         </div>
@@ -614,11 +615,11 @@ function FragmentRow({ label, values, active }: { label: string; values: number[
 
 function MiniBox({ label, active, tone = "blue" }: { label: string; active: boolean; tone?: "blue" | "green" | "purple" }) {
   const colors = {
-    blue: active ? "border-blue-200 bg-blue-50 text-blue-800" : "border-gray-100 bg-white text-gray-500",
-    green: active ? "border-green-200 bg-green-50 text-green-800" : "border-gray-100 bg-white text-gray-500",
-    purple: active ? "border-purple-200 bg-purple-50 text-purple-800" : "border-gray-100 bg-white text-gray-500",
+    blue: active ? "border-blue-400 bg-blue-50 text-blue-800" : "border-gray-100 bg-white/70 text-gray-500",
+    green: active ? "border-green-400 bg-green-50 text-green-800" : "border-gray-100 bg-white/70 text-gray-500",
+    purple: active ? "border-purple-400 bg-purple-50 text-purple-800" : "border-gray-100 bg-white/70 text-gray-500",
   };
-  return <div className={`rounded-lg border px-2 py-3 font-medium ${colors[tone]}`}>{label}</div>;
+  return <div className={`border-l-2 px-2 py-3 font-medium ${colors[tone]}`}>{label}</div>;
 }
 
 function GenericSceneBoard({
@@ -632,7 +633,7 @@ function GenericSceneBoard({
 }) {
   const fill = Math.min(100, Math.max(8, ((index + 1) / Math.max(total, 1)) * 100));
   return (
-    <div className="rounded-xl border border-gray-100 bg-gray-50/70 p-3">
+    <div className="border-t border-gray-100 pt-3">
       <div className="mb-2 text-xs font-semibold uppercase tracking-wider text-gray-400">
         Timed scene board
       </div>
@@ -643,7 +644,7 @@ function GenericSceneBoard({
         <div className="hidden md:flex items-center justify-center text-green-500">&#8594;</div>
         <SceneCard label="Output" text={cue.pass ?? "next state"} />
       </div>
-      <div className="mt-3 h-2 rounded-full bg-white">
+      <div className="mt-3 h-2 rounded-full bg-gray-100">
         <div className="h-2 rounded-full bg-green-500" style={{ width: `${fill}%` }} />
       </div>
       <p className="mt-3 text-xs leading-5 text-gray-500">
@@ -657,8 +658,8 @@ function GenericSceneBoard({
 function SceneCard({ label, text, active }: { label: string; text: string; active?: boolean }) {
   return (
     <div
-      className={`rounded-lg border px-3 py-3 ${
-        active ? "border-blue-200 bg-blue-50 text-blue-900" : "border-gray-100 bg-white text-gray-700"
+      className={`border-l-2 px-3 py-3 ${
+        active ? "border-blue-500 bg-blue-50 text-blue-900" : "border-gray-100 bg-gray-50/60 text-gray-700"
       }`}
     >
       <div className="text-[11px] font-semibold uppercase tracking-wider opacity-60">{label}</div>
@@ -701,12 +702,12 @@ function PipelineCard({
   tone: "gray" | "blue" | "green";
 }) {
   const styles = {
-    gray: "border-gray-100 bg-gray-50 text-gray-700",
-    blue: "border-blue-100 bg-blue-50 text-blue-800",
-    green: "border-green-100 bg-green-50 text-green-800",
+    gray: "border-gray-100 bg-gray-50/60 text-gray-700",
+    blue: "border-blue-400 bg-blue-50/70 text-blue-800",
+    green: "border-green-400 bg-green-50/70 text-green-800",
   };
   return (
-    <div className={`rounded-lg border px-3 py-3 ${styles[tone]}`}>
+    <div className={`border-l-2 px-3 py-3 ${styles[tone]}`}>
       <div className="text-[11px] font-semibold uppercase tracking-wider opacity-70">{label}</div>
       <div className="mt-1 text-sm font-medium leading-5">{text}</div>
     </div>
@@ -728,14 +729,14 @@ function ReadingBlockView({ block }: { block: ReadingBlock }) {
       return <p className="text-[15px] text-gray-700 leading-7">{block.text}</p>;
     case "definition":
       return (
-        <div className="rounded-lg border border-gray-100 bg-gray-50/60 px-4 py-3">
+        <div className="border-l-2 border-gray-200 bg-gray-50/60 px-3 py-3">
           <dt className="text-sm font-semibold text-gray-900">{block.term}</dt>
           <dd className="text-sm text-gray-600 leading-relaxed mt-0.5">{block.definition}</dd>
         </div>
       );
     case "example":
       return (
-        <div className="rounded-lg border-l-4 border-blue-300 bg-blue-50/50 pl-4 pr-3 py-3">
+        <div className="border-l-2 border-blue-300 bg-blue-50/50 pl-3 pr-3 py-3">
           {block.title && <div className="text-xs font-semibold text-blue-700 mb-1">{block.title}</div>}
           <p className="text-sm text-gray-700 leading-relaxed whitespace-pre-wrap">{block.body}</p>
         </div>
@@ -743,12 +744,12 @@ function ReadingBlockView({ block }: { block: ReadingBlock }) {
     case "callout": {
       const tone = block.tone ?? "info";
       const styles: Record<string, string> = {
-        info: "border-blue-200 bg-blue-50 text-blue-900",
-        warning: "border-amber-200 bg-amber-50 text-amber-900",
-        insight: "border-purple-200 bg-purple-50 text-purple-900",
+        info: "border-blue-300 bg-blue-50 text-blue-900",
+        warning: "border-amber-300 bg-amber-50 text-amber-900",
+        insight: "border-purple-300 bg-purple-50 text-purple-900",
       };
       return (
-        <div className={`rounded-lg border px-4 py-3 text-sm leading-relaxed ${styles[tone]}`}>
+        <div className={`border-l-2 px-3 py-3 text-sm leading-relaxed ${styles[tone]}`}>
           {block.text}
         </div>
       );
