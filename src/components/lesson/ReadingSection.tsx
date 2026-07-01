@@ -79,6 +79,10 @@ function Block({ block }: { block: ReadingBlock }) {
       return <h3 className="text-base font-semibold text-gray-900 mt-5">{block.text}</h3>;
     case "paragraph":
       return <p className="text-[15px] text-gray-700 leading-7">{block.text}</p>;
+    case "text":
+      return <p className="text-[15px] text-gray-700 leading-7">{block.content}</p>;
+    case "formula":
+      return <FormulaBlock block={block} />;
     case "definition":
       return (
         <div className="border-l-2 border-gray-200 bg-gray-50/60 px-3 py-3">
@@ -119,4 +123,30 @@ function Block({ block }: { block: ReadingBlock }) {
     default:
       return null;
   }
+}
+
+function FormulaBlock({
+  block,
+}: {
+  block: Extract<ReadingBlock, { type: "formula" }>;
+}) {
+  return (
+    <div className="border-l-2 border-indigo-300 bg-indigo-50/50 px-3 py-3">
+      <div className="overflow-x-auto rounded-md bg-white px-3 py-2 font-mono text-sm text-indigo-950">
+        {block.latex}
+      </div>
+      <p className="mt-2 text-sm leading-6 text-gray-700">{block.plain_english}</p>
+      <dl className="mt-3 grid gap-2 text-sm sm:grid-cols-2">
+        {block.variables.map((variable) => (
+          <div key={variable.symbol} className="border-t border-indigo-100 pt-2">
+            <dt className="font-mono font-semibold text-indigo-900">{variable.symbol}</dt>
+            <dd className="text-gray-600">
+              {variable.meaning}
+              {variable.shape ? <span className="text-gray-400"> ({variable.shape})</span> : null}
+            </dd>
+          </div>
+        ))}
+      </dl>
+    </div>
+  );
 }

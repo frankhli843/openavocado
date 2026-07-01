@@ -145,6 +145,13 @@ describe("validatePracticeCodeContent", () => {
             output: "3",
             visual: "3 flows into helper",
           },
+          {
+            title: "Return the result",
+            detail: "Then preserve the value through the helper so the returned output matches the expected shape.",
+            input: "value = 3",
+            output: "3",
+            visual: "the value moves from process to output",
+          },
         ],
       },
       io_examples: [
@@ -154,15 +161,34 @@ describe("validatePracticeCodeContent", () => {
           expected_output: "3",
           explanation: "The helper preserves the input in this exercise.",
         },
+        {
+          label: "Larger value",
+          input: "helper(8)",
+          expected_output: "8",
+          explanation: "The same input-output contract holds for another value.",
+        },
       ],
       visualization: {
         title: "Input moves through the helper",
         items: [
           { label: "Input", value: "3", role: "input" },
+          { label: "Process", value: "preserve value", role: "process" },
           { label: "Return", value: "3", role: "output" },
         ],
       },
       starter_code: "pass",
+      worked_examples: [
+        {
+          label: "basic",
+          title: "Basic readable version",
+          code: "def helper(x):\n    result = x\n    return result\n",
+        },
+        {
+          label: "concise",
+          title: "Best concise version",
+          code: "def helper(x):\n    return x\n",
+        },
+      ],
       hints: [{ level: 1, text: "think" }],
       tests: [{ id: "t1", description: "works", assert: "x == 1" }],
       hidden_tests: [{ id: "h1", description: "edge", assert: "x >= 0" }],
@@ -183,6 +209,17 @@ describe("validatePracticeCodeContent", () => {
     expect(validatePracticeCodeContent({ prompt: "p" }).valid).toBe(false);
   });
 
+  it("requires complete learner-facing code support, not just starter and tests", () => {
+    const r = validatePracticeCodeContent({
+      prompt: "Implement attention.",
+      starter_code: "def attention():\n    pass\n",
+      tests: [{ id: "t", description: "runs", assert: "attention() is not None" }],
+    });
+
+    expect(r.valid).toBe(false);
+    expect(r.errors.join(" ")).toMatch(/walkthrough|io_examples|visualization|worked_examples/);
+  });
+
   it("rejects malformed code walkthrough and input-output visualization fields", () => {
     const r = validatePracticeCodeContent({
       prompt: "Do the thing",
@@ -194,6 +231,54 @@ describe("validatePracticeCodeContent", () => {
 
     expect(r.valid).toBe(false);
     expect(r.errors.join(" ")).toMatch(/walkthrough|io_examples|visualization/);
+  });
+});
+
+describe("validateReadingContent formula blocks", () => {
+  it("accepts formal LaTeX with variable definitions", () => {
+    const r = validateReadingContent({
+      blocks: [
+        { type: "paragraph", text: "Scaled dot-product attention uses queries, keys, and values." },
+        {
+          type: "formula",
+          latex: "\\\\operatorname{Attention}(Q,K,V)=\\\\operatorname{softmax}(QK^T / \\\\sqrt{d_k})V",
+          plain_english: "Queries and keys create attention weights, then those weights mix value rows into output rows.",
+          variables: [
+            { symbol: "Q", meaning: "query matrix, one row per token", shape: "L x d_k" },
+            { symbol: "K", meaning: "key matrix, one row per token", shape: "L x d_k" },
+            { symbol: "V", meaning: "value matrix carrying content to mix", shape: "L x d_v" },
+            { symbol: "d_k", meaning: "key/query vector width used for scaling" },
+          ],
+        },
+      ],
+    });
+
+    expect(r.errors).toEqual([]);
+    expect(r.valid).toBe(true);
+  });
+
+  it("rejects formula-like prose without a formal LaTeX block", () => {
+    const r = validateReadingContent({
+      blocks: [
+        { type: "paragraph", text: "Attention(Q,K,V) = softmax(QK^T / √d_k) · V" },
+        { type: "paragraph", text: "This formula controls how value rows are mixed." },
+      ],
+    });
+
+    expect(r.valid).toBe(false);
+    expect(r.errors.join(" ")).toMatch(/formal formula block/);
+  });
+
+  it("rejects legacy formula blocks that do not define latex and variables", () => {
+    const r = validateReadingContent({
+      blocks: [
+        { type: "paragraph", text: "Scaled attention has a formal expression." },
+        { type: "formula", content: "Attention(Q,K,V) = softmax(QK^T / √d_k)·V" } as unknown,
+      ],
+    });
+
+    expect(r.valid).toBe(false);
+    expect(r.errors.join(" ")).toMatch(/latex|variable/);
   });
 });
 
@@ -270,9 +355,94 @@ function codeStudySupport() {
   };
 }
 
+function orientationVisual(slug = "orientation-scene") {
+  return {
+    strategy: "timeline",
+    artifact_slug: slug,
+    scene: {
+      scene_id: `${slug}-generated-scene`,
+      title: "Orientation map and tiny example",
+      motif: "pipeline map plus concrete object",
+      description: "A generated orientation scene that locates the lesson and creates a tiny object for the first part.",
+      panels: [
+        {
+          id: "map",
+          title: "Where we are",
+          kind: "pipeline",
+          description: "Shows the subject map narrowing to this lesson.",
+          data: [
+            { label: "Subject", value: "broad context", role: "context" },
+            { label: "Lesson target", value: "focused concept", role: "process" },
+            { label: "First part", value: "ready input", role: "output" },
+          ],
+        },
+        {
+          id: "example",
+          title: "Tiny object",
+          kind: "cards",
+          description: "Names the small object the learner carries forward.",
+          data: [
+            { label: "Object", value: "visible example", role: "input" },
+            { label: "Question", value: "what changes next", role: "process" },
+          ],
+        },
+      ],
+    },
+    cues: [
+      {
+        start: 0,
+        end: 15,
+        label: "Map",
+        headline: "The lesson starts by locating the concept",
+        narration: "The learner first sees where this concept sits before any detail starts.",
+        receive: "subject map",
+        transform: "focus on this lesson target",
+        pass: "local learning objective",
+        panel_id: "map",
+        active_elements: ["Subject", "Lesson target"],
+      },
+      {
+        start: 15,
+        end: 35,
+        label: "Concrete example",
+        headline: "A small example makes the object visible",
+        narration: "The visual introduces a tiny concrete object that the later sections will transform.",
+        receive: "local learning objective",
+        transform: "instantiate a tiny example",
+        pass: "visible example object",
+        panel_id: "example",
+        active_elements: ["Object"],
+      },
+      {
+        start: 35,
+        end: 55,
+        label: "Handoff",
+        headline: "The example is ready for the first lesson part",
+        narration: "The learner can now carry this object into the first detailed lesson section.",
+        receive: "visible example object",
+        transform: "name the next operation",
+        pass: "first section input",
+        panel_id: "map",
+        active_elements: ["First part"],
+      },
+    ],
+  };
+}
+
 function richLesson(overrides: Partial<GeneratedLessonContent["activities"][number]>[] = []): GeneratedLessonContent {
   const activities: GeneratedLessonContent["activities"] = [
-    { activity_type: "audio", is_core: true, sequence_order: 1, title: "a", content: { script: "A full spoken walkthrough of the concept for this lesson." } },
+    {
+      activity_type: "audio",
+      is_core: true,
+      sequence_order: 1,
+      title: "a",
+      content: {
+        script: "A full spoken walkthrough of the concept for this lesson.",
+        transcript: "A full spoken walkthrough of the concept for this lesson.",
+        duration_hint: 55,
+        orientation_visual: orientationVisual(),
+      },
+    },
     {
       activity_type: "reading",
       is_core: true,
@@ -363,6 +533,35 @@ function validLessonPartContent() {
       duration_hint: 90,
       synced_visual: {
         strategy: "timeline",
+        scene: {
+          scene_id: "part-concept-generated-scene",
+          title: "Part object transformation",
+          motif: "before-after transformation board",
+          description: "A generated scene specific to this part showing the incoming object, the operation, and the handoff.",
+          panels: [
+            {
+              id: "handoff",
+              title: "Part handoff",
+              kind: "flow",
+              description: "Shows the local receive, transform, and pass-forward steps.",
+              data: [
+                { label: "Receive", value: "previous concept", role: "input" },
+                { label: "Transform", value: "core operation", role: "process" },
+                { label: "Pass", value: "next input", role: "output" },
+              ],
+            },
+            {
+              id: "object",
+              title: "Object state",
+              kind: "matrix",
+              description: "Shows a tiny object changing values during the audio.",
+              data: [
+                { label: "row 1", values: [20, 50, 80], role: "input" },
+                { label: "row 2", values: [45, 70, 35], role: "process" },
+              ],
+            },
+          ],
+        },
         cues: [
           {
             start: 0,
@@ -373,6 +572,8 @@ function validLessonPartContent() {
             receive: "previous concept",
             transform: "focus the learner on this part",
             pass: "ready-to-change state",
+            panel_id: "handoff",
+            active_elements: ["Receive"],
           },
           {
             start: 25,
@@ -383,6 +584,8 @@ function validLessonPartContent() {
             receive: "ready-to-change state",
             transform: "perform the core operation",
             pass: "changed object",
+            panel_id: "object",
+            active_elements: ["row 2"],
           },
           {
             start: 60,
@@ -393,6 +596,8 @@ function validLessonPartContent() {
             receive: "changed object",
             transform: "package the output",
             pass: "next input",
+            panel_id: "handoff",
+            active_elements: ["Pass"],
           },
         ],
       },
@@ -604,11 +809,73 @@ describe("validateGeneratedContent — richer lessons", () => {
     expect(r.errors.join(" ")).toMatch(/mixed practice|practice_code/);
   });
 
+  it("rejects legacy char-offset audio cues that cannot sync to playback time", () => {
+    const content = validLessonPartContent();
+    content.audio.synced_visual = {
+      cues: [
+        { at_char: 0, action: "highlight", target: "step-0", label: "Old cue" },
+        { at_char: 120, action: "highlight", target: "step-1", label: "Old cue 2" },
+        { at_char: 240, action: "highlight", target: "step-2", label: "Old cue 3" },
+      ],
+    } as unknown as typeof content.audio.synced_visual;
+    const r = validateLessonPartContent(content, ["declarative"], validateWidgetSpec);
+    expect(r.valid).toBe(false);
+    expect(r.errors.join(" ")).toMatch(/legacy at_char|start must be/);
+  });
+
+  it("rejects timed audio cues that lack a generated bespoke scene plan", () => {
+    const content = validLessonPartContent();
+    const visualWithoutScene = { ...content.audio.synced_visual };
+    delete (visualWithoutScene as Partial<typeof content.audio.synced_visual>).scene;
+    content.audio.synced_visual = visualWithoutScene as typeof content.audio.synced_visual;
+    const r = validateLessonPartContent(content, ["declarative"], validateWidgetSpec);
+    expect(r.valid).toBe(false);
+    expect(r.errors.join(" ")).toMatch(/generated bespoke scene plan/);
+  });
+
+  it("rejects select-one practice questions with select-all answer metadata", () => {
+    const content = validLessonPartContent();
+    content.practice.questions[0] = {
+      ...content.practice.questions[0],
+      type: "select_one",
+      correct_index: undefined,
+      correct_indices: [0, 1],
+    } as typeof content.practice.questions[number];
+    const r = validateLessonPartContent(content, ["declarative"], validateWidgetSpec);
+    expect(r.valid).toBe(false);
+    expect(r.errors.join(" ")).toMatch(/select_one must not use correct_indices/);
+  });
+
+  it("rejects ordering practice whose correct_order uses numeric indices instead of item strings", () => {
+    const content = validLessonPartContent();
+    const ordering = content.practice.questions.find((q) => q.type === "ordering")!;
+    ordering.correct_order = [1, 2, 0] as unknown as string[];
+    const r = validateLessonPartContent(content, ["declarative"], validateWidgetSpec);
+    expect(r.valid).toBe(false);
+    expect(r.errors.join(" ")).toMatch(/correct_order must contain item strings/);
+  });
+
   it("validates next_lesson_diagnostics when provided", () => {
     const lesson = richLesson();
     lesson.next_lesson_diagnostics = [{ id: "d1" } as unknown as { id: string; prompt: string }];
     const r = validateGeneratedContent(lesson);
     expect(r.valid).toBe(false);
     expect(r.errors.join(" ")).toMatch(/next_lesson_diagnostics/);
+  });
+
+  it("rejects duplicate audio-synced visuals within the same lesson", () => {
+    const lesson = richLesson();
+    const duplicate = validLessonPartContent();
+    duplicate.audio.synced_visual = orientationVisual() as typeof duplicate.audio.synced_visual;
+    lesson.activities.push({
+      activity_type: "lesson_part",
+      is_core: true,
+      sequence_order: 6,
+      title: "Duplicate visual part",
+      content: duplicate,
+    });
+    const r = validateGeneratedContent(lesson);
+    expect(r.valid).toBe(false);
+    expect(r.errors.join(" ")).toMatch(/duplicates/);
   });
 });

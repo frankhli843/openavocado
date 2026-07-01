@@ -25,6 +25,7 @@ import {
   validatePracticeCodeContent,
   validateNextLessonDiagnostics,
   validateLessonPartContent,
+  validateAudioSyncedVisualContent,
 } from "@/lib/lesson-content/schema";
 
 /** Minimum audio script length to count as a real, generation-ready script. */
@@ -81,6 +82,8 @@ export const LESSON_QUALITY_BAR_PROMPT = [
   "- AUDIO + INTERACTIVE SIDE-BY-SIDE FOR ORIENTATION: every top-level audio orientation and every lesson_part audio segment must have a paired visual/interactive visible alongside the audio on desktop and immediately below it on mobile. Top-level audio must use the same timed cue scene pattern as lesson parts, stored as audio content orientation_visual with cues, receive/transform/pass labels, and seekable beats. For lesson parts, store it as audio.synced_visual plus the part interactive. Do not make learners finish listening before they can see the moving object being described.",
   "- AUDIO-ADJACENT VISUALS MUST BE SCOPED TO THE CURRENT AUDIO: the visual shown beside or immediately below an audio player must show only what that audio segment is narrating now, plus minimal before/after handoff context. Do not reuse a broad whole-lesson interactive, all-step simulator, complete curriculum map, or later exploratory widget beside the audio when most of it is unrelated to the current narration. Put broad exploratory interactives after the audio/text block as their own activity; the audio-adjacent visual should be a focused subset or dedicated bespoke artifact with timed states matching the spoken beats.",
   "- AUDIO-SYNCED VISUAL TRANSCRIPTS ARE REQUIRED: every top-level audio activity and every lesson_part audio object must include the learner-visible transcript and a synced visual. Top-level audio stores the synced visual in orientation_visual; lesson parts store it in audio.synced_visual. The synced visual must contain timed cues over the audio duration, so the visual changes as playback advances. Cues must identify what object the section receives, what operation is happening, and what is passed forward. A transcript-only accordion, one static component, or a card that just writes the audio text is rejected.",
+  "- UNIQUE BESPOKE AUDIO VISUALS: every audio-synced visual in the same lesson must be individually designed for that exact audio segment. Do not repeat the same receive-transform-pass layout, cue labels, scene objects, or visual motif with different text. Use a different scene plan per audio: an attention score grid for Q/K/V, a residual-stream ledger for residual flow, an expansion/compression gate for an MLP, a pipeline map for orientation, or a logits table for output-head audio. The checker rejects duplicate synced-visual fingerprints within a lesson.",
+  "- FORMAL MATH REQUIREMENT: whenever a lesson uses mathematical notation, formulas, or expressions such as Attention(Q,K,V), QK^T, softmax, square roots, matrix shapes, probabilities, or loss functions, the reading content must include a `formula` block with LaTeX, a plain-English interpretation, and explicit variable definitions including shapes/units when relevant. Do not leave formulas as plain prose.",
   "- FIVE-SECOND VISUAL BEATS: normal lesson-part audio should be planned at roughly one moving visual beat per 5 seconds of audio. Every beat does not need an entirely separate component, but it must visibly change an object, focus, matrix cell, pointer, arrow, row, layer, or before/after state. For a 160-second audio clip, expect about 30+ timed cue states. Long static intervals fail QA.",
   "- MANIM / 3BLUE1BROWN-STYLE SCENE DESIGN: model each synced visualization like a small Manim scene rather than a slide. Define objects, positions, transforms, camera/framing emphasis, and timed state changes. Use multiple coordinated visual components where useful: a pipeline map, a tiny matrix/table, a moving pointer, a before/after failure view, and a consequence panel. For transformer lessons, show real concept objects such as embedding tables, hidden-state matrices, attention score grids, residual paths, normalization, MLP layer expansion/compression, and logits tables. The public 3Blue1Brown Manim demo shows the intended workflow: build a scene from simple objects, animate transformations step by step, and iterate on styling/rendering rather than dumping prose into a box.",
   "- BESPOKE ARTIFACT PIPELINE (REQUIRED FOR NEW VISUALS): the DB-backed bespoke artifact pipeline is live. For any new interactive, generate a self-contained React component (React + recharts/lucide-react only, no external fetches), store it via POST /api/visual-artifacts with a stable slug, build it via POST /api/visual-artifacts/{slug}/build, run Chrome MCP QA on the sandbox URL (/api/visual-artifacts/{slug}/sandbox), take desktop and mobile screenshots, attach QA evidence via POST /api/visual-artifacts/{slug}/qa-evidence, then approve it via POST /api/visual-artifacts/{slug}/approve. Once approved, the lesson interactive JSON stores widget_type:'bespoke-artifact' and params.artifact_slug only. Component contract: export default function ArtifactComponent(). Allowed imports: react, react-dom, lucide-react, recharts. No fs, path, child_process, net, http, https, crypto.",
@@ -216,12 +219,25 @@ export function validateGeneratedContent(
   // generated from), so a lesson can never ship audio-less or with a stub.
   const audioActivity = content.activities.find((a) => a.activity_type === "audio");
   if (audioActivity) {
-    const script = (audioActivity.content as Record<string, unknown>)?.script;
+    const audioContent = audioActivity.content as Record<string, unknown>;
+    const script = audioContent?.script;
     if (typeof script !== "string" || script.trim().length < MIN_AUDIO_SCRIPT_CHARS) {
       errors.push(
         "audio activity must include a substantive script (generated audio must be available at lesson creation, not a placeholder)"
       );
     }
+    const transcript =
+      typeof audioContent?.transcript === "string" && audioContent.transcript.trim()
+        ? audioContent.transcript
+        : script;
+    if (typeof transcript !== "string" || transcript.trim().length < MIN_AUDIO_SCRIPT_CHARS) {
+      errors.push("audio activity must include a learner-visible transcript");
+    }
+    const visual = validateAudioSyncedVisualContent(
+      audioContent?.orientation_visual,
+      audioContent?.duration_hint
+    );
+    for (const e of visual.errors) errors.push(`audio activity orientation_visual: ${e}`);
   }
 
   // Multiple visual perspectives when the lesson covers multiple concepts. A
@@ -315,6 +331,10 @@ export function validateGeneratedContent(
     }
   }
 
+  for (const e of findDuplicateAudioVisuals(content.activities)) {
+    errors.push(e);
+  }
+
   // Knowledge graph orientation: strongly recommended for all lessons.
   // Logged as a warning, not a hard error, so existing seeded lessons still
   // pass until they are authored with graph data.
@@ -341,6 +361,110 @@ function validateNewLessonBespokeArtifact(spec: unknown): string[] {
   }
   return [];
 }
+
+function findDuplicateAudioVisuals(activities: GeneratedLessonContent["activities"]): string[] {
+  const seen = new Map<string, string>();
+  const errors: string[] = [];
+  for (const [index, activity] of activities.entries()) {
+    const content = activity.content as Record<string, unknown> | undefined;
+    const visual =
+      activity.activity_type === "audio"
+        ? (content?.orientation_visual as Record<string, unknown> | undefined)
+        : activity.activity_type === "lesson_part"
+          ? ((content?.audio as Record<string, unknown> | undefined)?.synced_visual as Record<string, unknown> | undefined)
+          : undefined;
+    if (!visual || !Array.isArray(visual.cues) || visual.cues.length === 0) continue;
+    const sceneId = typeof visual.scene === "object" && visual.scene && typeof (visual.scene as Record<string, unknown>).scene_id === "string"
+      ? (visual.scene as Record<string, unknown>).scene_id as string
+      : null;
+    if (sceneId) {
+      const sceneKey = `scene-id:${sceneId}`;
+      const priorById = seen.get(sceneKey);
+      const label = `activity[${index}] (${activity.title ?? activity.activity_type})`;
+      if (priorById) {
+        errors.push(`audio synced visual for ${label} reuses scene_id from ${priorById}; each audio segment needs a generated scene_id`);
+      } else {
+        seen.set(sceneKey, label);
+      }
+    }
+    const fingerprint = audioVisualFingerprint(visual);
+    if (!fingerprint) continue;
+    const label = `activity[${index}] (${activity.title ?? activity.activity_type})`;
+    const prior = seen.get(fingerprint);
+    if (prior) {
+      errors.push(`audio synced visual for ${label} duplicates ${prior}; each audio segment needs a bespoke visual scene`);
+    } else {
+      seen.set(fingerprint, label);
+    }
+  }
+  return errors;
+}
+
+function audioVisualFingerprint(visual: Record<string, unknown>): string {
+  const cues = Array.isArray(visual.cues) ? visual.cues : [];
+  const words = cues
+    .map((raw) => {
+      if (!raw || typeof raw !== "object") return "";
+      const cue = raw as Record<string, unknown>;
+      return [
+        cue.label,
+        cue.headline,
+        cue.receive,
+        cue.transform,
+        cue.pass,
+        cue.visual_kind,
+        visual.artifact_slug,
+        typeof visual.scene === "object" && visual.scene ? (visual.scene as Record<string, unknown>).title : null,
+        typeof visual.scene === "object" && visual.scene ? (visual.scene as Record<string, unknown>).motif : null,
+        typeof visual.scene === "object" && visual.scene ? (visual.scene as Record<string, unknown>).description : null,
+        ...(typeof visual.scene === "object" && visual.scene && Array.isArray((visual.scene as Record<string, unknown>).panels)
+          ? ((visual.scene as Record<string, unknown>).panels as unknown[]).flatMap((panel) => {
+              if (!panel || typeof panel !== "object") return [];
+              const p = panel as Record<string, unknown>;
+              const data = Array.isArray(p.data) ? p.data : [];
+              return [
+                p.title,
+                p.kind,
+                p.description,
+                ...data.flatMap((datum) => {
+                  if (!datum || typeof datum !== "object") return [];
+                  const d = datum as Record<string, unknown>;
+                  return [d.label, d.value, d.role];
+                }),
+              ];
+            })
+          : []),
+      ]
+        .filter((value): value is string => typeof value === "string")
+        .join(" ");
+    })
+    .join(" ")
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, " ")
+    .trim()
+    .split(/\s+/)
+    .filter((word) => word.length > 2 && !AUDIO_VISUAL_STOP_WORDS.has(word));
+  return Array.from(new Set(words)).sort().slice(0, 90).join(" ");
+}
+
+const AUDIO_VISUAL_STOP_WORDS = new Set([
+  "the",
+  "and",
+  "for",
+  "with",
+  "this",
+  "that",
+  "into",
+  "from",
+  "ready",
+  "state",
+  "visual",
+  "audio",
+  "section",
+  "object",
+  "next",
+  "previous",
+]);
 
 function validateGeneratedCodeStudySupport(content: unknown): string[] {
   if (!content || typeof content !== "object") {

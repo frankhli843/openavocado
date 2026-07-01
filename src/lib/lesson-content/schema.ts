@@ -22,9 +22,16 @@
 
 export type ReadingBlock =
   | { type: "heading"; text: string }
+  | { type: "text"; content: string }
   | { type: "paragraph"; text: string }
   | { type: "definition"; term: string; definition: string }
   | { type: "example"; title?: string; body: string }
+  | {
+      type: "formula";
+      latex: string;
+      plain_english: string;
+      variables: Array<{ symbol: string; meaning: string; shape?: string }>;
+    }
   | { type: "callout"; tone?: "info" | "warning" | "insight"; text: string }
   | { type: "list"; ordered?: boolean; items: string[] };
 
@@ -136,9 +143,11 @@ export function validateLessonDiagrams(
 
 const READING_BLOCK_TYPES = new Set([
   "heading",
+  "text",
   "paragraph",
   "definition",
   "example",
+  "formula",
   "callout",
   "list",
 ]);
@@ -162,6 +171,8 @@ export function validateReadingContent(content: unknown): { valid: boolean; erro
   }
 
   let textBlocks = 0;
+  let hasFormalFormulaBlock = false;
+  let hasFormulaLikeText = false;
   for (const [i, raw] of c.blocks.entries()) {
     if (!raw || typeof raw !== "object") {
       errors.push(`reading blocks[${i}] must be an object`);
@@ -178,7 +189,18 @@ export function validateReadingContent(content: unknown): { valid: boolean; erro
       case "callout":
         if (typeof b.text !== "string" || !b.text.trim()) {
           errors.push(`reading blocks[${i}] (${b.type}) missing text`);
-        } else textBlocks++;
+        } else {
+          textBlocks++;
+          if (looksLikeFormulaText(b.text)) hasFormulaLikeText = true;
+        }
+        break;
+      case "text":
+        if (typeof b.content !== "string" || !b.content.trim()) {
+          errors.push(`reading blocks[${i}] (text) missing content`);
+        } else {
+          textBlocks++;
+          if (looksLikeFormulaText(b.content)) hasFormulaLikeText = true;
+        }
         break;
       case "definition":
         if (typeof b.term !== "string" || !b.term.trim()) {
@@ -186,19 +208,59 @@ export function validateReadingContent(content: unknown): { valid: boolean; erro
         }
         if (typeof b.definition !== "string" || !b.definition.trim()) {
           errors.push(`reading blocks[${i}] (definition) missing definition`);
-        } else textBlocks++;
+        } else {
+          textBlocks++;
+          if (looksLikeFormulaText(b.definition)) hasFormulaLikeText = true;
+        }
         break;
       case "example":
         if (typeof b.body !== "string" || !b.body.trim()) {
           errors.push(`reading blocks[${i}] (example) missing body`);
-        } else textBlocks++;
+        } else {
+          textBlocks++;
+          if (looksLikeFormulaText(b.body)) hasFormulaLikeText = true;
+        }
         break;
+      case "formula": {
+        hasFormalFormulaBlock = true;
+        if (typeof b.latex !== "string" || !b.latex.trim()) {
+          errors.push(`reading blocks[${i}] (formula) requires latex`);
+        }
+        if (typeof b.plain_english !== "string" || b.plain_english.trim().length < 20) {
+          errors.push(`reading blocks[${i}] (formula) requires a substantive plain_english explanation`);
+        }
+        if (!Array.isArray(b.variables) || b.variables.length === 0) {
+          errors.push(`reading blocks[${i}] (formula) requires variable definitions`);
+        } else {
+          for (const [vi, rawVar] of b.variables.entries()) {
+            if (!rawVar || typeof rawVar !== "object") {
+              errors.push(`reading blocks[${i}] (formula).variables[${vi}] must be an object`);
+              continue;
+            }
+            const variable = rawVar as Record<string, unknown>;
+            if (typeof variable.symbol !== "string" || !variable.symbol.trim()) {
+              errors.push(`reading blocks[${i}] (formula).variables[${vi}] missing symbol`);
+            }
+            if (typeof variable.meaning !== "string" || variable.meaning.trim().length < 8) {
+              errors.push(`reading blocks[${i}] (formula).variables[${vi}] missing meaning`);
+            }
+            if (variable.shape !== undefined && typeof variable.shape !== "string") {
+              errors.push(`reading blocks[${i}] (formula).variables[${vi}].shape must be a string when present`);
+            }
+          }
+        }
+        textBlocks++;
+        break;
+      }
       case "list":
         if (!Array.isArray(b.items) || b.items.length === 0) {
           errors.push(`reading blocks[${i}] (list) needs a non-empty items array`);
         } else if (!b.items.every((it) => typeof it === "string" && it.trim())) {
           errors.push(`reading blocks[${i}] (list) items must be non-empty strings`);
-        } else textBlocks++;
+        } else {
+          textBlocks++;
+          if (b.items.some((it) => looksLikeFormulaText(it))) hasFormulaLikeText = true;
+        }
         break;
     }
   }
@@ -206,11 +268,29 @@ export function validateReadingContent(content: unknown): { valid: boolean; erro
   if (textBlocks < 2) {
     errors.push("reading content needs at least 2 substantive text blocks");
   }
+  if (hasFormulaLikeText && !hasFormalFormulaBlock) {
+    errors.push(
+      "reading content uses mathematical notation but lacks a formal formula block with LaTeX, plain_english, and variable definitions"
+    );
+  }
 
   const diagramResult = validateLessonDiagrams(c.diagrams, "reading.diagrams");
   errors.push(...diagramResult.errors);
 
   return { valid: errors.length === 0, errors };
+}
+
+function looksLikeFormulaText(value: unknown): boolean {
+  if (typeof value !== "string") return false;
+  const text = value.trim();
+  if (!text) return false;
+  return (
+    /\b[A-Za-z][A-Za-z0-9_]*\([^)]{1,80}\)\s*=/.test(text) ||
+    /\bsoftmax\s*\(/i.test(text) ||
+    /[A-Za-z0-9_]\s*[·*]\s*[A-Za-z0-9_]/.test(text) ||
+    /√|\\sqrt|[A-Za-z0-9_]\^[A-Za-z0-9_{]/.test(text) ||
+    /\b[A-Z][A-Za-z0-9_]*\s*=\s*[^.!?]{2,80}/.test(text)
+  );
 }
 
 // ─── Embedded media (YouTube) ────────────────────────────────────────────────
@@ -509,7 +589,11 @@ export function validatePracticeCodeContent(content: unknown): { valid: boolean;
     errors.push("practice_code requires a task prompt");
   }
 
-  if (c.walkthrough !== undefined) {
+  const requireStudySupport = true;
+
+  if (c.walkthrough === undefined && requireStudySupport) {
+    errors.push("practice_code requires walkthrough.steps so learners see the expected input/output transformation");
+  } else if (c.walkthrough !== undefined) {
     if (!c.walkthrough || typeof c.walkthrough !== "object") {
       errors.push("practice_code walkthrough must be an object when present");
     } else {
@@ -517,8 +601,8 @@ export function validatePracticeCodeContent(content: unknown): { valid: boolean;
       if (walkthrough.title !== undefined && typeof walkthrough.title !== "string") {
         errors.push("practice_code walkthrough.title must be a string when present");
       }
-      if (!Array.isArray(walkthrough.steps) || walkthrough.steps.length === 0) {
-        errors.push("practice_code walkthrough requires a non-empty steps array");
+      if (!Array.isArray(walkthrough.steps) || walkthrough.steps.length < 2) {
+        errors.push("practice_code walkthrough requires at least two conceptual steps");
       } else {
         for (const [i, raw] of walkthrough.steps.entries()) {
           if (!raw || typeof raw !== "object") {
@@ -542,9 +626,13 @@ export function validatePracticeCodeContent(content: unknown): { valid: boolean;
     }
   }
 
-  if (c.io_examples !== undefined) {
+  if (c.io_examples === undefined && requireStudySupport) {
+    errors.push("practice_code requires at least two io_examples showing expected inputs and outputs");
+  } else if (c.io_examples !== undefined) {
     if (!Array.isArray(c.io_examples)) {
       errors.push("practice_code io_examples must be an array when present");
+    } else if (c.io_examples.length < 2) {
+      errors.push("practice_code requires at least two io_examples showing expected inputs and outputs");
     } else {
       for (const [i, raw] of c.io_examples.entries()) {
         if (!raw || typeof raw !== "object") {
@@ -568,7 +656,9 @@ export function validatePracticeCodeContent(content: unknown): { valid: boolean;
     }
   }
 
-  if (c.visualization !== undefined) {
+  if (c.visualization === undefined && requireStudySupport) {
+    errors.push("practice_code requires visualization.items mapping input, process, and output");
+  } else if (c.visualization !== undefined) {
     if (!c.visualization || typeof c.visualization !== "object") {
       errors.push("practice_code visualization must be an object when present");
     } else {
@@ -579,9 +669,10 @@ export function validatePracticeCodeContent(content: unknown): { valid: boolean;
       if (viz.description !== undefined && typeof viz.description !== "string") {
         errors.push("practice_code visualization.description must be a string when present");
       }
-      if (!Array.isArray(viz.items) || viz.items.length < 2) {
-        errors.push("practice_code visualization requires at least 2 items");
+      if (!Array.isArray(viz.items) || viz.items.length < 3) {
+        errors.push("practice_code visualization requires at least 3 items");
       } else {
+        const roles = new Set<string>();
         for (const [i, raw] of viz.items.entries()) {
           if (!raw || typeof raw !== "object") {
             errors.push(`practice_code visualization.items[${i}] must be an object`);
@@ -596,16 +687,23 @@ export function validatePracticeCodeContent(content: unknown): { valid: boolean;
           }
           if (item.role !== undefined && !["input", "process", "output"].includes(String(item.role))) {
             errors.push(`practice_code visualization.items[${i}].role must be input, process, or output`);
+          } else if (typeof item.role === "string") {
+            roles.add(item.role);
           }
           if (item.note !== undefined && typeof item.note !== "string") {
             errors.push(`practice_code visualization.items[${i}].note must be a string when present`);
           }
         }
+        for (const role of ["input", "process", "output"]) {
+          if (!roles.has(role)) errors.push(`practice_code visualization missing "${role}" role`);
+        }
       }
     }
   }
 
-  if (c.worked_examples !== undefined) {
+  if (c.worked_examples === undefined && requireStudySupport) {
+    errors.push('practice_code requires worked_examples with "basic" and "concise" full-code versions');
+  } else if (c.worked_examples !== undefined) {
     if (!Array.isArray(c.worked_examples)) {
       errors.push("practice_code worked_examples must be an array when present");
     } else {
@@ -1074,12 +1172,36 @@ export interface AudioSyncedVisualCue {
   receive?: string;
   transform?: string;
   pass?: string;
+  panel_id?: string;
+  active_elements?: string[];
   visual_kind?: "pipeline" | "matrix" | "flow" | "graph" | "camera" | "custom";
+}
+
+export interface AudioGeneratedScenePanel {
+  id: string;
+  title: string;
+  kind: "matrix" | "vector" | "ledger" | "pipeline" | "flow" | "bar" | "cards" | "custom";
+  description: string;
+  data: Array<{
+    label: string;
+    value?: string;
+    values?: number[];
+    role?: "input" | "process" | "output" | "context";
+  }>;
+}
+
+export interface AudioGeneratedScene {
+  scene_id: string;
+  title: string;
+  motif: string;
+  description: string;
+  panels: AudioGeneratedScenePanel[];
 }
 
 export interface AudioSyncedVisualContent {
   strategy?: "timeline" | "audio-length-scaled";
   artifact_slug?: string;
+  scene: AudioGeneratedScene;
   cues: AudioSyncedVisualCue[];
 }
 
@@ -1223,14 +1345,22 @@ export function validateLessonPartPracticeContent(content: unknown): { valid: bo
         errors.push(`questions[${i}] choices must be non-empty strings`);
       }
       if (type === "select_one") {
+        if (q.correct_indices !== undefined) {
+          errors.push(`questions[${i}] select_one must not use correct_indices; use select_all for multi-select answers`);
+        }
         if (!Number.isInteger(q.correct_index)) {
           errors.push(`questions[${i}] select_one requires correct_index`);
         } else if (Array.isArray(choices) && (Number(q.correct_index) < 0 || Number(q.correct_index) >= choices.length)) {
           errors.push(`questions[${i}] correct_index out of range`);
         }
-      } else if (!Array.isArray(q.correct_indices)) {
-        errors.push(`questions[${i}] select_all requires correct_indices, use [] for none`);
       } else {
+        if (q.correct_index !== undefined) {
+          errors.push(`questions[${i}] select_all must not use correct_index; use correct_indices, including [] for none`);
+        }
+        if (!Array.isArray(q.correct_indices)) {
+          errors.push(`questions[${i}] select_all requires correct_indices, use [] for none`);
+          continue;
+        }
         const indices = q.correct_indices;
         if (!indices.every((idx) => Number.isInteger(idx) && Number(idx) >= 0)) {
           errors.push(`questions[${i}] correct_indices must contain non-negative integers`);
@@ -1254,6 +1384,21 @@ export function validateLessonPartPracticeContent(content: unknown): { valid: bo
       }
       if (!Array.isArray(q.correct_order) || q.correct_order.length < 3) {
         errors.push(`questions[${i}] ordering requires correct_order`);
+      } else if (!q.correct_order.every((item) => typeof item === "string" && item.trim())) {
+        errors.push(`questions[${i}] ordering correct_order must contain item strings, not numeric indices`);
+      } else if (Array.isArray(q.items)) {
+        const items = q.items as unknown[];
+        const itemSet = new Set(items);
+        const orderSet = new Set(q.correct_order);
+        if (itemSet.size !== items.length) {
+          errors.push(`questions[${i}] ordering items must not contain duplicates`);
+        }
+        if (orderSet.size !== q.correct_order.length) {
+          errors.push(`questions[${i}] ordering correct_order must not contain duplicates`);
+        }
+        if (q.correct_order.length !== items.length || !q.correct_order.every((item) => itemSet.has(item))) {
+          errors.push(`questions[${i}] ordering correct_order must contain exactly the same strings as items`);
+        }
       }
     }
 
@@ -1276,7 +1421,7 @@ export function validateLessonPartPracticeContent(content: unknown): { valid: bo
   return { valid: errors.length === 0, errors };
 }
 
-function validateAudioSyncedVisualContent(
+export function validateAudioSyncedVisualContent(
   visual: unknown,
   durationHint: unknown
 ): { valid: boolean; errors: string[] } {
@@ -1293,6 +1438,8 @@ function validateAudioSyncedVisualContent(
   if (v.strategy !== undefined && v.strategy !== "timeline" && v.strategy !== "audio-length-scaled") {
     errors.push('strategy must be "timeline" or "audio-length-scaled" when provided');
   }
+  const scene = validateAudioGeneratedScene(v.scene);
+  for (const e of scene.errors) errors.push(`scene: ${e}`);
   if (!Array.isArray(v.cues) || v.cues.length < 3) {
     errors.push("cues must contain at least 3 timed visual states");
     return { valid: errors.length === 0, errors };
@@ -1321,14 +1468,101 @@ function validateAudioSyncedVisualContent(
         lastEnd = Math.max(lastEnd, c.end);
       }
     }
+    for (const legacyField of ["at_char", "action", "target"] as const) {
+      if (legacyField in c) {
+        errors.push(`cue[${index}] uses legacy ${legacyField}; synced visuals require timed start/end cues`);
+      }
+    }
     for (const field of ["label", "headline", "narration"] as const) {
       if (typeof c[field] !== "string" || !c[field].trim()) {
         errors.push(`cue[${index}].${field} is required`);
       }
     }
+    if (!c.receive && !c.transform && !c.pass) {
+      errors.push(`cue[${index}] must describe at least one of receive, transform, or pass`);
+    }
+    if (c.panel_id !== undefined && typeof c.panel_id !== "string") {
+      errors.push(`cue[${index}].panel_id must be a string when present`);
+    }
+    if (c.active_elements !== undefined && !isStringArray(c.active_elements)) {
+      errors.push(`cue[${index}].active_elements must be an array of strings when present`);
+    }
   }
   if (duration !== null && duration > 0 && lastEnd < duration * 0.65) {
     errors.push("timed cues must cover most of duration_hint so the visual changes through the audio");
+  }
+  return { valid: errors.length === 0, errors };
+}
+
+function validateAudioGeneratedScene(scene: unknown): { valid: boolean; errors: string[] } {
+  const errors: string[] = [];
+  if (!scene || typeof scene !== "object") {
+    return {
+      valid: false,
+      errors: ["required; each audio segment needs a generated bespoke scene plan, not a reused generic visual"],
+    };
+  }
+  const s = scene as Record<string, unknown>;
+  for (const field of ["scene_id", "title", "motif", "description"] as const) {
+    if (typeof s[field] !== "string" || !(s[field] as string).trim()) {
+      errors.push(`${field} is required`);
+    }
+  }
+  if (typeof s.description === "string" && s.description.trim().length < 30) {
+    errors.push("description must explain what makes this scene specific to the audio");
+  }
+  if (!Array.isArray(s.panels) || s.panels.length < 2) {
+    errors.push("panels must include at least two generated visual panels");
+    return { valid: errors.length === 0, errors };
+  }
+  const ids = new Set<string>();
+  for (const [i, rawPanel] of s.panels.entries()) {
+    if (!rawPanel || typeof rawPanel !== "object") {
+      errors.push(`panels[${i}] must be an object`);
+      continue;
+    }
+    const panel = rawPanel as Record<string, unknown>;
+    if (typeof panel.id !== "string" || !panel.id.trim()) {
+      errors.push(`panels[${i}].id is required`);
+    } else if (ids.has(panel.id)) {
+      errors.push(`panels[${i}].id duplicates another panel`);
+    } else {
+      ids.add(panel.id);
+    }
+    if (typeof panel.title !== "string" || !panel.title.trim()) {
+      errors.push(`panels[${i}].title is required`);
+    }
+    if (!["matrix", "vector", "ledger", "pipeline", "flow", "bar", "cards", "custom"].includes(String(panel.kind))) {
+      errors.push(`panels[${i}].kind must be matrix, vector, ledger, pipeline, flow, bar, cards, or custom`);
+    }
+    if (typeof panel.description !== "string" || panel.description.trim().length < 20) {
+      errors.push(`panels[${i}].description must explain the panel`);
+    }
+    if (!Array.isArray(panel.data) || panel.data.length === 0) {
+      errors.push(`panels[${i}].data must contain generated visual data`);
+      continue;
+    }
+    for (const [di, rawDatum] of panel.data.entries()) {
+      if (!rawDatum || typeof rawDatum !== "object") {
+        errors.push(`panels[${i}].data[${di}] must be an object`);
+        continue;
+      }
+      const datum = rawDatum as Record<string, unknown>;
+      if (typeof datum.label !== "string" || !datum.label.trim()) {
+        errors.push(`panels[${i}].data[${di}].label is required`);
+      }
+      if (datum.value !== undefined && typeof datum.value !== "string") {
+        errors.push(`panels[${i}].data[${di}].value must be a string when present`);
+      }
+      if (datum.values !== undefined) {
+        if (!Array.isArray(datum.values) || !datum.values.every((value) => typeof value === "number" && Number.isFinite(value))) {
+          errors.push(`panels[${i}].data[${di}].values must be finite numbers when present`);
+        }
+      }
+      if (datum.role !== undefined && !["input", "process", "output", "context"].includes(String(datum.role))) {
+        errors.push(`panels[${i}].data[${di}].role must be input, process, output, or context`);
+      }
+    }
   }
   return { valid: errors.length === 0, errors };
 }
