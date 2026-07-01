@@ -552,7 +552,7 @@ export default function LessonPage({ params }: { params: Promise<{ id: string }>
       <div className={chatMaximized ? "transition-[padding] duration-200 xl:pr-[28rem]" : "transition-[padding] duration-200"}>
         {/* Sticky top bar */}
         <div className="sticky top-0 z-10 bg-white border-b border-gray-200">
-          <div className="max-w-4xl mx-auto px-4 sm:px-6 py-2 sm:py-0 sm:h-11 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 sm:gap-4">
+          <div className="max-w-[110rem] mx-auto px-3 sm:px-4 lg:px-6 py-2 sm:py-0 sm:h-11 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 sm:gap-4">
           <div className="flex items-center gap-2 text-xs sm:text-sm text-gray-500 min-w-0">
             <Link href="/?resume=0" className="hover:text-gray-800 transition-colors shrink-0">
               &#8592; Dashboard
@@ -613,7 +613,7 @@ export default function LessonPage({ params }: { params: Promise<{ id: string }>
         </div>
 
         {/* Lesson content */}
-        <div className="max-w-4xl mx-auto px-6 py-8 space-y-6">
+        <div className="max-w-[110rem] mx-auto px-3 sm:px-4 lg:px-6 py-8 space-y-6">
         {/* Header */}
         <div className="bg-white rounded-xl border border-gray-200 p-6">
           <div className="flex items-start justify-between gap-4 mb-3">

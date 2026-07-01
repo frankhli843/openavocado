@@ -854,7 +854,28 @@ export interface AssessmentContent {
 
 export interface LessonPartAudioContent {
   script: string;
+  /** Explicit learner-visible transcript. If omitted, script is treated as the transcript. */
+  transcript?: string;
   duration_hint?: number;
+  synced_visual?: AudioSyncedVisualContent;
+}
+
+export interface AudioSyncedVisualCue {
+  start: number;
+  end?: number;
+  label: string;
+  headline: string;
+  narration: string;
+  receive?: string;
+  transform?: string;
+  pass?: string;
+  visual_kind?: "pipeline" | "matrix" | "flow" | "graph" | "camera" | "custom";
+}
+
+export interface AudioSyncedVisualContent {
+  strategy?: "timeline" | "audio-length-scaled";
+  artifact_slug?: string;
+  cues: AudioSyncedVisualCue[];
 }
 
 export interface LessonPartContent {
@@ -894,6 +915,16 @@ export function validateLessonPartContent(
     errors.push("audio: lesson_part requires an audio object");
   } else if (typeof audio.script !== "string" || audio.script.trim().length < 200) {
     errors.push("audio: lesson_part audio.script must be a substantive per-part script");
+  } else {
+    const transcript =
+      typeof audio.transcript === "string" && audio.transcript.trim()
+        ? audio.transcript
+        : audio.script;
+    if (typeof transcript !== "string" || transcript.trim().length < 200) {
+      errors.push("audio: lesson_part requires a substantive learner-visible transcript");
+    }
+    const visual = validateAudioSyncedVisualContent(audio.synced_visual, audio.duration_hint);
+    for (const e of visual.errors) errors.push(`audio.synced_visual: ${e}`);
   }
 
   if (widgetValidator) {
@@ -920,6 +951,63 @@ export function validateLessonPartContent(
     errors.push('quiz: idk_option must not be false');
   }
 
+  return { valid: errors.length === 0, errors };
+}
+
+function validateAudioSyncedVisualContent(
+  visual: unknown,
+  durationHint: unknown
+): { valid: boolean; errors: string[] } {
+  const errors: string[] = [];
+  if (!visual || typeof visual !== "object") {
+    return {
+      valid: false,
+      errors: [
+        "required for every lesson_part; provide timed cues that change the visual as the audio advances",
+      ],
+    };
+  }
+  const v = visual as Record<string, unknown>;
+  if (v.strategy !== undefined && v.strategy !== "timeline" && v.strategy !== "audio-length-scaled") {
+    errors.push('strategy must be "timeline" or "audio-length-scaled" when provided');
+  }
+  if (!Array.isArray(v.cues) || v.cues.length < 3) {
+    errors.push("cues must contain at least 3 timed visual states");
+    return { valid: errors.length === 0, errors };
+  }
+  let previousStart = -1;
+  const duration = typeof durationHint === "number" && Number.isFinite(durationHint) ? durationHint : null;
+  let lastEnd = 0;
+  for (const [index, cue] of v.cues.entries()) {
+    if (!cue || typeof cue !== "object") {
+      errors.push(`cue[${index}] must be an object`);
+      continue;
+    }
+    const c = cue as Record<string, unknown>;
+    if (typeof c.start !== "number" || !Number.isFinite(c.start) || c.start < 0) {
+      errors.push(`cue[${index}].start must be a non-negative number of seconds`);
+    } else if (c.start < previousStart) {
+      errors.push(`cue[${index}].start must be sorted in ascending audio time`);
+    } else {
+      previousStart = c.start;
+      lastEnd = Math.max(lastEnd, c.start);
+    }
+    if (c.end !== undefined) {
+      if (typeof c.end !== "number" || !Number.isFinite(c.end) || c.end <= Number(c.start)) {
+        errors.push(`cue[${index}].end must be greater than start when provided`);
+      } else {
+        lastEnd = Math.max(lastEnd, c.end);
+      }
+    }
+    for (const field of ["label", "headline", "narration"] as const) {
+      if (typeof c[field] !== "string" || !c[field].trim()) {
+        errors.push(`cue[${index}].${field} is required`);
+      }
+    }
+  }
+  if (duration !== null && duration > 0 && lastEnd < duration * 0.65) {
+    errors.push("timed cues must cover most of duration_hint so the visual changes through the audio");
+  }
   return { valid: errors.length === 0, errors };
 }
 

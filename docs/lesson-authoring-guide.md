@@ -141,19 +141,20 @@ enforced by `validateGeneratedContent`; the rest is a hard authoring rule.
   explanation and nearby visualizations together, then do the practice/code and
   assessments. Do not bury audio after the written explanation inside a lesson
   part, and do not separate mechanism text from its visual support.
-- **Target architecture: dynamic visual components.** The fixed registered
-  widget catalog is a compatibility bridge, not the desired ceiling. The target
-  system should let agents generate per-part React components, store the source
-  and manifest in SQLite, compile them in isolation, attach a build hash and
-  compiled artifact reference, and mark them renderable only after automated
-  checks plus Chrome MCP desktop/mobile verification. Existing registered
-  widgets should eventually migrate into that same artifact/approval model.
-- **Generic visuals are legacy fallback only.** Future normal lesson generation
-  should not use the generic declarative chart renderer as the primary
-  interactive unless the concept is genuinely about quantities, trends, or
-  distributions and the visual has still been purpose-designed for that exact
-  block. The default bar is intensive custom visual design plus Chrome MCP
-  iteration. Visual quality is core lesson quality, not decoration.
+- **Dynamic visual components are now the authoring path.** The fixed registered
+  widget catalog and generic declarative renderer are legacy read-only
+  compatibility for older lessons. New generated lessons must use the
+  DB-backed `bespoke-artifact` pipeline: generate per-part React components,
+  store source and manifest in SQLite, compile in isolation, attach build hash
+  and compiled artifact reference, run Chrome MCP desktop/mobile sandbox QA with
+  screenshots, record QA evidence, then approve. Lesson JSON stores only
+  `widget_type: "bespoke-artifact"` plus the stable approved slug.
+- **Generic visuals are forbidden for new generation.** Do not use the generic
+  declarative chart renderer or a registered widget for new lesson authoring,
+  even if one is close. If a visual needs a bar chart, matrix, stage map, or
+  flow diagram, implement that as a bespoke artifact with the exact objects,
+  labels, controls, and failure states for this lesson. Visual quality is core
+  lesson quality, not decoration.
 - **Metaphors, simple examples, and step-specific visuals.** For multi-step
   lessons, each major step should have a plain-language handle, a fitting
   metaphor, easy examples, and its own visual/interactive treatment when that
@@ -199,6 +200,25 @@ enforced by `validateGeneratedContent`; the rest is a hard authoring rule.
   that visual. The audio should say what to change, what to watch, what failure
   mode is being shown, and what the visual proves. Do not leave silent graphs
   for the learner to interpret alone.
+- **Every lesson part needs a transcript and synced visual timeline.** The
+  `audio.script` is the source transcript and may be duplicated into
+  `audio.transcript` for clarity. Each lesson part must also include
+  `audio.synced_visual.cues`: timed states that cover most of the audio duration
+  and change the visual as playback advances. A static transcript panel is not
+  enough. The timeline should show what the part receives, what changes during
+  the narration, and what is passed forward.
+- **Plan visual beats about every 5 seconds.** For normal lesson-part audio,
+  expect roughly one moving visual beat every 5 seconds. A beat can move a
+  pointer, highlight a matrix cell, shift a row, update an arrow, reveal a
+  layer, change camera focus, or transition a before/after state. It must not
+  merely display the next sentence of the transcript. Long static intervals fail
+  QA.
+- **Use a Manim / 3Blue1Brown scene mindset.** The reference workflow from
+  Grant Sanderson's 3Blue1Brown Manim demo is not "put text beside a chart"; it
+  is scene construction. Define objects, positions, transforms, camera emphasis,
+  and timed state changes. A good synced visual may combine a pipeline map, a
+  tiny table or matrix, a moving pointer, before/after state, and a consequence
+  panel, all coordinated by the audio timeline.
 - **YouTube media should be included when highly relevant.** Look for a video
   when it can deepen the lesson, but do not embed long general videos as filler.
   If a video is used, it must be short or timestamped to the exact relevant
@@ -311,24 +331,17 @@ durable educational videos. Never embed private or credentialed content.
 A strong lesson shows the same idea from several angles. There are two ways to
 do this, and you can combine them:
 
-1. **Several `interactive` activities** in one lesson. Each restores its own
-   state independently.
-2. **Several charts in one declarative widget** via `charts: WidgetChart[]`
-   (in addition to or instead of the single `chart`). All charts are driven by
-   the same controls, so they update together. Chart types: `bar`, `curve`,
-   `table` (a frequency/contingency grid of live-computed cells), and `tree`
-   (a population-split / flow diagram with live counts).
+1. **Several `interactive` activities** in one lesson, each backed by its own
+   approved bespoke artifact and restored independently.
+2. **Several coordinated views inside one bespoke artifact**, driven by the same
+   controls or audio timeline: a table, graph, flow, matrix, stage map, and
+   failure view can all live in one purpose-built component.
 
-The seeded Bayes lesson is the reference: one slider set drives a bar chart, a
-frequency table, and a population tree, and a second widget plots the posterior
-against prevalence. Keep every chart responsive (no page-level horizontal
-scroll at 390px) — the built-in charts already are.
-
-Interactive widgets are declarative or registered specs only. **Never** emit raw
-React/JS. Outputs are computed by the sandboxed expression evaluator (arithmetic,
-comparisons, logic, ternary, whitelisted math functions). Formulas may only
-reference control ids and earlier output ids; unknown identifiers fail
-validation.
+Older seeded lessons may still demonstrate declarative multi-chart specs, but
+that path is not valid for new generation. New interactives are approved
+`bespoke-artifact` specs only. Never emit raw React/JS in lesson JSON. The raw
+component source belongs in `visual_artifacts`, crosses the build/QA/approval
+gate, and lesson JSON references only the slug.
 
 ## Code: scaffold, never solve
 
@@ -368,15 +381,29 @@ coherent idea and include all four teaching modes:
   "reading": { "intro": "...", "blocks": [...], "summary": "..." },
   "audio": {
     "script": "A spoken explanation tied to this exact visualization...",
-    "duration_hint": 90
+    "transcript": "The exact transcript shown to the learner...",
+    "duration_hint": 90,
+    "synced_visual": {
+      "strategy": "timeline",
+      "cues": [
+        {
+          "start": 0,
+          "end": 24,
+          "label": "Receives",
+          "headline": "Name the incoming object",
+          "narration": "The visual shows what arrived from the previous step.",
+          "receive": "previous step output",
+          "transform": "focus attention",
+          "pass": "ready state"
+        }
+      ]
+    }
   },
   "interactive": {
     "schema_version": "1.0",
-    "widget_type": "declarative",
+    "widget_type": "bespoke-artifact",
     "instructions": "Change the image size and watch what breaks...",
-    "controls": [...],
-    "outputs": [...],
-    "charts": [...]
+    "params": { "artifact_slug": "resize-breakage-scene" }
   },
   "quiz": {
     "pass_threshold": 4,
@@ -390,6 +417,8 @@ coherent idea and include all four teaching modes:
 Lesson-part rules:
 - Parts are collapsed by default in the UI and show a checkmark only after the
   learner passes the part quiz and clicks "Mark Part Done".
+- Each part must include a transcript and `audio.synced_visual` timeline whose
+  cues cover most of the part audio. The visual must change with playback time.
 - Each part quiz must contain exactly 10 MC questions, `pass_threshold: 4`, and
   `consecutive_correct_required: 4`. Wrong answers and "I don't know" reset the
   streak and still create retry obligations.
@@ -527,11 +556,15 @@ deployment configuration.
 - [ ] Audio script is comprehensive, not a placeholder.
 - [ ] Reading has headings, a definition, a worked example, and a summary.
 - [ ] Normal lessons are broken into `lesson_part` activities where appropriate:
-      each part has written explanation, per-part audio, interactive
+      each part has written explanation, per-part audio transcript,
+      `audio.synced_visual` timed cues, a bespoke-artifact interactive
       visualization, exactly 10 MC questions, `pass_threshold: 4`, and
       `consecutive_correct_required: 4`.
 - [ ] At least two visual perspectives on the core concept, and every
       visualization has an audio explanation clip or per-part audio script.
+- [ ] Every new interactive uses `widget_type: "bespoke-artifact"` and has
+      Chrome MCP sandbox QA evidence, including desktop and mobile screenshots,
+      before the lesson references it.
 - [ ] Media (if used) has reason + fallback and resolves to a valid video id.
 - [ ] Code has a prompt, progressive unboxable hints all the way to the answer
       explanation, public + hidden tests, comments documenting any external
@@ -578,6 +611,16 @@ examples, wrong difficulty calibration, audio that sounds robotic or truncated).
    ```
    A lesson that fails any of these must be regenerated or fixed — it cannot
    proceed to QA.
+
+   For each new bespoke artifact, also run:
+   ```
+   POST /api/visual-artifacts
+   POST /api/visual-artifacts/{slug}/build
+   open /api/visual-artifacts/{slug}/sandbox with Chrome MCP
+   take desktop and mobile screenshots
+   POST /api/visual-artifacts/{slug}/qa-evidence
+   POST /api/visual-artifacts/{slug}/approve
+   ```
 
 4. **Manual QA review.** A reviewer (not the same agent that generated the
    lesson) opens the lesson in the browser and works through it:

@@ -151,7 +151,7 @@ export function LessonChatModal({
         <button
           type="button"
           onClick={() => openChat(false)}
-          className="fixed bottom-4 right-4 z-[70] inline-flex h-12 w-12 items-center justify-center rounded-full bg-blue-600 text-white shadow-lg shadow-blue-600/20 transition-colors hover:bg-blue-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-300 sm:bottom-6 sm:right-6"
+          className="fixed bottom-3 right-3 z-[70] inline-flex h-10 w-10 items-center justify-center rounded-full bg-blue-600 text-white shadow-lg shadow-blue-600/20 transition-colors hover:bg-blue-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-300 sm:bottom-6 sm:right-6 sm:h-12 sm:w-12"
           aria-label="Ask a lesson question"
         >
           <MessageCircle size={21} aria-hidden="true" />

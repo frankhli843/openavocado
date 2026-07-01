@@ -285,6 +285,15 @@ describe("formatValue + initial state", () => {
 
 // ─── Generator contract ─────────────────────────────────────────────────────
 
+function validBespokeSpec(slug = "my-concept-viz"): Record<string, unknown> {
+  return {
+    schema_version: "1.0",
+    widget_type: "bespoke-artifact",
+    instructions: "Explore the visualization.",
+    params: { artifact_slug: slug },
+  };
+}
+
 function baseContent(interactiveContent: Record<string, unknown>): GeneratedLessonContent {
   return {
     title: "T",
@@ -326,8 +335,14 @@ function baseContent(interactiveContent: Record<string, unknown>): GeneratedLess
 }
 
 describe("validateGeneratedContent — interactive widget", () => {
-  it("passes when the interactive activity carries a valid widget spec", () => {
+  it("fails new generation when the interactive uses the legacy declarative path", () => {
     const r = validateGeneratedContent(baseContent(validDeclarative as unknown as Record<string, unknown>));
+    expect(r.valid).toBe(false);
+    expect(r.errors.join(" ")).toMatch(/bespoke-artifact/);
+  });
+
+  it("passes when the interactive activity carries a valid bespoke-artifact spec", () => {
+    const r = validateGeneratedContent(baseContent(validBespokeSpec()));
     expect(r.valid).toBe(true);
   });
 
@@ -338,12 +353,7 @@ describe("validateGeneratedContent — interactive widget", () => {
   });
 
   it("passes when the interactive uses a valid bespoke-artifact spec", () => {
-    const r = validateGeneratedContent(baseContent({
-      schema_version: "1.0",
-      widget_type: "bespoke-artifact",
-      instructions: "Explore the visualization.",
-      params: { artifact_slug: "my-concept-viz" },
-    }));
+    const r = validateGeneratedContent(baseContent(validBespokeSpec("my-concept-viz")));
     expect(r.valid).toBe(true);
   });
 

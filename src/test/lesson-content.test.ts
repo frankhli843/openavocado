@@ -211,10 +211,9 @@ function richLesson(overrides: Partial<GeneratedLessonContent["activities"][numb
       title: "i",
       content: {
         schema_version: "1.0",
-        widget_type: "declarative",
-        instructions: "go",
-        controls: [{ type: "slider", id: "p", label: "P", min: 0, max: 1, step: 0.1, default: 0.5 }],
-        outputs: [{ id: "q", label: "Q", formula: "p * 2" }],
+        widget_type: "bespoke-artifact",
+        instructions: "Explore the purpose-built visualization.",
+        params: { artifact_slug: "rich-lesson-viz" },
       },
     },
     {
@@ -266,14 +265,50 @@ function validLessonPartContent() {
     audio: {
       script:
         "This is a substantive audio script for the visualization. It explains what the learner should change, what they should notice, what failure mode the visualization reveals, and why the visual matters for the concept being taught.",
+      transcript:
+        "This is a substantive audio script for the visualization. It explains what the learner should change, what they should notice, what failure mode the visualization reveals, and why the visual matters for the concept being taught.",
       duration_hint: 90,
+      synced_visual: {
+        strategy: "timeline",
+        cues: [
+          {
+            start: 0,
+            end: 25,
+            label: "Receives",
+            headline: "The part starts from the previous concept",
+            narration: "The visual begins by naming what arrives from the previous section.",
+            receive: "previous concept",
+            transform: "focus the learner on this part",
+            pass: "ready-to-change state",
+          },
+          {
+            start: 25,
+            end: 60,
+            label: "Transforms",
+            headline: "The central operation changes the object",
+            narration: "The visual changes the object while the audio explains the mechanism.",
+            receive: "ready-to-change state",
+            transform: "perform the core operation",
+            pass: "changed object",
+          },
+          {
+            start: 60,
+            end: 90,
+            label: "Passes forward",
+            headline: "The result becomes the next section's input",
+            narration: "The visual shows the handoff so the learner knows why this section mattered.",
+            receive: "changed object",
+            transform: "package the output",
+            pass: "next input",
+          },
+        ],
+      },
     },
     interactive: {
       schema_version: "1.0",
-      widget_type: "declarative",
+      widget_type: "bespoke-artifact",
       instructions: "Move the control and watch the result.",
-      controls: [{ type: "slider", id: "x", label: "X", min: 0, max: 10, step: 1, default: 5 }],
-      outputs: [{ id: "y", label: "Y", formula: "x * 2" }],
+      params: { artifact_slug: "part-concept-viz" },
     },
     quiz: {
       pass_threshold: 4,
@@ -348,10 +383,9 @@ describe("validateGeneratedContent — richer lessons", () => {
       title: "i2",
       content: {
         schema_version: "1.0",
-        widget_type: "declarative",
-        instructions: "explore",
-        controls: [{ type: "slider", id: "n", label: "N", min: 1, max: 8, step: 1, default: 1 }],
-        outputs: [{ id: "o", label: "O", formula: "n * 3" }],
+        widget_type: "bespoke-artifact",
+        instructions: "Explore the second purpose-built visualization.",
+        params: { artifact_slug: "second-perspective-viz" },
       },
     });
     expect(validateGeneratedContent(lesson).valid).toBe(true);

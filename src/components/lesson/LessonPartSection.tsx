@@ -2,7 +2,7 @@
 
 import { useMemo, useRef, useState, type ReactNode } from "react";
 import type { GeneratedArtifact, LessonActivity, ReadingBlock } from "@/types";
-import type { LessonPartContent } from "@/lib/lesson-content/schema";
+import type { AudioSyncedVisualContent, AudioSyncedVisualCue, LessonPartContent } from "@/lib/lesson-content/schema";
 import type { WidgetStateChange } from "./widgets/DeclarativeWidget";
 import { WidgetHost } from "./widgets/WidgetHost";
 import { LessonDiagramsView } from "./LessonDiagrams";
@@ -10,6 +10,8 @@ import {
   MultipleChoiceAssessmentSection,
   type QuizAssessContext,
 } from "./MultipleChoiceAssessmentSection";
+
+type NormalizedAudioCue = AudioSyncedVisualCue & { end: number };
 
 interface LessonPartSectionProps {
   activity: LessonActivity;
@@ -45,6 +47,14 @@ export function LessonPartSection({
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const [audioTime, setAudioTime] = useState(0);
   const [audioDuration, setAudioDuration] = useState(0);
+  const syncedVisual =
+    part?.audio.synced_visual ??
+    (activity.id === 40
+      ? ({
+          strategy: "timeline",
+          cues: HIDDEN_STATE_AUDIO_CUES,
+        } satisfies AudioSyncedVisualContent)
+      : null);
 
   const seekAudio = (time: number) => {
     if (!audioRef.current) return;
@@ -84,10 +94,11 @@ export function LessonPartSection({
                 Part audio artifact is not generated yet. The script below is the per-part audio source.
               </div>
             )}
-            {activity.id === 40 && (
-              <AudioSyncedHiddenStateVisual
+            {syncedVisual && (
+              <AudioSyncedLessonVisual
+                visual={syncedVisual}
                 currentTime={audioTime}
-                duration={audioDuration || 154}
+                duration={audioDuration || part.audio.duration_hint || 154}
                 onSeek={seekAudio}
               />
             )}
@@ -96,7 +107,7 @@ export function LessonPartSection({
                 Transcript
               </summary>
               <div className="max-h-56 overflow-y-auto border-t border-gray-100 bg-white px-4 py-3 text-sm leading-relaxed text-gray-600">
-                {part.audio.script}
+                {part.audio.transcript ?? part.audio.script}
               </div>
             </details>
           </PartBlock>
@@ -156,18 +167,7 @@ function PartBlock({ title, children }: { title: string; children: ReactNode }) 
   );
 }
 
-interface AudioVisualCue {
-  start: number;
-  end: number;
-  label: string;
-  headline: string;
-  narration: string;
-  receive: string;
-  transform: string;
-  pass: string;
-}
-
-const HIDDEN_STATE_AUDIO_CUES: AudioVisualCue[] = [
+const HIDDEN_STATE_AUDIO_CUES: AudioSyncedVisualCue[] = [
   {
     start: 0,
     end: 18,
@@ -230,42 +230,37 @@ const HIDDEN_STATE_AUDIO_CUES: AudioVisualCue[] = [
   },
 ];
 
-function AudioSyncedHiddenStateVisual({
+function AudioSyncedLessonVisual({
+  visual,
   currentTime,
   duration,
   onSeek,
 }: {
+  visual: AudioSyncedVisualContent;
   currentTime: number;
   duration: number;
   onSeek: (time: number) => void;
 }) {
+  const cues = normalizeVisualCues(visual.cues, duration);
+  if (cues.length === 0) return null;
   const safeDuration = Math.max(duration, 1);
-  const activeIndex = HIDDEN_STATE_AUDIO_CUES.findIndex(
+  const foundIndex = cues.findIndex(
     (cue) => currentTime >= cue.start && currentTime < cue.end
   );
-  const cue = HIDDEN_STATE_AUDIO_CUES[Math.max(activeIndex, 0)] ?? HIDDEN_STATE_AUDIO_CUES[0];
+  const activeIndex = foundIndex >= 0 ? foundIndex : currentTime >= cues[cues.length - 1].end ? cues.length - 1 : 0;
+  const cue = cues[Math.max(activeIndex, 0)] ?? cues[0];
   const progressPct = Math.min(100, Math.max(0, (currentTime / safeDuration) * 100));
 
-  const pipeline = [
-    "Text",
-    "Tokenizer",
-    "Token IDs",
-    "Embedding",
-    "Hidden states",
-    "Transformer",
-    "Logits",
-  ];
-  const activePipelineIndex = Math.min(
-    pipeline.length - 1,
-    cue.label === "Map"
-      ? 1
-      : cue.label === "Token IDs"
-      ? 2
-      : cue.label === "Embedding lookup"
-      ? 3
-      : cue.label === "Position" || cue.label === "Hidden state"
-      ? 4
-      : 5
+  const pipelineCues =
+    cues.length > 10
+      ? cues.filter((_, index) => index % 6 === 0 || index === cues.length - 1)
+      : cues;
+  const activePipelineIndex = Math.max(
+    0,
+    pipelineCues.findIndex((item, index) => {
+      const next = pipelineCues[index + 1];
+      return currentTime >= item.start && (!next || currentTime < next.start);
+    })
   );
 
   const rows = [
@@ -274,6 +269,12 @@ function AudioSyncedHiddenStateVisual({
     { token: "ID 91", vector: [40, 82, 18], active: cue.start >= 44 },
     { token: "ID 44", vector: [85, 34, 58], active: cue.start >= 72 },
   ];
+  const hiddenStateScene =
+    visual.artifact_slug === "lesson-7-token-ids-hidden-states" ||
+    cues.some((item) => item.label === "Embedding lookup");
+  const transformerBlockScene =
+    visual.artifact_slug === "lesson-7-transformer-block-scene" ||
+    cues.some((item) => item.label.toLowerCase().includes("attention") || item.label.toLowerCase().includes("mlp"));
 
   return (
     <div className="rounded-xl border border-blue-100 bg-white shadow-sm overflow-hidden">
@@ -294,15 +295,15 @@ function AudioSyncedHiddenStateVisual({
         </div>
       </div>
 
-      <div className="grid gap-4 p-4 lg:grid-cols-[minmax(0,1fr)_17rem]">
+      <div className="grid gap-4 p-4 pb-16 sm:pb-4 lg:grid-cols-[minmax(0,1fr)_17rem]">
         <div className="space-y-4">
           <div className="grid grid-cols-2 gap-2 sm:grid-cols-4 lg:grid-cols-7">
-            {pipeline.map((stage, index) => {
+            {pipelineCues.map((stage, index) => {
               const done = index < activePipelineIndex;
               const active = index === activePipelineIndex;
               return (
                 <div
-                  key={stage}
+                  key={`${stage.start}-${stage.label}`}
                   className={`rounded-lg border px-2 py-2 text-center text-xs font-medium ${
                     active
                       ? "border-blue-400 bg-blue-600 text-white shadow-sm"
@@ -311,63 +312,69 @@ function AudioSyncedHiddenStateVisual({
                       : "border-gray-100 bg-gray-50 text-gray-400"
                   }`}
                 >
-                  {stage}
+                  {stage.label}
                 </div>
               );
             })}
           </div>
 
           <div className="grid gap-3 md:grid-cols-3">
-            <PipelineCard label="Receives" text={cue.receive} tone="gray" />
-            <PipelineCard label="Current operation" text={cue.transform} tone="blue" />
-            <PipelineCard label="Passes forward" text={cue.pass} tone="green" />
+            <PipelineCard label="Receives" text={cue.receive ?? "prior visual state"} tone="gray" />
+            <PipelineCard label="Current operation" text={cue.transform ?? cue.headline} tone="blue" />
+            <PipelineCard label="Passes forward" text={cue.pass ?? "updated visual state"} tone="green" />
           </div>
 
-          <div className="rounded-xl border border-gray-100 bg-gray-50/70 p-3">
-            <div className="mb-2 text-xs font-semibold uppercase tracking-wider text-gray-400">
-              Tiny hidden-state trace
-            </div>
-            <div className="space-y-2">
-              {rows.map((row, rowIndex) => (
-                <div
-                  key={`${row.token}-${rowIndex}`}
-                  className={`grid grid-cols-[4.5rem_minmax(0,1fr)] items-center gap-3 rounded-lg border px-3 py-2 ${
-                    row.active
-                      ? "border-blue-100 bg-white"
-                      : "border-gray-100 bg-white/60 opacity-60"
-                  }`}
-                >
-                  <div className="text-xs font-semibold text-gray-600">{row.token}</div>
-                  <div className="flex items-center gap-2">
-                    {row.vector.map((value, i) => (
-                      <div key={i} className="h-6 flex-1 rounded bg-blue-100 overflow-hidden">
-                        <div
-                          className={`h-full rounded ${row.active ? "bg-blue-500" : "bg-gray-300"}`}
-                          style={{ width: `${value}%` }}
-                        />
-                      </div>
-                    ))}
-                    <span className="w-10 text-right text-[11px] text-gray-400">
-                      row {rowIndex + 1}
-                    </span>
+          {hiddenStateScene ? (
+            <div className="rounded-xl border border-gray-100 bg-gray-50/70 p-3">
+              <div className="mb-2 text-xs font-semibold uppercase tracking-wider text-gray-400">
+                Tiny hidden-state trace
+              </div>
+              <div className="space-y-2">
+                {rows.map((row, rowIndex) => (
+                  <div
+                    key={`${row.token}-${rowIndex}`}
+                    className={`grid grid-cols-[4.5rem_minmax(0,1fr)] items-center gap-3 rounded-lg border px-3 py-2 ${
+                      row.active
+                        ? "border-blue-100 bg-white"
+                        : "border-gray-100 bg-white/60 opacity-60"
+                    }`}
+                  >
+                    <div className="text-xs font-semibold text-gray-600">{row.token}</div>
+                    <div className="flex items-center gap-2">
+                      {row.vector.map((value, i) => (
+                        <div key={i} className="h-6 flex-1 rounded bg-blue-100 overflow-hidden">
+                          <div
+                            className={`h-full rounded ${row.active ? "bg-blue-500" : "bg-gray-300"}`}
+                            style={{ width: `${value}%` }}
+                          />
+                        </div>
+                      ))}
+                      <span className="w-10 text-right text-[11px] text-gray-400">
+                        row {rowIndex + 1}
+                      </span>
+                    </div>
                   </div>
-                </div>
-              ))}
+                ))}
+              </div>
+              <p className="mt-3 text-xs leading-5 text-gray-500">
+                The visual is not showing real model weights. It shows the shape of the handoff:
+                token IDs select rows, rows become vectors, and vectors stack into the matrix that
+                transformer blocks edit next.
+              </p>
             </div>
-            <p className="mt-3 text-xs leading-5 text-gray-500">
-              The visual is not showing real model weights. It shows the shape of the handoff:
-              token IDs select rows, rows become vectors, and vectors stack into the matrix that
-              transformer blocks edit next.
-            </p>
-          </div>
+          ) : transformerBlockScene ? (
+            <TransformerBlockScene cue={cue} currentTime={currentTime} />
+          ) : (
+            <GenericSceneBoard cue={cue} index={activeIndex} total={cues.length} />
+          )}
         </div>
 
         <div className="space-y-2">
           <div className="rounded-lg border border-gray-100 bg-gray-50 px-3 py-3 text-sm leading-6 text-gray-600">
             {cue.narration}
           </div>
-          <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-1">
-            {HIDDEN_STATE_AUDIO_CUES.map((item, index) => {
+          <div className="grid max-h-[28rem] gap-2 overflow-y-auto pr-1 sm:grid-cols-2 lg:grid-cols-1">
+            {cues.map((item, index) => {
               const active = item === cue;
               return (
                 <button
@@ -393,6 +400,256 @@ function AudioSyncedHiddenStateVisual({
       </div>
     </div>
   );
+}
+
+function TransformerBlockScene({
+  cue,
+  currentTime,
+}: {
+  cue: NormalizedAudioCue;
+  currentTime: number;
+}) {
+  const label = cue.label.toLowerCase();
+  const phase =
+    label.includes("attention") || label.includes("score") || label.includes("mix")
+      ? "attention"
+      : label.includes("residual") || label.includes("norm")
+      ? "residual"
+      : label.includes("mlp") || label.includes("feed") || label.includes("feature")
+      ? "mlp"
+      : label.includes("handoff") || label.includes("output") || label.includes("logit")
+      ? "output"
+      : "input";
+  const pulse = Math.round((currentTime % 5) + 1);
+  const rows = [
+    { token: "the", values: [34, 62, 45, 24] },
+    { token: "cat", values: [72, 28, 52, 64] },
+    { token: "sat", values: [48, 74, 34, 58] },
+    { token: "mat", values: [26, 42, 78, 46] },
+  ];
+  const attention = [
+    [82, 35, 22, 18],
+    [28, 80, 44, 52],
+    [34, 56, 76, 42],
+    [22, 62, 48, 86],
+  ];
+  return (
+    <div className="rounded-xl border border-gray-100 bg-gray-50/70 p-3">
+      <div className="mb-3 flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
+        <div>
+          <div className="text-xs font-semibold uppercase tracking-wider text-gray-400">
+            Transformer block scene
+          </div>
+          <div className="text-sm font-semibold text-gray-800">{cue.headline}</div>
+        </div>
+        <div className="text-[11px] font-semibold uppercase tracking-wider text-blue-500">
+          5s beat {pulse}
+        </div>
+      </div>
+
+      <div className="grid gap-3 xl:grid-cols-[1fr_0.9fr]">
+        <div className="space-y-3">
+          <SceneStage active={phase === "input"} label="1. Hidden-state rows enter">
+            <div className="space-y-2">
+              {rows.map((row, rowIndex) => (
+                <div key={row.token} className="grid grid-cols-[3.5rem_minmax(0,1fr)] items-center gap-2">
+                  <div className="rounded bg-white px-2 py-1 text-xs font-semibold text-gray-600">
+                    {rowIndex}: {row.token}
+                  </div>
+                  <div className="flex gap-1">
+                    {row.values.map((value, i) => (
+                      <div key={i} className="h-7 flex-1 rounded bg-blue-50">
+                        <div
+                          className={`h-full rounded transition-all duration-500 ${
+                            phase === "input" ? "bg-blue-500" : "bg-blue-200"
+                          }`}
+                          style={{ width: `${value}%` }}
+                        />
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </SceneStage>
+
+          <SceneStage active={phase === "attention"} label="2. Attention mixes rows">
+            <div className="grid grid-cols-[3.5rem_repeat(4,minmax(0,1fr))] gap-1 text-center text-[11px]">
+              <div />
+              {rows.map((row) => (
+                <div key={row.token} className="font-semibold text-gray-400">{row.token}</div>
+              ))}
+              {attention.map((line, rowIndex) => (
+                <FragmentRow
+                  key={rows[rowIndex].token}
+                  label={rows[rowIndex].token}
+                  values={line}
+                  active={phase === "attention"}
+                />
+              ))}
+            </div>
+          </SceneStage>
+        </div>
+
+        <div className="space-y-3">
+          <SceneStage active={phase === "residual"} label="3. Residual + normalization">
+            <div className="grid grid-cols-[1fr_auto_1fr_auto_1fr] items-center gap-2 text-center text-xs">
+              <MiniBox label="old row" active={phase === "residual"} />
+              <span className="font-semibold text-blue-500">+</span>
+              <MiniBox label="attention update" active={phase === "residual"} />
+              <span className="font-semibold text-green-500">→</span>
+              <MiniBox label="stable row" active={phase === "residual"} tone="green" />
+            </div>
+            <div className="mt-2 h-2 rounded-full bg-white">
+              <div
+                className={`h-2 rounded-full transition-all duration-500 ${
+                  phase === "residual" ? "w-4/5 bg-green-500" : "w-1/3 bg-gray-200"
+                }`}
+              />
+            </div>
+          </SceneStage>
+
+          <SceneStage active={phase === "mlp"} label="4. MLP edits each row">
+            <div className="grid grid-cols-[1fr_auto_1fr_auto_1fr] items-center gap-2 text-center text-xs">
+              <MiniBox label="D features" active={phase === "mlp"} />
+              <span className="font-semibold text-purple-500">→</span>
+              <MiniBox label="expand + activation" active={phase === "mlp"} tone="purple" />
+              <span className="font-semibold text-purple-500">→</span>
+              <MiniBox label="D update" active={phase === "mlp"} tone="blue" />
+            </div>
+            <p className="mt-2 text-xs leading-5 text-gray-500">
+              The MLP works row-by-row. It does not mix token positions; attention already did that.
+            </p>
+          </SceneStage>
+
+          <SceneStage active={phase === "output"} label="5. Same shape leaves richer">
+            <div className="grid grid-cols-4 gap-1">
+              {rows.map((row, index) => (
+                <div
+                  key={row.token}
+                  className={`rounded-lg border px-2 py-2 text-center text-xs ${
+                    phase === "output" ? "border-blue-200 bg-blue-50 text-blue-800" : "border-gray-100 bg-white text-gray-500"
+                  }`}
+                >
+                  row {index + 1}
+                  <div className="mt-1 text-[10px] text-gray-400">D cols</div>
+                </div>
+              ))}
+            </div>
+            <p className="mt-2 text-xs leading-5 text-gray-500">
+              Shape stays L by D. The values now carry more context, ready for another block or the logits head.
+            </p>
+          </SceneStage>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function SceneStage({ active, label, children }: { active: boolean; label: string; children: ReactNode }) {
+  return (
+    <div className={`rounded-xl border p-3 transition-colors ${active ? "border-blue-200 bg-white shadow-sm" : "border-gray-100 bg-white/70"}`}>
+      <div className={`mb-2 text-xs font-semibold uppercase tracking-wider ${active ? "text-blue-600" : "text-gray-400"}`}>
+        {label}
+      </div>
+      {children}
+    </div>
+  );
+}
+
+function FragmentRow({ label, values, active }: { label: string; values: number[]; active: boolean }) {
+  return (
+    <>
+      <div className="rounded bg-white px-1 py-1 font-semibold text-gray-500">{label}</div>
+      {values.map((value, index) => (
+        <div key={index} className="h-7 rounded bg-white">
+          <div
+            className={`h-full rounded transition-all duration-500 ${active ? "bg-blue-500" : "bg-gray-200"}`}
+            style={{ width: `${value}%`, opacity: active ? Math.max(0.25, value / 100) : 0.45 }}
+          />
+        </div>
+      ))}
+    </>
+  );
+}
+
+function MiniBox({ label, active, tone = "blue" }: { label: string; active: boolean; tone?: "blue" | "green" | "purple" }) {
+  const colors = {
+    blue: active ? "border-blue-200 bg-blue-50 text-blue-800" : "border-gray-100 bg-white text-gray-500",
+    green: active ? "border-green-200 bg-green-50 text-green-800" : "border-gray-100 bg-white text-gray-500",
+    purple: active ? "border-purple-200 bg-purple-50 text-purple-800" : "border-gray-100 bg-white text-gray-500",
+  };
+  return <div className={`rounded-lg border px-2 py-3 font-medium ${colors[tone]}`}>{label}</div>;
+}
+
+function GenericSceneBoard({
+  cue,
+  index,
+  total,
+}: {
+  cue: NormalizedAudioCue;
+  index: number;
+  total: number;
+}) {
+  const fill = Math.min(100, Math.max(8, ((index + 1) / Math.max(total, 1)) * 100));
+  return (
+    <div className="rounded-xl border border-gray-100 bg-gray-50/70 p-3">
+      <div className="mb-2 text-xs font-semibold uppercase tracking-wider text-gray-400">
+        Timed scene board
+      </div>
+      <div className="grid gap-3 md:grid-cols-[minmax(0,1fr)_2rem_minmax(0,1fr)_2rem_minmax(0,1fr)] md:items-stretch">
+        <SceneCard label="Incoming object" text={cue.receive ?? "previous state"} />
+        <div className="hidden md:flex items-center justify-center text-blue-400">&#8594;</div>
+        <SceneCard label="Animated change" text={cue.transform ?? cue.headline} active />
+        <div className="hidden md:flex items-center justify-center text-green-500">&#8594;</div>
+        <SceneCard label="Output" text={cue.pass ?? "next state"} />
+      </div>
+      <div className="mt-3 h-2 rounded-full bg-white">
+        <div className="h-2 rounded-full bg-green-500" style={{ width: `${fill}%` }} />
+      </div>
+      <p className="mt-3 text-xs leading-5 text-gray-500">
+        This scene board follows the audio cue-by-cue: the incoming object, the animated
+        transformation, and the handoff to the next part stay visible together.
+      </p>
+    </div>
+  );
+}
+
+function SceneCard({ label, text, active }: { label: string; text: string; active?: boolean }) {
+  return (
+    <div
+      className={`rounded-lg border px-3 py-3 ${
+        active ? "border-blue-200 bg-blue-50 text-blue-900" : "border-gray-100 bg-white text-gray-700"
+      }`}
+    >
+      <div className="text-[11px] font-semibold uppercase tracking-wider opacity-60">{label}</div>
+      <div className="mt-1 text-sm font-medium leading-5">{text}</div>
+    </div>
+  );
+}
+
+function normalizeVisualCues(cues: AudioSyncedVisualCue[], duration: number): NormalizedAudioCue[] {
+  const safeDuration = Math.max(duration, 1);
+  return cues.map((cue, index) => {
+    const nextStart = cues[index + 1]?.start;
+    const end =
+      typeof cue.end === "number"
+        ? cue.end
+        : typeof nextStart === "number"
+        ? nextStart
+        : safeDuration;
+    return {
+      start: cue.start,
+      end,
+      label: cue.label,
+      headline: cue.headline,
+      narration: cue.narration,
+      receive: cue.receive,
+      transform: cue.transform,
+      pass: cue.pass,
+      visual_kind: cue.visual_kind,
+    };
+  });
 }
 
 function PipelineCard({

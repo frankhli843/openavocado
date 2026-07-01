@@ -34,21 +34,19 @@ export { WIDGET_SCHEMA_VERSION };
 /**
  * Widget spec authoring guidance for lesson generators.
  *
- * An `interactive` activity's `content` MUST be a WidgetSpec:
+ * A newly generated `interactive` activity's `content` MUST be a WidgetSpec:
  *   - schema_version: "1.x"
- *   - widget_type: "declarative" or a registered type ({@link REGISTERED_WIDGETS})
+ *   - widget_type: "bespoke-artifact"
  *   - instructions: learner-facing description of what to do
- *   - declarative widgets: controls[], outputs[] (safe formulas), optional panels[]/chart
- *   - registered widgets: typed params (never code)
+ *   - params.artifact_slug: approved DB-backed visual_artifacts slug
  *
- * Arbitrary AI-authored React/JS is NOT accepted from lesson JSON/SQLite.
- * Purpose-built React is encouraged, but it must cross a build/review boundary:
- * commit a source component, restrict imports, typecheck/build it, wire it
- * through the registry or an equivalent manifest, then let lesson content
- * reference only a stable widget/component id plus safe params.
+ * Arbitrary AI-authored React/JS is NOT accepted from lesson JSON/SQLite. The
+ * model-generated component must cross the visual-artifact build/review
+ * boundary first, including Chrome MCP sandbox screenshots, then the lesson
+ * references only the approved slug.
  */
 export const WIDGET_AUTHORING_NOTE =
-  "interactive.content must be a purpose-built WidgetSpec (bespoke declarative or reviewed registered widget). No raw code.";
+  "interactive.content for new lessons must be widget_type:'bespoke-artifact' with an approved visual_artifacts slug. No registered/declarative widgets for new generation.";
 
 /**
  * The enrichment quality bar every generated lesson must meet, formatted for
@@ -70,21 +68,23 @@ export const LESSON_QUALITY_BAR_PROMPT = [
   "- NO UNDOCUMENTED ASSUMPTIONS: do not assume domain facts are true unless they are already documented in AvocadoCore context, present in the local SQLite evidence, or verified and recorded in the lesson/task notes.",
   "- PLANNING STAGE BEFORE AUTHORING: before writing lesson content, do comprehensive current research for the topic, especially when it touches active model-building, inference, quantization, GGUF, Hugging Face, or Gemma practice. Record source-backed findings, update the subject workpad and long-term plan, then author the lesson from that plan.",
   "- DYNAMIC, BESPOKE AUTHORING: do not fill a reusable template. Choose the lesson scope, metaphor, examples, visualizations, practice, quiz, and video because they fit this learner, this topic, and the DB evidence.",
-  "- PURPOSE-BUILT REACT VISUALS: every visual must be designed for the exact concept block it supports. Treat each dense block like a small custom learning app: identify the real data/artifact/process in the prose, then show its rows, columns, axes, states, transitions, failure points, or before/after values. Prefer bespoke React components for interactive parts when they teach better than declarative charts. The safe app path is reviewed source code wired through a registry/manifest, with lesson content storing only a stable component id plus safe params. Do not execute raw React/JS directly from lesson JSON or SQLite. Generic bars, relabelable flow boxes, and template-looking diagrams fail QA unless the lesson is genuinely about generic quantities, trends, or distributions.",
+  "- PURPOSE-BUILT REACT VISUALS: every visual must be designed for the exact concept block it supports. Treat each dense block like a small custom learning app: identify the real data/artifact/process in the prose, then show its rows, columns, axes, states, transitions, failure points, or before/after values. For new generated lessons, all interactives must be DB-backed bespoke-artifact components. Do not use registered widgets or the generic declarative widget path for new lesson authoring. Do not execute raw React/JS directly from lesson JSON or SQLite. Generic bars, relabelable flow boxes, and template-looking diagrams fail QA unless the lesson is genuinely about generic quantities, trends, or distributions and has still been implemented as a bespoke artifact.",
   "- CONCEPT GROUNDING BEFORE OPERATIONS: before a lesson says to look up, add, optimize, sample, cache, classify, normalize, or compare a technical object, first show what that object is, where it comes from, and how it relates to the previous step. Terms like embedding, matrix, tensor, vector, logits, index, prior, likelihood, gradient, loss, and cache must get a tiny concrete representation before operations are performed on them. Example: for embedding lookup, show the embedding matrix as vocabulary-ID rows by hidden-dimension columns, explain that it is learned model weights, show that tokenizer IDs are row addresses, then show the selected row becoming the embedding vector.",
   "- DEFINE MAJOR NOUNS UNLESS EVIDENCE PROVES THEY ARE KNOWN: do not assume the learner understands a concept just because it appears in a curriculum plan or prior lesson title. If assessment answers, mastery signals, completed lesson content, or profile criteria do not prove the learner knows a term, define and ground it before using it as a building block. Example: before saying 'a transformer block refines hidden states', explain that a transformer block is one repeated layer that receives one vector row per token, lets token rows read other token rows through attention, updates each row through an MLP, wraps updates with normalization and residual addition, and returns the same shape with more context-aware values. Likewise, do not say 'the MLP transforms each token' until the lesson has defined MLP as the per-token feed-forward subnetwork inside the block, shown its input hidden vector, explained its learned linear layers plus activation in learner language, and shown its output update fitting back into the token row.",
   "- MECHANISM-LEVEL DETAIL, NOT COMPRESSED SUMMARIES: paragraphs that name several operations without unpacking them fail the quality bar. A sentence like 'attention mixes context, the MLP transforms each token, residuals keep signal, and the output head produces logits' is an outline, not teaching. Expand it into a concrete micro-trace with tiny dimensions and labels, such as 4 token positions, 3 hidden dimensions, and 5 vocabulary logits. Show what object enters, which rows/cells change after attention, what the MLP changes, where normalization and residual addition sit, and how the final hidden vector becomes one raw score per vocabulary token.",
   "- ADJACENT VISUALS FOR DENSE MECHANISMS: every mechanism-heavy paragraph needs a diagram or interactive next to the exact text it explains, not one distant overview widget later in the lesson. Attach Mermaid/static diagrams through reading.diagrams[] or place a lesson-part interactive immediately beside the prose. Use the same nouns as the text: token positions, hidden-state rows, residual stream, attention weights, MLP update, normalization boundary, output-head projection, logits table, or the equivalent concrete artifacts for the domain.",
   "- SECTION PIPELINE STAGE MAPS: every lesson part in a pipeline/process lesson must include a local stage-and-handoff visual that shows what came before, what this section receives, what it changes, what it outputs, and what comes next. For LLM lessons, explicitly distinguish tokenizer, embeddings/hidden states, transformer blocks, output head/logits, training, and inference/serving. The learner should never have to guess how the current object relates to the wider pipeline.",
   "- LESSON FLOW ORDER: the learner-facing order should be listen first, then study written text and visualizations together, then do practice problems/code and assessments. Lesson-part UI and content should put audio before the written/visual pair, and visuals should stay close enough to the text that they can be read together.",
-  "- BESPOKE ARTIFACT PIPELINE (DEFAULT FOR NEW VISUALS): the DB-backed bespoke artifact pipeline is live. For any new interactive, generate a self-contained React component (React + recharts/lucide-react only, no external fetches), store it via POST /api/visual-artifacts with a stable slug, build it via POST /api/visual-artifacts/{slug}/build, run Chrome MCP QA on the sandbox URL (/api/visual-artifacts/{slug}/sandbox), then approve it via POST /api/visual-artifacts/{slug}/approve. Once approved, the lesson interactive JSON stores widget_type:'bespoke-artifact' and params.artifact_slug only. Component contract: export default function ArtifactComponent(). Allowed imports: react, react-dom, lucide-react, recharts. No fs, path, child_process, net, http, https, crypto.",
-  "- REGISTERED WIDGETS ARE THE LEGACY BRIDGE: existing registered types (supply-demand, kv-cache-generation, etc.) remain supported. When one is exactly right for a concept, use it. The registry is a compatibility bridge, not the authoring target for new lessons.",
-  "- GENERIC VISUALS ARE LEGACY FALLBACK ONLY: do not use the generic declarative chart renderer as the primary normal-lesson visual unless the concept is genuinely about quantities, trends, or distributions and the spec is still purpose-designed for that exact block. Default to bespoke-artifact workflow for new visuals. Visual quality is part of the core lesson, not decoration.",
+  "- AUDIO-SYNCED VISUAL TRANSCRIPTS ARE REQUIRED: every lesson_part audio object must include the learner-visible transcript (audio.transcript, or audio.script as the exact transcript) and audio.synced_visual. The synced visual must contain timed cues over the audio duration, so the visual changes as playback advances. Cues must identify what object the section receives, what operation is happening, and what is passed forward. A transcript-only accordion, one static component, or a card that just writes the audio text is rejected.",
+  "- FIVE-SECOND VISUAL BEATS: normal lesson-part audio should be planned at roughly one moving visual beat per 5 seconds of audio. Every beat does not need an entirely separate component, but it must visibly change an object, focus, matrix cell, pointer, arrow, row, layer, or before/after state. For a 160-second audio clip, expect about 30+ timed cue states. Long static intervals fail QA.",
+  "- MANIM / 3BLUE1BROWN-STYLE SCENE DESIGN: model each synced visualization like a small Manim scene rather than a slide. Define objects, positions, transforms, camera/framing emphasis, and timed state changes. Use multiple coordinated visual components where useful: a pipeline map, a tiny matrix/table, a moving pointer, a before/after failure view, and a consequence panel. For transformer lessons, show real concept objects such as embedding tables, hidden-state matrices, attention score grids, residual paths, normalization, MLP layer expansion/compression, and logits tables. The public 3Blue1Brown Manim demo shows the intended workflow: build a scene from simple objects, animate transformations step by step, and iterate on styling/rendering rather than dumping prose into a box.",
+  "- BESPOKE ARTIFACT PIPELINE (REQUIRED FOR NEW VISUALS): the DB-backed bespoke artifact pipeline is live. For any new interactive, generate a self-contained React component (React + recharts/lucide-react only, no external fetches), store it via POST /api/visual-artifacts with a stable slug, build it via POST /api/visual-artifacts/{slug}/build, run Chrome MCP QA on the sandbox URL (/api/visual-artifacts/{slug}/sandbox), take desktop and mobile screenshots, attach QA evidence via POST /api/visual-artifacts/{slug}/qa-evidence, then approve it via POST /api/visual-artifacts/{slug}/approve. Once approved, the lesson interactive JSON stores widget_type:'bespoke-artifact' and params.artifact_slug only. Component contract: export default function ArtifactComponent(). Allowed imports: react, react-dom, lucide-react, recharts. No fs, path, child_process, net, http, https, crypto.",
+  "- REGISTERED AND DECLARATIVE WIDGETS ARE LEGACY READ-ONLY COMPATIBILITY: existing registered types (supply-demand, kv-cache-generation, etc.) and declarative specs may remain renderable while old lessons are migrated, but they are forbidden for new generated lessons and will fail validateGeneratedContent. Do not choose them just because one is close.",
   "- EXAMPLES + METAPHORS: use fitting metaphors and simple examples to make each major step or concept understandable. Multi-step lessons should give each major step its own plain-language handle, metaphor, and easy examples where useful.",
   "- Audio must be a real walkthrough, not a short caption or table of contents. Normal lessons should target at least 10 minutes of substantive Doraemon-voice audio, longer when needed; go shorter only for explicitly short reference/diagnostic content and document why. It must explain the why, connect the steps, and include concrete worked examples in plain language.",
   "- First-class WRITTEN teaching text the learner can study without the audio (headings, a definition, a worked example, a summary) — not a transcript dump.",
   "- MULTIPLE meaningful visual/interactive explorations when the lesson covers multiple concepts. A multi-concept lesson (3+ goals/mastery targets) needs at least TWO distinct visual perspectives; a multi-step lesson should prefer step-specific visuals. One thin widget for many concepts is rejected.",
-  "- LESSON PARTS: break normal lessons into collapsed `lesson_part` activities. Each part must contain written explanation, a per-part audio script, an interactive visualization, and a 10-question MC reinforcement quiz requiring 4 correct answers in a row. Section done/undone buttons are a learner checklist only, available at any time, persisted in SQLite, and never used as a completion gate.",
+  "- LESSON PARTS: break normal lessons into collapsed `lesson_part` activities. Each part must contain written explanation, a per-part audio script/transcript, audio.synced_visual timed across that part's audio length, a bespoke-artifact interactive visualization, and a 10-question MC reinforcement quiz requiring 4 correct answers in a row. Section done/undone buttons are a learner checklist only, available at any time, persisted in SQLite, and never used as a completion gate.",
   "- Interactives must deepen understanding, not merely display graphs. Each widget needs a learning objective, learner-controlled variable, visible consequence/failure mode, and written takeaway. Prefer before/after and 'what breaks if...' interactions. QA should reject any visual whose labels could be swapped and reused for an unrelated lesson.",
   "- AUDIO FOR EVERY VISUALIZATION: every visualization/interactive must have a spoken explanation clip or per-part audio script that explains what to change, what to notice, and what the visual proves. Do not leave visuals as silent graphs.",
   "- TABLE OF CONTENTS AND DEEP LINKS: every lesson, subject tab, dashboard menu, section, and activity should be reachable by stable URL/query/hash links so the learner can return directly to the right place.",
@@ -261,6 +261,9 @@ export function validateGeneratedContent(
       if (!result.valid) {
         for (const e of result.errors) errors.push(`interactive ${label}: ${e}`);
       }
+      for (const e of validateNewLessonBespokeArtifact(activity.content)) {
+        errors.push(`interactive ${label}: ${e}`);
+      }
     }
 
     if (activity.activity_type === "lesson_part") {
@@ -271,6 +274,10 @@ export function validateGeneratedContent(
       );
       if (!result.valid) {
         for (const e of result.errors) errors.push(`lesson_part ${label}: ${e}`);
+      }
+      const part = activity.content as Record<string, unknown> | undefined;
+      for (const e of validateNewLessonBespokeArtifact(part?.interactive)) {
+        errors.push(`lesson_part ${label}: interactive: ${e}`);
       }
     }
 
@@ -313,6 +320,17 @@ export function validateGeneratedContent(
   }
 
   return { valid: errors.length === 0, errors, warnings };
+}
+
+function validateNewLessonBespokeArtifact(spec: unknown): string[] {
+  if (!spec || typeof spec !== "object") return [];
+  const widgetType = (spec as Record<string, unknown>).widget_type;
+  if (widgetType !== "bespoke-artifact") {
+    return [
+      'new generated lessons must use widget_type:"bespoke-artifact"; registered and declarative widgets are legacy read-only compatibility only',
+    ];
+  }
+  return [];
 }
 
 /**
