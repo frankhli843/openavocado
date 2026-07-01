@@ -15,6 +15,8 @@ export function LessonResumeTracker({ lessonId, sectionIds, onActiveSectionChang
   useEffect(() => {
     const ids = sectionKey ? sectionKey.split("|").filter(Boolean) : [];
     const safeSectionIds = new Set(ids);
+    let lastSavedSection: string | null | undefined;
+    let scrollFrame: number | null = null;
 
     function currentHashSection(): string | null {
       const id = window.location.hash.replace(/^#/, "");
@@ -22,6 +24,8 @@ export function LessonResumeTracker({ lessonId, sectionIds, onActiveSectionChang
     }
 
     function save(sectionId: string | null) {
+      if (sectionId === lastSavedSection) return;
+      lastSavedSection = sectionId;
       const href = buildLessonDeepLink(lessonId, sectionId);
       writeLessonResumeState(window.localStorage, {
         href,
@@ -38,6 +42,36 @@ export function LessonResumeTracker({ lessonId, sectionIds, onActiveSectionChang
       });
     }
 
+    function visibleReadingSection(): string | null {
+      const readingLine = 150;
+      let active: string | null = null;
+      let nearestBelow: { id: string; top: number } | null = null;
+
+      for (const id of ids) {
+        const el = document.getElementById(id);
+        if (!el) continue;
+        const rect = el.getBoundingClientRect();
+        if (rect.bottom < 0) continue;
+        if (rect.top <= readingLine) {
+          active = id;
+          continue;
+        }
+        if (!nearestBelow || rect.top < nearestBelow.top) {
+          nearestBelow = { id, top: rect.top };
+        }
+      }
+
+      return active ?? nearestBelow?.id ?? currentHashSection();
+    }
+
+    function handleViewportChange() {
+      if (scrollFrame != null) return;
+      scrollFrame = window.requestAnimationFrame(() => {
+        scrollFrame = null;
+        save(visibleReadingSection());
+      });
+    }
+
     const initialSection = currentHashSection();
     save(initialSection);
     scrollToSection(initialSection);
@@ -48,29 +82,15 @@ export function LessonResumeTracker({ lessonId, sectionIds, onActiveSectionChang
       scrollToSection(sectionId);
     }
     window.addEventListener("hashchange", handleHashChange);
-
-    const observer = new IntersectionObserver(
-      (entries) => {
-        const visible = entries
-          .filter((entry) => entry.isIntersecting && safeSectionIds.has(entry.target.id))
-          .sort((a, b) => b.intersectionRatio - a.intersectionRatio)[0];
-        if (visible?.target.id) save(visible.target.id);
-      },
-      {
-        root: null,
-        rootMargin: "-18% 0px -62% 0px",
-        threshold: [0.1, 0.25, 0.5, 0.75],
-      }
-    );
-
-    for (const id of ids) {
-      const el = document.getElementById(id);
-      if (el) observer.observe(el);
-    }
+    window.addEventListener("scroll", handleViewportChange, { passive: true });
+    window.addEventListener("resize", handleViewportChange);
+    window.requestAnimationFrame(handleViewportChange);
 
     return () => {
       window.removeEventListener("hashchange", handleHashChange);
-      observer.disconnect();
+      window.removeEventListener("scroll", handleViewportChange);
+      window.removeEventListener("resize", handleViewportChange);
+      if (scrollFrame != null) window.cancelAnimationFrame(scrollFrame);
     };
   }, [lessonId, onActiveSectionChange, sectionKey]);
 

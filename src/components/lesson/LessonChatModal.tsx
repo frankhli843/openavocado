@@ -36,6 +36,10 @@ export function LessonChatModal({
   const inputRef = useRef<HTMLTextAreaElement | null>(null);
 
   useEffect(() => {
+    if (maximized) setOpen(true);
+  }, [maximized]);
+
+  useEffect(() => {
     if (!open || loaded) return;
     let cancelled = false;
     async function load() {

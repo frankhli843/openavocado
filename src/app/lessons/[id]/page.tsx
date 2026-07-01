@@ -73,6 +73,7 @@ export default function LessonPage({ params }: { params: Promise<{ id: string }>
   const [runOutput, setRunOutput] = useState<string>("");
   const [testResults, setTestResults] = useState<Record<string, string>>({});
   const [chatMaximized, setChatMaximized] = useState(false);
+  const [chatDefaultApplied, setChatDefaultApplied] = useState(false);
   const [activeSectionId, setActiveSectionId] = useState<string | null>(null);
   // Widget state is keyed per interactive activity id so a lesson with several
   // visualizations restores each one independently.
@@ -81,6 +82,15 @@ export default function LessonPage({ params }: { params: Promise<{ id: string }>
   const handleActiveSectionChange = useCallback((sectionId: string | null) => {
     setActiveSectionId(sectionId);
   }, []);
+
+  useEffect(() => {
+    if (chatDefaultApplied) return;
+    setChatDefaultApplied(true);
+    if (typeof window === "undefined" || typeof window.matchMedia !== "function") return;
+    if (window.matchMedia("(min-width: 1280px)").matches) {
+      setChatMaximized(true);
+    }
+  }, [chatDefaultApplied]);
 
   useEffect(() => {
     async function load() {

@@ -52,7 +52,6 @@ describe("LessonChatModal", () => {
       />
     );
 
-    fireEvent.click(screen.getByRole("button", { name: /ask a lesson question/i }));
     await screen.findByText(/ask a quick question about the current lesson/i);
 
     const dialog = screen.getByRole("dialog", { name: /lesson questions/i });
