@@ -135,6 +135,33 @@ describe("validatePracticeCodeContent", () => {
   it("accepts a scaffolded exercise with prompt + tests", () => {
     const r = validatePracticeCodeContent({
       prompt: "Do the thing",
+      walkthrough: {
+        title: "Think through the behavior",
+        steps: [
+          {
+            title: "Read the input",
+            detail: "Start by identifying the exact value entering the function before writing syntax.",
+            input: "helper(3)",
+            output: "3",
+            visual: "3 flows into helper",
+          },
+        ],
+      },
+      io_examples: [
+        {
+          label: "Small value",
+          input: "helper(3)",
+          expected_output: "3",
+          explanation: "The helper preserves the input in this exercise.",
+        },
+      ],
+      visualization: {
+        title: "Input moves through the helper",
+        items: [
+          { label: "Input", value: "3", role: "input" },
+          { label: "Return", value: "3", role: "output" },
+        ],
+      },
       starter_code: "pass",
       hints: [{ level: 1, text: "think" }],
       tests: [{ id: "t1", description: "works", assert: "x == 1" }],
@@ -154,6 +181,19 @@ describe("validatePracticeCodeContent", () => {
   it("requires a prompt and at least one test", () => {
     expect(validatePracticeCodeContent({ tests: [{ id: "t", description: "d", assert: "x" }] }).valid).toBe(false);
     expect(validatePracticeCodeContent({ prompt: "p" }).valid).toBe(false);
+  });
+
+  it("rejects malformed code walkthrough and input-output visualization fields", () => {
+    const r = validatePracticeCodeContent({
+      prompt: "Do the thing",
+      walkthrough: { steps: [{ title: "", detail: "too short" }] },
+      io_examples: [{ label: "Case", input: "", expected_output: "" }],
+      visualization: { title: "Flow", items: [{ label: "Only", value: "x", role: "middle" }] },
+      tests: [{ id: "t", description: "d", assert: "x" }],
+    });
+
+    expect(r.valid).toBe(false);
+    expect(r.errors.join(" ")).toMatch(/walkthrough|io_examples|visualization/);
   });
 });
 
@@ -194,6 +234,42 @@ describe("declarative widget table/tree charts", () => {
 
 // ─── Generator contract: richer-lesson requirements ──────────────────────────
 
+function codeStudySupport() {
+  return {
+    walkthrough: {
+      title: "Trace the behavior",
+      steps: [
+        {
+          title: "Read the input",
+          detail: "Identify the exact value that enters the function before writing implementation syntax.",
+          input: "solve()",
+          output: "not returned yet",
+          visual: "the call enters the helper",
+        },
+        {
+          title: "Return the expected value",
+          detail: "The function should produce the value the tests expect, keeping the output shape simple and inspectable.",
+          input: "internal value 1",
+          output: "1",
+          visual: "the value moves into the return slot",
+        },
+      ],
+    },
+    io_examples: [
+      { label: "Default call", input: "solve()", expected_output: "1", explanation: "The fixture returns the expected value." },
+      { label: "Result variable", input: "result", expected_output: "1", explanation: "The final result should contain the same value." },
+    ],
+    visualization: {
+      title: "Input maps to expected output",
+      items: [
+        { label: "Input", value: "solve()", role: "input" as const },
+        { label: "Process", value: "choose expected value", role: "process" as const },
+        { label: "Output", value: "1", role: "output" as const },
+      ],
+    },
+  };
+}
+
 function richLesson(overrides: Partial<GeneratedLessonContent["activities"][number]>[] = []): GeneratedLessonContent {
   const activities: GeneratedLessonContent["activities"] = [
     { activity_type: "audio", is_core: true, sequence_order: 1, title: "a", content: { script: "A full spoken walkthrough of the concept for this lesson." } },
@@ -221,7 +297,24 @@ function richLesson(overrides: Partial<GeneratedLessonContent["activities"][numb
       is_core: true,
       sequence_order: 4,
       title: "c",
-      content: { prompt: "do", tests: [{ id: "t", description: "d", assert: "x == 1" }] },
+      content: {
+        prompt: "do",
+        ...codeStudySupport(),
+        starter_code: "x = 1\n",
+        worked_examples: [
+          {
+            label: "basic",
+            title: "Basic readable version",
+            code: "def solve():\n    value = 1\n    result = value\n    return result\n\nresult = solve()\n",
+          },
+          {
+            label: "concise",
+            title: "Best concise version",
+            code: "def solve():\n    return 1\n\nresult = solve()\n",
+          },
+        ],
+        tests: [{ id: "t", description: "d", assert: "x == 1" }],
+      },
     },
     { activity_type: "assessment", is_core: true, sequence_order: 5, title: "s", content: {} },
   ];
@@ -310,6 +403,89 @@ function validLessonPartContent() {
       instructions: "Move the control and watch the result.",
       params: { artifact_slug: "part-concept-viz" },
     },
+    code: {
+      prompt: "Implement the focused helper for this lesson part.",
+      ...codeStudySupport(),
+      starter_code: "def helper(x):\n    return x\n",
+      worked_examples: [
+        {
+          label: "basic",
+          title: "Basic readable version",
+          code: "def helper(x):\n    result = x\n    return result\n",
+        },
+        {
+          label: "concise",
+          title: "Best concise version",
+          code: "def helper(x):\n    return x\n",
+        },
+      ],
+      tests: [{ id: "part-code", description: "helper returns input", assert: "helper(3) == 3" }],
+    },
+    practice: {
+      pass_threshold: 4,
+      written_feedback: "llm_judge",
+      questions: [
+        {
+          id: "p1",
+          type: "select_one",
+          prompt: "Which object enters the part?",
+          concept: "part-concept",
+          difficulty: "easy",
+          choices: ["previous concept", "unrelated fact", "final answer"],
+          correct_index: 0,
+          explanation: "The part starts from the previous concept.",
+        },
+        {
+          id: "p2",
+          type: "select_all",
+          prompt: "Select all true statements.",
+          concept: "part-concept",
+          difficulty: "medium",
+          choices: ["The object changes", "The handoff matters", "The visual is decorative"],
+          correct_indices: [0, 1],
+          explanation: "The visual should show the object changing and being handed off.",
+        },
+        {
+          id: "p3",
+          type: "select_all",
+          prompt: "Select all statements that are true for a placeholder-only lesson.",
+          concept: "part-concept",
+          difficulty: "medium",
+          choices: ["It grounds objects", "It supports practice", "It is acceptable"],
+          correct_indices: [],
+          explanation: "None are true because placeholders are rejected.",
+        },
+        {
+          id: "p4",
+          type: "ordering",
+          prompt: "Order the section flow.",
+          concept: "part-concept",
+          difficulty: "medium",
+          items: ["receive object", "transform object", "pass object forward"],
+          correct_order: ["receive object", "transform object", "pass object forward"],
+          explanation: "A section should show receive, transform, and pass forward.",
+        },
+        {
+          id: "p5",
+          type: "written",
+          prompt: "Explain why the visual must stay beside the text.",
+          concept: "part-concept",
+          difficulty: "hard",
+          actual_answer: "The visual must stay beside the text so the learner can map each named object and operation to what changes on screen without searching elsewhere.",
+          rubric: "Look for text-to-visual mapping, named objects, operations, and reduced cognitive load.",
+        },
+        {
+          id: "p6",
+          type: "select_one",
+          prompt: "What should the code practice target?",
+          concept: "part-concept",
+          difficulty: "easy",
+          choices: ["The section's mechanism", "A random syntax drill", "Only the final lesson concept"],
+          correct_index: 0,
+          explanation: "Part code should practice the part's mechanism.",
+        },
+      ],
+    },
     quiz: {
       pass_threshold: 4,
       consecutive_correct_required: 4,
@@ -321,7 +497,9 @@ function validLessonPartContent() {
 
 describe("validateGeneratedContent — richer lessons", () => {
   it("passes a complete lesson with audio, reading, interactive, code, assessment", () => {
-    expect(validateGeneratedContent(richLesson()).valid).toBe(true);
+    const r = validateGeneratedContent(richLesson());
+    expect(r.errors).toEqual([]);
+    expect(r.valid).toBe(true);
   });
 
   it("fails when written text (reading) is missing", () => {
@@ -388,7 +566,9 @@ describe("validateGeneratedContent — richer lessons", () => {
         params: { artifact_slug: "second-perspective-viz" },
       },
     });
-    expect(validateGeneratedContent(lesson).valid).toBe(true);
+    const r = validateGeneratedContent(lesson);
+    expect(r.errors).toEqual([]);
+    expect(r.valid).toBe(true);
   });
 
   it("passes a lesson-part based lesson and validates the part contract", () => {
@@ -410,16 +590,18 @@ describe("validateGeneratedContent — richer lessons", () => {
       validateWidgetSpec
     );
     expect(direct.valid).toBe(true);
-    expect(validateGeneratedContent(lesson).valid).toBe(true);
+    const r = validateGeneratedContent(lesson);
+    expect(r.errors).toEqual([]);
+    expect(r.valid).toBe(true);
   });
 
-  it("rejects lesson parts without 10 questions and 4-in-a-row rule", () => {
-    const content = validLessonPartContent();
-    content.quiz.questions = content.quiz.questions.slice(0, 9);
-    content.quiz.consecutive_correct_required = 3;
+  it("rejects lesson parts without mixed practice and code", () => {
+    const content = validLessonPartContent() as Partial<ReturnType<typeof validLessonPartContent>>;
+    delete content.practice;
+    delete content.code;
     const r = validateLessonPartContent(content, ["declarative"], validateWidgetSpec);
     expect(r.valid).toBe(false);
-    expect(r.errors.join(" ")).toMatch(/10 multiple-choice|consecutive_correct_required/);
+    expect(r.errors.join(" ")).toMatch(/mixed practice|practice_code/);
   });
 
   it("validates next_lesson_diagnostics when provided", () => {

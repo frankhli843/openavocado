@@ -413,8 +413,16 @@ export interface PracticeCodeContent {
   language?: string;
   /** The task the learner must accomplish. */
   prompt?: string;
+  /** Conceptual walkthrough that explains the exercise before code is edited. */
+  walkthrough?: PracticeCodeWalkthrough;
+  /** Concrete input/output examples that make the expected behavior inspectable. */
+  io_examples?: PracticeCodeIoExample[];
+  /** Small visual model of how values move through the exercise. */
+  visualization?: PracticeCodeVisualization;
   /** Starter code — scaffolding only, never the completed solution. */
   starter_code?: string;
+  /** Full worked implementations, shown as basic/readable and concise versions. */
+  worked_examples?: PracticeCodeWorkedExample[];
   /** Constraints / rules the solution must respect. */
   constraints?: string[];
   /** Optional ordered steps that guide without giving the answer. */
@@ -427,9 +435,50 @@ export interface PracticeCodeContent {
   hidden_tests?: CodeTest[];
 }
 
+export interface PracticeCodeWorkedExample {
+  label: "basic" | "concise" | string;
+  title?: string;
+  explanation?: string;
+  code: string;
+}
+
+export interface PracticeCodeWalkthrough {
+  title?: string;
+  steps: PracticeCodeWalkthroughStep[];
+}
+
+export interface PracticeCodeWalkthroughStep {
+  title: string;
+  detail: string;
+  input?: string;
+  output?: string;
+  visual?: string;
+}
+
+export interface PracticeCodeIoExample {
+  label: string;
+  input: string;
+  expected_output: string;
+  explanation?: string;
+}
+
+export interface PracticeCodeVisualization {
+  title: string;
+  description?: string;
+  items: PracticeCodeVisualizationItem[];
+}
+
+export interface PracticeCodeVisualizationItem {
+  label: string;
+  value: string;
+  role?: "input" | "process" | "output";
+  note?: string;
+}
+
 /**
  * Fields that must never appear in a practice_code content spec, because the
- * UI requires the learner to write and submit the solution rather than read it.
+ * UI renders worked_examples in a controlled place rather than letting authors
+ * smuggle unstructured answer fields into the payload.
  */
 const FORBIDDEN_ANSWER_KEYS = ["solution", "answer", "solution_code", "reference_solution", "completed_code"];
 
@@ -437,7 +486,8 @@ const FORBIDDEN_ANSWER_KEYS = ["solution", "answer", "solution_code", "reference
  * Validate a practice_code activity's content.
  *
  * Enforces the pedagogical boundary: scaffolding (prompt, starter, hints,
- * constraints, tests) is required, but an exposed final answer is rejected.
+ * constraints, tests) is required, and any completed answer must be inside
+ * worked_examples with both a basic/readable and concise implementation.
  */
 export function validatePracticeCodeContent(content: unknown): { valid: boolean; errors: string[] } {
   const errors: string[] = [];
@@ -457,6 +507,134 @@ export function validatePracticeCodeContent(content: unknown): { valid: boolean;
 
   if (typeof c.prompt !== "string" || !c.prompt.trim()) {
     errors.push("practice_code requires a task prompt");
+  }
+
+  if (c.walkthrough !== undefined) {
+    if (!c.walkthrough || typeof c.walkthrough !== "object") {
+      errors.push("practice_code walkthrough must be an object when present");
+    } else {
+      const walkthrough = c.walkthrough as Record<string, unknown>;
+      if (walkthrough.title !== undefined && typeof walkthrough.title !== "string") {
+        errors.push("practice_code walkthrough.title must be a string when present");
+      }
+      if (!Array.isArray(walkthrough.steps) || walkthrough.steps.length === 0) {
+        errors.push("practice_code walkthrough requires a non-empty steps array");
+      } else {
+        for (const [i, raw] of walkthrough.steps.entries()) {
+          if (!raw || typeof raw !== "object") {
+            errors.push(`practice_code walkthrough.steps[${i}] must be an object`);
+            continue;
+          }
+          const step = raw as Record<string, unknown>;
+          if (typeof step.title !== "string" || !step.title.trim()) {
+            errors.push(`practice_code walkthrough.steps[${i}] missing title`);
+          }
+          if (typeof step.detail !== "string" || step.detail.trim().length < 20) {
+            errors.push(`practice_code walkthrough.steps[${i}] needs a substantive detail`);
+          }
+          for (const key of ["input", "output", "visual"] as const) {
+            if (step[key] !== undefined && typeof step[key] !== "string") {
+              errors.push(`practice_code walkthrough.steps[${i}].${key} must be a string when present`);
+            }
+          }
+        }
+      }
+    }
+  }
+
+  if (c.io_examples !== undefined) {
+    if (!Array.isArray(c.io_examples)) {
+      errors.push("practice_code io_examples must be an array when present");
+    } else {
+      for (const [i, raw] of c.io_examples.entries()) {
+        if (!raw || typeof raw !== "object") {
+          errors.push(`practice_code io_examples[${i}] must be an object`);
+          continue;
+        }
+        const example = raw as Record<string, unknown>;
+        if (typeof example.label !== "string" || !example.label.trim()) {
+          errors.push(`practice_code io_examples[${i}] missing label`);
+        }
+        if (typeof example.input !== "string" || !example.input.trim()) {
+          errors.push(`practice_code io_examples[${i}] missing input`);
+        }
+        if (typeof example.expected_output !== "string" || !example.expected_output.trim()) {
+          errors.push(`practice_code io_examples[${i}] missing expected_output`);
+        }
+        if (example.explanation !== undefined && typeof example.explanation !== "string") {
+          errors.push(`practice_code io_examples[${i}].explanation must be a string when present`);
+        }
+      }
+    }
+  }
+
+  if (c.visualization !== undefined) {
+    if (!c.visualization || typeof c.visualization !== "object") {
+      errors.push("practice_code visualization must be an object when present");
+    } else {
+      const viz = c.visualization as Record<string, unknown>;
+      if (typeof viz.title !== "string" || !viz.title.trim()) {
+        errors.push("practice_code visualization missing title");
+      }
+      if (viz.description !== undefined && typeof viz.description !== "string") {
+        errors.push("practice_code visualization.description must be a string when present");
+      }
+      if (!Array.isArray(viz.items) || viz.items.length < 2) {
+        errors.push("practice_code visualization requires at least 2 items");
+      } else {
+        for (const [i, raw] of viz.items.entries()) {
+          if (!raw || typeof raw !== "object") {
+            errors.push(`practice_code visualization.items[${i}] must be an object`);
+            continue;
+          }
+          const item = raw as Record<string, unknown>;
+          if (typeof item.label !== "string" || !item.label.trim()) {
+            errors.push(`practice_code visualization.items[${i}] missing label`);
+          }
+          if (typeof item.value !== "string" || !item.value.trim()) {
+            errors.push(`practice_code visualization.items[${i}] missing value`);
+          }
+          if (item.role !== undefined && !["input", "process", "output"].includes(String(item.role))) {
+            errors.push(`practice_code visualization.items[${i}].role must be input, process, or output`);
+          }
+          if (item.note !== undefined && typeof item.note !== "string") {
+            errors.push(`practice_code visualization.items[${i}].note must be a string when present`);
+          }
+        }
+      }
+    }
+  }
+
+  if (c.worked_examples !== undefined) {
+    if (!Array.isArray(c.worked_examples)) {
+      errors.push("practice_code worked_examples must be an array when present");
+    } else {
+      const labels = new Set<string>();
+      for (const [i, raw] of c.worked_examples.entries()) {
+        if (!raw || typeof raw !== "object") {
+          errors.push(`practice_code worked_examples[${i}] must be an object`);
+          continue;
+        }
+        const ex = raw as Record<string, unknown>;
+        if (typeof ex.label !== "string" || !ex.label.trim()) {
+          errors.push(`practice_code worked_examples[${i}] missing label`);
+        } else {
+          labels.add(ex.label.trim().toLowerCase());
+        }
+        if (typeof ex.code !== "string" || ex.code.trim().length < 20) {
+          errors.push(`practice_code worked_examples[${i}] requires full code`);
+        }
+        if (ex.title !== undefined && typeof ex.title !== "string") {
+          errors.push(`practice_code worked_examples[${i}].title must be a string when present`);
+        }
+        if (ex.explanation !== undefined && typeof ex.explanation !== "string") {
+          errors.push(`practice_code worked_examples[${i}].explanation must be a string when present`);
+        }
+      }
+      if (c.worked_examples.length > 0 && (!labels.has("basic") || !labels.has("concise"))) {
+        errors.push('practice_code worked_examples must include both "basic" and "concise" examples when present');
+      }
+    }
   }
 
   const publicTests = Array.isArray(c.tests) ? c.tests : [];
@@ -852,6 +1030,33 @@ export interface AssessmentContent {
 
 // ─── Lesson parts ────────────────────────────────────────────────────────────
 
+export type LessonPartPracticeQuestionType = "select_one" | "select_all" | "ordering" | "written";
+
+export interface LessonPartPracticeQuestion {
+  id: string;
+  type: LessonPartPracticeQuestionType;
+  prompt: string;
+  concept: string;
+  difficulty: "easy" | "medium" | "hard";
+  explanation?: string;
+  hint?: string;
+  choices?: string[];
+  correct_index?: number;
+  /** Empty array means "none of these are correct" for select_all. */
+  correct_indices?: number[];
+  items?: string[];
+  correct_order?: string[];
+  actual_answer?: string;
+  rubric?: string;
+  accepted_answers?: string[];
+}
+
+export interface LessonPartPracticeContent {
+  questions: LessonPartPracticeQuestion[];
+  pass_threshold?: number;
+  written_feedback?: "llm_judge";
+}
+
 export interface LessonPartAudioContent {
   script: string;
   /** Explicit learner-visible transcript. If omitted, script is treated as the transcript. */
@@ -887,14 +1092,18 @@ export interface LessonPartContent {
   audio: LessonPartAudioContent;
   /** Interactive exploration for this part. */
   interactive: unknown;
-  /** Reinforcement quiz for this part. */
-  quiz: MultipleChoiceQuizContent;
+  /** Executable part-specific coding practice. */
+  code?: PracticeCodeContent;
+  /** Mixed reinforcement practice for this part. */
+  practice?: LessonPartPracticeContent;
+  /** Legacy reinforcement quiz for old generated content. */
+  quiz?: MultipleChoiceQuizContent;
 }
 
 /**
  * Validate a collapsed lesson-part activity. A lesson part bundles the written
- * teaching, audio script, interactive exploration, and 10-question MC
- * reinforcement check for one step/concept.
+ * teaching, audio script, interactive exploration, and mixed reinforcement
+ * practice for one step/concept.
  */
 export function validateLessonPartContent(
   content: unknown,
@@ -934,22 +1143,135 @@ export function validateLessonPartContent(
     errors.push("interactive: lesson_part requires an interactive widget spec");
   }
 
-  const quiz = validateMultipleChoiceQuizContent(c.quiz);
-  for (const e of quiz.errors) errors.push(`quiz: ${e}`);
-  const quizObj = c.quiz as Record<string, unknown> | undefined;
-  const questions = Array.isArray(quizObj?.questions) ? quizObj.questions : [];
-  if (questions.length !== 10) {
-    errors.push("quiz: each lesson_part requires exactly 10 multiple-choice questions");
+  const code = validatePracticeCodeContent(c.code);
+  for (const e of code.errors) errors.push(`code: ${e}`);
+
+  const practice = validateLessonPartPracticeContent(c.practice);
+  for (const e of practice.errors) errors.push(`practice: ${e}`);
+
+  if (c.quiz !== undefined) {
+    const quiz = validateMultipleChoiceQuizContent(c.quiz);
+    for (const e of quiz.errors) errors.push(`quiz: ${e}`);
   }
-  if (quizObj?.pass_threshold !== 4) {
-    errors.push("quiz: each lesson_part requires pass_threshold: 4");
+
+  return { valid: errors.length === 0, errors };
+}
+
+export function validateLessonPartPracticeContent(content: unknown): { valid: boolean; errors: string[] } {
+  const errors: string[] = [];
+  if (!content || typeof content !== "object") {
+    return { valid: false, errors: ["each lesson_part requires mixed practice, not only multiple-choice quiz"] };
   }
-  if (quizObj?.consecutive_correct_required !== 4) {
-    errors.push("quiz: each lesson_part requires consecutive_correct_required: 4");
+  const c = content as Record<string, unknown>;
+  if (!Array.isArray(c.questions)) {
+    return { valid: false, errors: ["questions must be an array"] };
   }
-  if (quizObj?.idk_option === false) {
-    errors.push('quiz: idk_option must not be false');
+  if (c.questions.length < 6) {
+    errors.push("questions must contain at least 6 mixed practice prompts");
   }
+  if (c.pass_threshold !== undefined && (!Number.isInteger(c.pass_threshold) || Number(c.pass_threshold) < 1)) {
+    errors.push("pass_threshold must be a positive integer when present");
+  }
+  if (c.written_feedback !== undefined && c.written_feedback !== "llm_judge") {
+    errors.push('written_feedback must be "llm_judge" when present');
+  }
+
+  const seen = new Set<string>();
+  const typeCounts: Record<LessonPartPracticeQuestionType, number> = {
+    select_one: 0,
+    select_all: 0,
+    ordering: 0,
+    written: 0,
+  };
+  let hasNoneSelectAll = false;
+  let hasSomeSelectAll = false;
+
+  for (const [i, raw] of c.questions.entries()) {
+    if (!raw || typeof raw !== "object") {
+      errors.push(`questions[${i}] must be an object`);
+      continue;
+    }
+    const q = raw as Record<string, unknown>;
+    const type = q.type as LessonPartPracticeQuestionType;
+    if (typeof q.id !== "string" || !q.id.trim()) {
+      errors.push(`questions[${i}] missing id`);
+    } else if (seen.has(q.id)) {
+      errors.push(`questions[${i}] duplicate id "${q.id}"`);
+    } else {
+      seen.add(q.id);
+    }
+    if (!["select_one", "select_all", "ordering", "written"].includes(String(q.type))) {
+      errors.push(`questions[${i}] type must be select_one, select_all, ordering, or written`);
+      continue;
+    }
+    typeCounts[type]++;
+    if (typeof q.prompt !== "string" || !q.prompt.trim()) {
+      errors.push(`questions[${i}] missing prompt`);
+    }
+    if (typeof q.concept !== "string" || !q.concept.trim()) {
+      errors.push(`questions[${i}] missing concept`);
+    }
+    if (!["easy", "medium", "hard"].includes(String(q.difficulty))) {
+      errors.push(`questions[${i}] difficulty must be "easy", "medium", or "hard"`);
+    }
+
+    if (type === "select_one" || type === "select_all") {
+      const choices = q.choices;
+      if (!Array.isArray(choices) || choices.length < 2 || choices.length > 7) {
+        errors.push(`questions[${i}] choices must contain 2 to 7 items`);
+      } else if (!choices.every((choice) => typeof choice === "string" && choice.trim())) {
+        errors.push(`questions[${i}] choices must be non-empty strings`);
+      }
+      if (type === "select_one") {
+        if (!Number.isInteger(q.correct_index)) {
+          errors.push(`questions[${i}] select_one requires correct_index`);
+        } else if (Array.isArray(choices) && (Number(q.correct_index) < 0 || Number(q.correct_index) >= choices.length)) {
+          errors.push(`questions[${i}] correct_index out of range`);
+        }
+      } else if (!Array.isArray(q.correct_indices)) {
+        errors.push(`questions[${i}] select_all requires correct_indices, use [] for none`);
+      } else {
+        const indices = q.correct_indices;
+        if (!indices.every((idx) => Number.isInteger(idx) && Number(idx) >= 0)) {
+          errors.push(`questions[${i}] correct_indices must contain non-negative integers`);
+        }
+        if (Array.isArray(choices) && indices.some((idx) => Number(idx) >= choices.length)) {
+          errors.push(`questions[${i}] correct_indices contains out-of-range index`);
+        }
+        if (new Set(indices).size !== indices.length) {
+          errors.push(`questions[${i}] correct_indices must not contain duplicates`);
+        }
+        if (indices.length === 0) hasNoneSelectAll = true;
+        if (indices.length > 1) hasSomeSelectAll = true;
+      }
+    }
+
+    if (type === "ordering") {
+      if (!Array.isArray(q.items) || q.items.length < 3) {
+        errors.push(`questions[${i}] ordering requires at least 3 items`);
+      } else if (!q.items.every((item) => typeof item === "string" && item.trim())) {
+        errors.push(`questions[${i}] ordering items must be non-empty strings`);
+      }
+      if (!Array.isArray(q.correct_order) || q.correct_order.length < 3) {
+        errors.push(`questions[${i}] ordering requires correct_order`);
+      }
+    }
+
+    if (type === "written") {
+      if (typeof q.actual_answer !== "string" || q.actual_answer.trim().length < 20) {
+        errors.push(`questions[${i}] written requires a substantive actual_answer for LLM grading`);
+      }
+      if (typeof q.rubric !== "string" || q.rubric.trim().length < 20) {
+        errors.push(`questions[${i}] written requires a substantive rubric`);
+      }
+    }
+  }
+
+  if (typeCounts.select_all < 2) errors.push("questions must include at least two select_all prompts");
+  if (!hasNoneSelectAll) errors.push("select_all prompts must include one case where none are correct");
+  if (!hasSomeSelectAll) errors.push("select_all prompts must include one case where multiple answers are correct");
+  if (typeCounts.ordering < 1) errors.push("questions must include at least one ordering prompt");
+  if (typeCounts.written < 1) errors.push("questions must include at least one written prompt with LLM grading");
 
   return { valid: errors.length === 0, errors };
 }

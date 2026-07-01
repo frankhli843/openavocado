@@ -65,6 +65,8 @@ interface GeminiLessonDraft {
   reading_intro: string;
   reading_blocks: ReadingBlock[];
   reading_summary: string;
+  lesson_parts?: LessonPartDraft[];
+  final_code?: PracticeCodeDraft;
   assessment_questions: AssessmentQuestion[];
   quiz_questions: QuizQuestion[];
   next_lesson_diagnostics: DiagnosticQuestion[];
@@ -82,6 +84,71 @@ interface ReadingBlock {
   tone?: string;
   ordered?: boolean;
   items?: string[];
+}
+
+interface PracticeCodeDraft {
+  prompt: string;
+  walkthrough?: {
+    title?: string;
+    steps: Array<{
+      title: string;
+      detail: string;
+      input?: string;
+      output?: string;
+      visual?: string;
+    }>;
+  };
+  io_examples?: Array<{
+    label: string;
+    input: string;
+    expected_output: string;
+    explanation?: string;
+  }>;
+  visualization?: {
+    title: string;
+    description?: string;
+    items: Array<{
+      label: string;
+      value: string;
+      role?: "input" | "process" | "output";
+      note?: string;
+    }>;
+  };
+  starter_code?: string;
+  worked_examples: Array<{
+    label: "basic" | "concise";
+    title?: string;
+    explanation?: string;
+    code: string;
+  }>;
+  constraints?: string[];
+  guided_steps?: string[];
+  hints?: Array<{ level: number; text: string }>;
+  tests: Array<{ id: string; description: string; assert: string }>;
+  hidden_tests?: Array<{ id: string; description: string; assert: string }>;
+}
+
+interface LessonPartDraft {
+  part_id: string;
+  title: string;
+  reading: {
+    intro?: string;
+    blocks: ReadingBlock[];
+    summary?: string;
+  };
+  audio: {
+    script: string;
+    transcript?: string;
+    duration_hint?: number;
+    synced_visual: Record<string, unknown>;
+  };
+  interactive: Record<string, unknown>;
+  code: PracticeCodeDraft;
+  practice: {
+    written_feedback?: "llm_judge";
+    pass_threshold?: number;
+    questions: Array<Record<string, unknown>>;
+  };
 }
 
 interface AssessmentQuestion {
@@ -340,7 +407,14 @@ Generate a high-quality adaptive lesson for this learner. The lesson must:
 - Have a rich audio script (target 800-1200 words — the learner will listen to this as their primary learning)
 - Include 8-12 substantive reading blocks that teach the concept clearly with definitions, worked examples, mechanism traces, and explicit preview/deeper-later language when needed
 - Include 2-3 open-ended assessment questions that check understanding
-- Include 8-10 multiple-choice quiz questions grounded in taught material
+- Include mixed practice beyond plain multiple choice: select-one, select-all
+  with some correct, select-all with none correct, ordering, and written
+  responses with an expected answer and rubric for immediate LLM grading
+- Include a small executable code exercise for each lesson sub-part plus one
+  final integrator code exercise. Every code exercise must include full
+  worked_examples for both a basic/readable implementation and a best concise
+  implementation so phone mode can show complete code clearly.
+- Include 8-10 final multiple-choice quiz questions grounded in taught material
 - Include 2 next-lesson diagnostic questions (look-ahead probes, NOT graded)
 - Be specific to this subject and learner — avoid generic filler content
 
@@ -353,6 +427,9 @@ Non-negotiable lesson-depth rules:
 - ADJACENT VISUALS FOR DENSE MECHANISMS. Every mechanism-heavy paragraph should be paired with a diagram or interactive that uses the same nouns as the text. For transformer content, show token positions, hidden-state rows, attention weights or context update, MLP update, normalization/residual boundary, output-head projection, and logits table near the prose that names them.
 - SECTION PIPELINE STAGE MAPS. Every lesson part in a pipeline/process lesson must include a local stage-and-handoff visual: what came before, what this section receives, what it changes, what it outputs, and what comes next. For LLM lessons, explicitly distinguish tokenizer, embeddings/hidden states, transformer blocks, output head/logits, training, and inference/serving.
 - LESSON FLOW ORDER. The learner-facing flow is: listen to audio first, then study text and visualizations together, then do practice problems/code and assessments.
+- EVERY SUB-LESSON NEEDS CODE AND MIXED PRACTICE. Do not ship a lesson part that only contains prose, audio, and a visual. Each part must have an executable code exercise for that exact mechanism, plus mixed practice with select-one, select-all some, select-all none, ordering, and written response. Written responses need actual_answer and rubric so /api/answer-judge can grade immediately.
+- FINAL CODE TIES THE PARTS TOGETHER. In addition to per-part code, include a final integrator coding task that combines the lesson mechanisms. Each coding task must include worked_examples with both "basic" and "concise" full-code versions, and those examples must be readable in phone preview.
+- CODE EXERCISES TEACH BEFORE THEY ASK. Each coding task must include: a walkthrough with 3-5 conceptual steps, at least 2 concrete io_examples, and a visualization that maps input → transformation → expected output. The walkthrough must explain what the input represents, what shape/type the output has, and why the tests expect that behavior. Phone mode shows this reference/answer material instead of a runnable editor.
 - Transformer-block example standard: before saying "a transformer block refines hidden states", define it as one repeated layer that receives one vector row per token, lets token rows read other token rows through attention, updates each row through an MLP, wraps updates with normalization and residual addition, and returns the same shape with more context-aware values.
 - MLP example standard: before saying "the MLP transforms each token", define MLP as the per-token feed-forward subnetwork inside the block, show that it receives one token hidden vector at a time, uses learned linear layers plus an activation, and returns an update vector that fits back into the same token row.
 
@@ -401,6 +478,126 @@ Return ONLY a valid JSON object matching this exact schema (no markdown, no pros
     }
   ],
   "reading_summary": "1-2 sentence summary of what the reading section covered",
+  "lesson_parts": [
+    {
+      "part_id": "part_1",
+      "title": "Specific sub-lesson title",
+      "reading": {
+        "intro": "Short intro for this part",
+        "blocks": [
+          { "type": "heading", "text": "Part heading" },
+          { "type": "paragraph", "text": "Mechanism-level explanation with concrete objects." },
+          { "type": "definition", "term": "Key noun", "definition": "Definition grounded in learner language." }
+        ],
+        "summary": "What this part proved"
+      },
+      "audio": {
+        "script": "Spoken walkthrough for this exact part",
+        "transcript": "Same learner-visible transcript",
+        "duration_hint": 120,
+        "synced_visual": {
+          "strategy": "timeline",
+          "cues": [
+            {
+              "start": 0,
+              "end": 5,
+              "label": "Receives",
+              "headline": "What arrives from the prior step",
+              "narration": "Name the object and show it visually.",
+              "receive": "previous object",
+              "transform": "focus the learner",
+              "pass": "ready state"
+            }
+          ]
+        }
+      },
+      "interactive": {
+        "schema_version": "1.0",
+        "widget_type": "bespoke-artifact",
+        "instructions": "Use the custom visual to inspect the state change.",
+        "params": { "artifact_slug": "approved-artifact-slug" }
+      },
+      "code": {
+        "prompt": "Implement this part's tiny mechanism.",
+        "walkthrough": {
+          "title": "Trace the expected behavior before coding",
+          "steps": [
+            {
+              "title": "Name the input",
+              "detail": "Explain what the function receives, including type, shape, and concept meaning.",
+              "input": "helper(3)",
+              "output": "not returned yet",
+              "visual": "3 enters helper as the one value to preserve"
+            },
+            {
+              "title": "Apply the mechanism",
+              "detail": "Explain the exact transformation the learner should implement before syntax details.",
+              "input": "3",
+              "output": "3",
+              "visual": "the value passes through unchanged"
+            }
+          ]
+        },
+        "io_examples": [
+          { "label": "Small case", "input": "helper(3)", "expected_output": "3", "explanation": "The helper returns the same value." },
+          { "label": "Different case", "input": "helper(10)", "expected_output": "10", "explanation": "The same rule applies to a different input." }
+        ],
+        "visualization": {
+          "title": "Input becomes output",
+          "description": "A compact map of the value before, during, and after the function.",
+          "items": [
+            { "label": "Input", "value": "3", "role": "input", "note": "what the caller passes in" },
+            { "label": "Transform", "value": "preserve x", "role": "process", "note": "the mechanism to implement" },
+            { "label": "Output", "value": "3", "role": "output", "note": "what tests expect" }
+          ]
+        },
+        "starter_code": "def helper(x):\n    pass\n",
+        "worked_examples": [
+          { "label": "basic", "title": "Basic readable version", "code": "def helper(x):\n    result = x\n    return result\n" },
+          { "label": "concise", "title": "Best concise version", "code": "def helper(x):\n    return x\n" }
+        ],
+        "tests": [{ "id": "part_test", "description": "Helper returns expected value", "assert": "helper(3) == 3" }]
+      },
+      "practice": {
+        "written_feedback": "llm_judge",
+        "questions": [
+          { "id": "p1", "type": "select_one", "prompt": "...", "choices": ["A", "B"], "correct_index": 0, "explanation": "..." },
+          { "id": "p2", "type": "select_all", "prompt": "...", "choices": ["A", "B", "C"], "correct_indices": [0, 2], "explanation": "..." },
+          { "id": "p3", "type": "select_all", "prompt": "...", "choices": ["A", "B", "C"], "correct_indices": [], "explanation": "None are correct because ..." },
+          { "id": "p4", "type": "ordering", "prompt": "...", "items": ["first", "second"], "correct_order": ["first", "second"], "explanation": "..." },
+          { "id": "p5", "type": "written", "prompt": "...", "actual_answer": "Expected answer", "rubric": "What good answers include" }
+        ]
+      }
+    }
+  ],
+  "final_code": {
+    "prompt": "Integrator exercise that combines the lesson parts",
+    "walkthrough": {
+      "title": "Trace the integrator behavior",
+      "steps": [
+        { "title": "Collect the lesson objects", "detail": "Identify the values from the earlier parts that this function receives.", "input": "solve(3)", "visual": "one call enters the integrator" },
+        { "title": "Combine the mechanisms", "detail": "Apply the earlier part mechanisms in the same order taught by the lesson.", "output": "3", "visual": "part outputs become the final return value" }
+      ]
+    },
+    "io_examples": [
+      { "label": "Small case", "input": "solve(3)", "expected_output": "3", "explanation": "The integrator applies the lesson path to a small value." },
+      { "label": "Different case", "input": "solve(10)", "expected_output": "10", "explanation": "The same path should generalize." }
+    ],
+    "visualization": {
+      "title": "Parts compose into one result",
+      "items": [
+        { "label": "Input", "value": "3", "role": "input" },
+        { "label": "Part chain", "value": "part 1 → part 2 → part 3", "role": "process" },
+        { "label": "Return", "value": "3", "role": "output" }
+      ]
+    },
+    "starter_code": "def solve(x):\n    pass\n",
+    "worked_examples": [
+      { "label": "basic", "title": "Basic readable version", "code": "def solve(x):\n    result = x\n    return result\n" },
+      { "label": "concise", "title": "Best concise version", "code": "def solve(x):\n    return x\n" }
+    ],
+    "tests": [{ "id": "final_test", "description": "Integrator returns expected value", "assert": "solve(3) == 3" }]
+  },
   "assessment_questions": [
     {
       "id": "free_1",
@@ -491,6 +688,7 @@ function insertGeneratedLesson(
        (lesson_id, activity_type, is_core, sequence_order, title, content)
      VALUES (?, ?, ?, ?, ?, ?)`
   );
+  let sequence = 3;
 
   // 1. Audio activity
   insertActivity.run(
@@ -520,97 +718,89 @@ function insertGeneratedLesson(
     })
   );
 
-  // 3. Interactive activity (declarative widget)
   const concept0 = draft.concept_tags[0] ?? "the concept";
   const concept1 = draft.concept_tags[1] ?? "application";
+  if (Array.isArray(draft.lesson_parts) && draft.lesson_parts.length > 0) {
+    for (const part of draft.lesson_parts) {
+      insertActivity.run(
+        lessonId,
+        "lesson_part",
+        1,
+        sequence++,
+        part.title || `Part ${sequence - 2}: ${draft.title}`,
+        JSON.stringify({
+          part_id: part.part_id,
+          reading: part.reading,
+          audio: part.audio,
+          interactive: part.interactive,
+          code: part.code,
+          practice: part.practice,
+        })
+      );
+    }
+  } else {
+    insertActivity.run(
+      lessonId,
+      "interactive",
+      1,
+      sequence++,
+      `Explore: ${draft.title} — readiness check`,
+      JSON.stringify({
+        schema_version: "1.0",
+        widget_type: "declarative",
+        title: `${draft.title} — learning pressure`,
+        instructions:
+          "Adjust the sliders to reflect your confidence in each area. " +
+          "Watch how readiness changes. This compatibility widget is used only when the provider omits lesson_parts.",
+        controls: [
+          { type: "slider", id: "concept_clarity", label: `Clarity on ${concept0}`, min: 0, max: 10, step: 1, default: 4 },
+          { type: "slider", id: "application_depth", label: `Ability to apply ${concept1}`, min: 0, max: 10, step: 1, default: 3 },
+          { type: "slider", id: "example_recall", label: "Can recall a concrete example", min: 0, max: 10, step: 1, default: 5 },
+        ],
+        outputs: [
+          {
+            id: "readiness",
+            label: "Lesson readiness",
+            formula: "(concept_clarity * 0.45 + application_depth * 0.35 + example_recall * 0.20) * 10",
+            format: "percent",
+            precision: 0,
+            description: "Weighted readiness across the three dimensions.",
+          },
+          { id: "gap", label: "Gap to address", formula: "100 - readiness", format: "percent", precision: 0 },
+        ],
+        charts: [
+          {
+            type: "bar",
+            title: "Self-assessment by dimension",
+            bars: [
+              { label: `${concept0} clarity`, ref: "concept_clarity", color: "#2563eb" },
+              { label: `${concept1} depth`, ref: "application_depth", color: "#16a34a" },
+              { label: "Example recall", ref: "example_recall", color: "#f59e0b" },
+            ],
+            max: 10,
+          },
+        ],
+        panels: [{ title: "What this means", template: "Your current readiness is {{readiness}}." }],
+      })
+    );
+  }
+
+  const finalCode = draft.final_code ?? fallbackFinalCode(concept0, concept1);
   insertActivity.run(
     lessonId,
-    "interactive",
+    "practice_code",
     1,
-    3,
-    `Explore: ${draft.title} — readiness check`,
-    JSON.stringify({
-      schema_version: "1.0",
-      widget_type: "declarative",
-      title: `${draft.title} — learning pressure`,
-      instructions:
-        "Adjust the sliders to reflect your confidence in each area. " +
-        "Watch how readiness changes. This is a self-assessment tool, not a grade.",
-      controls: [
-        {
-          type: "slider",
-          id: "concept_clarity",
-          label: `Clarity on ${concept0}`,
-          min: 0,
-          max: 10,
-          step: 1,
-          default: 4,
-        },
-        {
-          type: "slider",
-          id: "application_depth",
-          label: `Ability to apply ${concept1}`,
-          min: 0,
-          max: 10,
-          step: 1,
-          default: 3,
-        },
-        {
-          type: "slider",
-          id: "example_recall",
-          label: "Can recall a concrete example",
-          min: 0,
-          max: 10,
-          step: 1,
-          default: 5,
-        },
-      ],
-      outputs: [
-        {
-          id: "readiness",
-          label: "Lesson readiness",
-          formula: "(concept_clarity * 0.45 + application_depth * 0.35 + example_recall * 0.20) * 10",
-          format: "percent",
-          precision: 0,
-          description: "Weighted readiness across the three dimensions.",
-        },
-        {
-          id: "gap",
-          label: "Gap to address",
-          formula: "100 - readiness",
-          format: "percent",
-          precision: 0,
-        },
-      ],
-      charts: [
-        {
-          type: "bar",
-          title: "Self-assessment by dimension",
-          bars: [
-            { label: `${concept0} clarity`, ref: "concept_clarity", color: "#2563eb" },
-            { label: `${concept1} depth`, ref: "application_depth", color: "#16a34a" },
-            { label: "Example recall", ref: "example_recall", color: "#f59e0b" },
-          ],
-          max: 10,
-        },
-      ],
-      panels: [
-        {
-          title: "What this means",
-          template:
-            `Your current readiness is {{readiness}}. ` +
-            `Focus on the dimension with the lowest slider if you want to improve the most.`,
-        },
-      ],
-    })
+    sequence++,
+    `Code: Tie ${draft.title} together`,
+    JSON.stringify(finalCode)
   );
 
-  // 4. Assessment activity
+  // Assessment activity
   insertActivity.run(
     lessonId,
     "assessment",
     1,
-    4,
+    sequence++,
     "Check: Reflect, consolidate, and shape the next lesson",
     JSON.stringify({
       questions: draft.assessment_questions,
@@ -638,6 +828,102 @@ function insertGeneratedLesson(
   upsertWorkpad(db, subjectId, learnerId, lessonId, draft);
 
   return lessonId;
+}
+
+function fallbackFinalCode(concept0: string, concept1: string): PracticeCodeDraft {
+  const safeConcept0 = concept0.replace(/[^A-Za-z0-9 _-]/g, "").slice(0, 40) || "the first concept";
+  const safeConcept1 = concept1.replace(/[^A-Za-z0-9 _-]/g, "").slice(0, 40) || "the second concept";
+  return {
+    prompt: `Represent how ${safeConcept0} connects to ${safeConcept1}. Return a short dictionary with both names and a one-line relationship.`,
+    walkthrough: {
+      title: "Trace the dictionary this function should return",
+      steps: [
+        {
+          title: "Start with two lesson concepts",
+          detail: "The function does not take arguments. It uses the two concepts from the lesson as the fixed input ideas.",
+          input: "connect_concepts()",
+          output: "a dictionary with first, second, and relationship",
+          visual: `${safeConcept0} and ${safeConcept1} are the two named inputs to organize.`,
+        },
+        {
+          title: "Package the concepts into stable keys",
+          detail: "The output shape matters: tests expect exactly first, second, and relationship so later code can read those fields reliably.",
+          input: "two concept names",
+          output: "{'first': ..., 'second': ..., 'relationship': ...}",
+          visual: "three labeled slots appear in the returned dictionary.",
+        },
+        {
+          title: "Write the relationship in plain language",
+          detail: "The relationship value should say how the first concept supports or sets up the second concept, not just repeat the names.",
+          input: `${safeConcept0} → ${safeConcept1}`,
+          output: "a non-empty relationship string",
+          visual: "an arrow label becomes the relationship field.",
+        },
+      ],
+    },
+    io_examples: [
+      {
+        label: "Expected shape",
+        input: "connect_concepts()",
+        expected_output: "{'first': '...', 'second': '...', 'relationship': '...'}",
+        explanation: "The exact text may vary, but the three keys must be present and filled.",
+      },
+      {
+        label: "Relationship check",
+        input: "connect_concepts()['relationship']",
+        expected_output: "a non-empty sentence",
+        explanation: "The relationship should explain the connection rather than return an empty placeholder.",
+      },
+    ],
+    visualization: {
+      title: "Concepts become a returned dictionary",
+      description: "The exercise maps lesson concepts into a stable structure that tests can inspect.",
+      items: [
+        { label: "Input ideas", value: `${safeConcept0} + ${safeConcept1}`, role: "input", note: "the concepts from the lesson" },
+        { label: "Package", value: "first / second / relationship", role: "process", note: "the dictionary keys tests expect" },
+        { label: "Return", value: "filled dictionary", role: "output", note: "the learner's final value" },
+      ],
+    },
+    starter_code:
+      "def connect_concepts():\n" +
+      "    return {\n" +
+      "        'first': '',\n" +
+      "        'second': '',\n" +
+      "        'relationship': '',\n" +
+      "    }\n",
+    worked_examples: [
+      {
+        label: "basic",
+        title: "Basic readable version",
+        code:
+          "def connect_concepts():\n" +
+          `    first = ${JSON.stringify(safeConcept0)}\n` +
+          `    second = ${JSON.stringify(safeConcept1)}\n` +
+          "    relationship = 'The first concept sets up the second concept.'\n" +
+          "    return {\n" +
+          "        'first': first,\n" +
+          "        'second': second,\n" +
+          "        'relationship': relationship,\n" +
+          "    }\n",
+      },
+      {
+        label: "concise",
+        title: "Best concise version",
+        code:
+          "def connect_concepts():\n" +
+          `    return {'first': ${JSON.stringify(safeConcept0)}, 'second': ${JSON.stringify(safeConcept1)}, 'relationship': 'first supports second'}\n`,
+      },
+    ],
+    hints: [
+      { level: 1, text: "Start by naming the two concepts from the lesson." },
+      { level: 2, text: "Return a dictionary with first, second, and relationship keys." },
+      { level: 3, text: "The relationship should describe how the first concept helps make the second concept possible." },
+    ],
+    tests: [
+      { id: "shape", description: "returns the expected keys", assert: "set(connect_concepts().keys()) == {'first', 'second', 'relationship'}" },
+      { id: "filled", description: "fills every value", assert: "all(str(v).strip() for v in connect_concepts().values())" },
+    ],
+  };
 }
 
 function upsertLessonTags(

@@ -502,6 +502,9 @@ export default function LessonPage({ params }: { params: Promise<{ id: string }>
           onQuizStateChange={(serialized) => triggerPartQuizAutosave(activity.id, serialized)}
           onQuizPassedChange={() => undefined}
           assessContext={assessContext}
+          learnerId={activeLearnerId}
+          lessonTitle={lesson.title}
+          lessonDescription={lesson.description}
         />
       );
     }
@@ -510,6 +513,8 @@ export default function LessonPage({ params }: { params: Promise<{ id: string }>
         <PythonSection
           activity={activity}
           learnerId={activeLearnerId}
+          lessonTitle={lesson.title}
+          lessonDescription={lesson.description}
           initialCode={codeDraft}
           initialOutput={runOutput}
           initialTests={testResults}

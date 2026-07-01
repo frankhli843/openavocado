@@ -5,6 +5,7 @@ import dynamic from "next/dynamic";
 import { Maximize2, Minimize2, Monitor, Smartphone } from "lucide-react";
 import type { LessonActivity, PracticeCodeContent, CodeTest } from "@/types";
 import { createPyodideExecutor, stubExecutor, type PythonExecutor } from "@/lib/python-sandbox";
+import { MarkdownText } from "@/components/MarkdownText";
 
 // CodeMirror is client-only (uses DOM APIs). Dynamically import to skip SSR.
 const CodeMirrorEditor = dynamic(() => import("./PythonEditor"), { ssr: false, loading: () => null });
@@ -17,6 +18,8 @@ interface PythonSectionProps {
   initialTests: Record<string, string>;
   onChange: (code: string, output: string, tests: Record<string, string>) => void;
   reserveChatRail?: boolean;
+  lessonTitle?: string;
+  lessonDescription?: string | null;
 }
 
 type PreviewMode = "desktop" | "phone";
@@ -43,6 +46,8 @@ export function PythonSection({
   initialTests,
   onChange,
   reserveChatRail = false,
+  lessonTitle = "Untitled lesson",
+  lessonDescription = null,
 }: PythonSectionProps) {
   const content: PracticeCodeContent = activity.content ? JSON.parse(activity.content) : {};
 
@@ -64,7 +69,10 @@ export function PythonSection({
   const [pyStatus, setPyStatus] = useState<"loading" | "ready" | "unavailable">("loading");
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [previewMode, setPreviewMode] = useState<PreviewMode>("desktop");
+  const [codeFeedback, setCodeFeedback] = useState<string | null>(null);
+  const [codeFeedbackLoading, setCodeFeedbackLoading] = useState(false);
   const executorRef = useRef(executor);
+  const isPhonePreview = previewMode === "phone" && !isFullscreen;
 
   useEffect(() => {
     if (typeof window === "undefined") return;
@@ -147,6 +155,7 @@ export function PythonSection({
 
   async function handleSubmit() {
     setSubmitting(true);
+    setCodeFeedback(null);
     try {
       const { output: newOutput, results } = await runTests([...publicTests, ...hiddenTests]);
       const merged = { ...testResults, ...results };
@@ -158,16 +167,45 @@ export function PythonSection({
       // auto-completes the lesson — manual completion remains the only trigger.
       const all = [...publicTests, ...hiddenTests];
       const passed = all.length > 0 && all.every((t) => results[t.id] === "pass");
-      if (passed) {
-        try {
-          await fetch("/api/code-submission", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ activity_id: activity.id, learner_id: learnerId, passed: true }),
-          });
-        } catch {
-          /* submission signal is best-effort */
-        }
+      try {
+        await fetch("/api/code-submission", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ activity_id: activity.id, learner_id: learnerId, passed }),
+        });
+      } catch {
+        /* submission signal is best-effort */
+      }
+      setCodeFeedbackLoading(true);
+      try {
+        const response = await fetch("/api/code-feedback", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            lesson_title: lessonTitle,
+            lesson_description: lessonDescription,
+            exercise_title: activity.title ?? "Code exercise",
+            exercise_prompt: content.prompt ?? activity.title ?? "Code exercise",
+            starter_code: starterCode,
+            learner_code: code,
+            interpreter_output: newOutput,
+            public_test_results: publicTests.map((test) => ({
+              id: test.id,
+              description: test.description,
+              status: results[test.id] === "pass" ? "pass" : results[test.id] === "fail" ? "fail" : "not_run",
+            })),
+            hidden_test_summary: hiddenTests.length > 0
+              ? { total: hiddenTests.length, passed: hiddenTests.filter((test) => results[test.id] === "pass").length }
+              : null,
+            all_passed: passed,
+          }),
+        });
+        const json = (await response.json()) as { enabled?: boolean; feedback?: string | null };
+        if (json.enabled && json.feedback) setCodeFeedback(json.feedback);
+      } catch {
+        setCodeFeedback("I could not generate AI feedback for this submission. Use the visible output and test results to pick the next edit.");
+      } finally {
+        setCodeFeedbackLoading(false);
       }
     } finally {
       setSubmitting(false);
@@ -191,19 +229,167 @@ export function PythonSection({
     ? "fixed inset-y-0 left-0 right-0 z-50 bg-white text-gray-900 flex flex-col xl:right-[28rem]"
     : "fixed inset-0 z-50 bg-white text-gray-900 flex flex-col";
 
+  const codeFeedbackPanel = (codeFeedbackLoading || codeFeedback) ? (
+    <div className="rounded-lg border border-blue-100 bg-blue-50/60 px-4 py-3 text-sm text-blue-950">
+      <div className="mb-1 text-xs font-semibold uppercase tracking-wider text-blue-700">AI code feedback</div>
+      {codeFeedbackLoading ? (
+        <p>Reading your code and test output...</p>
+      ) : codeFeedback ? (
+        <MarkdownText text={codeFeedback} />
+      ) : null}
+    </div>
+  ) : null;
+
+  const optionalNotice = (
+    <div className="rounded-lg border border-sky-100 bg-sky-50/70 px-4 py-3 text-sm leading-6 text-sky-950">
+      <strong className="font-semibold">Optional coding reinforcement.</strong>{" "}
+      This section is meant to deepen the lesson if you already have some coding experience. You can skip it and still complete the lesson.
+    </div>
+  );
+
+  const walkthroughPanel = content.walkthrough?.steps?.length ? (
+    <div className="rounded-lg border border-gray-100 bg-white">
+      <div className="border-b border-gray-100 px-4 py-3">
+        <div className="text-xs font-semibold uppercase tracking-wider text-gray-400">Walkthrough</div>
+        <h3 className="mt-0.5 text-sm font-semibold text-gray-800">
+          {content.walkthrough.title ?? "How to think about this exercise"}
+        </h3>
+      </div>
+      <div className="divide-y divide-gray-100">
+        {content.walkthrough.steps.map((step, index) => (
+          <div key={`${step.title}-${index}`} className="grid gap-3 px-4 py-3 sm:grid-cols-[1.3fr_1fr]">
+            <div>
+              <div className="text-sm font-semibold text-gray-800">
+                {index + 1}. {step.title}
+              </div>
+              <p className="mt-1 text-sm leading-6 text-gray-600">{step.detail}</p>
+            </div>
+            {(step.input || step.output || step.visual) && (
+              <div className="rounded-lg border border-gray-100 bg-gray-50/70 p-3 text-xs leading-5 text-gray-600">
+                {step.visual && <div className="mb-2 font-medium text-gray-700">{step.visual}</div>}
+                {step.input && (
+                  <div className="grid grid-cols-[4.5rem_1fr] gap-2">
+                    <span className="font-semibold uppercase tracking-wide text-gray-400">Input</span>
+                    <code className="font-mono text-gray-700">{step.input}</code>
+                  </div>
+                )}
+                {step.output && (
+                  <div className="mt-1 grid grid-cols-[4.5rem_1fr] gap-2">
+                    <span className="font-semibold uppercase tracking-wide text-gray-400">Output</span>
+                    <code className="font-mono text-gray-700">{step.output}</code>
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+        ))}
+      </div>
+    </div>
+  ) : null;
+
+  const ioExamplesPanel = content.io_examples?.length ? (
+    <div className="rounded-lg border border-emerald-100 bg-emerald-50/40">
+      <div className="border-b border-emerald-100 px-4 py-3">
+        <div className="text-xs font-semibold uppercase tracking-wider text-emerald-700">Expected inputs and outputs</div>
+        <p className="mt-1 text-sm leading-6 text-emerald-950">
+          Use these examples to check the behavior before thinking about syntax.
+        </p>
+      </div>
+      <div className="grid gap-3 p-3 sm:grid-cols-2">
+        {content.io_examples.map((example) => (
+          <div key={example.label} className="rounded-lg border border-emerald-100 bg-white p-3">
+            <div className="text-sm font-semibold text-gray-800">{example.label}</div>
+            <div className="mt-2 grid gap-2 text-xs">
+              <div>
+                <div className="mb-1 font-semibold uppercase tracking-wide text-gray-400">Input</div>
+                <pre className="overflow-x-auto rounded bg-gray-50 px-3 py-2 font-mono text-gray-700">{example.input}</pre>
+              </div>
+              <div>
+                <div className="mb-1 font-semibold uppercase tracking-wide text-gray-400">Expected output</div>
+                <pre className="overflow-x-auto rounded bg-emerald-50 px-3 py-2 font-mono text-emerald-900">{example.expected_output}</pre>
+              </div>
+            </div>
+            {example.explanation && <p className="mt-2 text-xs leading-5 text-gray-500">{example.explanation}</p>}
+          </div>
+        ))}
+      </div>
+    </div>
+  ) : null;
+
+  const visualizationPanel = content.visualization?.items?.length ? (
+    <div className="rounded-lg border border-indigo-100 bg-indigo-50/40 px-4 py-3">
+      <div className="text-xs font-semibold uppercase tracking-wider text-indigo-700">Code behavior map</div>
+      <h3 className="mt-0.5 text-sm font-semibold text-gray-800">{content.visualization.title}</h3>
+      {content.visualization.description && (
+        <p className="mt-1 text-sm leading-6 text-gray-600">{content.visualization.description}</p>
+      )}
+      <div className="mt-3 grid gap-2 sm:grid-cols-3">
+        {content.visualization.items.map((item, index) => (
+          <div key={`${item.label}-${index}`} className="relative rounded-lg border border-indigo-100 bg-white p-3">
+            <div className={`mb-2 inline-flex rounded-full px-2 py-0.5 text-[11px] font-semibold uppercase tracking-wide ${
+              item.role === "input"
+                ? "bg-blue-50 text-blue-700"
+                : item.role === "output"
+                  ? "bg-emerald-50 text-emerald-700"
+                  : "bg-amber-50 text-amber-700"
+            }`}>
+              {item.role ?? "step"}
+            </div>
+            <div className="text-sm font-semibold text-gray-800">{item.label}</div>
+            <code className="mt-1 block break-words font-mono text-xs leading-5 text-gray-700">{item.value}</code>
+            {item.note && <p className="mt-2 text-xs leading-5 text-gray-500">{item.note}</p>}
+          </div>
+        ))}
+      </div>
+    </div>
+  ) : null;
+
+  const workedExamples = content.worked_examples && content.worked_examples.length > 0 ? (
+    <div className="space-y-3">
+      <div className="text-xs font-semibold uppercase tracking-wider text-gray-400">
+        {isPhonePreview ? "Reference answers" : "Full code examples"}
+      </div>
+      <div className={`grid gap-3 ${isPhonePreview ? "grid-cols-1" : "lg:grid-cols-2"}`}>
+        {content.worked_examples.map((example) => (
+          <details
+            key={example.label}
+            open={isPhonePreview}
+            className="rounded-lg border border-gray-100 bg-gray-50/50"
+          >
+            <summary className="cursor-pointer select-none px-3 py-2 text-sm font-semibold text-gray-700">
+              {example.title ?? (example.label === "concise" ? "Best concise version" : "Basic readable version")}
+            </summary>
+            {example.explanation && (
+              <p className="border-t border-gray-100 px-3 py-2 text-xs leading-5 text-gray-500">
+                {example.explanation}
+              </p>
+            )}
+            <pre className="max-h-[28rem] overflow-auto border-t border-gray-100 bg-white px-3 py-3 text-xs leading-5 text-gray-700">
+              <code>{example.code}</code>
+            </pre>
+          </details>
+        ))}
+      </div>
+    </div>
+  ) : null;
+
   // Shared editor area rendered both inline and in fullscreen overlay
   const editorArea = (
-    <div className="flex flex-col h-full">
-      <div className="text-xs text-gray-400 mb-1.5 font-mono flex items-center gap-2">
-        Python 3 (Pyodide/WASM)
-        <span className="text-gray-300">·</span>
+    <div className={`flex h-full flex-col ${isPhonePreview ? "min-h-[360px]" : ""}`}>
+      <div
+        className={`mb-1.5 font-mono text-gray-400 ${
+          isPhonePreview ? "flex flex-col gap-0.5 text-[11px] leading-4" : "flex items-center gap-2 text-xs"
+        }`}
+      >
+        <span>Python 3 (Pyodide/WASM)</span>
+        {!isPhonePreview && <span className="text-gray-300">·</span>}
         <span className="text-gray-500 text-xs">syntax highlighting · auto-indent · Tab=4 spaces</span>
       </div>
       <div className="flex-1 min-h-0 rounded-lg overflow-hidden border border-gray-200 bg-white focus-within:ring-2 focus-within:ring-blue-200">
         <CodeMirrorEditor
           value={code}
           onChange={handleCodeChange}
-          height={isFullscreen ? "100%" : "208px"}
+          height={isFullscreen ? "100%" : isPhonePreview ? "360px" : "208px"}
           fullscreen={isFullscreen}
         />
       </div>
@@ -211,25 +397,29 @@ export function PythonSection({
   );
 
   const actionBar = (
-    <div className="flex flex-wrap items-center gap-2">
+    <div className={`flex flex-wrap items-center gap-2 ${isPhonePreview ? "items-stretch" : ""}`}>
       <button
         onClick={handleRun}
         disabled={running || submitting || pyStatus !== "ready"}
-        className="flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium bg-white border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 disabled:opacity-40 transition-colors"
+        className={`flex items-center justify-center gap-1.5 rounded-lg border border-gray-300 bg-white px-3 py-1.5 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50 disabled:opacity-40 ${
+          isPhonePreview ? "flex-1" : ""
+        }`}
       >
         {running ? "Running..." : "Run tests"}
       </button>
       <button
         onClick={handleSubmit}
         disabled={running || submitting || pyStatus !== "ready"}
-        className="flex items-center gap-1.5 px-4 py-1.5 text-sm font-medium bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-40 transition-colors"
+        className={`flex items-center justify-center gap-1.5 rounded-lg bg-blue-600 px-4 py-1.5 text-sm font-medium text-white transition-colors hover:bg-blue-700 disabled:opacity-40 ${
+          isPhonePreview ? "flex-1" : ""
+        }`}
       >
         {submitting ? "Submitting..." : "Submit"}
       </button>
       <button
         onClick={handleReset}
         disabled={running || submitting}
-        className="px-3 py-1.5 text-sm font-medium text-gray-500 hover:text-gray-700 disabled:opacity-40 transition-colors"
+        className="px-3 py-1.5 text-sm font-medium text-gray-500 transition-colors hover:text-gray-700 disabled:opacity-40"
       >
         Reset
       </button>
@@ -237,7 +427,9 @@ export function PythonSection({
         onClick={() => setIsFullscreen((v) => !v)}
         title={isFullscreen ? "Exit fullscreen (Esc)" : "Fullscreen focus mode"}
         aria-label={isFullscreen ? "Exit fullscreen" : "Enter fullscreen"}
-        className="ml-auto px-3 py-1.5 text-sm font-medium text-gray-500 bg-gray-100 border border-gray-200 rounded-lg hover:bg-gray-200 transition-colors"
+        className={`rounded-lg border border-gray-200 bg-gray-100 px-3 py-1.5 text-sm font-medium text-gray-500 transition-colors hover:bg-gray-200 ${
+          isPhonePreview ? "" : "ml-auto"
+        }`}
       >
         {isFullscreen ? (
           <>
@@ -255,7 +447,9 @@ export function PythonSection({
         <button
           onClick={() => setHintsShown((n) => Math.min(n + 1, hints.length))}
           disabled={hintsShown >= hints.length}
-          className="px-3 py-1.5 text-sm font-medium text-amber-700 bg-amber-50 border border-amber-100 rounded-lg hover:bg-amber-100 disabled:opacity-40 transition-colors"
+          className={`rounded-lg border border-amber-100 bg-amber-50 px-3 py-1.5 text-sm font-medium text-amber-700 transition-colors hover:bg-amber-100 disabled:opacity-40 ${
+            isPhonePreview ? "w-full" : ""
+          }`}
         >
           {hintsShown >= hints.length ? "All hints shown" : `Show hint (${hintsShown}/${hints.length})`}
         </button>
@@ -300,6 +494,7 @@ export function PythonSection({
           <div className="flex-1 min-h-0 flex flex-col lg:flex-row gap-0 overflow-hidden">
             {/* Left: editor */}
             <div className="flex-1 min-h-0 flex flex-col p-4 gap-3">
+              {optionalNotice}
               {content.prompt && (
                 <div className="rounded-lg bg-blue-50/60 border border-blue-100 px-4 py-3 shrink-0">
                   <div className="text-xs font-semibold text-blue-700 uppercase tracking-wider mb-1">Your task</div>
@@ -393,6 +588,7 @@ export function PythonSection({
                   )}
                 </div>
               )}
+              {codeFeedbackPanel}
             </div>
           </div>
         </div>
@@ -400,7 +596,7 @@ export function PythonSection({
 
       {/* Inline card (always rendered, editor area hidden when fullscreen so CodeMirror doesn't double-mount) */}
       <div
-        className={previewMode === "phone" ? "mx-auto w-full max-w-[390px]" : "w-full"}
+        className={previewMode === "phone" ? "mx-auto w-full max-w-[390px] pb-20" : "w-full"}
         data-preview-mode={previewMode}
       >
       <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
@@ -417,26 +613,30 @@ export function PythonSection({
           </div>
           <div className="flex flex-wrap items-center gap-2 sm:ml-auto">
             <PreviewModeToggle mode={previewMode} onChange={setPreviewMode} />
-            <span
-              className={`inline-flex items-center gap-1 text-xs px-2 py-0.5 rounded-full shrink-0 ${
-                pyStatus === "ready"
-                  ? "bg-green-50 text-green-700"
-                  : pyStatus === "loading"
-                  ? "bg-yellow-50 text-yellow-700"
-                  : "bg-red-50 text-red-700"
-              }`}
-            >
+            {!isPhonePreview && (
               <span
-                className={`w-1.5 h-1.5 rounded-full ${
-                  pyStatus === "ready" ? "bg-green-500" : pyStatus === "loading" ? "bg-yellow-400 animate-pulse" : "bg-red-400"
+                className={`inline-flex items-center gap-1 text-xs px-2 py-0.5 rounded-full shrink-0 ${
+                  pyStatus === "ready"
+                    ? "bg-green-50 text-green-700"
+                    : pyStatus === "loading"
+                    ? "bg-yellow-50 text-yellow-700"
+                    : "bg-red-50 text-red-700"
                 }`}
-              />
-              {pyStatus === "ready" ? "Pyodide ready" : pyStatus === "loading" ? "Loading Python..." : "Python unavailable"}
-            </span>
+              >
+                <span
+                  className={`w-1.5 h-1.5 rounded-full ${
+                    pyStatus === "ready" ? "bg-green-500" : pyStatus === "loading" ? "bg-yellow-400 animate-pulse" : "bg-red-400"
+                  }`}
+                />
+                {pyStatus === "ready" ? "Pyodide ready" : pyStatus === "loading" ? "Loading Python..." : "Python unavailable"}
+              </span>
+            )}
           </div>
         </div>
 
-        <div className="p-4 space-y-4 sm:p-6">
+        <div className={`space-y-4 ${isPhonePreview ? "p-3 text-[15px]" : "p-4 sm:p-6"}`}>
+          {optionalNotice}
+
           {/* Task prompt */}
           {content.prompt && (
             <div className="rounded-lg bg-blue-50/60 border border-blue-100 px-4 py-3">
@@ -467,25 +667,37 @@ export function PythonSection({
             </details>
           )}
 
-          {/* Editor — hidden when fullscreen so CodeMirror doesn't double-mount */}
-          {!isFullscreen && (
+          {walkthroughPanel}
+          {ioExamplesPanel}
+          {visualizationPanel}
+          {isPhonePreview && workedExamples}
+          {isPhonePreview && !workedExamples && (
+            <div className="rounded-lg border border-amber-100 bg-amber-50 px-4 py-3 text-sm leading-6 text-amber-900">
+              Reference answers have not been generated for this older coding exercise yet.
+            </div>
+          )}
+
+          {/* Editor — hidden in phone preview and when fullscreen so CodeMirror doesn't double-mount */}
+          {!isFullscreen && !isPhonePreview && (
             <div className="space-y-2">
               {editorArea}
             </div>
           )}
-          {isFullscreen && (
+          {isFullscreen && !isPhonePreview && (
             <div className="rounded-lg bg-gray-50 border border-gray-200 px-4 py-3 text-sm text-gray-500 text-center">
               Editor open in focus mode &mdash; press <kbd className="bg-white border border-gray-200 text-gray-600 px-1 rounded text-xs">Esc</kbd> or click <strong>⊠ Exit focus</strong> to return.
             </div>
           )}
 
           {/* Actions */}
-          {!isFullscreen && actionBar}
+          {!isFullscreen && !isPhonePreview && actionBar}
+
+          {!isFullscreen && !isPhonePreview && workedExamples}
 
           {/* Focus mode button when fullscreen not active (also in actionBar, but easy to find here) */}
 
           {/* Progressive hints */}
-          {!isFullscreen && hintsShown > 0 && (
+          {!isFullscreen && !isPhonePreview && hintsShown > 0 && (
             <div className="space-y-1.5">
               {hints.slice(0, hintsShown).map((h, i) => (
                 <div key={i} className="rounded-lg bg-amber-50 border border-amber-100 px-3 py-2 text-sm text-amber-900">
@@ -497,7 +709,7 @@ export function PythonSection({
           )}
 
           {/* Output */}
-          {!isFullscreen && (output || running || submitting) && (
+          {!isFullscreen && !isPhonePreview && (output || running || submitting) && (
             <div>
               <div className="text-xs text-gray-400 mb-1.5 font-mono">Output</div>
               <pre className="w-full min-h-12 px-4 py-3 bg-gray-50 border border-gray-100 rounded-lg text-xs font-mono text-gray-700 overflow-x-auto whitespace-pre-wrap">
@@ -507,7 +719,7 @@ export function PythonSection({
           )}
 
           {/* Public tests */}
-          {!isFullscreen && publicTests.length > 0 && (
+          {!isFullscreen && !isPhonePreview && publicTests.length > 0 && (
             <div>
               <div className="flex items-center gap-2 mb-2">
                 <div className="text-xs text-gray-400 font-mono">Tests</div>
@@ -537,7 +749,7 @@ export function PythonSection({
           )}
 
           {/* Hidden tests — count only, assertions never shown */}
-          {!isFullscreen && hiddenTests.length > 0 && (
+          {!isFullscreen && !isPhonePreview && hiddenTests.length > 0 && (
             <div
               className={`flex items-center justify-between gap-2 px-3 py-2 rounded-lg text-sm border ${
                 submitted
@@ -558,7 +770,7 @@ export function PythonSection({
           )}
 
           {/* Submission feedback */}
-          {!isFullscreen && submitted && (
+          {!isFullscreen && !isPhonePreview && submitted && (
             <div
               className={`rounded-lg px-4 py-3 text-sm border ${
                 allPassed
@@ -574,9 +786,11 @@ export function PythonSection({
             </div>
           )}
 
-          <p className="text-xs text-gray-400">
+          {!isFullscreen && !isPhonePreview && codeFeedbackPanel}
+
+          {!isPhonePreview && <p className="text-xs text-gray-400">
             Your code, output, and results save automatically. Submitting or passing tests does not complete the lesson — use &quot;Mark Complete&quot; for that.
-          </p>
+          </p>}
         </div>
       </div>
       </div>

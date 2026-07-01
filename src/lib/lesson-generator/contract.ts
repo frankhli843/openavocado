@@ -84,7 +84,8 @@ export const LESSON_QUALITY_BAR_PROMPT = [
   "- Audio must be a real walkthrough, not a short caption or table of contents. Normal lessons should target at least 10 minutes of substantive Doraemon-voice audio, longer when needed; go shorter only for explicitly short reference/diagnostic content and document why. It must explain the why, connect the steps, and include concrete worked examples in plain language.",
   "- First-class WRITTEN teaching text the learner can study without the audio (headings, a definition, a worked example, a summary) — not a transcript dump.",
   "- MULTIPLE meaningful visual/interactive explorations when the lesson covers multiple concepts. A multi-concept lesson (3+ goals/mastery targets) needs at least TWO distinct visual perspectives; a multi-step lesson should prefer step-specific visuals. One thin widget for many concepts is rejected.",
-  "- LESSON PARTS: break normal lessons into collapsed `lesson_part` activities. Each part must contain written explanation, a per-part audio script/transcript, audio.synced_visual timed across that part's audio length, a bespoke-artifact interactive visualization, and a 10-question MC reinforcement quiz requiring 4 correct answers in a row. Section done/undone buttons are a learner checklist only, available at any time, persisted in SQLite, and never used as a completion gate.",
+  "- LESSON PARTS: break normal lessons into collapsed `lesson_part` activities. Each part must contain written explanation, a per-part audio script/transcript, audio.synced_visual timed across that part's audio length, a bespoke-artifact interactive visualization, a part-specific executable code practice, and mixed reinforcement practice. Mixed practice must include select-one, select-all with some correct, select-all with none correct, ordering, and written questions. Written questions must provide actual_answer + rubric so /api/answer-judge can give immediate LLM feedback. Section done/undone buttons are a learner checklist only, available at any time, persisted in SQLite, and never used as a completion gate.",
+  "- CODE IN EVERY SUB-LESSON + FINAL INTEGRATOR: every normal lesson_part must include a code field with a small runnable exercise for that part's mechanism. The lesson must also include a final practice_code activity that ties the lesson parts together. Coding sections must provide a walkthrough, at least two concrete input/output examples, a behavior visualization mapping input -> process -> output, and worked_examples with both a basic/readable full implementation and a best concise full implementation. Phone preview is read-only answer/study mode: it must hide the runnable editor and show the optional-coding notice, walkthrough, expected I/O, behavior map, and reference answers clearly.",
   "- Interactives must deepen understanding, not merely display graphs. Each widget needs a learning objective, learner-controlled variable, visible consequence/failure mode, and written takeaway. Prefer before/after and 'what breaks if...' interactions. QA should reject any visual whose labels could be swapped and reused for an unrelated lesson.",
   "- AUDIO FOR EVERY VISUALIZATION: every visualization/interactive must have a spoken explanation clip or per-part audio script that explains what to change, what to notice, and what the visual proves. Do not leave visuals as silent graphs.",
   "- TABLE OF CONTENTS AND DEEP LINKS: every lesson, subject tab, dashboard menu, section, and activity should be reachable by stable URL/query/hash links so the learner can return directly to the right place.",
@@ -303,6 +304,9 @@ export function validateGeneratedContent(
       if (!result.valid) {
         for (const e of result.errors) errors.push(`practice_code ${label}: ${e}`);
       }
+      for (const e of validateGeneratedCodeStudySupport(activity.content)) {
+        errors.push(`practice_code ${label}: ${e}`);
+      }
     }
   }
 
@@ -331,6 +335,58 @@ function validateNewLessonBespokeArtifact(spec: unknown): string[] {
     ];
   }
   return [];
+}
+
+function validateGeneratedCodeStudySupport(content: unknown): string[] {
+  if (!content || typeof content !== "object") {
+    return [
+      "practice_code content must include walkthrough, io_examples, visualization, and worked_examples",
+    ];
+  }
+  const c = content as Record<string, unknown>;
+  const errors: string[] = [];
+
+  const walkthrough = c.walkthrough as Record<string, unknown> | undefined;
+  const steps = walkthrough && typeof walkthrough === "object" ? walkthrough.steps : undefined;
+  if (!Array.isArray(steps) || steps.length < 2) {
+    errors.push("practice_code must include walkthrough.steps with at least 2 conceptual steps");
+  }
+
+  const ioExamples = c.io_examples;
+  if (!Array.isArray(ioExamples) || ioExamples.length < 2) {
+    errors.push("practice_code must include at least 2 io_examples");
+  }
+
+  const visualization = c.visualization as Record<string, unknown> | undefined;
+  const vizItems = visualization && typeof visualization === "object" ? visualization.items : undefined;
+  if (!Array.isArray(vizItems) || vizItems.length < 3) {
+    errors.push("practice_code must include visualization.items mapping input, process, and output");
+  } else {
+    const roles = new Set(
+      vizItems
+        .map((item) => (item && typeof item === "object" ? (item as Record<string, unknown>).role : null))
+        .filter((role): role is string => typeof role === "string")
+        .map((role) => role.toLowerCase())
+    );
+    for (const role of ["input", "process", "output"]) {
+      if (!roles.has(role)) errors.push(`practice_code visualization missing "${role}" role`);
+    }
+  }
+
+  const examples = c.worked_examples;
+  if (!Array.isArray(examples)) {
+    errors.push('practice_code must include worked_examples with "basic" and "concise" full-code versions');
+    return errors;
+  }
+  const labels = new Set(
+    examples
+      .map((ex) => (ex && typeof ex === "object" ? (ex as Record<string, unknown>).label : null))
+      .filter((label): label is string => typeof label === "string")
+      .map((label) => label.toLowerCase())
+  );
+  if (!labels.has("basic")) errors.push('practice_code worked_examples missing "basic" full-code version');
+  if (!labels.has("concise")) errors.push('practice_code worked_examples missing "concise" full-code version');
+  return errors;
 }
 
 /**

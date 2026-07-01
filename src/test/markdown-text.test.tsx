@@ -34,6 +34,16 @@ describe("MarkdownText", () => {
     expect(screen.getByText("ordered one")).toBeInTheDocument();
   });
 
+  it("renders headings and safe markdown links", () => {
+    render(<MarkdownText text={"# Agent Notes\n\nSee [Gemma 4](https://deepmind.google/models/gemma/gemma-4/) for context."} />);
+
+    const heading = screen.getByRole("heading", { name: "Agent Notes" });
+    expect(heading.tagName).toBe("H3");
+
+    const link = screen.getByRole("link", { name: "Gemma 4" });
+    expect(link).toHaveAttribute("href", "https://deepmind.google/models/gemma/gemma-4/");
+  });
+
   it("keeps raw HTML as inert text", () => {
     const { container } = render(<MarkdownText text={'<img src=x onerror="alert(1)"> **safe**'} />);
     expect(container.querySelector("img")).toBeNull();

@@ -2,15 +2,17 @@
 
 import type { ReactNode } from "react";
 
-type InlineKind = "text" | "strong" | "em" | "code";
+type InlineKind = "text" | "strong" | "em" | "code" | "link";
 
 interface InlineToken {
   kind: InlineKind;
   text: string;
+  href?: string;
 }
 
 type Block =
   | { kind: "paragraph"; text: string }
+  | { kind: "heading"; level: 1 | 2 | 3 | 4; text: string }
   | { kind: "ul"; items: string[] }
   | { kind: "ol"; items: string[] }
   | { kind: "codeblock"; lang: string; code: string };
@@ -26,6 +28,16 @@ export function MarkdownText({ text, className = "" }: { text: string; className
               <code>{block.code}</code>
             </pre>
           );
+        }
+        if (block.kind === "heading") {
+          const className =
+            block.level === 1
+              ? "m-0 text-base font-semibold text-gray-950"
+              : block.level === 2
+                ? "m-0 pt-2 text-sm font-semibold text-gray-900"
+                : "m-0 pt-1 text-sm font-medium text-gray-800";
+          const Tag = `h${Math.min(block.level + 2, 6)}` as "h3" | "h4" | "h5" | "h6";
+          return <Tag key={index} className={className}>{renderInline(block.text)}</Tag>;
         }
         if (block.kind === "ul") {
           return (
@@ -101,6 +113,19 @@ function parseBlocks(text: string): Block[] {
       continue;
     }
 
+    const heading = line.match(/^(#{1,4})\s+(.+)$/);
+    if (heading) {
+      flushParagraph();
+      flushList();
+      blocks.push({
+        kind: "heading",
+        level: heading[1].length as 1 | 2 | 3 | 4,
+        text: heading[2],
+      });
+      i++;
+      continue;
+    }
+
     const unordered = line.match(/^\s*[-*]\s+(.+)$/);
     if (unordered) {
       flushParagraph();
@@ -159,6 +184,19 @@ function renderInline(text: string, keyPrefix = "inline"): ReactNode[] {
         </code>
       );
     }
+    if (token.kind === "link" && token.href) {
+      return (
+        <a
+          key={key}
+          href={token.href}
+          target="_blank"
+          rel="noreferrer"
+          className="font-medium text-blue-700 underline decoration-blue-300 underline-offset-2"
+        >
+          {renderInline(token.text, key)}
+        </a>
+      );
+    }
     return token.text;
   });
 }
@@ -175,6 +213,20 @@ function parseInline(text: string): InlineToken[] {
   }
 
   while (i < text.length) {
+    if (text[i] === "[") {
+      const closeLabel = text.indexOf("]", i + 1);
+      const openHref = closeLabel >= 0 ? text.indexOf("(", closeLabel + 1) : -1;
+      const closeHref = openHref >= 0 ? text.indexOf(")", openHref + 1) : -1;
+      if (closeLabel > i + 1 && openHref === closeLabel + 1 && closeHref > openHref + 1) {
+        const href = text.slice(openHref + 1, closeHref).trim();
+        if (/^https?:\/\/[^\s)]+$/i.test(href)) {
+          tokens.push({ kind: "link", text: text.slice(i + 1, closeLabel), href });
+          i = closeHref + 1;
+          continue;
+        }
+      }
+    }
+
     if (text[i] === "`") {
       const end = text.indexOf("`", i + 1);
       if (end > i + 1) {
@@ -215,7 +267,7 @@ function parseInline(text: string): InlineToken[] {
 }
 
 function findNextSpecial(text: string, start: number): number {
-  const indexes = ["`", "*", "_"]
+  const indexes = ["`", "*", "_", "["]
     .map((marker) => text.indexOf(marker, start))
     .filter((index) => index >= 0);
   return indexes.length ? Math.min(...indexes) : text.length;

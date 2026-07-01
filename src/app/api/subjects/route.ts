@@ -4,6 +4,7 @@ import { seedDatabase } from "@/db/seed";
 import { getSubjectCreatedDispatcher } from "@/lib/adapters";
 import { computeSubjectMastery } from "@/lib/mastery";
 import { getSessionUser } from "@/lib/auth/session";
+import { reconcileMaterializedLessonJobs } from "@/lib/lesson-jobs/reconcile";
 import type { LearnerProfile, NextLessonJob, Subject, SubjectCreatedEvent, SubjectSummary } from "@/types";
 
 /** POST /api/subjects — create a new subject for a learner */
@@ -190,6 +191,7 @@ export async function GET(request: Request) {
     // Use session learner to prevent cross-user data exposure; fall back to
     // explicit query param (for backwards-compatible API use) or learner 1.
     const learnerId = sessionUser?.active_learner_id ?? Number(searchParams.get("learner_id") || 1);
+    reconcileMaterializedLessonJobs(db, { learnerId });
 
     const subjects = db
       .prepare(

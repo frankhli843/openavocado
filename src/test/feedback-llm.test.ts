@@ -2,6 +2,7 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import {
   getAnswerFeedback,
   getAnswerJudgment,
+  getCodeFeedback,
   loadFeedbackConfig,
   parseAnswerJudgment,
   type AnswerJudgeRequest,
@@ -115,6 +116,42 @@ describe("parseAnswerJudgment", () => {
     expect(feedback).toBe("Actionable learner feedback.");
   });
 
+  it("retries transient Google demand spikes before failing feedback", async () => {
+    const fetchMock = vi.spyOn(globalThis, "fetch")
+      .mockResolvedValueOnce(
+        new Response(
+          JSON.stringify({ error: { code: 503, message: "This model is currently experiencing high demand." } }),
+          { status: 503, headers: { "Content-Type": "application/json" } }
+        )
+      )
+      .mockResolvedValueOnce(
+        new Response(
+          JSON.stringify({ candidates: [{ content: { parts: [{ text: "Recovered feedback." }] } }] }),
+          { status: 200, headers: { "Content-Type": "application/json" } }
+        )
+      );
+
+    const feedback = await getAnswerFeedback(
+      {
+        enabled: true,
+        provider: "google",
+        baseUrl: "https://generativelanguage.googleapis.com",
+        apiKey: "test-key",
+        model: "gemini-flash-latest",
+      },
+      {
+        lessonTitle: "Tokenization",
+        lessonDescription: null,
+        questionText: "Why do LLMs tokenize text?",
+        questionHint: null,
+        learnerAnswer: "So text can become model inputs.",
+      }
+    );
+
+    expect(fetchMock).toHaveBeenCalledTimes(2);
+    expect(feedback).toBe("Recovered feedback.");
+  });
+
   it("parses a strict semantic judge JSON response", () => {
     const parsed = parseAnswerJudgment(
       '{"verdict":"correct","confidence":0.91,"feedback":"Same meaning, different wording."}'
@@ -176,5 +213,51 @@ describe("parseAnswerJudgment", () => {
     expect(fetchMock).toHaveBeenCalledTimes(2);
     expect(parsed.verdict).toBe("partially_correct");
     expect(parsed.feedback).toMatch(/token-ID contract|probabilities over token IDs/i);
+  });
+
+  it("sends code, interpreter output, and test results for code feedback", async () => {
+    const fetchMock = vi.spyOn(globalThis, "fetch").mockImplementationOnce(async (_url, init) => {
+      const body = JSON.parse(String(init?.body)) as {
+        messages: Array<{ role: string; content: string }>;
+      };
+      const prompt = body.messages.find((m) => m.role === "user")?.content ?? "";
+      expect(prompt).toContain("Learner code:");
+      expect(prompt).toContain("return x + 1");
+      expect(prompt).toContain("Interpreter output:");
+      expect(prompt).toContain("AssertionError");
+      expect(prompt).toContain("public-1: FAIL");
+      expect(prompt).toContain("1/2 hidden tests passed");
+      return new Response(
+        JSON.stringify({
+          choices: [{ message: { content: "The failing public test shows an off-by-one update. Check whether the helper should return the original value before adding anything." } }],
+        }),
+        { status: 200, headers: { "Content-Type": "application/json" } }
+      );
+    });
+
+    const feedback = await getCodeFeedback(
+      {
+        enabled: true,
+        provider: "local",
+        baseUrl: "http://judge.test/v1",
+        apiKey: "",
+        model: "test-model",
+      },
+      {
+        lessonTitle: "Transformer block",
+        lessonDescription: "Practice hidden-state updates.",
+        exerciseTitle: "Code: residual update",
+        exercisePrompt: "Implement update(x).",
+        starterCode: "def update(x):\n    pass\n",
+        learnerCode: "def update(x):\n    return x + 1\n",
+        interpreterOutput: "AssertionError: expected 3",
+        publicTestResults: [{ id: "public-1", description: "returns original value", status: "fail" }],
+        hiddenTestSummary: { total: 2, passed: 1 },
+        allPassed: false,
+      }
+    );
+
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+    expect(feedback).toMatch(/off-by-one|original value/i);
   });
 });

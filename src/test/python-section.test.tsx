@@ -26,7 +26,50 @@ function practiceActivity(): LessonActivity {
     sequence_order: 5,
     content: JSON.stringify({
       prompt: "Implement a tiny logits calculation.",
+      walkthrough: {
+        title: "Trace the value before coding",
+        steps: [
+          {
+            title: "Receive token ids",
+            detail: "The function receives a short list of token ids and should preserve which ids appeared.",
+            input: "logits([1])",
+            output: "a dictionary-like score summary",
+            visual: "[1] enters the helper",
+          },
+        ],
+      },
+      io_examples: [
+        {
+          label: "Single token",
+          input: "logits([1])",
+          expected_output: "{1: 1}",
+          explanation: "The token id becomes the key and the count becomes the value.",
+        },
+      ],
+      visualization: {
+        title: "Token ids move into score slots",
+        description: "The input list is read, transformed, and returned as scores.",
+        items: [
+          { label: "Input ids", value: "[1]", role: "input" },
+          { label: "Count ids", value: "{1: 1}", role: "process" },
+          { label: "Return scores", value: "{1: 1}", role: "output" },
+        ],
+      },
       starter_code: "def logits(ids):\n    return ids\n",
+      worked_examples: [
+        {
+          label: "basic",
+          title: "Basic readable version",
+          explanation: "Use named variables so each step is visible.",
+          code: "def logits(ids):\n    scores = {}\n    for token_id in ids:\n        scores[token_id] = scores.get(token_id, 0) + 1\n    return scores\n",
+        },
+        {
+          label: "concise",
+          title: "Best concise version",
+          explanation: "The same idea can be written more tightly once it is understood.",
+          code: "def logits(ids):\n    return {token_id: ids.count(token_id) for token_id in set(ids)}\n",
+        },
+      ],
       tests: [{ id: "public-1", description: "returns something", assert: "assert logits([1])" }],
       hidden_tests: [],
       hints: [],
@@ -67,7 +110,17 @@ describe("PythonSection", () => {
     expect(phone).toHaveAttribute("aria-pressed", "true");
     expect(container.querySelector('[data-preview-mode="phone"]')).toBeInTheDocument();
     expect(container.querySelector(".max-w-\\[390px\\]")).toBeInTheDocument();
-    await waitFor(() => expect(screen.getByText("Python unavailable")).toBeInTheDocument());
+    expect(screen.queryByLabelText("Python code editor")).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: /run tests/i })).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: /submit/i })).not.toBeInTheDocument();
+    expect(screen.queryByText("Python unavailable")).not.toBeInTheDocument();
+    expect(screen.getByText("Optional coding reinforcement.")).toBeInTheDocument();
+    expect(screen.getByText("Reference answers")).toBeInTheDocument();
+    expect(screen.getByText("Basic readable version")).toBeInTheDocument();
+    expect(screen.getByText("Trace the value before coding")).toBeInTheDocument();
+    expect(screen.getByText("Single token")).toBeInTheDocument();
+    expect(screen.getByText("Token ids move into score slots")).toBeInTheDocument();
+    await waitFor(() => expect(console.warn).toHaveBeenCalled());
   });
 
   it("uses the same light theme in focus mode", async () => {

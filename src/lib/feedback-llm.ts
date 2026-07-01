@@ -105,6 +105,19 @@ export interface LessonChatRequest {
   messages: LessonChatMessage[];
 }
 
+export interface CodeFeedbackRequest {
+  lessonTitle: string;
+  lessonDescription: string | null;
+  exerciseTitle: string;
+  exercisePrompt: string;
+  starterCode: string | null;
+  learnerCode: string;
+  interpreterOutput: string;
+  publicTestResults: Array<{ id: string; description: string; status: "pass" | "fail" | "not_run" }>;
+  hiddenTestSummary: { total: number; passed: number } | null;
+  allPassed: boolean;
+}
+
 const FEEDBACK_SYSTEM = `You are a friendly learning coach. Give feedback on the student's answer.
 
 Max 2 paragraphs, max 4 sentences each. Hard limit.
@@ -164,6 +177,17 @@ Return a concise running summary that preserves:
 
 Do not include filler, timestamps, or generic encouragement.`;
 
+const CODE_FEEDBACK_SYSTEM = `You are a code tutor for AvocadoCore.
+
+The learner just submitted code. You receive the exercise context, their code, interpreter output, public test results, and only a hidden-test pass count.
+
+Return learner-facing feedback only.
+- If all tests passed: 1-2 concise sentences noting the key idea that worked.
+- If anything failed: 2-4 concise sentences. Name the most likely issue, cite the visible output or failed public test, and give one actionable hint for the next edit.
+- Do not reveal hidden test assertions or invent hidden-test details.
+- Do not provide a full corrected solution unless the submitted code is already essentially correct.
+- Prefer a hint over a rewrite.`;
+
 function buildUserPrompt(req: FeedbackRequest): string {
   const parts = [`Lesson: ${req.lessonTitle}`];
   if (req.lessonDescription) parts.push(`Context: ${req.lessonDescription}`);
@@ -211,6 +235,27 @@ function buildSummaryPrompt(previousSummary: string | null, messages: LessonChat
     ...messages.map((m) => `${m.role === "user" ? "Learner" : "Tutor"}: ${m.content}`),
   ];
   return lines.join("\n");
+}
+
+function buildCodeFeedbackPrompt(req: CodeFeedbackRequest): string {
+  const publicLines = req.publicTestResults.length
+    ? req.publicTestResults.map((t) => `- ${t.id}: ${t.status.toUpperCase()} — ${t.description}`).join("\n")
+    : "(no public tests)";
+  const hiddenLine = req.hiddenTestSummary
+    ? `${req.hiddenTestSummary.passed}/${req.hiddenTestSummary.total} hidden tests passed. Hidden assertions are not visible.`
+    : "No hidden tests.";
+  return [
+    `Lesson: ${req.lessonTitle}`,
+    req.lessonDescription ? `Lesson context: ${req.lessonDescription}` : null,
+    `Exercise: ${req.exerciseTitle}`,
+    `Exercise prompt: ${req.exercisePrompt}`,
+    req.starterCode ? `Starter code:\n${req.starterCode}` : null,
+    `Learner code:\n${req.learnerCode}`,
+    `Interpreter output:\n${req.interpreterOutput || "(no output)"}`,
+    `Public test results:\n${publicLines}`,
+    `Hidden test summary: ${hiddenLine}`,
+    `Overall status: ${req.allPassed ? "all tests passed" : "some tests failed"}`,
+  ].filter((line): line is string => Boolean(line)).join("\n\n");
 }
 
 export function parseAnswerJudgment(raw: string): AnswerJudgment {
@@ -464,24 +509,15 @@ async function callAnthropicJudge(
 }
 
 async function callGoogle(config: FeedbackConfig, req: FeedbackRequest): Promise<string> {
-  const url = `${config.baseUrl}/v1beta/models/${config.model}:generateContent`;
-  const res = await fetch(url, {
-    method: "POST",
-    headers: { "Content-Type": "application/json", "X-goog-api-key": config.apiKey },
-    body: JSON.stringify({
+  const data = await fetchGoogleGenerateContent(
+    config,
+    {
       systemInstruction: { parts: [{ text: FEEDBACK_SYSTEM }] },
       contents: [{ parts: [{ text: buildUserPrompt(req) }] }],
       generationConfig: { maxOutputTokens: 1024, temperature: 0.7 },
-    }),
-    signal: AbortSignal.timeout(30000),
-  });
-
-  if (!res.ok) {
-    const text = await res.text().catch(() => "");
-    throw new Error(`Google API error ${res.status}: ${text.slice(0, 200)}`);
-  }
-
-  const data = (await res.json()) as GoogleGenerateContentResponse;
+    },
+    "Google API error"
+  );
   return extractGoogleText(data)?.trim() ?? "(no feedback generated)";
 }
 
@@ -491,24 +527,15 @@ async function callGoogleJudge(
   system = JUDGE_SYSTEM,
   userPrompt = buildJudgePrompt(req)
 ): Promise<string> {
-  const url = `${config.baseUrl}/v1beta/models/${config.model}:generateContent`;
-  const res = await fetch(url, {
-    method: "POST",
-    headers: { "Content-Type": "application/json", "X-goog-api-key": config.apiKey },
-    body: JSON.stringify({
+  const data = await fetchGoogleGenerateContent(
+    config,
+    {
       systemInstruction: { parts: [{ text: system }] },
       contents: [{ parts: [{ text: userPrompt }] }],
       generationConfig: { maxOutputTokens: 512, temperature: 0.1, responseMimeType: "application/json" },
-    }),
-    signal: AbortSignal.timeout(30000),
-  });
-
-  if (!res.ok) {
-    const text = await res.text().catch(() => "");
-    throw new Error(`Google judge API error ${res.status}: ${text.slice(0, 200)}`);
-  }
-
-  const data = (await res.json()) as GoogleGenerateContentResponse;
+    },
+    "Google judge API error"
+  );
   return extractGoogleText(data)?.trim() ?? "";
 }
 
@@ -599,27 +626,19 @@ async function callGoogleChat(
   maxTokens = 1024,
   temperature = 0.4
 ): Promise<string> {
-  const url = `${config.baseUrl}/v1beta/models/${config.model}:generateContent`;
-  const res = await fetch(url, {
-    method: "POST",
-    headers: { "Content-Type": "application/json", "X-goog-api-key": config.apiKey },
-    body: JSON.stringify({
+  const data = await fetchGoogleGenerateContent(
+    config,
+    {
       systemInstruction: { parts: [{ text: system }] },
       contents: messages.map((m) => ({
         role: m.role === "assistant" ? "model" : "user",
         parts: [{ text: m.content }],
       })),
       generationConfig: { maxOutputTokens: maxTokens, temperature },
-    }),
-    signal: AbortSignal.timeout(60000),
-  });
-
-  if (!res.ok) {
-    const text = await res.text().catch(() => "");
-    throw new Error(`Google chat API error ${res.status}: ${text.slice(0, 200)}`);
-  }
-
-  const data = (await res.json()) as GoogleGenerateContentResponse;
+    },
+    "Google chat API error",
+    60000
+  );
   return extractGoogleText(data)?.trim() ?? "";
 }
 
@@ -630,6 +649,39 @@ interface GoogleGenerateContentResponse {
 function extractGoogleText(data: GoogleGenerateContentResponse): string | null {
   const parts = data.candidates?.[0]?.content?.parts ?? [];
   return parts.find((part) => part.text && !part.thought)?.text ?? parts.find((part) => part.text)?.text ?? null;
+}
+
+function sleep(ms: number): Promise<void> {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+function isTransientGoogleStatus(status: number): boolean {
+  return status === 429 || status === 500 || status === 502 || status === 503 || status === 504;
+}
+
+async function fetchGoogleGenerateContent(
+  config: FeedbackConfig,
+  body: unknown,
+  label: string,
+  timeoutMs = 30000
+): Promise<GoogleGenerateContentResponse> {
+  const url = `${config.baseUrl}/v1beta/models/${config.model}:generateContent`;
+  let lastText = "";
+  let lastStatus = 0;
+  for (let attempt = 0; attempt < 3; attempt++) {
+    const res = await fetch(url, {
+      method: "POST",
+      headers: { "Content-Type": "application/json", "X-goog-api-key": config.apiKey },
+      body: JSON.stringify(body),
+      signal: AbortSignal.timeout(timeoutMs),
+    });
+    if (res.ok) return (await res.json()) as GoogleGenerateContentResponse;
+    lastStatus = res.status;
+    lastText = await res.text().catch(() => "");
+    if (!isTransientGoogleStatus(res.status) || attempt === 2) break;
+    await sleep(1000 * (attempt + 1));
+  }
+  throw new Error(`${label} ${lastStatus}: ${lastText.slice(0, 200)}`);
 }
 
 export async function getAnswerFeedback(config: FeedbackConfig, req: FeedbackRequest): Promise<string> {
@@ -686,6 +738,17 @@ export async function summarizeLessonChat(
     0.1
   );
   return summary.trim().slice(0, 4000);
+}
+
+export async function getCodeFeedback(config: FeedbackConfig, req: CodeFeedbackRequest): Promise<string> {
+  const feedback = await callLessonChatRaw(
+    config,
+    CODE_FEEDBACK_SYSTEM,
+    [{ role: "user", content: buildCodeFeedbackPrompt(req) }],
+    700,
+    0.25
+  );
+  return feedback.trim() || "I could not generate code feedback for this submission.";
 }
 
 async function callJudgeRaw(

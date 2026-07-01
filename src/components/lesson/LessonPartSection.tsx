@@ -6,6 +6,8 @@ import type { AudioSyncedVisualContent, AudioSyncedVisualCue, LessonPartContent 
 import type { WidgetStateChange } from "./widgets/DeclarativeWidget";
 import { WidgetHost } from "./widgets/WidgetHost";
 import { LessonDiagramsView } from "./LessonDiagrams";
+import { PythonSection } from "./PythonSection";
+import { LessonPartPracticeSection } from "./LessonPartPracticeSection";
 import {
   MultipleChoiceAssessmentSection,
   type QuizAssessContext,
@@ -22,6 +24,9 @@ interface LessonPartSectionProps {
   onQuizStateChange: (serialized: string) => void;
   onQuizPassedChange: (passed: boolean) => void;
   assessContext?: QuizAssessContext | null;
+  learnerId: number;
+  lessonTitle?: string;
+  lessonDescription?: string | null;
 }
 
 export function LessonPartSection({
@@ -33,6 +38,9 @@ export function LessonPartSection({
   onQuizStateChange,
   onQuizPassedChange,
   assessContext,
+  learnerId,
+  lessonTitle,
+  lessonDescription,
 }: LessonPartSectionProps) {
   const parsed = useMemo(() => {
     if (!activity.content) return { part: null, error: "No lesson-part content" };
@@ -145,13 +153,44 @@ export function LessonPartSection({
             />
           </PartBlock>
 
-          <MultipleChoiceAssessmentSection
-            activity={activity}
-            savedQuizState={savedQuizState}
-            onStateChange={onQuizStateChange}
-            onPassedChange={onQuizPassedChange}
-            assessContext={assessContext ?? null}
-          />
+          {part.code && (
+            <PartBlock title="Code practice">
+              <PythonSection
+                activity={{
+                  ...activity,
+                  activity_type: "practice_code",
+                  title: `Code: ${activity.title ?? part.part_id ?? "lesson part"}`,
+                  content: JSON.stringify(part.code),
+                }}
+                learnerId={learnerId}
+                lessonTitle={lessonTitle ?? "Untitled lesson"}
+                lessonDescription={lessonDescription ?? null}
+                initialCode={part.code.starter_code ?? ""}
+                initialOutput=""
+                initialTests={{}}
+                onChange={() => undefined}
+              />
+            </PartBlock>
+          )}
+
+          {part.practice ? (
+            <PartBlock title="Practice">
+              <LessonPartPracticeSection
+                activity={activity}
+                lesson={{ title: lessonTitle ?? "Untitled lesson", description: lessonDescription ?? null }}
+                practice={part.practice}
+                assessContext={assessContext ?? null}
+              />
+            </PartBlock>
+          ) : (
+            <MultipleChoiceAssessmentSection
+              activity={activity}
+              savedQuizState={savedQuizState}
+              onStateChange={onQuizStateChange}
+              onPassedChange={onQuizPassedChange}
+              assessContext={assessContext ?? null}
+            />
+          )}
         </>
       )}
     </div>

@@ -170,12 +170,17 @@ enforced by `validateGeneratedContent`; the rest is a hard authoring rule.
 - **First-class written teaching text** (`reading`), not a transcript dump.
 - **Collapsed lesson parts for normal lessons.** Break the lesson into
   `lesson_part` activities whenever the topic has steps or sub-concepts. Each
-  part contains the written explanation, per-part audio script or clip,
-  interactive visualization, and a 10-question MC reinforcement quiz. The
-  learner must pass 4 correct answers in a row for reinforcement. Each section
-  has a done/undone button that the learner may toggle at any time as a personal
+  part contains the written explanation, per-part audio script/transcript,
+  `audio.synced_visual`, an adjacent bespoke-artifact visualization, a
+  part-specific executable code practice, and mixed reinforcement practice.
+  Mixed practice must include select-one, select-all with some correct,
+  select-all with none correct, ordering, and written-response prompts.
+  Written prompts must include `actual_answer` and `rubric` so
+  `/api/answer-judge` can give immediate LLM feedback. Each section has a
+  done/undone button that the learner may toggle at any time as a personal
   checklist marker. That marker persists in SQLite but is not a completion gate
-  and does not replace the final end-of-lesson assessment or any practice/code.
+  and does not replace the final end-of-lesson assessment or final integrator
+  code.
 - **Multiple meaningful visual/interactive explorations when the lesson covers
   multiple concepts.** A multi-concept lesson (3+ goals or mastery targets) must
   offer **at least two distinct visual perspectives** — either several
@@ -348,7 +353,21 @@ gate, and lesson JSON references only the slug.
 `practice_code` is a real submission exercise. Provide:
 
 - `prompt` — the task (required).
+- `walkthrough` — 3-5 conceptual steps that explain what the input represents,
+  what transformation the learner is implementing, what output shape/type is
+  expected, and why the tests expect that behavior.
+- `io_examples` — at least two concrete input and expected-output examples
+  with short explanations. These examples should let the learner predict the
+  behavior before reading or editing code.
+- `visualization` — a compact behavior map with labelled input, process, and
+  output items. It should make the data flow visible even if the learner skips
+  the runnable editor on phone.
 - `starter_code` — scaffolding only.
+- `worked_examples` — two full-code references: one `label: "basic"` readable
+  implementation and one `label: "concise"` best concise implementation. These
+  are rendered in a controlled study area and are especially important in phone
+  preview, where the learner studies the answer/reference path without typing
+  in the editor.
 - `constraints` and `guided_steps` — rules and an ordered path that guide
   without giving the answer.
 - `hints` — progressive and unboxable: start with a conceptual nudge, then a
@@ -365,9 +384,16 @@ gate, and lesson JSON references only the slug.
 
 Validation **rejects** any top-level `solution`, `answer`, `solution_code`,
 `reference_solution`, or `completed_code` field. Progressive answer support
-belongs in hints and comments, revealed step by step. The learner must write
-and submit code that passes the tests. Passing tests records a mastery signal but
-**never** completes the lesson.
+belongs in hints, comments, and the controlled `worked_examples` study block.
+The learner must write and submit code that passes the tests. Passing tests
+records a mastery signal but **never** completes the lesson.
+
+Every Submit also requests LLM code feedback through `/api/code-feedback` when
+the feedback provider is enabled. The request includes the exercise prompt,
+starter code, learner code, interpreter output, public test results, and only
+the hidden-test pass count. Feedback should name the likely issue and provide a
+next-edit hint when something fails, without revealing hidden assertions or
+dumping a full solution.
 
 ## Lesson parts (`lesson_part` content — required for normal lessons with steps)
 
@@ -405,23 +431,44 @@ coherent idea and include all four teaching modes:
     "instructions": "Change the image size and watch what breaks...",
     "params": { "artifact_slug": "resize-breakage-scene" }
   },
-  "quiz": {
-    "pass_threshold": 4,
-    "consecutive_correct_required": 4,
-    "idk_option": true,
-    "questions": [/* exactly 10 questions */]
+  "code": {
+    "prompt": "Implement the tiny helper for this part's mechanism.",
+    "starter_code": "def helper(x):\n    pass\n",
+    "worked_examples": [
+      { "label": "basic", "title": "Basic readable version", "code": "..." },
+      { "label": "concise", "title": "Best concise version", "code": "..." }
+    ],
+    "tests": [{ "id": "part-code", "description": "...", "assert": "..." }]
+  },
+  "practice": {
+    "written_feedback": "llm_judge",
+    "questions": [
+      { "type": "select_one", "prompt": "...", "choices": [...], "correct_index": 0, "explanation": "..." },
+      { "type": "select_all", "prompt": "...", "choices": [...], "correct_indices": [0, 2], "explanation": "..." },
+      { "type": "select_all", "prompt": "...", "choices": [...], "correct_indices": [], "explanation": "None of these are correct because ..." },
+      { "type": "ordering", "prompt": "...", "items": [...], "correct_order": [...], "explanation": "..." },
+      { "type": "written", "prompt": "...", "actual_answer": "...", "rubric": "..." }
+    ]
   }
 }
 ```
 
 Lesson-part rules:
 - Parts are collapsed by default in the UI and show a checkmark only after the
-  learner passes the part quiz and clicks "Mark Part Done".
+  learner clicks "Mark Part Done". Practice feedback and code checks are
+  learning evidence, not a hard gate for that checklist marker.
 - Each part must include a transcript and `audio.synced_visual` timeline whose
   cues cover most of the part audio. The visual must change with playback time.
-- Each part quiz must contain exactly 10 MC questions, `pass_threshold: 4`, and
-  `consecutive_correct_required: 4`. Wrong answers and "I don't know" reset the
-  streak and still create retry obligations.
+- Each part must include a `code` object using the same `practice_code` schema
+  as final code activities. The code exercise should target this part's exact
+  mechanism, not the whole lesson.
+- Each part must include mixed `practice.questions`: at least six prompts,
+  including select-one, select-all with multiple correct choices, select-all
+  with no correct choices, ordering, and written response.
+- Written part-practice questions must provide `actual_answer` and `rubric`.
+  The UI calls `/api/answer-judge` for immediate LLM feedback when the provider
+  is configured, and falls back loudly to local rubric comparison only when the
+  judge is unavailable.
 - Prefer one visualization per part. If a part contains multiple charts/views,
   the part audio must explicitly explain each visualization.
 - This per-part reinforcement does not replace the final assessment, final
@@ -498,7 +545,9 @@ diagnostics are assessed the same way at completion.
 - The learner must answer `pass_threshold` **distinct concepts** correctly
   (default: 6). A concept is counted once even if multiple retries were needed.
 - When `consecutive_correct_required` is set, the learner must also satisfy the
-  configured streak rule. Lesson parts require 4 correct answers in a row.
+  configured streak rule. Use this for final adaptive quiz flows only when it
+  improves learning; lesson-part reinforcement now uses mixed practice instead
+  of 4-in-a-row MC.
 - A wrong answer schedules a retry: the missed concept returns later in the
   queue in a rephrased form (via `AVOCADOCORE_ACP_ENDPOINT` if configured, or
   a deterministic choice-shuffle fallback). The retry is generated
@@ -558,8 +607,9 @@ deployment configuration.
 - [ ] Normal lessons are broken into `lesson_part` activities where appropriate:
       each part has written explanation, per-part audio transcript,
       `audio.synced_visual` timed cues, a bespoke-artifact interactive
-      visualization, exactly 10 MC questions, `pass_threshold: 4`, and
-      `consecutive_correct_required: 4`.
+      visualization, part-specific executable code, and mixed practice covering
+      select-one, select-all some, select-all none, ordering, and written
+      LLM-graded feedback.
 - [ ] At least two visual perspectives on the core concept, and every
       visualization has an audio explanation clip or per-part audio script.
 - [ ] Every new interactive uses `widget_type: "bespoke-artifact"` and has
@@ -568,7 +618,14 @@ deployment configuration.
 - [ ] Media (if used) has reason + fallback and resolves to a valid video id.
 - [ ] Code has a prompt, progressive unboxable hints all the way to the answer
       explanation, public + hidden tests, comments documenting any external
-      Python library calls, and no top-level exposed solution field.
+      Python library calls, and no top-level exposed solution field. Every
+      `practice_code` and lesson-part `code` object includes `walkthrough`,
+      at least two `io_examples`, a `visualization` mapping input -> process ->
+      output, and `worked_examples` with both basic/readable and best concise
+      full implementations.
+- [ ] Code Submit shows AI feedback from `/api/code-feedback`, using the
+      submitted code, interpreter output, visible test failures, and hidden test
+      pass count to give a concrete hint when something is wrong.
 - [ ] Assessment questions probe understanding, not recall of the audio.
 - [ ] Adaptive MC quiz present for normal lessons: 8+ questions, unique ids, `pass_threshold` ≤ question count,
       a **required `difficulty`** on every question, `misconception_target` and
@@ -738,10 +795,13 @@ LIVE / FRESH-DB VERIFICATION (required before QA):
 - Confirm the knowledge graph renders at the top, audio player shows real duration (not 0:00),
   and all activities are visible without horizontal overflow at 390px.
 - If the lesson has a code exercise, use the code exercise Desktop/Phone preview
-  control and verify Phone mode. The code editor, action buttons, hints, output,
-  and tests must remain readable and tappable inside the 390px preview.
+  control and verify Phone mode. Phone mode must be read-only: no code editor,
+  no Run/Submit controls, no runtime badge. It must show the optional-coding
+  notice, walkthrough, expected input/output examples, behavior visualization,
+  and full reference answers inside the 390px preview without horizontal
+  overflow.
 - Run the actual code exercise in the browser. Click Run tests and Submit with
-  the starter or intended solution path, verify public and hidden tests execute,
+  the starter or intended solution path in Desktop mode, verify public and hidden tests execute,
   and fix any runtime/package failure such as missing Pyodide packages. A code
   section that looks correct but has never been executed does not pass QA.
 

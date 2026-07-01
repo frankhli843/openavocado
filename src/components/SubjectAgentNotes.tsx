@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import type { SubjectWorkpad } from "@/types";
+import { MarkdownText } from "@/components/MarkdownText";
 
 interface SubjectAgentNotesProps {
   subjectId: number;
@@ -73,9 +74,9 @@ export function SubjectAgentNotes({ subjectId, learnerId }: SubjectAgentNotesPro
       </div>
       <div className="px-4 py-4 sm:px-5">
         {content ? (
-          <pre className="max-h-[70vh] overflow-auto whitespace-pre-wrap break-words rounded-lg bg-gray-50 p-4 font-sans text-sm leading-6 text-gray-700">
-            {content}
-          </pre>
+          <div className="max-h-[70vh] overflow-auto rounded-lg bg-gray-50 p-4 text-sm leading-6 text-gray-700">
+            <MarkdownText text={content} />
+          </div>
         ) : (
           <p className="rounded-lg bg-gray-50 p-4 text-sm text-gray-500">
             No subject workpad notes yet. Future lesson generation tasks will maintain the living plan here.

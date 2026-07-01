@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { getDb } from "@/db/connection";
 import { computeSubjectMastery } from "@/lib/mastery";
+import { reconcileMaterializedLessonJobs } from "@/lib/lesson-jobs/reconcile";
 import type { Subject, Lesson, MasterySignal, ProgressPoint } from "@/types";
 
 /** GET /api/subjects/:id — full subject detail with lessons, mastery, progress */
@@ -12,6 +13,7 @@ export async function GET(
     const { id } = await params;
     const db = getDb();
     const subjectId = Number(id);
+    reconcileMaterializedLessonJobs(db, { subjectId });
 
     const subject = db
       .prepare("SELECT * FROM subjects WHERE id = ?")

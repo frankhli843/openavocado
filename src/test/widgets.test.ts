@@ -294,6 +294,42 @@ function validBespokeSpec(slug = "my-concept-viz"): Record<string, unknown> {
   };
 }
 
+function codeStudySupport() {
+  return {
+    walkthrough: {
+      title: "Trace the behavior",
+      steps: [
+        {
+          title: "Read the input",
+          detail: "Identify the exact value that enters the tiny fixture before writing implementation syntax.",
+          input: "x = 0",
+          output: "not correct yet",
+          visual: "the starting value sits before the assignment.",
+        },
+        {
+          title: "Produce the expected value",
+          detail: "The exercise changes the value so the visible test has a concrete expected output.",
+          input: "set x",
+          output: "x == 1",
+          visual: "the value moves into the expected slot.",
+        },
+      ],
+    },
+    io_examples: [
+      { label: "Before", input: "x = 0", expected_output: "test fails", explanation: "The starting value is not the expected result." },
+      { label: "After", input: "x = 1", expected_output: "test passes", explanation: "The expected value satisfies the public test." },
+    ],
+    visualization: {
+      title: "Value becomes the test target",
+      items: [
+        { label: "Input", value: "x = 0", role: "input" as const },
+        { label: "Process", value: "assign x = 1", role: "process" as const },
+        { label: "Output", value: "x == 1", role: "output" as const },
+      ],
+    },
+  };
+}
+
 function baseContent(interactiveContent: Record<string, unknown>): GeneratedLessonContent {
   return {
     title: "T",
@@ -324,6 +360,20 @@ function baseContent(interactiveContent: Record<string, unknown>): GeneratedLess
         title: "c",
         content: {
           prompt: "Do the thing.",
+          ...codeStudySupport(),
+          starter_code: "x = 0\n",
+          worked_examples: [
+            {
+              label: "basic",
+              title: "Basic readable version",
+              code: "x = 1\nresult = x\nprint(result)\n",
+            },
+            {
+              label: "concise",
+              title: "Best concise version",
+              code: "result = 1\nprint(result)\n",
+            },
+          ],
           tests: [{ id: "t1", description: "works", assert: "x == 1" }],
         },
       },
