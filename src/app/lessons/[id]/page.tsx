@@ -542,8 +542,8 @@ export default function LessonPage({ params }: { params: Promise<{ id: string }>
       <div className={chatMaximized ? "transition-[padding] duration-200 xl:pr-[28rem]" : "transition-[padding] duration-200"}>
         {/* Sticky top bar */}
         <div className="sticky top-0 z-10 bg-white border-b border-gray-200">
-          <div className="max-w-4xl mx-auto px-6 h-11 flex items-center justify-between gap-4">
-          <div className="flex items-center gap-2 text-sm text-gray-500 min-w-0">
+          <div className="max-w-4xl mx-auto px-4 sm:px-6 py-2 sm:py-0 sm:h-11 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 sm:gap-4">
+          <div className="flex items-center gap-2 text-xs sm:text-sm text-gray-500 min-w-0">
             <Link href="/?resume=0" className="hover:text-gray-800 transition-colors shrink-0">
               &#8592; Dashboard
             </Link>
@@ -555,12 +555,12 @@ export default function LessonPage({ params }: { params: Promise<{ id: string }>
               Subject
             </Link>
             <span className="text-gray-300">/</span>
-            <span className="truncate text-gray-700 font-medium">{lesson.title}</span>
+            <span className="hidden sm:block truncate text-gray-700 font-medium">{lesson.title}</span>
           </div>
 
-          <div className="flex items-center gap-3 shrink-0">
+          <div className="flex items-center justify-end gap-2 sm:gap-3 shrink-0">
             {/* Save status */}
-            <span className="text-xs text-gray-400">
+            <span className="hidden sm:inline text-xs text-gray-400">
               {saveStatus === "saving"
                 ? "Saving..."
                 : saveStatus === "saved" && lastSavedAt
@@ -572,7 +572,7 @@ export default function LessonPage({ params }: { params: Promise<{ id: string }>
             {!completed && !discarded && lesson.status !== "completed" && (
               <button
                 onClick={() => setShowDiscardModal(true)}
-                className="px-3 py-1.5 text-sm font-medium text-gray-500 border border-gray-200 rounded-lg hover:bg-gray-50 hover:text-gray-700 transition-colors"
+                className="px-3 py-1.5 text-sm font-medium text-gray-500 border border-gray-200 rounded-lg hover:bg-gray-50 hover:text-gray-700 transition-colors whitespace-nowrap"
                 title="Discard this lesson and request a replacement"
               >
                 Discard
@@ -585,16 +585,16 @@ export default function LessonPage({ params }: { params: Promise<{ id: string }>
                 onClick={handleComplete}
                 disabled={completing || lesson.status === "completed" || completionBlocked}
                 title={completionBlockedByQuiz ? "Pass the final quiz first" : undefined}
-                className="px-4 py-1.5 text-sm font-medium bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+                className="px-4 py-1.5 text-sm font-medium bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:opacity-40 disabled:cursor-not-allowed transition-colors whitespace-nowrap"
               >
                 {completing ? "Completing..." : "Mark Complete"}
               </button>
             ) : completed ? (
-              <span className="px-3 py-1.5 text-sm font-medium bg-green-50 text-green-700 rounded-lg border border-green-100">
+              <span className="px-3 py-1.5 text-sm font-medium bg-green-50 text-green-700 rounded-lg border border-green-100 whitespace-nowrap">
                 Completed
               </span>
             ) : (
-              <span className="px-3 py-1.5 text-sm font-medium bg-amber-50 text-amber-700 rounded-lg border border-amber-100">
+              <span className="px-3 py-1.5 text-sm font-medium bg-amber-50 text-amber-700 rounded-lg border border-amber-100 whitespace-nowrap">
                 Discarded
               </span>
             )}

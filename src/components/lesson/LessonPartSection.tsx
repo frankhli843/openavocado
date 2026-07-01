@@ -52,28 +52,6 @@ export function LessonPartSection({
         </div>
       ) : (
         <>
-          <PartBlock title="Written explanation">
-            <article className="space-y-4">
-              {part.reading.intro && (
-                <p className="text-[15px] text-gray-700 leading-7">{part.reading.intro}</p>
-              )}
-              {part.reading.blocks.map((block, i) => (
-                <ReadingBlockView key={i} block={block} />
-              ))}
-              {part.reading.diagrams && part.reading.diagrams.length > 0 && (
-                <LessonDiagramsView diagrams={part.reading.diagrams} />
-              )}
-              {part.reading.summary && (
-                <div className="rounded-lg bg-green-50/70 border border-green-100 px-4 py-3">
-                  <div className="text-xs font-semibold text-green-700 uppercase tracking-wider mb-1">
-                    In short
-                  </div>
-                  <p className="text-sm text-gray-700 leading-relaxed">{part.reading.summary}</p>
-                </div>
-              )}
-            </article>
-          </PartBlock>
-
           <PartBlock title="Audio">
             {artifact?.file_path ? (
               <div className="space-y-2">
@@ -97,6 +75,28 @@ export function LessonPartSection({
                 {part.audio.script}
               </div>
             </details>
+          </PartBlock>
+
+          <PartBlock title="Written explanation">
+            <article className="space-y-4">
+              {part.reading.intro && (
+                <p className="text-[15px] text-gray-700 leading-7">{part.reading.intro}</p>
+              )}
+              {part.reading.blocks.map((block, i) => (
+                <ReadingBlockView key={i} block={block} />
+              ))}
+              {part.reading.diagrams && part.reading.diagrams.length > 0 && (
+                <LessonDiagramsView diagrams={part.reading.diagrams} />
+              )}
+              {part.reading.summary && (
+                <div className="rounded-lg bg-green-50/70 border border-green-100 px-4 py-3">
+                  <div className="text-xs font-semibold text-green-700 uppercase tracking-wider mb-1">
+                    In short
+                  </div>
+                  <p className="text-sm text-gray-700 leading-relaxed">{part.reading.summary}</p>
+                </div>
+              )}
+            </article>
           </PartBlock>
 
           <PartBlock title="Interactive">

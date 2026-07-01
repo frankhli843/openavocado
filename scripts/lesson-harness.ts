@@ -336,12 +336,22 @@ ${trigger}
 Generate a high-quality adaptive lesson for this learner. The lesson must:
 - Be pedagogically grounded in the learner's actual evidence (mastery signals, assessment results, completed lessons)
 - Include a clear planning_rationale explaining WHY this lesson is the right next step NOW
+- Start from a concept audit: list the major nouns and mechanisms the lesson will rely on, treat a concept as known only when assessment answers, mastery signals, completed lesson content, or profile criteria prove it, and define every unproven prerequisite before using it
 - Have a rich audio script (target 800-1200 words — the learner will listen to this as their primary learning)
-- Include 3-5 substantive reading blocks that teach the concept clearly with examples
+- Include 8-12 substantive reading blocks that teach the concept clearly with definitions, worked examples, mechanism traces, and explicit preview/deeper-later language when needed
 - Include 2-3 open-ended assessment questions that check understanding
-- Include 3-4 multiple-choice quiz questions grounded in taught material
+- Include 8-10 multiple-choice quiz questions grounded in taught material
 - Include 2 next-lesson diagnostic questions (look-ahead probes, NOT graded)
 - Be specific to this subject and learner — avoid generic filler content
+
+Non-negotiable lesson-depth rules:
+- DEFINE MAJOR NOUNS UNLESS EVIDENCE PROVES THEY ARE KNOWN. Do not assume the learner understands terms such as transformer block, attention, MLP, residual stream, normalization, logits, loss, gradient, KV cache, matrix, vector, tensor, prior, likelihood, or cache from a title or curriculum outline alone.
+- MECHANISM-LEVEL DETAIL, NOT COMPRESSED SUMMARIES. A sentence like "attention mixes context, the MLP transforms each token, residuals keep signal, and the output head produces logits" is an outline, not teaching. Expand dense mechanisms into a concrete micro-trace with tiny labeled dimensions and before/after state.
+- ADJACENT VISUALS FOR DENSE MECHANISMS. Every mechanism-heavy paragraph should be paired with a diagram or interactive that uses the same nouns as the text. For transformer content, show token positions, hidden-state rows, attention weights or context update, MLP update, normalization/residual boundary, output-head projection, and logits table near the prose that names them.
+- SECTION PIPELINE STAGE MAPS. Every lesson part in a pipeline/process lesson must include a local stage-and-handoff visual: what came before, what this section receives, what it changes, what it outputs, and what comes next. For LLM lessons, explicitly distinguish tokenizer, embeddings/hidden states, transformer blocks, output head/logits, training, and inference/serving.
+- LESSON FLOW ORDER. The learner-facing flow is: listen to audio first, then study text and visualizations together, then do practice problems/code and assessments.
+- Transformer-block example standard: before saying "a transformer block refines hidden states", define it as one repeated layer that receives one vector row per token, lets token rows read other token rows through attention, updates each row through an MLP, wraps updates with normalization and residual addition, and returns the same shape with more context-aware values.
+- MLP example standard: before saying "the MLP transforms each token", define MLP as the per-token feed-forward subnetwork inside the block, show that it receives one token hidden vector at a time, uses learned linear layers plus an activation, and returns an update vector that fits back into the same token row.
 
 CRITICAL: Use the mastery signals and assessment evidence to personalize content.
 - If a concept has low confidence signals: address it directly and carefully

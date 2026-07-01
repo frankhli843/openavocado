@@ -91,6 +91,56 @@ enforced by `validateGeneratedContent`; the rest is a hard authoring rule.
   vocabulary-ID rows by hidden-dimension columns, explain that it is learned
   model weights, and show that tokenizer IDs are row addresses. Do not make the
   learner learn the object and the operation in the same breath.
+- **Do not assume the learner knows the main nouns.** A major concept can be
+  used without redefinition only when learner evidence shows it is already
+  known: prior assessment answers, mastery signals, explicit profile criteria,
+  or completed lesson content that actually taught the term. A prior lesson
+  title or curriculum plan is not enough. If evidence is missing or weak, define
+  the object before using it. Example: before saying "a transformer block
+  refines hidden states", explain that a transformer block is one repeated layer
+  that receives one vector row per token, lets token rows read from other token
+  rows through attention, updates each row through an MLP, wraps those updates
+  with normalization and residual addition, and returns the same shape with more
+  context-aware values. Likewise, do not say "the MLP transforms each token"
+  until the lesson has defined MLP as the per-token feed-forward subnetwork
+  inside the block, shown its input hidden vector, explained its learned linear
+  layers plus activation in learner language, and shown its output update
+  fitting back into the token row.
+- **Mechanism paragraphs need mechanism-level detail.** Do not ship compressed
+  paragraphs that name several operations without unpacking them. For example,
+  "transformer blocks refine hidden states; attention mixes context; the MLP
+  transforms each token; residuals keep older signal; the output head produces
+  logits" is only an outline. A finished lesson must expand that into a
+  concrete micro-trace: the incoming hidden-state matrix, which token positions
+  attend to which other positions, what the attention update adds, what the MLP
+  changes per token, where normalization and residual addition sit, and how the
+  final hidden vector is projected into one raw score per vocabulary token. Use
+  tiny numbers and stable labels, for example 4 token positions, 3 hidden
+  dimensions, and a 5-token vocabulary, so the learner sees actual rows/cells
+  changing instead of abstract verbs.
+- **Put visuals beside the exact text they explain.** A distant overview widget
+  does not count as support for several dense paragraphs. When a paragraph
+  teaches a mechanism, attach a Mermaid/static diagram in `reading.diagrams[]`
+  or include a lesson-part interactive immediately next to that text. The
+  visual should use the same nouns as the paragraph: token positions, hidden
+  state rows, residual stream, attention weights, MLP update, normalization
+  boundary, output-head projection, logits table, or the equivalent concrete
+  objects for the lesson domain. If a mechanism is intentionally only a preview,
+  say "preview" in both audio and written text and state when deeper treatment
+  will come later.
+- **Every pipeline/process section needs a local stage map.** The full lesson
+  knowledge graph is not enough. Each lesson part that belongs to a pipeline,
+  lifecycle, syllabus path, or build sequence should include a small handoff
+  visual showing what came before, what this section receives, what it changes,
+  what it outputs, and what comes next. For LLM lessons, explicitly distinguish
+  tokenizer, embeddings/hidden states, transformer blocks, output head/logits,
+  training, and inference/serving so the learner can answer questions like
+  "how does the tokenizer relate to the transformer?" while reading the section.
+- **Learner flow order is audio, then text plus visuals, then practice.** The
+  learner should first listen to the audio orientation, then study the written
+  explanation and nearby visualizations together, then do the practice/code and
+  assessments. Do not bury audio after the written explanation inside a lesson
+  part, and do not separate mechanism text from its visual support.
 - **Target architecture: dynamic visual components.** The fixed registered
   widget catalog is a compatibility bridge, not the desired ceiling. The target
   system should let agents generate per-part React components, store the source
