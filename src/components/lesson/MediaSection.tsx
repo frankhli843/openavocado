@@ -35,8 +35,8 @@ export function MediaSection({ activity }: MediaSectionProps) {
   }, [activity.content]);
 
   return (
-    <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
-      <div className="flex items-center gap-3 px-6 py-4 border-b border-gray-100 bg-gray-50/50">
+    <div className="border-t border-gray-100 pt-4">
+      <div className="flex items-center gap-3 border-b border-gray-100 px-3 pb-4 sm:px-6">
         <span className="text-xl" aria-hidden="true">&#127909;</span>
         <div className="min-w-0">
           <div className="text-xs font-semibold text-gray-400 uppercase tracking-wider">Watch</div>
@@ -46,9 +46,9 @@ export function MediaSection({ activity }: MediaSectionProps) {
         </div>
       </div>
 
-      <div className="p-6 space-y-6">
+      <div className="space-y-6 px-3 py-4 sm:p-6">
         {parsed.error || !parsed.content ? (
-          <div role="alert" className="rounded-lg border border-amber-200 bg-amber-50 px-4 py-4 text-sm text-amber-800">
+          <div role="alert" className="border-l-2 border-amber-300 bg-amber-50 px-3 py-3 text-sm text-amber-800">
             <div className="font-semibold mb-1">Media could not be loaded</div>
             <p className="text-xs text-amber-700">{parsed.error}</p>
           </div>

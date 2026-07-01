@@ -29,9 +29,9 @@ export function AssessmentSection({ activity, answers, onChange }: AssessmentSec
   }
 
   return (
-    <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
+    <div className="border-t border-gray-100 pt-4">
       {/* Header */}
-      <div className="flex items-center gap-3 px-6 py-4 border-b border-gray-100 bg-gray-50/50">
+      <div className="flex items-center gap-3 border-b border-gray-100 px-3 pb-4 sm:px-6">
         <span className="text-xl" aria-hidden="true">&#128221;</span>
         <div>
           <div className="text-xs font-semibold text-gray-400 uppercase tracking-wider">Assessment</div>
@@ -41,9 +41,9 @@ export function AssessmentSection({ activity, answers, onChange }: AssessmentSec
         </div>
       </div>
 
-      <div className="p-6 space-y-6">
+      <div className="space-y-6 px-3 py-4 sm:p-6">
         {/* Clarification: submitting answers != completing the lesson */}
-        <div className="p-3 bg-blue-50 border border-blue-100 rounded-lg text-xs text-blue-600">
+        <div className="border-l-2 border-blue-300 bg-blue-50 px-3 py-2 text-xs text-blue-600">
           Answer the questions below. Your answers autosave as you type.
           Answering does not complete the lesson — use &quot;Mark Complete&quot; when you&apos;re done with the whole lesson.
         </div>

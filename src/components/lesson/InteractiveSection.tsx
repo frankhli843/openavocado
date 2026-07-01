@@ -29,8 +29,8 @@ export function InteractiveSection({ activity, initialState, onStateChange }: In
       : undefined;
 
   return (
-    <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
-      <div className="flex items-center gap-3 px-6 py-4 border-b border-gray-100 bg-gray-50/50">
+    <div className="border-t border-gray-100 pt-4">
+      <div className="flex items-center gap-3 border-b border-gray-100 px-3 pb-4 sm:px-6">
         <span className="text-xl" aria-hidden="true">&#129518;</span>
         <div className="min-w-0">
           <div className="text-xs font-semibold text-gray-400 uppercase tracking-wider">Interactive</div>
@@ -40,13 +40,13 @@ export function InteractiveSection({ activity, initialState, onStateChange }: In
         </div>
       </div>
 
-      <div className="p-6 space-y-4">
+      <div className="space-y-4 px-3 py-4 sm:p-6">
         {instructions && (
           <p className="text-sm text-gray-600 leading-relaxed">{instructions}</p>
         )}
 
         {parsed.parseError ? (
-          <div role="alert" className="rounded-lg border border-amber-200 bg-amber-50 px-4 py-4 text-sm text-amber-800">
+          <div role="alert" className="border-l-2 border-amber-300 bg-amber-50 px-3 py-3 text-sm text-amber-800">
             <div className="font-semibold mb-1">This interactive widget could not be loaded</div>
             <p className="text-xs text-amber-700">Malformed widget content: {parsed.parseError}</p>
           </div>

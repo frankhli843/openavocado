@@ -109,14 +109,14 @@ export function LessonPartPracticeSection({
   }
 
   return (
-    <div className="rounded-xl border border-gray-200 bg-white">
-      <div className="border-b border-gray-100 bg-gray-50/60 px-4 py-3">
+    <div className="border-t border-gray-100 pt-4">
+      <div className="border-b border-gray-100 pb-3">
         <div className="text-xs font-semibold uppercase tracking-wider text-gray-400">Mixed practice</div>
         <div className="mt-1 text-sm text-gray-600">
           Score: {score} / {threshold}. Includes select-one, select-all, ordering, and written feedback.
         </div>
       </div>
-      <div className="space-y-4 p-4">
+      <div className="space-y-4 py-4">
         {questions.map((q, index) => (
           <PracticeQuestionCard
             key={q.id}

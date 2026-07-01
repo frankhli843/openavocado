@@ -26,8 +26,8 @@ export function NextLessonDiagnosticsSection({
   }
 
   return (
-    <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
-      <div className="flex items-center gap-3 px-6 py-4 border-b border-gray-100 bg-gray-50/50">
+    <div className="border-t border-gray-100 pt-4">
+      <div className="flex items-center gap-3 border-b border-gray-100 px-3 pb-4 sm:px-6">
         <span className="text-xl" aria-hidden="true">&#128173;</span>
         <div className="min-w-0">
           <div className="text-xs font-semibold text-gray-400 uppercase tracking-wider">
@@ -39,7 +39,7 @@ export function NextLessonDiagnosticsSection({
         </div>
       </div>
 
-      <div className="p-6 space-y-5">
+      <div className="space-y-5 px-3 py-4 sm:p-6">
         <p className="text-xs text-gray-500 leading-relaxed">
           These quick reflections guide what comes next. They save automatically and
           do <strong>not</strong> complete the lesson — use Mark Complete for that.

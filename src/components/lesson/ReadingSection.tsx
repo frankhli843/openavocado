@@ -30,8 +30,8 @@ export function ReadingSection({ activity }: ReadingSectionProps) {
   }, [activity.content]);
 
   return (
-    <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
-      <div className="flex items-center gap-3 px-6 py-4 border-b border-gray-100 bg-gray-50/50">
+    <div className="border-t border-gray-100 pt-4">
+      <div className="flex items-center gap-3 border-b border-gray-100 px-3 pb-4 sm:px-6">
         <span className="text-xl" aria-hidden="true">&#128214;</span>
         <div className="min-w-0">
           <div className="text-xs font-semibold text-gray-400 uppercase tracking-wider">Written Lesson</div>
@@ -41,9 +41,9 @@ export function ReadingSection({ activity }: ReadingSectionProps) {
         </div>
       </div>
 
-      <div className="p-6">
+      <div className="px-3 py-4 sm:p-6">
         {parsed.error || !parsed.content ? (
-          <div role="alert" className="rounded-lg border border-amber-200 bg-amber-50 px-4 py-4 text-sm text-amber-800">
+          <div role="alert" className="border-l-2 border-amber-300 bg-amber-50 px-3 py-3 text-sm text-amber-800">
             <div className="font-semibold mb-1">Written content unavailable</div>
             <p className="text-xs text-amber-700">{parsed.error}</p>
           </div>
@@ -81,14 +81,14 @@ function Block({ block }: { block: ReadingBlock }) {
       return <p className="text-[15px] text-gray-700 leading-7">{block.text}</p>;
     case "definition":
       return (
-        <div className="rounded-lg border border-gray-100 bg-gray-50/60 px-4 py-3">
+        <div className="border-l-2 border-gray-200 bg-gray-50/60 px-3 py-3">
           <dt className="text-sm font-semibold text-gray-900">{block.term}</dt>
           <dd className="text-sm text-gray-600 leading-relaxed mt-0.5">{block.definition}</dd>
         </div>
       );
     case "example":
       return (
-        <div className="rounded-lg border-l-4 border-blue-300 bg-blue-50/50 pl-4 pr-3 py-3">
+        <div className="border-l-2 border-blue-300 bg-blue-50/50 pl-3 pr-3 py-3">
           {block.title && <div className="text-xs font-semibold text-blue-700 mb-1">{block.title}</div>}
           <p className="text-sm text-gray-700 leading-relaxed whitespace-pre-wrap">{block.body}</p>
         </div>
@@ -96,12 +96,12 @@ function Block({ block }: { block: ReadingBlock }) {
     case "callout": {
       const tone = block.tone ?? "info";
       const styles: Record<string, string> = {
-        info: "border-blue-200 bg-blue-50 text-blue-900",
-        warning: "border-amber-200 bg-amber-50 text-amber-900",
-        insight: "border-purple-200 bg-purple-50 text-purple-900",
+        info: "border-blue-300 bg-blue-50 text-blue-900",
+        warning: "border-amber-300 bg-amber-50 text-amber-900",
+        insight: "border-purple-300 bg-purple-50 text-purple-900",
       };
       return (
-        <div className={`rounded-lg border px-4 py-3 text-sm leading-relaxed ${styles[tone]}`}>
+        <div className={`border-l-2 px-3 py-3 text-sm leading-relaxed ${styles[tone]}`}>
           {block.text}
         </div>
       );

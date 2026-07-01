@@ -283,9 +283,9 @@ function QuizEngine({ activity, quiz, savedQuizState, onStateChange, onPassedCha
 
   if (session.passed || (isExhausted && thresholdMet)) {
     return (
-      <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
+      <div className="border-t border-gray-100 pt-4">
         <QuizHeader activity={activity} />
-        <div className="p-8 text-center space-y-4">
+        <div className="space-y-4 px-3 py-8 text-center sm:px-8">
           <div className="inline-flex items-center justify-center w-16 h-16 bg-green-100 rounded-full">
             <span className="text-3xl">&#10003;</span>
           </div>
@@ -318,9 +318,9 @@ function QuizEngine({ activity, quiz, savedQuizState, onStateChange, onPassedCha
 
   if (!currentQuestion) {
     return (
-      <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
+      <div className="border-t border-gray-100 pt-4">
         <QuizHeader activity={activity} />
-        <div className="p-6 text-center text-gray-400 text-sm">
+        <div className="px-3 py-6 text-center text-sm text-gray-400 sm:px-6">
           {isExhausted && session.correct_count < pass_threshold
             ? `You completed all questions with ${session.correct_count} / ${pass_threshold} correct. Some retry questions are being prepared.`
             : "Loading next question..."}
@@ -346,10 +346,10 @@ function QuizEngine({ activity, quiz, savedQuizState, onStateChange, onPassedCha
   // ─── Main quiz card ───────────────────────────────────────────────────────
 
   return (
-    <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
+    <div className="border-t border-gray-100 pt-4">
       <QuizHeader activity={activity} />
 
-      <div className="p-6 space-y-5">
+      <div className="space-y-5 px-3 py-4 sm:p-6">
         {/* Progress */}
         <div className="flex items-center justify-between">
           <ProgressBar
@@ -366,7 +366,7 @@ function QuizEngine({ activity, quiz, savedQuizState, onStateChange, onPassedCha
 
         {/* Retry notice */}
         {isRetryItem && (
-          <div className="px-3 py-2 bg-amber-50 border border-amber-100 rounded-lg text-xs text-amber-700 flex items-center gap-2">
+          <div className="flex items-center gap-2 border-l-2 border-amber-300 bg-amber-50 px-3 py-2 text-xs text-amber-700">
             <span>&#8635;</span>
             <span>
               This concept came back for another look.
@@ -504,7 +504,7 @@ function QuizEngine({ activity, quiz, savedQuizState, onStateChange, onPassedCha
             <p className="text-sm text-gray-700 leading-relaxed">{explanation}</p>
 
             {!feedback.correct && (
-              <p className="text-xs text-amber-700 bg-amber-50 border border-amber-100 rounded-lg px-3 py-2">
+              <p className="border-l-2 border-amber-300 bg-amber-50 px-3 py-2 text-xs text-amber-700">
                 {feedback.is_idk
                   ? "Saying “I don’t know” is useful signal — we’ll bring this concept back so you can lock it in. No penalty."
                   : "This concept will come back later in a different form. Keep going!"}
@@ -532,7 +532,7 @@ function QuizEngine({ activity, quiz, savedQuizState, onStateChange, onPassedCha
 
 function QuizHeader({ activity }: { activity: LessonActivity }) {
   return (
-    <div className="flex items-center gap-3 px-6 py-4 border-b border-gray-100 bg-gray-50/50">
+    <div className="flex items-center gap-3 border-b border-gray-100 px-3 pb-4 sm:px-6">
       <span className="text-xl" aria-hidden="true">&#127891;</span>
       <div>
         <div className="text-xs font-semibold text-gray-400 uppercase tracking-wider">Quiz</div>

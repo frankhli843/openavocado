@@ -518,6 +518,7 @@ export default function LessonPage({ params }: { params: Promise<{ id: string }>
           initialCode={codeDraft}
           initialOutput={runOutput}
           initialTests={testResults}
+          embedded
           reserveChatRail={chatMaximized}
           onChange={(code, output, tests) => {
             setCodeDraft(code);
