@@ -95,4 +95,15 @@ describe("LessonChatModal", () => {
       );
     });
   });
+
+  it("shows a local chat connection message instead of raw failed fetch text", async () => {
+    vi.mocked(fetch).mockRejectedValueOnce(new TypeError("Failed to fetch"));
+
+    render(<LessonChatModal lessonId={7} learnerId={1} lessonTitle="Inside the Transformer" />);
+
+    fireEvent.click(screen.getByRole("button", { name: /ask a lesson question/i }));
+
+    expect(await screen.findByText(/could not reach lesson chat/i)).toBeInTheDocument();
+    expect(screen.queryByText(/^Failed to fetch$/i)).not.toBeInTheDocument();
+  });
 });

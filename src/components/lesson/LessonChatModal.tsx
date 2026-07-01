@@ -15,6 +15,9 @@ interface LessonChatModalProps {
   onMaximizedChange?: (maximized: boolean) => void;
 }
 
+const CHAT_LOAD_TIMEOUT_MS = 15000;
+const CHAT_SEND_TIMEOUT_MS = 45000;
+
 export function LessonChatModal({
   lessonId,
   learnerId,
@@ -47,7 +50,9 @@ export function LessonChatModal({
       setError(null);
       try {
         const params = new URLSearchParams({ learner_id: String(learnerId) });
-        const res = await fetch(`/api/lessons/${lessonId}/chat?${params.toString()}`);
+        const res = await fetch(`/api/lessons/${lessonId}/chat?${params.toString()}`, {
+          signal: AbortSignal.timeout(CHAT_LOAD_TIMEOUT_MS),
+        });
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
         const json = (await res.json()) as {
           enabled: boolean;
@@ -59,7 +64,7 @@ export function LessonChatModal({
           setLoaded(true);
         }
       } catch (e) {
-        if (!cancelled) setError(e instanceof Error ? e.message : "Failed to load chat");
+        if (!cancelled) setError(describeChatError(e, "Failed to load saved lesson chat."));
       } finally {
         if (!cancelled) setLoading(false);
       }
@@ -92,6 +97,7 @@ export function LessonChatModal({
       const res = await fetch(`/api/lessons/${lessonId}/chat`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
+        signal: AbortSignal.timeout(CHAT_SEND_TIMEOUT_MS),
         body: JSON.stringify({
           learner_id: learnerId,
           message,
@@ -108,7 +114,7 @@ export function LessonChatModal({
       if (json.messages) setMessages(json.messages);
     } catch (e) {
       setInput(message);
-      setError(e instanceof Error ? e.message : "Message failed");
+      setError(describeChatError(e, "Message failed. Try again with a shorter question."));
     } finally {
       setSending(false);
     }
@@ -270,4 +276,25 @@ export function LessonChatModal({
       )}
     </>
   );
+}
+
+function describeChatError(error: unknown, fallback: string): string {
+  if (error instanceof DOMException) {
+    if (error.name === "TimeoutError" || error.name === "AbortError") {
+      return "Lesson chat took too long to answer. Try a shorter question or try again in a moment.";
+    }
+  }
+  if (error instanceof TypeError && /failed to fetch/i.test(error.message)) {
+    return "Could not reach lesson chat. Check that local Avo is still running, then try again.";
+  }
+  if (error instanceof Error) {
+    if (/failed to fetch/i.test(error.message)) {
+      return "Could not reach lesson chat. Check that local Avo is still running, then try again.";
+    }
+    if (/timeout|aborted/i.test(error.message)) {
+      return "Lesson chat took too long to answer. Try a shorter question or try again in a moment.";
+    }
+    return error.message || fallback;
+  }
+  return fallback;
 }

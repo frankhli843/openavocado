@@ -118,6 +118,11 @@ export interface CodeFeedbackRequest {
   allPassed: boolean;
 }
 
+const LOCAL_CHAT_CONTEXT_CHAR_LIMIT = 3000;
+const LOCAL_CHAT_SUMMARY_CHAR_LIMIT = 700;
+const LOCAL_CHAT_MESSAGE_CHAR_LIMIT = 700;
+const LOCAL_CHAT_MESSAGE_LIMIT = 3;
+
 const FEEDBACK_SYSTEM = `You are a friendly learning coach. Give feedback on the student's answer.
 
 Max 2 paragraphs, max 4 sentences each. Hard limit.
@@ -223,6 +228,32 @@ function buildLessonChatSystem(req: LessonChatRequest): string {
     parts.push("", "Compacted earlier chat:", req.compactSummary.trim());
   }
   return parts.join("\n");
+}
+
+function compactTextForLocalChat(text: string, maxChars: number): string {
+  const trimmed = text.trim();
+  if (trimmed.length <= maxChars) return trimmed;
+  const head = Math.floor(maxChars * 0.7);
+  const tail = maxChars - head;
+  return [
+    trimmed.slice(0, head).trimEnd(),
+    "\n\n[Earlier lesson context compacted for local chat latency.]\n\n",
+    trimmed.slice(-tail).trimStart(),
+  ].join("");
+}
+
+function compactLessonChatForLocal(req: LessonChatRequest): LessonChatRequest {
+  return {
+    ...req,
+    lessonContext: compactTextForLocalChat(req.lessonContext, LOCAL_CHAT_CONTEXT_CHAR_LIMIT),
+    compactSummary: req.compactSummary
+      ? compactTextForLocalChat(req.compactSummary, LOCAL_CHAT_SUMMARY_CHAR_LIMIT)
+      : null,
+    messages: req.messages.slice(-LOCAL_CHAT_MESSAGE_LIMIT).map((message) => ({
+      ...message,
+      content: compactTextForLocalChat(message.content, LOCAL_CHAT_MESSAGE_CHAR_LIMIT),
+    })),
+  };
 }
 
 function buildSummaryPrompt(previousSummary: string | null, messages: LessonChatMessage[]): string {
@@ -549,11 +580,15 @@ async function callOpenAICompatibleChat(
   const headers: Record<string, string> = { "Content-Type": "application/json" };
   if (config.apiKey) headers["Authorization"] = `Bearer ${config.apiKey}`;
 
-  // For local llama.cpp with --reasoning on, cap per-request thinking budget.
-  // budget_tokens: 4096 at 14ms/tok ≈ 57s; 256 caps thinking at ~3.5s while
-  // still giving the model enough context to produce correct, coherent answers.
-  const extraBody = config.provider === "local" ? { budget_tokens: 256 } : {};
-  const timeoutMs = config.provider === "local" ? 120000 : 60000;
+  const isLocal = config.provider === "local";
+  const effectiveMaxTokens = isLocal ? Math.min(maxTokens, 180) : maxTokens;
+  const extraBody = isLocal
+    ? {
+      budget_tokens: 0,
+      chat_template_kwargs: { enable_thinking: false },
+    }
+    : {};
+  const timeoutMs = isLocal ? 15000 : 60000;
 
   const res = await fetch(`${config.baseUrl}/chat/completions`, {
     method: "POST",
@@ -564,7 +599,7 @@ async function callOpenAICompatibleChat(
         { role: "system", content: system },
         ...messages.map((m) => ({ role: m.role, content: m.content })),
       ],
-      max_tokens: maxTokens,
+      max_tokens: effectiveMaxTokens,
       temperature,
       ...extraBody,
     }),
@@ -719,8 +754,15 @@ async function callLessonChatRaw(
 }
 
 export async function getLessonChatReply(config: FeedbackConfig, req: LessonChatRequest): Promise<string> {
-  const system = buildLessonChatSystem(req);
-  const answer = await callLessonChatRaw(config, system, req.messages, 1200, 0.35);
+  const chatReq = config.provider === "local" ? compactLessonChatForLocal(req) : req;
+  const system = buildLessonChatSystem(chatReq);
+  const answer = await callLessonChatRaw(
+    config,
+    system,
+    chatReq.messages,
+    config.provider === "local" ? 180 : 1200,
+    0.35
+  );
   return answer.trim() || "I could not generate a reply for that question.";
 }
 

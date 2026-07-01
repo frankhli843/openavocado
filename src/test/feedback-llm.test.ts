@@ -3,6 +3,7 @@ import {
   getAnswerFeedback,
   getAnswerJudgment,
   getCodeFeedback,
+  getLessonChatReply,
   loadFeedbackConfig,
   parseAnswerJudgment,
   type AnswerJudgeRequest,
@@ -259,5 +260,50 @@ describe("parseAnswerJudgment", () => {
 
     expect(fetchMock).toHaveBeenCalledTimes(1);
     expect(feedback).toMatch(/off-by-one|original value/i);
+  });
+
+  it("uses compact no-thinking requests for local lesson chat", async () => {
+    const fetchMock = vi.spyOn(globalThis, "fetch").mockImplementationOnce(async (_url, init) => {
+      const body = JSON.parse(String(init?.body)) as {
+        max_tokens: number;
+        budget_tokens?: number;
+        chat_template_kwargs?: { enable_thinking?: boolean };
+        messages: Array<{ role: string; content: string }>;
+      };
+      expect(body.max_tokens).toBe(180);
+      expect(body.budget_tokens).toBe(0);
+      expect(body.chat_template_kwargs).toEqual({ enable_thinking: false });
+      expect(body.messages[0].content.length).toBeLessThan(5000);
+      expect(body.messages).toHaveLength(1 + 3);
+      return new Response(
+        JSON.stringify({
+          choices: [{ message: { content: "A transformer block updates hidden-state vectors by mixing token context and refining each position." } }],
+        }),
+        { status: 200, headers: { "Content-Type": "application/json" } }
+      );
+    });
+
+    const reply = await getLessonChatReply(
+      {
+        enabled: true,
+        provider: "local",
+        baseUrl: "http://judge.test/v1",
+        apiKey: "",
+        model: "test-model",
+      },
+      {
+        lessonTitle: "Inside the Transformer",
+        lessonDescription: null,
+        lessonContext: "Current visible section: Transformer block\n" + "hidden state details ".repeat(900),
+        compactSummary: "Earlier chat: " + "learner asked about logits ".repeat(120),
+        messages: Array.from({ length: 12 }, (_, i) => ({
+          role: i % 2 === 0 ? "user" : "assistant",
+          content: `message ${i} ` + "context ".repeat(300),
+        })),
+      }
+    );
+
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+    expect(reply).toMatch(/updates hidden-state vectors/i);
   });
 });

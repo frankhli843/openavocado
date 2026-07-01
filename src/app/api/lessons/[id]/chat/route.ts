@@ -136,11 +136,27 @@ export async function POST(
     });
   } catch (err) {
     console.error("[api/lessons/:id/chat POST]", err);
+    const timedOut = isTimeoutError(err);
     return NextResponse.json(
-      { enabled: true, error: "Lesson chat failed" },
-      { status: 500 }
+      {
+        enabled: true,
+        error: timedOut
+          ? "Lesson chat timed out while waiting for the AI tutor. Try again with a shorter question."
+          : "Lesson chat failed",
+      },
+      { status: timedOut ? 504 : 500 }
     );
   }
+}
+
+function isTimeoutError(err: unknown): boolean {
+  if (err instanceof DOMException) {
+    return err.name === "TimeoutError" || err.name === "AbortError" || err.code === DOMException.TIMEOUT_ERR;
+  }
+  if (err instanceof Error) {
+    return /timeout|aborted due to timeout|operation was aborted/i.test(err.message);
+  }
+  return false;
 }
 
 function loadMessages(db: ReturnType<typeof getDb>, lessonId: number, learnerId: number): LessonChatMessage[] {
@@ -167,6 +183,13 @@ async function maybeCompactHistory(
     .get(lessonId, learnerId) as LessonChatState | undefined;
 
   const compactedThroughId = state?.compacted_through_message_id ?? null;
+  if (config.provider === "local") {
+    return {
+      compactSummary: state?.compact_summary?.trim() || null,
+      compactedThroughId,
+    };
+  }
+
   const candidates = loadMessages(db, lessonId, learnerId)
     .filter((m) => m.id > (compactedThroughId ?? 0))
     .slice(0, -RECENT_MESSAGE_LIMIT);
