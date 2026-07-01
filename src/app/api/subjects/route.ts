@@ -3,15 +3,18 @@ import { getDb } from "@/db/connection";
 import { seedDatabase } from "@/db/seed";
 import { getSubjectCreatedDispatcher } from "@/lib/adapters";
 import { computeSubjectMastery } from "@/lib/mastery";
+import { getSessionUser } from "@/lib/auth/session";
 import type { LearnerProfile, NextLessonJob, Subject, SubjectCreatedEvent, SubjectSummary } from "@/types";
 
 /** POST /api/subjects — create a new subject for a learner */
 export async function POST(request: Request) {
   try {
     const db = getDb();
+    const sessionUser = await getSessionUser();
     const body = (await request.json()) as Partial<Subject & { learner_id: number }>;
 
-    const learnerId = Number(body.learner_id || 1);
+    // Use session learner when not explicitly provided to prevent cross-user writes.
+    const learnerId = Number(body.learner_id || sessionUser?.active_learner_id || 1);
     const title = (body.title || "").trim();
     if (!title) {
       return NextResponse.json({ error: "title is required" }, { status: 400 });
@@ -182,8 +185,11 @@ export async function GET(request: Request) {
     const db = getDb();
     seedDatabase(); // idempotent — only runs once
 
+    const sessionUser = await getSessionUser();
     const { searchParams } = new URL(request.url);
-    const learnerId = Number(searchParams.get("learner_id") || 1);
+    // Use session learner to prevent cross-user data exposure; fall back to
+    // explicit query param (for backwards-compatible API use) or learner 1.
+    const learnerId = sessionUser?.active_learner_id ?? Number(searchParams.get("learner_id") || 1);
 
     const subjects = db
       .prepare(
