@@ -412,7 +412,7 @@ function updateActivityContent(): void {
 
   const visual = content.orientation_visual;
   if (!visual || typeof visual !== "object" || !Array.isArray(visual.cues)) {
-    throw new Error("Activity 84 is missing orientation_visual.cues");
+    throw new Error(`Activity ${ACTIVITY_ID} is missing orientation_visual.cues`);
   }
   visual.artifact_slug = cueArtifacts[0]!.slug;
   visual.segmented_artifacts = true;
@@ -442,7 +442,7 @@ async function main() {
     console.log(`approved ${spec.slug}`);
   }
   updateActivityContent();
-  console.log("updated lesson 15 section 84 with segmented cue artifacts");
+  console.log(`updated lesson ${LESSON_ID} activity ${ACTIVITY_ID} with segmented cue artifacts`);
 }
 
 main().catch((error) => {
