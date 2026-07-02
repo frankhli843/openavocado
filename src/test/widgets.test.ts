@@ -330,7 +330,26 @@ function codeStudySupport() {
   };
 }
 
+function longOverviewAudioScript(topic = "this lesson"): string {
+  const paragraphs = [
+    `Start with the map for ${topic}. Imagine the lesson as a city tour before walking into one building. First we name the neighborhoods, then we walk the same route slowly enough to notice doors, signs, shortcuts, and dead ends. A major term is never treated as magic. It is introduced as an object with a job, an input, an output, and a reason to exist.`,
+    `Now revisit the same map through an analogy. Think of ${topic} as a kitchen pass in a restaurant. Ingredients arrive from one station, a cook changes them, and the plate moves to the next station with a label saying what changed. The analogy is not the final truth, but it gives you a stable handle for later formal vocabulary.`,
+    `Use a tiny worked example next. Take one small object, give it a name, and follow it through the lesson. Say what shape it has, what information it carries, what operation reads it, what operation changes it, and what evidence would show the change succeeded. This prevents memorizing labels without knowing what they do.`,
+    `Then trace the mechanism. A mechanism explanation answers why the next step is needed, not only what the next step is called. If a component receives a representation, explain what it already contains and what it lacks. If a component transforms it, explain whether values, order, scale, confidence, or interpretation changed.`,
+    `Shift into implementation intuition. You should hear how the idea would feel in code or in a system diagram. Name likely data structures, small functions, checks, and debugging questions. This gives enough hooks so the later coding section feels like reinforcement rather than a separate programming puzzle.`,
+    `Name a misconception or failure mode. A learner often nods along while silently swapping two nearby ideas. This pass says what not to confuse, why the confusion is tempting, and what visible symptom would appear if the confusion guided an implementation. Repetition from another angle builds a sturdy mental model.`,
+    `Synthesize the lesson again. Return to the big map, then point to the next activity. The visual will make the route concrete, the reading will define it more formally, practice will check it, and anything outside the scope can safely wait for a later lesson.`,
+  ];
+
+  return Array.from({ length: 7 }, (_, cycle) =>
+    paragraphs
+      .map((paragraph, index) => `${index % 2 === 0 ? "Leo" : "Maya"}: Perspective ${cycle + 1}.${index + 1}. ${paragraph}`)
+      .join("\n\n")
+  ).join("\n\n");
+}
+
 function baseContent(interactiveContent: Record<string, unknown>): GeneratedLessonContent {
+  const overviewScript = longOverviewAudioScript("the widget test lesson");
   return {
     title: "T",
     description: "d",
@@ -343,9 +362,9 @@ function baseContent(interactiveContent: Record<string, unknown>): GeneratedLess
         sequence_order: 1,
         title: "a",
         content: {
-          script: "A full spoken walkthrough of the concept for this lesson.",
-          transcript: "A full spoken walkthrough of the concept for this lesson.",
-          duration_hint: 45,
+          script: overviewScript,
+          transcript: overviewScript,
+          duration_hint: 900,
           orientation_visual: {
             strategy: "timeline",
             scene: {
@@ -380,7 +399,7 @@ function baseContent(interactiveContent: Record<string, unknown>): GeneratedLess
             cues: [
               {
                 start: 0,
-                end: 15,
+                end: 300,
                 label: "Input",
                 headline: "Start with the prior object",
                 narration: "The test audio starts by naming the input.",
@@ -391,8 +410,8 @@ function baseContent(interactiveContent: Record<string, unknown>): GeneratedLess
                 active_elements: ["Input"],
               },
               {
-                start: 15,
-                end: 30,
+                start: 300,
+                end: 600,
                 label: "Process",
                 headline: "Show the generated operation",
                 narration: "The test audio shows the operation.",
@@ -403,8 +422,8 @@ function baseContent(interactiveContent: Record<string, unknown>): GeneratedLess
                 active_elements: ["New"],
               },
               {
-                start: 30,
-                end: 45,
+                start: 600,
+                end: 900,
                 label: "Output",
                 headline: "Pass the state forward",
                 narration: "The test audio passes the state forward.",

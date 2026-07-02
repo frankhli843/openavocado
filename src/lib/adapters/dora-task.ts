@@ -36,6 +36,11 @@ const PURPOSE_BUILT_VISUAL_REQUIREMENT = [
   "Before showing operations on a technical object, ground the object itself. If the lesson says embedding lookup, first show what an embedding is, what the embedding matrix looks like in a tiny concrete form, where it comes from, and how tokenizer IDs address rows. Apply the same rule to tensors, matrices, vectors, logits, priors, gradients, caches, queues, losses, and other dense terms. The learner should never have to infer what the thing is while simultaneously learning an operation on it.",
 ].join("\n");
 
+const LOCAL_MODEL_BOUNDARY_REQUIREMENT = [
+  "=== LOCAL MODEL BOUNDARY ===",
+  "Local AvocadoCore may use a low-latency local model for instant learner-facing paths such as chat, short-answer grading, code-submission feedback, hints, and immediate formative feedback. Do not use that local feedback model as the lesson author. Lesson generation and lesson repair must go through the AvocadoCore/Dora lesson-authoring flow, an approved harness, or a controlled backfill script that validates and writes real lesson content.",
+].join("\n");
+
 interface DoraCreateTaskInput {
   project: string;
   title: string;
@@ -211,9 +216,11 @@ function buildFirstLessonAcceptance(event: SubjectCreatedEvent, channel?: string
     "For the requested model-building and inference track, the first lesson should help the learner understand the lifecycle from data and tokenizer choices through training, inference, quantization, packaging, and release, while still teaching one concrete part deeply enough to practice. The end goal is competence to help the Google Gemma team, so the lesson should point toward real workflows and vocabulary without pretending the learner already knows them.",
     "",
     "=== REQUIRED LESSON STRUCTURE ===",
+    "The top-level overview audio is mandatory and must be long-form: at least 15 minutes, at least 2,700 words, and written as a two-host podcast transcript with clear male/female speaker labels such as Leo: and Maya:. Use a calm, conversational long-form interview / NotebookLM-style back-and-forth without imitating any specific living person. Start with the big map, then revisit the lesson through analogy/metaphor, tiny worked example, mechanism trace, implementation intuition, misconception/failure mode, and final synthesis. Define every major noun before using it and repeat the important ideas from more than one perspective. The transcript must sound like two hosts teaching the learner directly with natural questions and answers. Do not leak authoring instructions or meta-planning phrases like 'the learner should', 'the lesson should', 'the overview should', 'the audio should', or 'the transcript should'. Speak in 'you' and 'we'. When formulas are discussed in audio, say them in words, for example 'Q times K transpose divided by the square root of d sub k', then explain what that quantity means.",
     "Break normal lessons into collapsed lesson parts. Each part needs first-class written teaching text, a per-part Doraemon voice audio script, an interactive or visual element that deepens understanding, and exactly 10 multiple-choice reinforcement questions requiring 4 correct answers in a row. The done/undone button is only a personal checklist marker and must never gate completion. Add a table of contents and stable deep links for each part and meaningful activity.",
     "",
     "Every major step should use a metaphor, at least three simple examples where useful, and a concrete explanation of why the step exists. Visualizations should not be decorative graphs. They should let the learner change something, see a consequence or failure mode, and understand what the step proves. Every visualization must have audio explanation or a per-part audio script explaining what to change, what to notice, and what the visual proves.",
+    LOCAL_MODEL_BOUNDARY_REQUIREMENT,
     PURPOSE_BUILT_VISUAL_REQUIREMENT,
     "",
     "=== CODING PRACTICE AND HINTS ===",
@@ -273,6 +280,8 @@ export const doraTaskAdapter: CompletionHookAdapter = {
       event.current_level === "post_mastery"
         ? "Post-mastery is now active. The next lesson must find a recent, relevant, well-cited or frontier paper, cite it clearly, explain why it matters for this subject, and teach what the paper adds beyond the learner's mastered foundation. Do not generate another fundamentals lesson unless the evidence below proves a blocking gap."
         : "Do not jump into frontier-paper study until the stored current phase is post_mastery.",
+      "Every generated next lesson still begins with a long-form top-level overview audio activity: at least 15 minutes, at least 2,700 words, two-host male/female podcast transcript, high-level map first, then progressively deeper explanation through analogy, concrete example, mechanism trace, implementation intuition, misconception/failure mode, and synthesis. Keep it conversational and learner-facing, like two hosts naturally teaching the learner. Do not leak meta-authoring language such as 'the learner should', 'the lesson should', 'the overview should', 'the audio should', or 'the transcript should'. Speak directly with 'you' and 'we'. If formulas appear in audio, describe them in words first and keep raw notation for LaTeX reading blocks.",
+      LOCAL_MODEL_BOUNDARY_REQUIREMENT,
       "",
       "=== THIS LESSON ===",
       `Prior lesson: "${event.lesson_title}"  | Goals: ${event.lesson_goals.join(", ")}`,
@@ -375,6 +384,8 @@ export const doraTaskRegenerationAdapter: RegenerationHookAdapter = {
         : "",
       "=== INSTRUCTIONS ===",
       "Before writing the replacement lesson, review the subject goals, learner criteria, discard reason, current workpad, and mastery evidence. If the learner gave a reason such as too easy, too hard, wrong topic, or bad style, explicitly correct that failure mode. Update the workpad with what you decided and why, then generate a lesson that better fits the learner's goals, criteria, and current level.",
+      "The replacement lesson must include a long-form top-level overview audio activity: at least 15 minutes, at least 2,700 words, written as a two-host male/female podcast transcript, high-level first, then repeated explanation from multiple perspectives using metaphors, analogies, concrete examples, mechanism traces, implementation intuition, misconception/failure mode, and final synthesis. Keep it conversational and learner-facing, like two hosts naturally teaching the learner. Do not leak meta-authoring language such as 'the learner should', 'the lesson should', 'the overview should', 'the audio should', or 'the transcript should'. Speak directly with 'you' and 'we'. If formulas appear in audio, describe them in words first and keep raw notation for LaTeX reading blocks.",
+      LOCAL_MODEL_BOUNDARY_REQUIREMENT,
       "",
       "=== CODING PRACTICE AND HINTS ===",
       "If the replacement lesson includes code, provide progressive, unboxable hints that can be opened until the learner reaches the full answer path. Do not assume package-specific keywords or parameters are known. Document every external Python library in starter-code comments and teaching text.",

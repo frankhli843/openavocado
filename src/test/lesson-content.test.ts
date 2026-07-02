@@ -391,7 +391,7 @@ function orientationVisual(slug = "orientation-scene") {
     cues: [
       {
         start: 0,
-        end: 15,
+        end: 300,
         label: "Map",
         headline: "The lesson starts by locating the concept",
         narration: "The learner first sees where this concept sits before any detail starts.",
@@ -402,8 +402,8 @@ function orientationVisual(slug = "orientation-scene") {
         active_elements: ["Subject", "Lesson target"],
       },
       {
-        start: 15,
-        end: 35,
+        start: 300,
+        end: 600,
         label: "Concrete example",
         headline: "A small example makes the object visible",
         narration: "The visual introduces a tiny concrete object that the later sections will transform.",
@@ -414,8 +414,8 @@ function orientationVisual(slug = "orientation-scene") {
         active_elements: ["Object"],
       },
       {
-        start: 35,
-        end: 55,
+        start: 600,
+        end: 900,
         label: "Handoff",
         headline: "The example is ready for the first lesson part",
         narration: "The learner can now carry this object into the first detailed lesson section.",
@@ -429,7 +429,26 @@ function orientationVisual(slug = "orientation-scene") {
   };
 }
 
+function longOverviewAudioScript(topic = "this lesson"): string {
+  const paragraphs = [
+    `Start with the map for ${topic}. Imagine the lesson as a city tour before walking into one building. First we name the neighborhoods, then we walk the same route slowly enough to notice doors, signs, shortcuts, and dead ends. A major term is never treated as magic. It is introduced as an object with a job, an input, an output, and a reason to exist. The metaphor matters because you can carry it while the details are still forming.`,
+    `Now revisit the same map through an analogy. Think of ${topic} as a kitchen pass in a restaurant. Ingredients arrive from one station, a cook changes them, and the plate moves to the next station with a label saying what changed. The analogy is not the final truth, but it gives you a stable handle. When the written section later uses more formal vocabulary, you can translate each term back to the kitchen pass and ask what arrived, what changed, and what left.`,
+    `Use a tiny worked example next. Take one small object, give it a name, and follow it through the lesson. Do not jump from the object to a slogan. Say what shape it has, what information it carries, what operation reads it, what operation changes it, and what evidence would show the change succeeded. A worked example is valuable because it prevents memorizing labels without knowing what those labels do in a real sequence.`,
+    `Then trace the mechanism. A mechanism explanation answers why the next step is needed, not only what the next step is called. If a component receives a representation, explain what that representation already contains and what it lacks. If a component transforms it, explain whether the transformation changes the values, the order, the scale, the confidence, or the interpretation. If a component passes it forward, explain why the following section can trust that handoff.`,
+    `Shift into implementation intuition. You should hear how the idea would feel in code or in a system diagram even if this overview is still conceptual. Name the likely data structures, the small functions, the checks, and the common debugging questions. This does not reveal a full solution. It gives you enough hooks so the later coding section feels like reinforcing the concept instead of suddenly becoming a separate programming puzzle.`,
+    `Name a misconception or failure mode. It is easy to nod along while silently swapping two nearby ideas. This pass says what not to confuse, why the confusion is tempting, and what visible symptom would appear if the confusion guided an implementation. We repeat the correct relationship from another angle because repetition is not filler here. It is how you build a sturdy mental model instead of a list of phrases.`,
+    `Synthesize the lesson again. Return to the big map, then point to the next activity. The visual will make the route concrete, the reading will define it more formally, practice will check it, and anything outside the scope can safely wait for a later lesson. That final pass turns the overview into a usable plan: listen for the route, study the objects, manipulate the visual, then test the model with questions and code.`,
+  ];
+
+  return Array.from({ length: 6 }, (_, cycle) =>
+    paragraphs
+      .map((paragraph, index) => `${index % 2 === 0 ? "Leo" : "Maya"}: Perspective ${cycle + 1}.${index + 1}. ${paragraph}`)
+      .join("\n\n")
+  ).join("\n\n");
+}
+
 function richLesson(overrides: Partial<GeneratedLessonContent["activities"][number]>[] = []): GeneratedLessonContent {
+  const overviewScript = longOverviewAudioScript("the fixture lesson");
   const activities: GeneratedLessonContent["activities"] = [
     {
       activity_type: "audio",
@@ -437,9 +456,9 @@ function richLesson(overrides: Partial<GeneratedLessonContent["activities"][numb
       sequence_order: 1,
       title: "a",
       content: {
-        script: "A full spoken walkthrough of the concept for this lesson.",
-        transcript: "A full spoken walkthrough of the concept for this lesson.",
-        duration_hint: 55,
+        script: overviewScript,
+        transcript: overviewScript,
+        duration_hint: 900,
         orientation_visual: orientationVisual(),
       },
     },
@@ -527,9 +546,9 @@ function validLessonPartContent() {
     },
     audio: {
       script:
-        "This is a substantive audio script for the visualization. It explains what the learner should change, what they should notice, what failure mode the visualization reveals, and why the visual matters for the concept being taught.",
+        "This is a substantive audio script for the visualization. It explains what to change, what to notice, what failure mode the visualization reveals, and why the visual matters for the concept being taught.",
       transcript:
-        "This is a substantive audio script for the visualization. It explains what the learner should change, what they should notice, what failure mode the visualization reveals, and why the visual matters for the concept being taught.",
+        "This is a substantive audio script for the visualization. It explains what to change, what to notice, what failure mode the visualization reveals, and why the visual matters for the concept being taught.",
       duration_hint: 90,
       synced_visual: {
         strategy: "timeline",
@@ -745,6 +764,44 @@ describe("validateGeneratedContent — richer lessons", () => {
     const r = validateGeneratedContent(lesson);
     expect(r.valid).toBe(false);
     expect(r.errors.join(" ")).toMatch(/audio/i);
+  });
+
+  it("fails when the top-level overview audio is shorter than the 15-minute floor", () => {
+    const lesson = richLesson();
+    const audio = lesson.activities.find((a) => a.activity_type === "audio")!;
+    const content = audio.content as Record<string, unknown>;
+    content.script = Array.from({ length: 300 }, () => "short").join(" ");
+    content.transcript = content.script;
+    content.duration_hint = 120;
+    const r = validateGeneratedContent(lesson);
+
+    expect(r.valid).toBe(false);
+    expect(r.errors.join(" ")).toMatch(/2700 words/);
+    expect(r.errors.join(" ")).toMatch(/900 seconds/);
+  });
+
+  it("fails when the top-level overview audio leaks authoring instructions", () => {
+    const lesson = richLesson();
+    const audio = lesson.activities.find((a) => a.activity_type === "audio")!;
+    const content = audio.content as Record<string, unknown>;
+    content.script = `${longOverviewAudioScript("the fixture lesson")}\n\nLeo: The learner should receive this as a planning note, not a spoken lesson.`;
+    content.transcript = content.script;
+    const r = validateGeneratedContent(lesson);
+
+    expect(r.valid).toBe(false);
+    expect(r.errors.join(" ")).toMatch(/learner-facing/i);
+  });
+
+  it("fails when the top-level overview audio reads raw formula notation aloud", () => {
+    const lesson = richLesson();
+    const audio = lesson.activities.find((a) => a.activity_type === "audio")!;
+    const content = audio.content as Record<string, unknown>;
+    content.script = `${longOverviewAudioScript("the fixture lesson")}\n\nMaya: Now read QK^T divided by √d_k and H_{\\text{input}} directly from the transcript.`;
+    content.transcript = content.script;
+    const r = validateGeneratedContent(lesson);
+
+    expect(r.valid).toBe(false);
+    expect(r.errors.join(" ")).toMatch(/audio-friendly/i);
   });
 
   it("fails a multi-concept lesson that ships only one thin visual perspective", () => {

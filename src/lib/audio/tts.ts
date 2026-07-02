@@ -48,9 +48,44 @@ export interface TtsOptions {
   espeakWpm?: number;
 }
 
+interface DialogueSegment {
+  speaker: "male" | "female";
+  text: string;
+}
+
 function sha256File(p: string): string {
   const buf = fs.readFileSync(p);
   return "sha256:" + createHash("sha256").update(buf).digest("hex");
+}
+
+function parseDialogueSegments(script: string): DialogueSegment[] {
+  const segments: DialogueSegment[] = [];
+  let current: DialogueSegment | null = null;
+  for (const rawLine of script.split(/\n+/)) {
+    const line = rawLine.trim();
+    if (!line) continue;
+    const match = line.match(/^(?:\*\*)?(Leo|Male host|Host A|Doraemon|Daniel|Alex|Maya|Female host|Host B|Guest|Ava|Mina)(?:\*\*)?\s*:\s*(.+)$/i);
+    if (match) {
+      if (current?.text.trim()) segments.push({ ...current, text: current.text.trim() });
+      const label = match[1].toLowerCase();
+      current = {
+        speaker:
+          label.includes("maya") ||
+          label.includes("female") ||
+          label.includes("host b") ||
+          label.includes("guest") ||
+          label.includes("ava") ||
+          label.includes("mina")
+            ? "female"
+            : "male",
+        text: match[2],
+      };
+    } else if (current) {
+      current.text += ` ${line}`;
+    }
+  }
+  if (current?.text.trim()) segments.push({ ...current, text: current.text.trim() });
+  return segments.length >= 4 && new Set(segments.map((s) => s.speaker)).size >= 2 ? segments : [];
 }
 
 /** Probe MP3 duration in seconds via ffprobe; returns 0 if unavailable. */
@@ -74,6 +109,64 @@ function probeDurationSec(p: string): number {
 
 function ensureDir(filePath: string): void {
   fs.mkdirSync(path.dirname(filePath), { recursive: true });
+}
+
+function synthesizeDoraemonEdgeDialogue(
+  script: string,
+  outPath: string,
+  maleVoice: string,
+  femaleVoice: string
+): TtsResult | null {
+  const segments = parseDialogueSegments(script);
+  if (!segments.length) return null;
+  ensureDir(outPath);
+  const digest = createHash("sha256").update(script).digest("hex").slice(0, 16);
+  const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), `avo-dialogue-tts-${digest}-`));
+  const listPath = path.join(tmpDir, "concat.txt");
+  try {
+    const segmentPaths: string[] = [];
+    for (let i = 0; i < segments.length; i += 1) {
+      const segment = segments[i];
+      const segmentPath = path.join(tmpDir, `segment-${String(i).padStart(3, "0")}.mp3`);
+      synthesizeDoraemonEdge(
+        segment.text,
+        segmentPath,
+        segment.speaker === "female" ? femaleVoice : maleVoice
+      );
+      segmentPaths.push(segmentPath);
+    }
+    fs.writeFileSync(
+      listPath,
+      segmentPaths.map((segmentPath) => `file '${segmentPath.replace(/'/g, "'\\''")}'`).join("\n")
+    );
+    const ff = spawnSync(
+      "ffmpeg",
+      ["-y", "-loglevel", "error", "-f", "concat", "-safe", "0", "-i", listPath, "-c", "copy", outPath],
+      { encoding: "buffer", maxBuffer: 64 * 1024 * 1024 }
+    );
+    if (ff.status !== 0) {
+      throw new Error(`ffmpeg dialogue concat failed (status ${ff.status}): ${ff.stderr?.toString() ?? ""}`);
+    }
+    if (!fs.existsSync(outPath) || fs.statSync(outPath).size < 1024) {
+      throw new Error("dialogue edge_tts produced an empty or suspiciously small audio file");
+    }
+    const durationSec = probeDurationSec(outPath);
+    const wordCount = script.trim().split(/\s+/).filter(Boolean).length;
+    const expectedMinSec = Math.max(1, wordCount * 0.12);
+    if (durationSec > 0 && durationSec < expectedMinSec) {
+      throw new Error(`dialogue edge_tts output is too short (${durationSec}s for ${wordCount} words)`);
+    }
+    return {
+      filePath: outPath,
+      provider: "doraemon-edge-tts",
+      voice: `${maleVoice}+${femaleVoice}`,
+      durationSec,
+      contentHash: sha256File(outPath),
+      bytes: fs.statSync(outPath).size,
+    };
+  } finally {
+    fs.rmSync(tmpDir, { recursive: true, force: true });
+  }
 }
 
 /**
@@ -134,7 +227,7 @@ asyncio.run(run())
 
   const durationSec = probeDurationSec(outPath);
   const wordCount = script.trim().split(/\s+/).filter(Boolean).length;
-  const expectedMinSec = Math.max(3, wordCount * 0.15);
+  const expectedMinSec = Math.max(1, wordCount * 0.12);
   if (durationSec > 0 && durationSec < expectedMinSec) {
     throw new Error(
       `edge_tts output is too short (${durationSec}s for ${wordCount} words)`
@@ -289,18 +382,23 @@ export async function synthesizeSpeech(
   const wantOpenAI = opts.provider === "openai-tts";
   const wantEspeak = opts.provider === "espeak-ng";
   const doraemonVoice = opts.voice ?? "en-US-BrianNeural";
+  const femalePodcastVoice = "en-US-JennyNeural";
   const openaiVoice = opts.voice ?? "alloy";
   const espeakVoice = opts.voice ?? "en-us";
   const wpm = opts.espeakWpm ?? 165;
 
   // Forced provider (tests / explicit selection).
-  if (wantDoraemon) return synthesizeDoraemonEdge(trimmed, opts.outPath, doraemonVoice);
+  if (wantDoraemon) {
+    return synthesizeDoraemonEdgeDialogue(trimmed, opts.outPath, doraemonVoice, femalePodcastVoice)
+      ?? synthesizeDoraemonEdge(trimmed, opts.outPath, doraemonVoice);
+  }
   if (wantEspeak) return synthesizeEspeak(trimmed, opts.outPath, espeakVoice, wpm);
   if (wantOpenAI) return synthesizeOpenAI(trimmed, opts.outPath, openaiVoice);
 
   // Default cascade: use the learner-facing Doraemon voice first.
   try {
-    return synthesizeDoraemonEdge(trimmed, opts.outPath, doraemonVoice);
+    return synthesizeDoraemonEdgeDialogue(trimmed, opts.outPath, doraemonVoice, femalePodcastVoice)
+      ?? synthesizeDoraemonEdge(trimmed, opts.outPath, doraemonVoice);
   } catch (err) {
     // eslint-disable-next-line no-console
     console.warn(

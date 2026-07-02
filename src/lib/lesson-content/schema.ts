@@ -1180,7 +1180,7 @@ export interface AudioSyncedVisualCue {
 export interface AudioGeneratedScenePanel {
   id: string;
   title: string;
-  kind: "matrix" | "vector" | "ledger" | "pipeline" | "flow" | "bar" | "cards" | "custom";
+  kind: "matrix" | "vector" | "ledger" | "pipeline" | "flow" | "bar" | "cards" | "formula" | "custom";
   description: string;
   data: Array<{
     label: string;
@@ -1532,8 +1532,8 @@ function validateAudioGeneratedScene(scene: unknown): { valid: boolean; errors: 
     if (typeof panel.title !== "string" || !panel.title.trim()) {
       errors.push(`panels[${i}].title is required`);
     }
-    if (!["matrix", "vector", "ledger", "pipeline", "flow", "bar", "cards", "custom"].includes(String(panel.kind))) {
-      errors.push(`panels[${i}].kind must be matrix, vector, ledger, pipeline, flow, bar, cards, or custom`);
+    if (!["matrix", "vector", "ledger", "pipeline", "flow", "bar", "cards", "formula", "custom"].includes(String(panel.kind))) {
+      errors.push(`panels[${i}].kind must be matrix, vector, ledger, pipeline, flow, bar, cards, formula, or custom`);
     }
     if (typeof panel.description !== "string" || panel.description.trim().length < 20) {
       errors.push(`panels[${i}].description must explain the panel`);

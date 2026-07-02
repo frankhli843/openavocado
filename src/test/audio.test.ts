@@ -85,6 +85,27 @@ describe.runIf(HAS_DORAEMON_EDGE)("synthesizeSpeech (default Doraemon voice)", (
     expect(statSync(out).size).toBeGreaterThan(1000);
     expect(res.durationSec).toBeGreaterThan(0);
   });
+
+  it("uses male and female Edge voices for two-host podcast transcripts", async () => {
+    const dir = mkdtempSync(path.join(os.tmpdir(), "avo-tts-"));
+    tmpFiles.push(dir);
+    const out = path.join(dir, "dialogue.mp3");
+    const res = await synthesizeSpeech(
+      [
+        "Leo: We are setting up the big map for this lesson.",
+        "Maya: I will ask the learner-style clarifying question.",
+        "Leo: Then I unpack the mechanism with a tiny example.",
+        "Maya: And I check the misconception before practice.",
+      ].join("\n\n"),
+      { outPath: out }
+    );
+
+    expect(res.provider).toBe("doraemon-edge-tts");
+    expect(res.voice).toBe("en-US-BrianNeural+en-US-JennyNeural");
+    expect(existsSync(out)).toBe(true);
+    expect(statSync(out).size).toBeGreaterThan(1000);
+    expect(res.durationSec).toBeGreaterThan(0);
+  });
 });
 
 describe.runIf(HAS_ESPEAK)("synthesizeSpeech (espeak-ng)", () => {

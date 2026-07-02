@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo, useRef, useState, type ReactNode } from "react";
+import katex from "katex";
 import type { GeneratedArtifact, LessonActivity, ReadingBlock } from "@/types";
 import type {
   AudioGeneratedScenePanel,
@@ -799,18 +800,6 @@ function GeneratedAudioScene({
   const activePanelIndex = Math.max(0, panels.findIndex((panel) => panel.id === activePanelId));
   return (
     <div className="border-t border-gray-100 pt-3">
-      <div className="mb-3 flex flex-col gap-1 sm:flex-row sm:items-start sm:justify-between">
-        <div>
-          <div className="text-xs font-semibold uppercase tracking-wider text-gray-400">
-            Generated scene: {visual.scene.motif}
-          </div>
-          <div className="text-sm font-semibold text-gray-800">{visual.scene.title}</div>
-          <p className="mt-1 text-xs leading-5 text-gray-500">{visual.scene.description}</p>
-        </div>
-        <div className="text-[11px] font-semibold uppercase tracking-wider text-blue-500">
-          {visual.scene.scene_id}
-        </div>
-      </div>
       <div className="mb-3 flex max-w-full gap-1 overflow-x-auto pb-1" aria-label="Generated scene steps">
         {panels.map((panel, index) => (
           <div
@@ -822,16 +811,13 @@ function GeneratedAudioScene({
           />
         ))}
       </div>
-      <div className="grid gap-3 xl:grid-cols-2">
-        {panels.map((panel) => (
-          <GeneratedScenePanel
-            key={panel.id}
-            panel={panel}
-            active={panel.id === activePanelId}
-            activeElements={cue.active_elements ?? []}
-          />
-        ))}
-      </div>
+      {panels[activePanelIndex] ? (
+        <GeneratedScenePanel
+          panel={panels[activePanelIndex]}
+          active
+          activeElements={cue.active_elements ?? []}
+        />
+      ) : null}
     </div>
   );
 }
@@ -870,12 +856,112 @@ function GeneratedScenePanel({
           <GeneratedVectors data={panel.data} activeElements={activeElements} active={active} />
         ) : panel.kind === "pipeline" || panel.kind === "flow" ? (
           <GeneratedFlow data={panel.data} activeElements={activeElements} active={active} />
+        ) : panel.kind === "formula" ? (
+          <GeneratedFormula data={panel.data} activeElements={activeElements} active={active} />
         ) : (
           <GeneratedCards data={panel.data} activeElements={activeElements} active={active} />
         )}
       </div>
     </div>
   );
+}
+
+function GeneratedFormula({
+  data,
+  activeElements,
+  active,
+}: {
+  data: AudioGeneratedScenePanel["data"];
+  activeElements: string[];
+  active: boolean;
+}) {
+  const formula = data.find((item) => /formula|equation|expression/i.test(item.label))?.value ?? data[0]?.value ?? "";
+  const terms = data.filter((item) => !/formula|equation|expression/i.test(item.label));
+  const formulaHtml = useMemo(() => renderGeneratedFormula(String(formula), activeElements), [formula, activeElements]);
+  return (
+    <div className="space-y-3">
+      <div className="max-w-full overflow-hidden rounded bg-white px-3 py-4 text-gray-800">
+        {formulaHtml ? (
+          <div
+            className="max-w-full overflow-x-auto text-sm sm:text-base [&_.katex-display]:my-0 [&_.katex]:whitespace-normal"
+            aria-label={`Formula: ${formula}`}
+            dangerouslySetInnerHTML={{ __html: formulaHtml }}
+          />
+        ) : (
+          <code className="block whitespace-pre-wrap break-all font-mono text-sm leading-7">
+            {formula}
+          </code>
+        )}
+      </div>
+      {terms.length > 0 && (
+        <div className="grid gap-2 sm:grid-cols-2">
+          {terms.map((item) => {
+            const highlighted = active && isActiveGeneratedElement(item.label, activeElements);
+            return (
+              <div
+                key={item.label}
+                className={`border-l-2 bg-white px-3 py-2 ${
+                  highlighted ? "border-blue-500 text-blue-900" : "border-gray-100 text-gray-700"
+                }`}
+              >
+                <div className="text-xs font-semibold">{item.label}</div>
+                <div className="mt-1 text-xs leading-5 text-gray-500">{item.value}</div>
+              </div>
+            );
+          })}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function renderGeneratedFormula(formula: string, activeElements: string[]) {
+  if (!formula.trim()) return "";
+  try {
+    return katex.renderToString(highlightLatexTerms(formula.trim(), activeElements), {
+      displayMode: true,
+      throwOnError: false,
+      strict: "warn",
+      trust: false,
+      output: "html",
+    });
+  } catch {
+    return "";
+  }
+}
+
+function highlightLatexTerms(formula: string, activeElements: string[]) {
+  let out = formula;
+  const replacements = activeElements
+    .flatMap((item) => latexTargetsForActiveElement(item))
+    .filter((item, index, all) => item && all.indexOf(item) === index)
+    .sort((a, b) => b.length - a.length);
+
+  for (const target of replacements) {
+    out = out.replace(new RegExp(escapeRegExp(target), "g"), `\\colorbox{#dbeafe}{${target}}`);
+  }
+  return out;
+}
+
+function latexTargetsForActiveElement(label: string) {
+  const normalized = label.trim();
+  const lower = normalized.toLowerCase();
+  const isOperator = lower === "layernorm" || lower === "attention" || lower === "mlp" || lower === "softmax";
+  const targets = isOperator ? [] : [normalized];
+  const subMatch = lower.match(/^([a-z]) sub (.+)$/);
+  if (subMatch) {
+    const base = subMatch[1].toUpperCase() === normalized[0] ? normalized[0] : subMatch[1];
+    const sub = subMatch[2].replace(/\s+/g, "-");
+    targets.push(`${base}_{\\text{${sub}}}`, `${base}_{${sub}}`, `${base}_${sub}`);
+  }
+  if (isOperator) {
+    targets.push(`\\operatorname{${normalized}}`, `\\mathrm{${normalized}}`);
+  }
+  return targets;
+}
+
+function escapeRegExp(value: string) {
+  return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 }
 
 function isActiveGeneratedElement(label: string, activeElements: string[]) {

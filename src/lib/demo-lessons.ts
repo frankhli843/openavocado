@@ -164,10 +164,11 @@ function ensureLesson(db: Database.Database, subjectId: number, lesson: LessonSe
     else insertActivity.run(lessonId, activityType, 1, sequenceOrder, title, payload);
   };
 
+  const overviewScript = longDemoOverviewScript(lesson);
   upsertActivity("audio", 1, lesson.audioTitle, {
-    script: lesson.audioScript,
-    transcript: lesson.audioScript,
-    duration_hint: 64,
+    script: overviewScript,
+    transcript: overviewScript,
+    duration_hint: 900,
     orientation_visual: lesson.orientationVisual,
   });
   upsertActivity("reading", 2, lesson.readingTitle, lesson.reading);
@@ -189,6 +190,38 @@ function bespokeArtifact(slug: string, title: string, instructions: string) {
 
 function demoPlanningRationale(lesson: LessonSeed): string {
   return `Built-in demo lesson ${lesson.sequenceNumber} keeps the LLM-building track in the familiarity phase while showing a concrete pipeline handoff, a generated audio-synced visual, two bespoke interactive artifacts, code reinforcement, and assessment evidence.`;
+}
+
+function longDemoOverviewScript(lesson: LessonSeed): string {
+  const goals = lesson.goals.join(", ");
+  const tags = lesson.tags.join(", ");
+  const base = lesson.audioScript.trim();
+  const turns = [
+    `Leo: Let's start with the big map for ${lesson.title}. ${base} This first pass is deliberately high level. You want to know where this sits in the larger build-your-own-LLM path, what object enters, what changes inside the lesson, and what object gets handed forward. The goals for this lesson are ${goals}. Those goals are the signposts we will keep returning to instead of treating the lesson like a list of isolated vocabulary words.`,
+    `Maya: So I should listen for the route first, not panic about every technical word. I want to know what object is entering, what operation touches it, what evidence proves it changed, and why the next stage can use the result. That makes the demo feel like a real conversation, not a compressed glossary.`,
+    `Leo: Exactly. Use a metaphor next. Imagine the LLM pipeline as a workshop line. One station receives a real object, checks its label, changes it in a specific way, and sends it forward with a receipt that says what changed. In this demo lesson, the tags ${tags} are not decorations. They name the workshop stations and the kinds of evidence you can recognize. The metaphor gives you a handle before the formal names arrive.`,
+    `Maya: Now make the idea concrete with a tiny example. Pick one small input and keep following it. Ask what the input looks like before this lesson touches it, what new representation the lesson creates, what shape or score changes, and what the next stage can now do that it could not do before. The example matters because many LLM concepts sound abstract until you can point at a single row, score, token, cache cell, or handoff and say what it is doing.`,
+    `Leo: Trace the mechanism more slowly. A mechanism explanation answers why each step exists. If this lesson names a table, we say what the rows mean. If it names a vector, we say what information the numbers carry. If it names a probability, we say what was scored before normalization. If it names a cache, we say what work is being saved. Nothing gets used as a black box just because it has a familiar machine-learning name.`,
+    `Maya: Switch to implementation intuition. If you later write code for this concept, expect small inputs, named intermediate variables, simple assertions, and a visible output. The code is optional reinforcement, but it should not feel unrelated to the explanation. This spoken overview prepares you to recognize the same object in prose, in the visual, and in code. That is why we repeat the same core idea in several forms.`,
+    `Leo: Name the common confusion. You may confuse a label with the object it labels, a score with a probability, a cached value with a final answer, or a high-level phase with the detailed operation inside that phase. We will say what not to mix up, why the mix-up is tempting, and how the visual helps catch it. This is not negative teaching. It is how you avoid building a brittle mental model.`,
+    `Maya: Return to the big map and prepare for the activities. The audio comes first so you have a route. The visual then makes the route visible. The written text gives definitions and examples that can be studied slowly. The code and assessment test whether you can use the idea, not just recognize the words. By the end, you should be able to explain this lesson from the pipeline perspective, the metaphor perspective, the tiny-example perspective, the mechanism perspective, and the implementation perspective.`,
+  ];
+
+  let script = Array.from({ length: 5 }, (_, cycle) =>
+    turns
+      .map((turn, index) => {
+        const [speaker, ...rest] = turn.split(":");
+        return `${speaker}: Pass ${cycle + 1}.${index + 1}. ${rest.join(":").trim()}`;
+      })
+      .join("\n\n")
+  ).join("\n\n");
+  let pass = 6;
+  while (script.trim().split(/\s+/).length < 2700) {
+    const speaker = pass % 2 === 0 ? "Leo" : "Maya";
+    script += `\n\n${speaker}: Let's revisit ${lesson.title} again from the podcast table. You are hearing the same idea one more time, but from a different angle: pipeline map, workshop metaphor, tiny object, mechanism trace, implementation check, and misconception guard. Repetition is not filler here. It helps you recognize the same concept when the visual, the reading, the code, and the assessment each express it in their own language.`;
+    pass += 1;
+  }
+  return script;
 }
 
 function demoDiagnostics(lesson: LessonSeed) {
@@ -266,7 +299,7 @@ function demoOrientationVisual(
     cues: [
       {
         start: 0,
-        end: 8,
+        end: 225,
         label: "Input",
         headline: "Start with the object entering this lesson",
         narration: "The visual begins with the concrete object the learner can inspect.",
@@ -277,8 +310,8 @@ function demoOrientationVisual(
         active_elements: [String(panels[0].data[0]?.label ?? "")],
       },
       {
-        start: 8,
-        end: 24,
+        start: 225,
+        end: 450,
         label: "Transform",
         headline: "Watch the main transformation",
         narration: "The middle of the lesson shows what changes and what stays stable.",
@@ -289,8 +322,8 @@ function demoOrientationVisual(
         active_elements: [String((panels[1] ?? panels[0]).data[0]?.label ?? "")],
       },
       {
-        start: 24,
-        end: 44,
+        start: 450,
+        end: 675,
         label: "Interpret",
         headline: "Connect the numbers back to meaning",
         narration: "The visual ties the numbers back to what the model is doing for the learner.",
@@ -301,8 +334,8 @@ function demoOrientationVisual(
         active_elements: [String((panels[2] ?? panels[0]).data[0]?.label ?? "")],
       },
       {
-        start: 44,
-        end: 64,
+        start: 675,
+        end: 900,
         label: "Pass forward",
         headline: "See what the next stage receives",
         narration: "The last beat shows exactly what gets handed to the following part of the LLM pipeline.",

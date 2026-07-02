@@ -19,6 +19,7 @@ export function AudioSection({ activity, artifact }: AudioSectionProps) {
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const [audioTime, setAudioTime] = useState(0);
   const [audioDuration, setAudioDuration] = useState(0);
+  const [audioPlaying, setAudioPlaying] = useState(false);
   const syncedOrientation = isAudioSyncedVisual(orientationVisual) ? orientationVisual : null;
   const widgetOrientation = syncedOrientation ? null : orientationVisual;
 
@@ -55,7 +56,13 @@ export function AudioSection({ activity, artifact }: AudioSectionProps) {
           <div className="min-w-0 space-y-4">
             {/* Audio player */}
             {artifact?.file_path ? (
-              <div>
+              <div
+                className={
+                  audioPlaying
+                    ? "sticky top-[4.75rem] z-20 rounded-xl border border-blue-100 bg-white/95 p-2 shadow-lg shadow-blue-100/60 backdrop-blur"
+                    : ""
+                }
+              >
                 <audio
                   ref={audioRef}
                   controls
@@ -63,6 +70,9 @@ export function AudioSection({ activity, artifact }: AudioSectionProps) {
                   src={`/runtime/${artifact.file_path}`}
                   onLoadedMetadata={(event) => setAudioDuration(event.currentTarget.duration || 0)}
                   onTimeUpdate={(event) => setAudioTime(event.currentTarget.currentTime)}
+                  onPlay={() => setAudioPlaying(true)}
+                  onPause={() => setAudioPlaying(false)}
+                  onEnded={() => setAudioPlaying(false)}
                 >
                   Your browser does not support audio playback.
                 </audio>

@@ -166,14 +166,41 @@ enforced by `validateGeneratedContent`; the rest is a hard authoring rule.
   lessons, each major step should have a plain-language handle, a fitting
   metaphor, easy examples, and its own visual/interactive treatment when that
   would clarify what the step changes or what breaks if skipped.
-- **Audio is a real walkthrough, not a short caption.** The spoken script must be
-  detailed enough for the learner to understand the high-level picture, the why,
-  and concrete worked examples before using the interactives. Normal lessons
-  should target at least 10 minutes of substantive Doraemon-voice audio, and may
-  be longer when the topic needs it. Go shorter only for explicitly short
-  reference/diagnostic content and document why. The audio should explicitly
-  bridge concepts in plain language. If it sounds like a quick summary or table
-  of contents, regenerate it.
+- **Top-level overview audio is a long-form walkthrough, not a short caption.**
+  The first audio activity must be detailed enough for the learner to understand
+  the high-level picture, the why, and concrete worked examples before using the
+  interactives. Normal lessons must target at least 15 minutes of substantive
+  Doraemon-voice audio, which means at least 2,700 words in the source script.
+  Start the overview with the big map, then revisit the same ideas from
+  multiple perspectives: metaphor or analogy, tiny worked example, mechanism
+  trace, implementation intuition, misconception or failure mode, and final
+  synthesis. The transcript must read like a conversational two-host podcast lesson with
+  clear male/female speaker labels such as `Leo:` and `Maya:`. Use a calm
+  long-form interview or NotebookLM-style back-and-forth without imitating any
+  specific living person: one host asks learner-like clarifying questions, the
+  other unpacks the mechanism. Define every major noun before relying on it. Go
+  shorter only for explicitly short reference/diagnostic content and document
+  why. If it sounds like a quick summary or table of contents, regenerate it.
+- **Audio scripts must be learner-facing, never author-facing.** The top-level
+  overview and all lesson-part audio must sound like two hosts speaking
+  directly to the learner with natural questions and answers. Do not leak
+  prompt, rubric, checklist, or planning language into the transcript. Phrases
+  such as "the learner should", "the lesson should", "the overview should",
+  "the audio should", and "the transcript should" are authoring notes, not
+  spoken lesson text. Use direct conversational language such as "you will see",
+  "we are going to look at", and "listen for this handoff".
+- **Conversational learning strategy is good.** It is useful for hosts to coach
+  the learner on how to listen, for example "do not try to memorize everything
+  at once, listen for the object and the handoff." Keep this in direct
+  second-person language. Do not turn it into an internal instruction about
+  what "the learner should" do.
+- **Local model boundary.** Local AvocadoCore may use a low-latency local model
+  for instant learner-facing paths such as chat, short-answer grading,
+  code-submission feedback, hints, and immediate formative feedback. Do not use
+  that local feedback model as the lesson author. Lesson generation and repair
+  must go through the AvocadoCore / Dora lesson-authoring flow, an approved
+  harness, or a controlled backfill script that validates and writes real lesson
+  content.
 - **First-class written teaching text** (`reading`), not a transcript dump.
 - **Collapsed lesson parts for normal lessons.** Break the lesson into
   `lesson_part` activities whenever the topic has steps or sub-concepts. Each
@@ -235,6 +262,17 @@ enforced by `validateGeneratedContent`; the rest is a hard authoring rule.
   square roots, matrix shapes, losses, or gradients, add a reading block with
   `type: "formula"`, `latex`, `plain_english`, and `variables[]`. Do not leave
   formulas as plain prose or unintroduced symbols.
+- **Spoken formulas must be audio-friendly.** Keep raw notation in the formal
+  LaTeX block, but in audio read formulas as words and meaning. For example,
+  say "Q times K transpose, divided by the square root of d sub k" before
+  explaining the attention-score table. Do not read raw text such as `QK^T /
+  √d_k` as if it were prose.
+- **Formula narration needs formula visuals.** When audio explains a formula,
+  the paired synced visual must include a formula panel (`kind: "formula"`) that
+  displays the formula and highlights the symbols or subexpressions currently
+  being discussed. For attention, show the expression and highlight Q, K, the
+  score matrix, softmax, and V as the hosts discuss each one. Do not narrate a
+  formula while showing only an unrelated pipeline or generic cards.
 - **Plan visual beats about every 5 seconds.** For normal lesson-part audio,
   expect roughly one moving visual beat every 5 seconds. A beat can move a
   pointer, highlight a matrix cell, shift a row, update an arrow, reveal a
@@ -307,7 +345,9 @@ enforced by `validateGeneratedContent`; the rest is a hard authoring rule.
   discussed in that audio. Put broad exploratory interactives after the
   audio/text block as their own activity; the audio-adjacent visual should be a
   focused subset or dedicated bespoke artifact with timed states matching the
-  spoken beats.
+  spoken beats. The step rail may show nearby beats for orientation, but the
+  main audio-adjacent synced visual should show only the currently relevant
+  generated panel. Do not render every scene panel at once beside the audio.
 - **Knowledge graph orientation (`knowledge_graph_data`).** Every lesson must
   include a `KnowledgeGraphData` object (see `src/types/index.ts`) that shows
   where this lesson sits in the subject curriculum. Think of it as a subject map

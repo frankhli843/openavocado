@@ -46,20 +46,28 @@ describe("demo lesson seeding", () => {
     expect(audioRows).toHaveLength(DEMO_LESSONS.length);
     for (const row of audioRows) {
       const content = JSON.parse(row.content) as {
+        script?: string;
         transcript?: string;
+        duration_hint?: number;
         orientation_visual?: {
           scene?: { panels?: Array<{ id: string; kind?: string }> };
-          cues?: Array<{ panel_id?: string; active_elements?: string[] }>;
+          cues?: Array<{ start?: number; end?: number; panel_id?: string; active_elements?: string[] }>;
         };
       };
       const panels = content.orientation_visual?.scene?.panels ?? [];
       const cues = content.orientation_visual?.cues ?? [];
       const panelIds = new Set(panels.map((panel) => panel.id));
 
-      expect(content.transcript?.length).toBeGreaterThan(100);
+      expect((content.script ?? "").trim().split(/\s+/).length).toBeGreaterThanOrEqual(2700);
+      expect(content.script ?? "").not.toMatch(
+        /\b(?:the learner should|learner should|the learner needs|learner needs|the lesson should|this lesson should|the overview should|this overview should|the audio should|the transcript should|the script should)\b/i
+      );
+      expect(content.transcript).toBe(content.script);
+      expect(content.duration_hint).toBeGreaterThanOrEqual(900);
       expect(panels.length).toBeGreaterThanOrEqual(4);
       expect(new Set(panels.map((panel) => panel.kind)).size).toBeGreaterThan(1);
       expect(cues.length).toBeGreaterThanOrEqual(4);
+      expect(Math.max(...cues.map((cue) => cue.end ?? 0))).toBeGreaterThanOrEqual(900);
       for (const cue of cues) {
         expect(cue.panel_id).toBeTruthy();
         expect(panelIds.has(cue.panel_id ?? "")).toBe(true);

@@ -30,6 +30,14 @@ import {
 
 /** Minimum audio script length to count as a real, generation-ready script. */
 const MIN_AUDIO_SCRIPT_CHARS = 20;
+/** Fifteen minutes with margin at the current Doraemon Edge TTS pace. */
+const MIN_OVERVIEW_AUDIO_WORDS = 2700;
+const PODCAST_MALE_RE = /^(?:\*\*)?(Leo|Male host|Host A|Doraemon|Daniel|Alex)(?:\*\*)?:/gim;
+const PODCAST_FEMALE_RE = /^(?:\*\*)?(Maya|Female host|Host B|Guest|Ava|Mina)(?:\*\*)?:/gim;
+const AUTHORING_LEAK_RE =
+  /\b(?:the learner should|learner should|the learner needs|learner needs|the lesson should|this lesson should|the overview should|this overview should|the audio should|the transcript should|the script should|must be written as|should be written as)\b/i;
+const RAW_FORMULA_AUDIO_RE = /\b(?:QK\^T|Q\s*·\s*K\^T|√d_k|softmax\([^)]*[·^√_][^)]*\)|[A-Za-z]\^[A-Za-z0-9]|\b\w+_\w+\b)/;
+const RAW_LATEX_AUDIO_RE = /(?:\\[A-Za-z]+|[A-Za-z]_\{|_\{|[{}])/;
 
 export { WIDGET_SCHEMA_VERSION };
 
@@ -80,7 +88,7 @@ export const LESSON_QUALITY_BAR_PROMPT = [
   "- SECTION PIPELINE STAGE MAPS: every lesson part in a pipeline/process lesson must include a local stage-and-handoff visual that shows what came before, what this section receives, what it changes, what it outputs, and what comes next. For LLM lessons, explicitly distinguish tokenizer, embeddings/hidden states, transformer blocks, output head/logits, training, and inference/serving. The learner should never have to guess how the current object relates to the wider pipeline.",
   "- LESSON FLOW ORDER: the learner-facing order should be listen first, then study written text and visualizations together, then do practice problems/code and assessments. Lesson-part UI and content should put audio before the written/visual pair, and visuals should stay close enough to the text that they can be read together.",
   "- AUDIO + INTERACTIVE SIDE-BY-SIDE FOR ORIENTATION: every top-level audio orientation and every lesson_part audio segment must have a paired visual/interactive visible alongside the audio on desktop and immediately below it on mobile. Top-level audio must use the same timed cue scene pattern as lesson parts, stored as audio content orientation_visual with cues, receive/transform/pass labels, and seekable beats. For lesson parts, store it as audio.synced_visual plus the part interactive. Do not make learners finish listening before they can see the moving object being described.",
-  "- AUDIO-ADJACENT VISUALS MUST BE SCOPED TO THE CURRENT AUDIO: the visual shown beside or immediately below an audio player must show only what that audio segment is narrating now, plus minimal before/after handoff context. Do not reuse a broad whole-lesson interactive, all-step simulator, complete curriculum map, or later exploratory widget beside the audio when most of it is unrelated to the current narration. Put broad exploratory interactives after the audio/text block as their own activity; the audio-adjacent visual should be a focused subset or dedicated bespoke artifact with timed states matching the spoken beats.",
+  "- AUDIO-ADJACENT VISUALS MUST BE SCOPED TO THE CURRENT AUDIO: the visual shown beside or immediately below an audio player must show only what that audio segment is narrating now, plus minimal before/after handoff context. Do not reuse a broad whole-lesson interactive, all-step simulator, complete curriculum map, or later exploratory widget beside the audio when most of it is unrelated to the current narration. Put broad exploratory interactives after the audio/text block as their own activity; the audio-adjacent visual should be a focused subset or dedicated bespoke artifact with timed states matching the spoken beats. In the UI, the step rail may show nearby beats, but the main synced visual should show only the currently relevant generated panel, not every panel in the scene at once.",
   "- AUDIO-SYNCED VISUAL TRANSCRIPTS ARE REQUIRED: every top-level audio activity and every lesson_part audio object must include the learner-visible transcript and a synced visual. Top-level audio stores the synced visual in orientation_visual; lesson parts store it in audio.synced_visual. The synced visual must contain timed cues over the audio duration, so the visual changes as playback advances. Cues must identify what object the section receives, what operation is happening, and what is passed forward. A transcript-only accordion, one static component, or a card that just writes the audio text is rejected.",
   "- UNIQUE BESPOKE AUDIO VISUALS: every audio-synced visual in the same lesson must be individually designed for that exact audio segment. Do not repeat the same receive-transform-pass layout, cue labels, scene objects, or visual motif with different text. Use a different scene plan per audio: an attention score grid for Q/K/V, a residual-stream ledger for residual flow, an expansion/compression gate for an MLP, a pipeline map for orientation, or a logits table for output-head audio. The checker rejects duplicate synced-visual fingerprints within a lesson.",
   "- FORMAL MATH REQUIREMENT: whenever a lesson uses mathematical notation, formulas, or expressions such as Attention(Q,K,V), QK^T, softmax, square roots, matrix shapes, probabilities, or loss functions, the reading content must include a `formula` block with LaTeX, a plain-English interpretation, and explicit variable definitions including shapes/units when relevant. Do not leave formulas as plain prose.",
@@ -89,7 +97,11 @@ export const LESSON_QUALITY_BAR_PROMPT = [
   "- BESPOKE ARTIFACT PIPELINE (REQUIRED FOR NEW VISUALS): the DB-backed bespoke artifact pipeline is live. For any new interactive, generate a self-contained React component (React + recharts/lucide-react only, no external fetches), store it via POST /api/visual-artifacts with a stable slug, build it via POST /api/visual-artifacts/{slug}/build, run Chrome MCP QA on the sandbox URL (/api/visual-artifacts/{slug}/sandbox), take desktop and mobile screenshots, attach QA evidence via POST /api/visual-artifacts/{slug}/qa-evidence, then approve it via POST /api/visual-artifacts/{slug}/approve. Once approved, the lesson interactive JSON stores widget_type:'bespoke-artifact' and params.artifact_slug only. Component contract: export default function ArtifactComponent(). Allowed imports: react, react-dom, lucide-react, recharts. No fs, path, child_process, net, http, https, crypto.",
   "- REGISTERED AND DECLARATIVE WIDGETS ARE LEGACY READ-ONLY COMPATIBILITY: existing registered types (supply-demand, kv-cache-generation, etc.) and declarative specs may remain renderable while old lessons are migrated, but they are forbidden for new generated lessons and will fail validateGeneratedContent. Do not choose them just because one is close.",
   "- EXAMPLES + METAPHORS: use fitting metaphors and simple examples to make each major step or concept understandable. Multi-step lessons should give each major step its own plain-language handle, metaphor, and easy examples where useful.",
-  "- Audio must be a real walkthrough, not a short caption or table of contents. Normal lessons should target at least 10 minutes of substantive Doraemon-voice audio, longer when needed; go shorter only for explicitly short reference/diagnostic content and document why. It must explain the why, connect the steps, and include concrete worked examples in plain language.",
+  "- TOP-LEVEL OVERVIEW AUDIO MINIMUM: the first audio activity is the learner's primary lecture and must target at least 15 minutes of substantive Doraemon-voice audio, which means at least 2,700 words unless the lesson is explicitly diagnostic/reference-only and documents why it is shorter. The transcript must use a two-host podcast format with clear male and female speaker labels, for example `Leo:` and `Maya:`. Use a calm long-form interview / NotebookLM-style back-and-forth without imitating a specific living person. One host should ask learner-like clarifying questions while the other unpacks the mechanism. Start at the high-level map, then spiral into more detail by revisiting the same core ideas through analogy/metaphor, tiny worked example, mechanism trace, implementation intuition, misconception/failure mode, and final synthesis. It must define every major noun, explain why each step matters, connect the steps, repeat the essential model from multiple perspectives, and use concrete examples in plain language. A short caption, table of contents, or quick intro fails QA.",
+  "- LEARNER-FACING AUDIO ONLY: audio scripts and transcripts must sound like the hosts are teaching the learner directly. Do not leak authoring instructions, rubric language, or meta-planning phrases such as 'the learner should', 'the lesson should', 'the overview should', 'the audio should', or 'the transcript should'. Say 'you should hear', 'we will look at', or directly explain the concept instead.",
+  "- CONVERSATIONAL LEARNING STRATEGY IS ENCOURAGED: it is good for hosts to coach the learner on how to listen, for example 'do not try to memorize everything at once, listen for the object and the handoff.' Keep that guidance in direct second-person conversational language. Do not convert it into author-facing wording about what 'the learner should' do.",
+  "- AUDIO-FRIENDLY FORMULAS: reading blocks still need formal LaTeX, but spoken audio must describe formulas in words. Do not read raw notation such as `QK^T / √d_k` as text. Say 'Q times K transpose, divided by the square root of d sub k', then explain what the quantity means before returning to the visual or example.",
+  "- FORMULA-SYNCED VISUALS: when audio explains a formula, the paired synced visual must include a formula panel (kind `formula`) that displays the formula and highlights the specific symbols or subexpressions named by the current cue. For attention, show the expression and highlight Q, K, the score matrix, softmax, and V as the hosts discuss each one. Do not narrate a formula while showing an unrelated pipeline or generic cards.",
   "- First-class WRITTEN teaching text the learner can study without the audio (headings, a definition, a worked example, a summary) — not a transcript dump.",
   "- MULTIPLE meaningful visual/interactive explorations when the lesson covers multiple concepts. A multi-concept lesson (3+ goals/mastery targets) needs at least TWO distinct visual perspectives; a multi-step lesson should prefer step-specific visuals. One thin widget for many concepts is rejected.",
   "- LESSON PARTS: break normal lessons into collapsed `lesson_part` activities. Each part must contain written explanation, a per-part audio script/transcript, audio.synced_visual timed across that part's audio length, a bespoke-artifact interactive visualization, a part-specific executable code practice, and mixed reinforcement practice. Mixed practice must include select-one, select-all with some correct, select-all with none correct, ordering, and written questions. Written questions must provide actual_answer + rubric so /api/answer-judge can give immediate LLM feedback. Section done/undone buttons are a learner checklist only, available at any time, persisted in SQLite, and never used as a completion gate.",
@@ -225,6 +237,30 @@ export function validateGeneratedContent(
       errors.push(
         "audio activity must include a substantive script (generated audio must be available at lesson creation, not a placeholder)"
       );
+    } else {
+      const wordCount = script.trim().split(/\s+/).filter(Boolean).length;
+      if (wordCount < MIN_OVERVIEW_AUDIO_WORDS) {
+        errors.push(
+          `top-level overview audio script must be at least ${MIN_OVERVIEW_AUDIO_WORDS} words to target 15+ minutes; got ${wordCount}`
+        );
+      }
+      const maleLines = script.match(PODCAST_MALE_RE)?.length ?? 0;
+      const femaleLines = script.match(PODCAST_FEMALE_RE)?.length ?? 0;
+      if (maleLines < 4 || femaleLines < 4) {
+        errors.push(
+          "top-level overview audio script must use a two-host podcast transcript with at least four male-host and four female-host turns"
+        );
+      }
+      if (AUTHORING_LEAK_RE.test(script)) {
+        errors.push(
+          "top-level overview audio script must be learner-facing and must not leak authoring instructions such as 'the learner should', 'the lesson should', or 'the audio should'"
+        );
+      }
+      if (RAW_FORMULA_AUDIO_RE.test(script) || RAW_LATEX_AUDIO_RE.test(script)) {
+        errors.push(
+          "top-level overview audio script must describe formulas in audio-friendly words instead of raw notation such as QK^T, √d_k, LaTeX commands, braces, or underscored variable names"
+        );
+      }
     }
     const transcript =
       typeof audioContent?.transcript === "string" && audioContent.transcript.trim()
@@ -238,6 +274,10 @@ export function validateGeneratedContent(
       audioContent?.duration_hint
     );
     for (const e of visual.errors) errors.push(`audio activity orientation_visual: ${e}`);
+    const durationHint = Number(audioContent?.duration_hint ?? 0);
+    if (!Number.isFinite(durationHint) || durationHint < 15 * 60) {
+      errors.push("top-level overview audio duration_hint must be at least 900 seconds");
+    }
   }
 
   // Multiple visual perspectives when the lesson covers multiple concepts. A

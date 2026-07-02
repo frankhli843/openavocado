@@ -77,17 +77,73 @@ const visual: AudioSyncedVisualContent = {
 };
 
 describe("AudioSyncedLessonVisual", () => {
-  it("keeps all generated panels visible and highlights the active audio cue panel", () => {
+  it("shows only the active generated panel while keeping the step rail visible", () => {
     render(<AudioSyncedLessonVisual visual={visual} currentTime={12} duration={30} onSeek={vi.fn()} />);
 
     expect(screen.getAllByText("Context vector leaves attention").length).toBeGreaterThan(0);
     expect(screen.getByText("Attention panel")).toBeInTheDocument();
-    expect(screen.getByText("Input panel")).toBeInTheDocument();
-    expect(screen.getByText("Output panel")).toBeInTheDocument();
+    expect(screen.queryByText("Input panel")).not.toBeInTheDocument();
+    expect(screen.queryByText("Output panel")).not.toBeInTheDocument();
+    expect(screen.queryByText(/Generated scene/i)).not.toBeInTheDocument();
+    expect(screen.queryByText("focused-scene")).not.toBeInTheDocument();
     expect(screen.getByLabelText("Generated scene steps")).toBeInTheDocument();
     expect(screen.getByText("The current beat should highlight the attention panel in place.")).toBeInTheDocument();
     expect(screen.getByText("Attention panel").closest("[aria-current='step']")).toBeTruthy();
-    expect(screen.getByText("Input panel").closest("[aria-current='step']")).toBeFalsy();
-    expect(screen.getByText("Output panel").closest("[aria-current='step']")).toBeFalsy();
+  });
+
+  it("renders formula panels and highlights the formula terms named by the cue", () => {
+    const formulaVisual: AudioSyncedVisualContent = {
+      strategy: "timeline",
+      scene: {
+        scene_id: "formula-scene",
+        title: "Formula scene",
+        motif: "formula strip",
+        description: "A generated formula scene that highlights symbols as the audio explains them.",
+        panels: [
+          {
+            id: "formula",
+            title: "Attention formula",
+            kind: "formula",
+            description: "Shows the attention formula and the symbols being narrated.",
+            data: [
+              { label: "formula", value: "Attention(Q,K,V) = softmax(QK^T / sqrt(d_k)) · V", role: "context" },
+              { label: "Q", value: "Query rows: what this token asks for", role: "input" },
+              { label: "K", value: "Key rows: what each token advertises", role: "input" },
+              { label: "V", value: "Value rows: content being mixed", role: "output" },
+            ],
+          },
+          {
+            id: "after",
+            title: "After formula",
+            kind: "cards",
+            description: "Shows what happens after the formula.",
+            data: [{ label: "Context", value: "mixed vector", role: "output" }],
+          },
+        ],
+      },
+      cues: [
+        {
+          start: 0,
+          end: 15,
+          label: "Formula",
+          headline: "Q and K create scores",
+          narration: "The formula is highlighted as the audio names Q and K.",
+          receive: "query and key rows",
+          transform: "compute scores",
+          pass: "attention weights",
+          panel_id: "formula",
+          active_elements: ["Q", "K"],
+        },
+      ],
+    };
+
+    render(<AudioSyncedLessonVisual visual={formulaVisual} currentTime={4} duration={15} onSeek={vi.fn()} />);
+
+    expect(screen.getByText("Attention formula")).toBeInTheDocument();
+    const renderedFormula = screen.getByLabelText("Formula: Attention(Q,K,V) = softmax(QK^T / sqrt(d_k)) · V");
+    expect(renderedFormula.innerHTML).toContain("#dbeafe");
+    expect(screen.getAllByText("Q").some((el) => el.closest(".border-l-2")?.className.includes("border-blue-500"))).toBe(true);
+    expect(screen.getAllByText("K").some((el) => el.closest(".border-l-2")?.className.includes("border-blue-500"))).toBe(true);
+    expect(screen.queryByText("After formula")).not.toBeInTheDocument();
   });
 });
