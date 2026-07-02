@@ -414,7 +414,7 @@ function updateActivityContent(): void {
   if (!visual || typeof visual !== "object" || !Array.isArray(visual.cues)) {
     throw new Error("Activity 84 is missing orientation_visual.cues");
   }
-  visual.artifact_slug = "lesson-15-cue-hidden-state-input";
+  visual.artifact_slug = cueArtifacts[0]!.slug;
   visual.segmented_artifacts = true;
   visual.segmentation_note =
     "Each major cue mounts a separate approved visual_artifacts component so formulas, matrices, residuals, and MLP handoff are not forced into one generic box layout.";

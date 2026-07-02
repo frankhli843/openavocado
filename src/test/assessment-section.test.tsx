@@ -16,7 +16,7 @@ function activity(content: unknown): LessonActivity {
     section_number: 6,
     title: "Assessment: Transformer Architecture Bridge",
     content: JSON.stringify(content),
-    is_core: true,
+    is_core: 1,
     created_at: "2026-07-01T00:00:00.000Z",
     updated_at: "2026-07-01T00:00:00.000Z",
   } as LessonActivity;

@@ -895,8 +895,7 @@ describe("validateGeneratedContent — richer lessons", () => {
     const content = validLessonPartContent();
     delete (content.audio.synced_visual as Partial<typeof content.audio.synced_visual>).artifact_slug;
     content.audio.synced_visual.cues = content.audio.synced_visual.cues.map((cue) => {
-      const copy = { ...cue };
-      delete copy.artifact_slug;
+      const { artifact_slug: _artifactSlug, ...copy } = cue as typeof cue & { artifact_slug?: string };
       return copy;
     });
     const r = validateLessonPartContent(content, ["declarative"], validateWidgetSpec);
