@@ -3,6 +3,7 @@ import "@testing-library/jest-dom/vitest";
 import { render, screen } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 import { AudioSyncedLessonVisual } from "@/components/lesson/LessonPartSection";
+import { EmbeddingMatrixLookupWidget } from "@/components/lesson/widgets/EmbeddingMatrixLookupWidget";
 import type { AudioSyncedVisualContent } from "@/lib/lesson-content/schema";
 
 const visual: AudioSyncedVisualContent = {
@@ -78,7 +79,7 @@ const visual: AudioSyncedVisualContent = {
 
 describe("AudioSyncedLessonVisual", () => {
   it("shows only the active generated panel while keeping the step rail visible", () => {
-    render(<AudioSyncedLessonVisual visual={visual} currentTime={12} duration={30} onSeek={vi.fn()} />);
+    const { container } = render(<AudioSyncedLessonVisual visual={visual} currentTime={12} duration={30} onSeek={vi.fn()} />);
 
     expect(screen.getAllByText("Context vector leaves attention").length).toBeGreaterThan(0);
     expect(screen.getByText("Attention panel")).toBeInTheDocument();
@@ -89,6 +90,9 @@ describe("AudioSyncedLessonVisual", () => {
     expect(screen.getByLabelText("Generated scene steps")).toBeInTheDocument();
     expect(screen.getByText("The current beat should highlight the attention panel in place.")).toBeInTheDocument();
     expect(screen.getByText("Attention panel").closest("[aria-current='step']")).toBeTruthy();
+
+    expect(container.innerHTML).toContain("grid grid-cols-1 gap-2");
+    expect(container.innerHTML).not.toContain("grid-cols-2 gap-2 sm:grid-cols-4");
   });
 
   it("renders formula panels and highlights the formula terms named by the cue", () => {
@@ -145,5 +149,15 @@ describe("AudioSyncedLessonVisual", () => {
     expect(screen.getAllByText("Q").some((el) => el.closest(".border-l-2")?.className.includes("border-blue-500"))).toBe(true);
     expect(screen.getAllByText("K").some((el) => el.closest(".border-l-2")?.className.includes("border-blue-500"))).toBe(true);
     expect(screen.queryByText("After formula")).not.toBeInTheDocument();
+  });
+
+  it("keeps the embedding lookup primer in a single readable column", () => {
+    const { container } = render(<EmbeddingMatrixLookupWidget />);
+    const styleText = [...container.querySelectorAll("style")].map((style) => style.textContent ?? "").join("\n");
+
+    expect(screen.getByText("From token IDs to hidden states")).toBeInTheDocument();
+    expect(styleText).toContain(".hsl-primer-grid");
+    expect(styleText).toContain("max-width: 100%");
+    expect(styleText).not.toContain("grid-template-columns: minmax(0, 0.9fr) minmax(280px, 1.1fr)");
   });
 });

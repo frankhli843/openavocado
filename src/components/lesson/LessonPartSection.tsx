@@ -395,9 +395,9 @@ export function AudioSyncedLessonVisual({
         </div>
       </div>
 
-      <div className="grid min-w-0 gap-4 pt-4 pb-16 sm:pb-0 2xl:grid-cols-[minmax(0,1fr)_17rem]">
+      <div className="grid min-w-0 gap-4 pt-4 pb-16 sm:pb-0">
         <div className="space-y-4">
-          <div className="grid grid-cols-2 gap-2 sm:grid-cols-4 lg:grid-cols-7">
+          <div className="grid grid-cols-1 gap-2">
             {pipelineCues.map((stage, index) => {
               const done = index < activePipelineIndex;
               const active = index === activePipelineIndex;
@@ -418,7 +418,7 @@ export function AudioSyncedLessonVisual({
             })}
           </div>
 
-          <div className="grid gap-3 md:grid-cols-3">
+          <div className="grid gap-3">
             <PipelineCard label="Receives" text={cue.receive ?? "prior visual state"} tone="gray" />
             <PipelineCard label="Current operation" text={cue.transform ?? cue.headline} tone="blue" />
             <PipelineCard label="Passes forward" text={cue.pass ?? "updated visual state"} tone="green" />
@@ -480,7 +480,7 @@ export function AudioSyncedLessonVisual({
           )}
         </div>
 
-        <div className="hidden space-y-2 2xl:block">
+        <div className="hidden space-y-2">
           <div className="grid max-h-[28rem] gap-2 overflow-y-auto pr-1 sm:grid-cols-2 lg:grid-cols-1">
             {cues.map((item, index) => {
               const active = item === cue;
@@ -555,7 +555,7 @@ function TransformerBlockScene({
         </div>
       </div>
 
-      <div className="grid gap-3 xl:grid-cols-[1fr_0.9fr]">
+      <div className="grid gap-3">
         <div className="space-y-3">
           <SceneStage active={phase === "input"} label="1. Hidden-state rows enter">
             <div className="space-y-2">
@@ -601,7 +601,7 @@ function TransformerBlockScene({
 
         <div className="space-y-3">
           <SceneStage active={phase === "residual"} label="3. Residual + normalization">
-            <div className="grid grid-cols-[1fr_auto_1fr_auto_1fr] items-center gap-2 text-center text-xs">
+            <div className="grid gap-2 text-center text-xs">
               <MiniBox label="old row" active={phase === "residual"} />
               <span className="font-semibold text-blue-500">+</span>
               <MiniBox label="attention update" active={phase === "residual"} />
@@ -618,7 +618,7 @@ function TransformerBlockScene({
           </SceneStage>
 
           <SceneStage active={phase === "mlp"} label="4. MLP edits each row">
-            <div className="grid grid-cols-[1fr_auto_1fr_auto_1fr] items-center gap-2 text-center text-xs">
+            <div className="grid gap-2 text-center text-xs">
               <MiniBox label="D features" active={phase === "mlp"} />
               <span className="font-semibold text-purple-500">→</span>
               <MiniBox label="expand + activation" active={phase === "mlp"} tone="purple" />
@@ -631,7 +631,7 @@ function TransformerBlockScene({
           </SceneStage>
 
           <SceneStage active={phase === "output"} label="5. Same shape leaves richer">
-            <div className="grid grid-cols-4 gap-1">
+            <div className="grid gap-1">
               {rows.map((row, index) => (
                 <div
                   key={row.token}
@@ -705,11 +705,11 @@ function GenericSceneBoard({
       <div className="mb-2 text-xs font-semibold uppercase tracking-wider text-gray-400">
         Timed scene board
       </div>
-      <div className="grid gap-3 md:grid-cols-[minmax(0,1fr)_2rem_minmax(0,1fr)_2rem_minmax(0,1fr)] md:items-stretch">
+      <div className="grid gap-3">
         <SceneCard label="Incoming object" text={cue.receive ?? "previous state"} />
-        <div className="hidden md:flex items-center justify-center text-blue-400">&#8594;</div>
+        <div className="hidden items-center justify-center text-blue-400">&#8594;</div>
         <SceneCard label="Animated change" text={cue.transform ?? cue.headline} active />
-        <div className="hidden md:flex items-center justify-center text-green-500">&#8594;</div>
+        <div className="hidden items-center justify-center text-green-500">&#8594;</div>
         <SceneCard label="Output" text={cue.pass ?? "next state"} />
       </div>
       <div className="mt-3 h-2 rounded-full bg-gray-100">
@@ -894,7 +894,7 @@ function GeneratedFormula({
         )}
       </div>
       {terms.length > 0 && (
-        <div className="grid gap-2 sm:grid-cols-2">
+        <div className="grid gap-2">
           {terms.map((item) => {
             const highlighted = active && isActiveGeneratedElement(item.label, activeElements);
             return (
@@ -1041,7 +1041,7 @@ function GeneratedVectors({
   active: boolean;
 }) {
   return (
-    <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
+    <div className="grid gap-2">
       {data.map((item) => {
         const highlighted = active && isActiveGeneratedElement(item.label, activeElements);
         const values = item.values && item.values.length > 0 ? item.values : [45, 72, 28, 60];
@@ -1072,7 +1072,7 @@ function GeneratedFlow({
   active: boolean;
 }) {
   return (
-    <div className="grid gap-2 sm:grid-cols-3">
+    <div className="grid gap-2">
       {data.map((item, index) => {
         const highlighted = active && (activeElements.length === 0 ? index === 0 : isActiveGeneratedElement(item.label, activeElements));
         return (
@@ -1096,7 +1096,7 @@ function GeneratedCards({
   active: boolean;
 }) {
   return (
-    <div className="grid gap-2 sm:grid-cols-2">
+    <div className="grid gap-2">
       {data.map((item) => {
         const highlighted = active && isActiveGeneratedElement(item.label, activeElements);
         return (
@@ -1174,7 +1174,7 @@ function ResidualStreamScene({ cue, currentTime }: { cue: NormalizedAudioCue; cu
       <div className="mb-3 text-xs font-semibold uppercase tracking-wider text-gray-400">
         Residual stream ledger
       </div>
-      <div className="grid gap-3 lg:grid-cols-[1fr_1.1fr]">
+      <div className="grid gap-3">
         <SceneStage active label="Running representation">
           <div className="space-y-2">
             {steps.map((step, index) => (
@@ -1189,7 +1189,7 @@ function ResidualStreamScene({ cue, currentTime }: { cue: NormalizedAudioCue; cu
           </div>
         </SceneStage>
         <SceneStage active={/norm|residual|add/i.test(`${cue.label} ${cue.headline}`)} label="Add, then stabilize">
-          <div className="grid grid-cols-[1fr_auto_1fr_auto_1fr] items-center gap-2 text-center text-xs">
+          <div className="grid gap-2 text-center text-xs">
             <MiniBox label="old stream" active tone="green" />
             <span className="font-semibold text-green-600">+</span>
             <MiniBox label="new delta" active tone="blue" />
@@ -1219,7 +1219,7 @@ function MlpExpansionScene({ cue }: { cue: NormalizedAudioCue; currentTime: numb
       <div className="mb-3 text-xs font-semibold uppercase tracking-wider text-gray-400">
         MLP expansion and gate scene
       </div>
-      <div className="grid gap-3 lg:grid-cols-3">
+      <div className="grid gap-3">
         <SceneStage active={phase === "input"} label="One token row enters">
           <VectorBars values={[54, 24, 68, 38]} active={phase === "input"} />
           <p className="mt-2 text-xs text-gray-500">The MLP sees one token vector at a time.</p>

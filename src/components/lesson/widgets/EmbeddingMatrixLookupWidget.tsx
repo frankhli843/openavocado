@@ -453,7 +453,7 @@ const css = `
   font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
 }
 .hsl-wrap {
-  max-width: 820px;
+  max-width: 100%;
   margin: 0 auto;
 }
 .hsl-eyebrow {
@@ -511,7 +511,6 @@ const css = `
 }
 .hsl-primer-grid {
   display: grid;
-  grid-template-columns: minmax(0, 0.9fr) minmax(280px, 1.1fr);
   gap: 0.9rem;
   align-items: start;
 }
