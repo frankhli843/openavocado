@@ -21,10 +21,11 @@ type CueArtifact = {
   sidebars: Array<{ label: string; value: string }>;
 };
 
-const LESSON_ID = 15;
-const ACTIVITY_ID = 84;
+const LESSON_ID = Number(process.env.LESSON_ID ?? 15);
+const ACTIVITY_ID = Number(process.env.ACTIVITY_ID ?? 84);
+const SLUG_PREFIX = process.env.SLUG_PREFIX ?? `lesson-${LESSON_ID}-cue`;
 
-const cueArtifacts: CueArtifact[] = [
+const baseCueArtifacts: CueArtifact[] = [
   {
     slug: "lesson-15-cue-hidden-state-input",
     title: "Hidden-state matrix enters the block",
@@ -206,6 +207,11 @@ const cueArtifacts: CueArtifact[] = [
     ],
   },
 ];
+
+const cueArtifacts: CueArtifact[] = baseCueArtifacts.map((artifact) => ({
+  ...artifact,
+  slug: `${SLUG_PREFIX}-${artifact.slug.replace(/^lesson-15-cue-/, "")}`,
+}));
 
 function artifactSource(spec: CueArtifact): string {
   return `import React from "react";
