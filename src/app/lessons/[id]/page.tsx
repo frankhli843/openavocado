@@ -595,25 +595,6 @@ export default function LessonPage({ params }: { params: Promise<{ id: string }>
               </button>
             )}
 
-            {/* Complete button — gated on MC quiz pass when quiz is present */}
-            {!completed && !discarded ? (
-              <button
-                onClick={handleComplete}
-                disabled={completing || lesson.status === "completed" || completionBlocked}
-                title={completionBlockedByQuiz ? "Pass the final quiz first" : undefined}
-                className="px-4 py-1.5 text-sm font-medium bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:opacity-40 disabled:cursor-not-allowed transition-colors whitespace-nowrap"
-              >
-                {completing ? "Completing..." : "Mark Complete"}
-              </button>
-            ) : completed ? (
-              <span className="px-3 py-1.5 text-sm font-medium bg-green-50 text-green-700 rounded-lg border border-green-100 whitespace-nowrap">
-                Completed
-              </span>
-            ) : (
-              <span className="px-3 py-1.5 text-sm font-medium bg-amber-50 text-amber-700 rounded-lg border border-amber-100 whitespace-nowrap">
-                Discarded
-              </span>
-            )}
           </div>
         </div>
         </div>
@@ -677,14 +658,6 @@ export default function LessonPage({ params }: { params: Promise<{ id: string }>
                 This lesson is no longer in your active queue. Your mastery score has not changed.
               </span>
             </div>
-          </div>
-        )}
-
-        {/* Completion clarification */}
-        {!completed && !discarded && (
-          <div className="px-4 py-2.5 bg-blue-50 border border-blue-100 rounded-lg text-xs text-blue-600 flex items-center gap-2">
-            <span>&#8505;</span>
-            Progress is saved automatically. Section checkmarks are just your checklist. Click &quot;Mark Complete&quot; only when you&apos;re done with the whole lesson.
           </div>
         )}
 
@@ -755,21 +728,26 @@ export default function LessonPage({ params }: { params: Promise<{ id: string }>
 
         {/* Bottom action row */}
         {!completed && !discarded && (
-          <div className="pt-4 pb-8 flex items-center justify-center gap-4">
-            <button
-              onClick={() => setShowDiscardModal(true)}
-              className="px-5 py-2.5 text-sm font-medium text-gray-500 border border-gray-200 rounded-xl hover:bg-gray-50 hover:text-gray-700 transition-colors"
-            >
-              Discard lesson
-            </button>
-            <button
-              onClick={handleComplete}
-              disabled={completing || completionBlocked}
-              title={completionBlockedByQuiz ? "Pass the final quiz first" : undefined}
-              className="px-8 py-3 font-semibold bg-green-600 text-white rounded-xl hover:bg-green-700 disabled:opacity-40 disabled:cursor-not-allowed transition-colors shadow-sm"
-            >
-              {completing ? "Completing..." : "Mark Lesson Complete"}
-            </button>
+          <div className="pt-4 pb-8 space-y-3 text-center">
+            <p className="text-xs text-gray-500">
+              Progress is saved automatically. Section checkmarks are only your checklist. Finish the lesson here when you are done with the whole lesson.
+            </p>
+            <div className="flex items-center justify-center gap-4">
+              <button
+                onClick={() => setShowDiscardModal(true)}
+                className="px-5 py-2.5 text-sm font-medium text-gray-500 border border-gray-200 rounded-xl hover:bg-gray-50 hover:text-gray-700 transition-colors"
+              >
+                Discard lesson
+              </button>
+              <button
+                onClick={handleComplete}
+                disabled={completing || completionBlocked}
+                title={completionBlockedByQuiz ? "Pass the final quiz first" : undefined}
+                className="px-8 py-3 font-semibold bg-green-600 text-white rounded-xl hover:bg-green-700 disabled:opacity-40 disabled:cursor-not-allowed transition-colors shadow-sm"
+              >
+                {completing ? "Completing..." : "Mark Lesson Complete"}
+              </button>
+            </div>
           </div>
         )}
         </div>

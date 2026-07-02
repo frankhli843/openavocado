@@ -6,16 +6,22 @@
  *
  * Usage:
  *   pnpm tsx scripts/backfill-demo-lessons.ts
- *   AVOCADOCORE_DB_PATH=/var/prodavo/data/avocadocore.db pnpm tsx scripts/backfill-demo-lessons.ts
+ *   pnpm tsx scripts/backfill-demo-lessons.ts --audio
+ *   AVOCADOCORE_DB_PATH=/var/prodavo/data/avocadocore.db pnpm tsx scripts/backfill-demo-lessons.ts --audio
  */
-import { getDb } from "../src/db/connection";
-import { DEMO_SUBJECT_TITLE, ensureDemoLessonsForLearner } from "../src/lib/demo-lessons";
+import { closeDb, getDb } from "../src/db/connection";
+import {
+  DEMO_SUBJECT_TITLE,
+  ensureDemoLessonAudioForLearner,
+  ensureDemoLessonsForLearner,
+} from "../src/lib/demo-lessons";
 
 interface LearnerRow {
   id: number;
 }
 
-function main() {
+async function main() {
+  const repairAudio = process.argv.slice(2).includes("--audio");
   const db = getDb();
   const learners = db
     .prepare("SELECT id FROM learner_profiles ORDER BY id ASC")
@@ -34,9 +40,22 @@ function main() {
     .prepare("SELECT COUNT(*) AS count FROM subjects WHERE title = ?")
     .get(DEMO_SUBJECT_TITLE) as { count: number };
 
+  let audioChecked = 0;
+  if (repairAudio) {
+    for (const learner of learners) {
+      await ensureDemoLessonAudioForLearner(db, learner.id);
+      audioChecked += 1;
+    }
+  }
+
   console.log(
-    `Backfilled demo lessons for ${repairedSubjects} learner profile(s). Demo subject count: ${demoSubjectCount.count}.`
+    `Backfilled demo lessons for ${repairedSubjects} learner profile(s). Demo subject count: ${demoSubjectCount.count}. Audio repair: ${repairAudio ? `${audioChecked} learner profile(s)` : "skipped"}.`
   );
+  closeDb();
 }
 
-main();
+main().catch((error) => {
+  console.error("Demo lesson backfill failed:", error);
+  closeDb();
+  process.exit(1);
+});

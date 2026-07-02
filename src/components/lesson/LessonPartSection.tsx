@@ -412,6 +412,9 @@ export function AudioSyncedLessonVisual({
             <PipelineCard label="Current operation" text={cue.transform ?? cue.headline} tone="blue" />
             <PipelineCard label="Passes forward" text={cue.pass ?? "updated visual state"} tone="green" />
           </div>
+          <div className="border-l-2 border-gray-200 bg-gray-50/60 px-3 py-2 text-sm leading-6 text-gray-600">
+            {cue.narration}
+          </div>
 
           {visual.scene ? (
             <GeneratedAudioScene visual={visual} cue={cue} currentTime={currentTime} />
@@ -466,10 +469,7 @@ export function AudioSyncedLessonVisual({
           )}
         </div>
 
-        <div className="space-y-2">
-          <div className="border-l-2 border-gray-200 bg-gray-50/60 px-3 py-2 text-sm leading-6 text-gray-600">
-            {cue.narration}
-          </div>
+        <div className="hidden space-y-2 2xl:block">
           <div className="grid max-h-[28rem] gap-2 overflow-y-auto pr-1 sm:grid-cols-2 lg:grid-cols-1">
             {cues.map((item, index) => {
               const active = item === cue;
@@ -745,6 +745,8 @@ function normalizeVisualCues(cues: AudioSyncedVisualCue[], duration: number): No
       transform: cue.transform,
       pass: cue.pass,
       visual_kind: cue.visual_kind,
+      panel_id: cue.panel_id,
+      active_elements: cue.active_elements,
     };
   });
 }
@@ -784,6 +786,8 @@ function GeneratedAudioScene({
   const activePanelId = cue.panel_id && panels.some((panel) => panel.id === cue.panel_id)
     ? cue.panel_id
     : panels[Math.floor(currentTime / 7) % panels.length]?.id;
+  const activePanel = panels.find((panel) => panel.id === activePanelId) ?? panels[0];
+  const activePanelIndex = Math.max(0, panels.findIndex((panel) => panel.id === activePanelId));
   return (
     <div className="border-t border-gray-100 pt-3">
       <div className="mb-3 flex flex-col gap-1 sm:flex-row sm:items-start sm:justify-between">
@@ -798,15 +802,25 @@ function GeneratedAudioScene({
           {visual.scene.scene_id}
         </div>
       </div>
-      <div className="grid gap-3 xl:grid-cols-2">
-        {panels.map((panel) => (
-          <GeneratedScenePanel
+      <div className="mb-3 flex max-w-full gap-1 overflow-x-auto pb-1" aria-label="Generated scene steps">
+        {panels.map((panel, index) => (
+          <div
             key={panel.id}
-            panel={panel}
-            active={panel.id === activePanelId}
-            activeElements={cue.active_elements ?? []}
+            className={`h-1.5 min-w-10 flex-1 rounded-full ${
+              panel.id === activePanelId ? "bg-blue-600" : index < activePanelIndex ? "bg-blue-200" : "bg-gray-200"
+            }`}
+            title={panel.title}
           />
         ))}
+      </div>
+      <div>
+        {activePanel && (
+          <GeneratedScenePanel
+            panel={activePanel}
+            active
+            activeElements={cue.active_elements ?? []}
+          />
+        )}
       </div>
     </div>
   );
