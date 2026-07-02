@@ -10,8 +10,8 @@ const visual: AudioSyncedVisualContent = {
   scene: {
     scene_id: "focused-scene",
     title: "Focused audio scene",
-    motif: "one relevant panel at a time",
-    description: "A generated scene with multiple panels where only the current cue panel should render.",
+    motif: "active panel highlighted in place",
+    description: "A generated scene with multiple panels where the current cue panel should stay highlighted.",
     panels: [
       {
         id: "input",
@@ -54,7 +54,7 @@ const visual: AudioSyncedVisualContent = {
       end: 20,
       label: "Attention",
       headline: "Context vector leaves attention",
-      narration: "The current beat should show the attention panel only.",
+      narration: "The current beat should highlight the attention panel in place.",
       receive: "query/key/value",
       transform: "weighted mix",
       pass: "context vector",
@@ -77,14 +77,17 @@ const visual: AudioSyncedVisualContent = {
 };
 
 describe("AudioSyncedLessonVisual", () => {
-  it("renders only the panel relevant to the active audio cue", () => {
+  it("keeps all generated panels visible and highlights the active audio cue panel", () => {
     render(<AudioSyncedLessonVisual visual={visual} currentTime={12} duration={30} onSeek={vi.fn()} />);
 
     expect(screen.getAllByText("Context vector leaves attention").length).toBeGreaterThan(0);
     expect(screen.getByText("Attention panel")).toBeInTheDocument();
+    expect(screen.getByText("Input panel")).toBeInTheDocument();
+    expect(screen.getByText("Output panel")).toBeInTheDocument();
     expect(screen.getByLabelText("Generated scene steps")).toBeInTheDocument();
-    expect(screen.getByText("The current beat should show the attention panel only.")).toBeInTheDocument();
-    expect(screen.queryByText("Input panel")).not.toBeInTheDocument();
-    expect(screen.queryByText("Output panel")).not.toBeInTheDocument();
+    expect(screen.getByText("The current beat should highlight the attention panel in place.")).toBeInTheDocument();
+    expect(screen.getByText("Attention panel").closest("[aria-current='step']")).toBeTruthy();
+    expect(screen.getByText("Input panel").closest("[aria-current='step']")).toBeFalsy();
+    expect(screen.getByText("Output panel").closest("[aria-current='step']")).toBeFalsy();
   });
 });

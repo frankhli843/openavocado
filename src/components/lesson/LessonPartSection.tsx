@@ -61,6 +61,7 @@ export function LessonPartSection({
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const [audioTime, setAudioTime] = useState(0);
   const [audioDuration, setAudioDuration] = useState(0);
+  const [audioPlaying, setAudioPlaying] = useState(false);
   const syncedVisual =
     part?.audio.synced_visual ??
     (activity.id === 40
@@ -120,7 +121,13 @@ export function LessonPartSection({
             <div className={syncedVisual ? "grid min-w-0 gap-5 xl:grid-cols-[minmax(18rem,0.7fr)_minmax(0,1.3fr)] xl:items-start" : "min-w-0 space-y-3"}>
               <div className="min-w-0 space-y-3">
                 {artifact?.file_path ? (
-                  <div className="space-y-2">
+                  <div
+                    className={`space-y-2 ${
+                      audioPlaying
+                        ? "sticky top-[4.75rem] z-20 rounded-xl border border-blue-100 bg-white/95 p-2 shadow-lg shadow-blue-100/60 backdrop-blur"
+                        : ""
+                    }`}
+                  >
                     <audio
                       ref={audioRef}
                       controls
@@ -128,6 +135,9 @@ export function LessonPartSection({
                       src={`/runtime/${artifact.file_path}`}
                       onLoadedMetadata={(event) => setAudioDuration(event.currentTarget.duration || 0)}
                       onTimeUpdate={(event) => setAudioTime(event.currentTarget.currentTime)}
+                      onPlay={() => setAudioPlaying(true)}
+                      onPause={() => setAudioPlaying(false)}
+                      onEnded={() => setAudioPlaying(false)}
                     >
                       Your browser does not support audio playback.
                     </audio>
@@ -786,7 +796,6 @@ function GeneratedAudioScene({
   const activePanelId = cue.panel_id && panels.some((panel) => panel.id === cue.panel_id)
     ? cue.panel_id
     : panels[Math.floor(currentTime / 7) % panels.length]?.id;
-  const activePanel = panels.find((panel) => panel.id === activePanelId) ?? panels[0];
   const activePanelIndex = Math.max(0, panels.findIndex((panel) => panel.id === activePanelId));
   return (
     <div className="border-t border-gray-100 pt-3">
@@ -813,14 +822,15 @@ function GeneratedAudioScene({
           />
         ))}
       </div>
-      <div>
-        {activePanel && (
+      <div className="grid gap-3 xl:grid-cols-2">
+        {panels.map((panel) => (
           <GeneratedScenePanel
-            panel={activePanel}
-            active
+            key={panel.id}
+            panel={panel}
+            active={panel.id === activePanelId}
             activeElements={cue.active_elements ?? []}
           />
-        )}
+        ))}
       </div>
     </div>
   );
@@ -836,7 +846,12 @@ function GeneratedScenePanel({
   activeElements: string[];
 }) {
   return (
-    <div className={`border-l-2 px-3 py-3 transition-colors ${active ? "border-blue-500 bg-blue-50/50" : "border-gray-100 bg-gray-50/50"}`}>
+    <div
+      aria-current={active ? "step" : undefined}
+      className={`border-l-2 px-3 py-3 transition-colors ${
+        active ? "border-blue-500 bg-blue-50/50 shadow-sm shadow-blue-100/70" : "border-gray-100 bg-gray-50/50"
+      }`}
+    >
       <div className="flex items-start justify-between gap-2">
         <div>
           <div className={`text-xs font-semibold uppercase tracking-wider ${active ? "text-blue-600" : "text-gray-400"}`}>
