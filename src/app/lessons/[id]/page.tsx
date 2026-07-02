@@ -16,7 +16,7 @@ import { NextLessonDiagnosticsSection } from "@/components/lesson/NextLessonDiag
 import { KnowledgeGraphOrientation } from "@/components/lesson/KnowledgeGraphOrientation";
 import { LessonChatModal } from "@/components/lesson/LessonChatModal";
 import { LessonResumeTracker } from "@/components/lesson/LessonResumeTracker";
-import { debounce, postAutosave, type SaveStatus } from "@/lib/autosave";
+import { debounce, postAutosave } from "@/lib/autosave";
 import { DiscardLessonModal } from "@/components/DiscardLessonModal";
 import type { NextLessonDiagnostic } from "@/lib/lesson-content/schema";
 
@@ -49,8 +49,6 @@ export default function LessonPage({ params }: { params: Promise<{ id: string }>
   const [learnerId, setLearnerId] = useState<number | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [saveStatus, setSaveStatus] = useState<SaveStatus>("idle");
-  const [lastSavedAt, setLastSavedAt] = useState<string | null>(null);
   const [completing, setCompleting] = useState(false);
   const [completed, setCompleted] = useState(false);
   const [showDiscardModal, setShowDiscardModal] = useState(false);
@@ -128,7 +126,6 @@ export default function LessonPage({ params }: { params: Promise<{ id: string }>
           if (codeRow.code_draft) setCodeDraft(codeRow.code_draft);
           if (codeRow.run_output) setRunOutput(codeRow.run_output);
           if (codeRow.test_results) setTestResults(JSON.parse(codeRow.test_results));
-          setLastSavedAt(codeRow.saved_at);
         }
 
         if (assessmentAct) {
@@ -155,7 +152,6 @@ export default function LessonPage({ params }: { params: Promise<{ id: string }>
               Object.entries(aa).filter(([k]) => k !== "__quiz__" && k !== "__diag__" && k !== "__section_done__")
             ) as Record<string, string>;
             setAssessmentAnswers(rest);
-            setLastSavedAt(assessmentRow.saved_at);
           }
         }
 
@@ -209,11 +205,7 @@ export default function LessonPage({ params }: { params: Promise<{ id: string }>
   // Autosave — debounced, fires on any content change
   const [debouncedSave] = debounce(
     async (payload: Parameters<typeof postAutosave>[0]) => {
-      setSaveStatus("saving");
       await postAutosave(payload);
-      const now = new Date().toISOString();
-      setLastSavedAt(now);
-      setSaveStatus("saved");
     },
     1200
   );
@@ -290,11 +282,7 @@ export default function LessonPage({ params }: { params: Promise<{ id: string }>
   // the code/assessment row. Like all autosave, it never marks the lesson complete.
   const [debouncedWidgetSave] = debounce(
     async (payload: Parameters<typeof postAutosave>[0]) => {
-      setSaveStatus("saving");
       await postAutosave(payload);
-      const now = new Date().toISOString();
-      setLastSavedAt(now);
-      setSaveStatus("saved");
     },
     1200
   );
@@ -556,10 +544,10 @@ export default function LessonPage({ params }: { params: Promise<{ id: string }>
   return (
     <div className="min-h-screen bg-gray-50">
       <div className={chatMaximized ? "transition-[padding] duration-200 xl:pr-[28rem]" : "transition-[padding] duration-200"}>
-        {/* Sticky top bar */}
-        <div className="sticky top-0 z-10 bg-white border-b border-gray-200">
-          <div className="max-w-[110rem] mx-auto px-3 sm:px-4 lg:px-6 py-2 sm:py-0 sm:h-11 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 sm:gap-4">
-          <div className="flex items-center gap-2 text-xs sm:text-sm text-gray-500 min-w-0">
+        {/* Lesson content */}
+        <div className="max-w-[110rem] mx-auto px-3 sm:px-4 lg:px-6 py-8 space-y-6">
+        {/* Breadcrumb row */}
+        <div className="flex min-w-0 items-center gap-2 text-xs text-gray-500 sm:text-sm">
             <Link href="/?resume=0" className="hover:text-gray-800 transition-colors shrink-0">
               &#8592; Dashboard
             </Link>
@@ -573,34 +561,6 @@ export default function LessonPage({ params }: { params: Promise<{ id: string }>
             <span className="text-gray-300">/</span>
             <span className="hidden sm:block truncate text-gray-700 font-medium">{lesson.title}</span>
           </div>
-
-          <div className="flex items-center justify-end gap-2 sm:gap-3 shrink-0">
-            {/* Save status */}
-            <span className="hidden sm:inline text-xs text-gray-400">
-              {saveStatus === "saving"
-                ? "Saving..."
-                : saveStatus === "saved" && lastSavedAt
-                ? `Saved ${new Date(lastSavedAt).toLocaleTimeString()}`
-                : ""}
-            </span>
-
-            {/* Discard button — only for incomplete lessons */}
-            {!completed && !discarded && lesson.status !== "completed" && (
-              <button
-                onClick={() => setShowDiscardModal(true)}
-                className="px-3 py-1.5 text-sm font-medium text-gray-500 border border-gray-200 rounded-lg hover:bg-gray-50 hover:text-gray-700 transition-colors whitespace-nowrap"
-                title="Discard this lesson and request a replacement"
-              >
-                Discard
-              </button>
-            )}
-
-          </div>
-        </div>
-        </div>
-
-        {/* Lesson content */}
-        <div className="max-w-[110rem] mx-auto px-3 sm:px-4 lg:px-6 py-8 space-y-6">
         {/* Header */}
         <div className="bg-white rounded-xl border border-gray-200 p-6">
           <div className="flex items-start justify-between gap-4 mb-3">
