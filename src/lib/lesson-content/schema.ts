@@ -1166,6 +1166,8 @@ export interface LessonPartAudioContent {
 export interface AudioSyncedVisualCue {
   start: number;
   end?: number;
+  /** Optional per-cue visual_artifacts slug. When present, the renderer swaps to this artifact for the cue. */
+  artifact_slug?: string;
   label: string;
   headline: string;
   narration: string;
@@ -1200,6 +1202,7 @@ export interface AudioGeneratedScene {
 
 export interface AudioSyncedVisualContent {
   strategy?: "timeline" | "audio-length-scaled";
+  /** Fallback artifact for legacy/simple synced visuals. Rich audio may instead provide per-cue artifact_slug values. */
   artifact_slug?: string;
   scene: AudioGeneratedScene;
   cues: AudioSyncedVisualCue[];
@@ -1438,8 +1441,9 @@ export function validateAudioSyncedVisualContent(
   if (v.strategy !== undefined && v.strategy !== "timeline" && v.strategy !== "audio-length-scaled") {
     errors.push('strategy must be "timeline" or "audio-length-scaled" when provided');
   }
-  if (typeof v.artifact_slug !== "string" || !/^[a-z0-9-]+$/.test(v.artifact_slug)) {
-    errors.push("artifact_slug is required and must reference an approved DB-backed bespoke visual artifact");
+  const hasFallbackArtifact = typeof v.artifact_slug === "string" && /^[a-z0-9-]+$/.test(v.artifact_slug);
+  if (v.artifact_slug !== undefined && !hasFallbackArtifact) {
+    errors.push("artifact_slug must be lowercase alphanumeric with hyphens and reference an approved DB-backed bespoke visual artifact");
   }
   const scene = validateAudioGeneratedScene(v.scene);
   for (const e of scene.errors) errors.push(`scene: ${e}`);
@@ -1450,6 +1454,8 @@ export function validateAudioSyncedVisualContent(
   let previousStart = -1;
   const duration = typeof durationHint === "number" && Number.isFinite(durationHint) ? durationHint : null;
   let lastEnd = 0;
+  let cueArtifactCount = 0;
+  const cueArtifactSlugs = new Set<string>();
   for (const [index, cue] of v.cues.entries()) {
     if (!cue || typeof cue !== "object") {
       errors.push(`cue[${index}] must be an object`);
@@ -1481,6 +1487,14 @@ export function validateAudioSyncedVisualContent(
         errors.push(`cue[${index}].${field} is required`);
       }
     }
+    if (c.artifact_slug !== undefined) {
+      if (typeof c.artifact_slug !== "string" || !/^[a-z0-9-]+$/.test(c.artifact_slug)) {
+        errors.push(`cue[${index}].artifact_slug must be lowercase alphanumeric with hyphens`);
+      } else {
+        cueArtifactCount += 1;
+        cueArtifactSlugs.add(c.artifact_slug);
+      }
+    }
     if (!c.receive && !c.transform && !c.pass) {
       errors.push(`cue[${index}] must describe at least one of receive, transform, or pass`);
     }
@@ -1493,6 +1507,12 @@ export function validateAudioSyncedVisualContent(
   }
   if (duration !== null && duration > 0 && lastEnd < duration * 0.65) {
     errors.push("timed cues must cover most of duration_hint so the visual changes through the audio");
+  }
+  if (!hasFallbackArtifact && cueArtifactCount !== v.cues.length) {
+    errors.push("audio synced visual requires a fallback artifact_slug or an approved cue.artifact_slug on every cue");
+  }
+  if (cueArtifactCount > 0 && cueArtifactSlugs.size < Math.min(2, cueArtifactCount)) {
+    errors.push("segmented audio visuals must use distinct per-cue artifact_slug values, not one repeated component");
   }
   return { valid: errors.length === 0, errors };
 }

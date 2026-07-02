@@ -431,13 +431,13 @@ function orientationVisual(slug = "orientation-scene") {
 
 function longOverviewAudioScript(topic = "this lesson"): string {
   const paragraphs = [
-    `Start with the map for ${topic}. Imagine the lesson as a city tour before walking into one building. First we name the neighborhoods, then we walk the same route slowly enough to notice doors, signs, shortcuts, and dead ends. A major term is never treated as magic. It is introduced as an object with a job, an input, an output, and a reason to exist. The metaphor matters because you can carry it while the details are still forming.`,
-    `Now revisit the same map through an analogy. Think of ${topic} as a kitchen pass in a restaurant. Ingredients arrive from one station, a cook changes them, and the plate moves to the next station with a label saying what changed. The analogy is not the final truth, but it gives you a stable handle. When the written section later uses more formal vocabulary, you can translate each term back to the kitchen pass and ask what arrived, what changed, and what left.`,
-    `Use a tiny worked example next. Take one small object, give it a name, and follow it through the lesson. Do not jump from the object to a slogan. Say what shape it has, what information it carries, what operation reads it, what operation changes it, and what evidence would show the change succeeded. A worked example is valuable because it prevents memorizing labels without knowing what those labels do in a real sequence.`,
+    `Start with the concrete object for ${topic}. The lesson names the object, shows its shape, explains where it came from, and states why the next operation needs it. A major term is never treated as magic. It is introduced as a thing with a job, an input, an output, and a reason to exist. The opening example matters because it gives every later definition something visible to attach to.`,
+    `Now revisit the same object through an analogy. Think of ${topic} as a kitchen pass in a restaurant. Ingredients arrive from one station, a cook changes them, and the plate moves to the next station with a label saying what changed. The analogy is not the final truth, but it gives the formal vocabulary a stable handle. When the written section later uses more precise terms, each term still points back to a specific object and a specific change.`,
+    `Use a tiny worked example next. Take one small object, give it a name, and follow it through the lesson. The example states what shape it has, what information it carries, what operation reads it, what operation changes it, and what evidence would show the change succeeded. A worked example is valuable because it prevents labels from floating away from the actual sequence they describe.`,
     `Then trace the mechanism. A mechanism explanation answers why the next step is needed, not only what the next step is called. If a component receives a representation, explain what that representation already contains and what it lacks. If a component transforms it, explain whether the transformation changes the values, the order, the scale, the confidence, or the interpretation. If a component passes it forward, explain why the following section can trust that handoff.`,
     `Shift into implementation intuition. You should hear how the idea would feel in code or in a system diagram even if this overview is still conceptual. Name the likely data structures, the small functions, the checks, and the common debugging questions. This does not reveal a full solution. It gives you enough hooks so the later coding section feels like reinforcing the concept instead of suddenly becoming a separate programming puzzle.`,
-    `Name a misconception or failure mode. It is easy to nod along while silently swapping two nearby ideas. This pass says what not to confuse, why the confusion is tempting, and what visible symptom would appear if the confusion guided an implementation. We repeat the correct relationship from another angle because repetition is not filler here. It is how you build a sturdy mental model instead of a list of phrases.`,
-    `Synthesize the lesson again. Return to the big map, then point to the next activity. The visual will make the route concrete, the reading will define it more formally, practice will check it, and anything outside the scope can safely wait for a later lesson. That final pass turns the overview into a usable plan: listen for the route, study the objects, manipulate the visual, then test the model with questions and code.`,
+    `Name a misconception or failure mode. It is easy to nod along while silently swapping two nearby ideas. This pass says what not to confuse, why the confusion is tempting, and what visible symptom would appear if the confusion guided an implementation. The correction uses the same concrete object again so the distinction is visible rather than merely verbal.`,
+    `Synthesize the lesson again. The visual shows the object changing, the reading defines it more formally, practice checks whether the relationship is usable, and anything outside the scope can safely wait for a later lesson. That final pass ties the spoken explanation, the visual state, the written definition, and the code exercise to the same taught mechanism.`,
   ];
 
   return Array.from({ length: 6 }, (_, cycle) =>
@@ -894,9 +894,36 @@ describe("validateGeneratedContent — richer lessons", () => {
   it("rejects audio-synced visuals without an approved bespoke artifact slug", () => {
     const content = validLessonPartContent();
     delete (content.audio.synced_visual as Partial<typeof content.audio.synced_visual>).artifact_slug;
+    content.audio.synced_visual.cues = content.audio.synced_visual.cues.map((cue) => {
+      const copy = { ...cue };
+      delete copy.artifact_slug;
+      return copy;
+    });
     const r = validateLessonPartContent(content, ["declarative"], validateWidgetSpec);
     expect(r.valid).toBe(false);
     expect(r.errors.join(" ")).toMatch(/artifact_slug/);
+  });
+
+  it("accepts segmented audio visuals where every cue has its own approved artifact slug", () => {
+    const content = validLessonPartContent();
+    delete (content.audio.synced_visual as Partial<typeof content.audio.synced_visual>).artifact_slug;
+    content.audio.synced_visual.cues = content.audio.synced_visual.cues.map((cue, index) => ({
+      ...cue,
+      artifact_slug: `part-audio-cue-${index + 1}`,
+    }));
+    const r = validateLessonPartContent(content, ["declarative"], validateWidgetSpec);
+    expect(r.valid).toBe(true);
+  });
+
+  it("rejects segmented audio visuals that repeat the same cue artifact", () => {
+    const content = validLessonPartContent();
+    content.audio.synced_visual.cues = content.audio.synced_visual.cues.map((cue) => ({
+      ...cue,
+      artifact_slug: "same-reused-component",
+    }));
+    const r = validateLessonPartContent(content, ["declarative"], validateWidgetSpec);
+    expect(r.valid).toBe(false);
+    expect(r.errors.join(" ")).toMatch(/distinct per-cue artifact_slug/);
   });
 
   it("rejects select-one practice questions with select-all answer metadata", () => {

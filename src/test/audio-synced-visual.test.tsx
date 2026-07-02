@@ -27,6 +27,7 @@ const visual: AudioSyncedVisualContent = {
     {
       start: 0,
       end: 10,
+      artifact_slug: "attention-input-row-artifact",
       label: "Input",
       headline: "Token row enters",
       narration: "The row enters the operation.",
@@ -37,6 +38,7 @@ const visual: AudioSyncedVisualContent = {
     {
       start: 10,
       end: 20,
+      artifact_slug: "attention-score-grid-artifact",
       label: "Attention",
       headline: "Context vector leaves attention",
       narration: "The approved artifact should receive cueIndex 1 for this beat.",
@@ -47,6 +49,7 @@ const visual: AudioSyncedVisualContent = {
     {
       start: 20,
       end: 30,
+      artifact_slug: "attention-residual-handoff-artifact",
       label: "Output",
       headline: "Updated row moves forward",
       narration: "The row leaves the step.",
@@ -57,17 +60,25 @@ const visual: AudioSyncedVisualContent = {
   ],
 };
 
+function withoutCueArtifacts(source: AudioSyncedVisualContent): AudioSyncedVisualContent["cues"] {
+  return source.cues.map((cue) => {
+    const copy = { ...cue };
+    delete copy.artifact_slug;
+    return copy;
+  });
+}
+
 describe("AudioSyncedLessonVisual", () => {
-  it("renders only an approved DB-backed artifact for the main synced visual", () => {
+  it("renders only the active cue's approved DB-backed artifact for the main synced visual", () => {
     const { container } = render(<AudioSyncedLessonVisual visual={visual} currentTime={12} duration={30} onSeek={vi.fn()} />);
 
     expect(screen.getAllByText("Context vector leaves attention").length).toBeGreaterThan(0);
     expect(screen.getByText("The approved artifact should receive cueIndex 1 for this beat.")).toBeInTheDocument();
     expect(screen.getByLabelText("Audio visual steps")).toBeInTheDocument();
-    expect(container.querySelector('[data-audio-synced-artifact="focused-attention-audio-artifact"]')).toBeInTheDocument();
+    expect(container.querySelector('[data-audio-synced-artifact="attention-score-grid-artifact"]')).toBeInTheDocument();
     const iframe = container.querySelector("iframe") as HTMLIFrameElement;
     expect(iframe).toBeInTheDocument();
-    expect(iframe.getAttribute("src")).toBe("/api/visual-artifacts/focused-attention-audio-artifact/sandbox");
+    expect(iframe.getAttribute("src")).toBe("/api/visual-artifacts/attention-score-grid-artifact/sandbox");
 
     expect(screen.queryByText("Input panel")).not.toBeInTheDocument();
     expect(screen.queryByText("Attention panel")).not.toBeInTheDocument();
@@ -76,7 +87,11 @@ describe("AudioSyncedLessonVisual", () => {
   });
 
   it("fails loudly instead of drawing a generic panel when artifact_slug is missing", () => {
-    const missingArtifact = { ...visual, artifact_slug: undefined } as AudioSyncedVisualContent;
+    const missingArtifact = {
+      ...visual,
+      artifact_slug: undefined,
+      cues: withoutCueArtifacts(visual),
+    } as AudioSyncedVisualContent;
     render(<AudioSyncedLessonVisual visual={missingArtifact} currentTime={12} duration={30} onSeek={vi.fn()} />);
 
     const alert = screen.getByRole("alert");

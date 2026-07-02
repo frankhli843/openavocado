@@ -187,13 +187,16 @@ enforced by `validateGeneratedContent`; the rest is a hard authoring rule.
   prompt, rubric, checklist, or planning language into the transcript. Phrases
   such as "the learner should", "the lesson should", "the overview should",
   "the audio should", and "the transcript should" are authoring notes, not
-  spoken lesson text. Use direct conversational language such as "you will see",
-  "we are going to look at", and "listen for this handoff".
-- **Conversational learning strategy is good.** It is useful for hosts to coach
-  the learner on how to listen, for example "do not try to memorize everything
-  at once, listen for the object and the handoff." Keep this in direct
-  second-person language. Do not turn it into an internal instruction about
-  what "the learner should" do.
+  spoken lesson text. Teach the concept directly with concrete examples,
+  mechanism traces, contrasts, and references to the actual visual objects.
+  Do not spend overview time telling the learner how to listen, how not to
+  memorize, or how to use the lesson.
+- **No generic listening-coach filler.** Avoid phrases such as "before we dive
+  in, you need the route", "do not try to memorize everything", "listen for the
+  object and the handoff", "we are building a mental map", or "this is a guided
+  conversation, not a lecture." Those are authoring reminders, not lesson
+  content. If orientation is needed, make it topic-specific: name the actual
+  object, actual transformation, actual evidence, and actual next stage.
 - **Local model boundary.** Local AvocadoCore may use a low-latency local model
   for instant learner-facing paths such as chat, short-answer grading,
   code-submission feedback, hints, and immediate formative feedback. Do not use
@@ -242,16 +245,21 @@ enforced by `validateGeneratedContent`; the rest is a hard authoring rule.
 - **Every lesson part needs a transcript and synced visual timeline.** The
   `audio.script` is the source transcript and may be duplicated into
   `audio.transcript` for clarity. Each lesson part must also include
-  `audio.synced_visual.artifact_slug` plus `audio.synced_visual.cues`. The
-  slug must point to an approved `visual_artifacts` React component generated
-  for that exact audio segment. The cues are timed states that cover most of the
-  audio duration and drive that artifact as playback advances. A static
-  transcript panel, generic panel renderer, or local prewritten component is
-  not enough. The timeline should show what the part receives, what changes
-  during the narration, and what is passed forward.
+  `audio.synced_visual` with either a fallback `artifact_slug` or separate
+  `cue.artifact_slug` values. Each slug must point to an approved
+  `visual_artifacts` React component generated for that exact audio segment or
+  cue. The cues are timed states that cover most of the audio duration and can
+  mount completely different artifacts as playback advances. Dense formula,
+  transformer, matrix, and code-trace audio should prefer separate cue
+  artifacts, so Q/K dot products, score matrices, softmax, value mixing,
+  residual addition, and MLP handoff can be distinct generated components. A
+  static transcript panel, generic panel renderer, repeated box layout, or
+  local prewritten component is not enough. The timeline should show what the
+  part receives, what changes during the narration, and what is passed forward.
 - **No repeated audio visuals.** Every audio segment in one lesson needs its own
-  approved artifact. Do not reuse the same component source, panel layout,
-  motif, cue labels, or scene objects with slightly different text. A Q/K/V
+  approved artifact, and dense audio should use separate approved cue artifacts
+  when the visual object changes. Do not reuse the same component source, panel
+  layout, motif, cue labels, or scene objects with slightly different text. A Q/K/V
   audio should look like
   an attention score grid, a residual-stream audio should look like a running
   ledger, an MLP audio should look like expansion, activation, and compression,

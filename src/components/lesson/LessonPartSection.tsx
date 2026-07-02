@@ -239,6 +239,7 @@ export function AudioSyncedLessonVisual({
   const activeIndex = foundIndex >= 0 ? foundIndex : currentTime >= cues[cues.length - 1].end ? cues.length - 1 : 0;
   const cue = cues[Math.max(activeIndex, 0)] ?? cues[0];
   const progressPct = Math.min(100, Math.max(0, (currentTime / safeDuration) * 100));
+  const activeArtifactSlug = cue.artifact_slug ?? visual.artifact_slug;
 
   const pipelineCues =
     cues.length > 10
@@ -312,10 +313,11 @@ export function AudioSyncedLessonVisual({
             {cue.narration}
           </div>
 
-          {visual.artifact_slug ? (
-            <div className="border-t border-gray-100 pt-3" data-audio-synced-artifact={visual.artifact_slug}>
+          {activeArtifactSlug ? (
+            <div className="border-t border-gray-100 pt-3" data-audio-synced-artifact={activeArtifactSlug}>
               <BespokeArtifactRenderer
-                artifactSlug={visual.artifact_slug}
+                key={activeArtifactSlug}
+                artifactSlug={activeArtifactSlug}
                 initialState={artifactState}
                 minHeight={360}
               />
