@@ -11,11 +11,12 @@
  *   AVOCADOCORE_AGENT_HARNESS_COMMAND="tsx /path/to/scripts/lesson-harness.ts"
  *
  * Environment:
- *   AVOCADOCORE_DB_PATH           — SQLite DB path (same as app)
- *   GOOGLE_AI_STUDIO_API_KEY      — Gemini API key (server-side only, never logged)
- *   GOOGLE_AI_STUDIO_MODEL        — model name (default: gemma-4-26b-a4b-it)
- *   AVOCADOCORE_FEEDBACK_PROVIDER — secondary provider config (google = Gemini)
- *   AVOCADOCORE_LOCAL_QUEUE_AUDIO — "skip" to skip audio generation (testing)
+ *   AVOCADOCORE_DB_PATH                       — SQLite DB path (same as app)
+ *   GOOGLE_AI_STUDIO_API_KEY                  — Gemini API key (server-side only, never logged)
+ *   GOOGLE_AI_STUDIO_MODEL                    — model name (default: gemma-4-26b-a4b-it)
+ *   AVOCADOCORE_AGENT_HARNESS_FALLBACK_MODEL  — fallback model after all retries fail (e.g. gemini-2.0-flash)
+ *   AVOCADOCORE_FEEDBACK_PROVIDER             — secondary provider config (google = Gemini)
+ *   AVOCADOCORE_LOCAL_QUEUE_AUDIO             — "skip" to skip audio generation (testing)
  *
  * Output contract (last JSON-looking line on stdout):
  *   { ok: true, ref: "agent-harness-lesson-N", lesson_id: N }
@@ -235,15 +236,19 @@ function getGeminiModel(): string {
   );
 }
 
-function getGeneratorId(): string {
-  return `agent-harness/google-ai-studio/${getGeminiModel()}/v1`;
+function getFallbackModel(): string | null {
+  return process.env.AVOCADOCORE_AGENT_HARNESS_FALLBACK_MODEL?.trim() || null;
 }
 
-async function callGemini(prompt: string): Promise<string> {
+function getGeneratorId(modelOverride?: string): string {
+  return `agent-harness/google-ai-studio/${modelOverride ?? getGeminiModel()}/v1`;
+}
+
+async function callGemini(prompt: string, modelOverride?: string): Promise<string> {
   const key = getGeminiKey();
   if (!key) throw new Error("GOOGLE_AI_STUDIO_API_KEY is not set");
 
-  const model = getGeminiModel();
+  const model = modelOverride ?? getGeminiModel();
   const url = `https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(model)}:generateContent`;
 
   const body = {
@@ -285,6 +290,105 @@ async function callGemini(prompt: string): Promise<string> {
     "";
   if (!text) throw new Error("Gemini returned an empty response");
   return text;
+}
+
+function incrementRetryCount(
+  db: Database.Database,
+  subjectId: number,
+  triggerEvent: string
+): void {
+  try {
+    db.prepare(
+      `UPDATE next_lesson_jobs
+       SET retry_count = COALESCE(retry_count, 0) + 1, updated_at = datetime('now')
+       WHERE subject_id = ? AND trigger_event = ? AND status = 'dispatched'`
+    ).run(subjectId, triggerEvent);
+  } catch {
+    // Best-effort — never fail the harness over a retry counter update
+  }
+}
+
+function isRetryableError(err: unknown): boolean {
+  if (!(err instanceof Error)) return false;
+  const msg = err.message;
+  // Retry on HTTP 500 (server-side capacity/transient) or AbortSignal timeout
+  return (
+    msg.includes("Gemini HTTP 500") ||
+    msg.includes("AbortError") ||
+    err.name === "AbortError" ||
+    msg.includes("The operation was aborted")
+  );
+}
+
+async function callGeminiWithRetry(
+  db: Database.Database,
+  subjectId: number,
+  triggerEvent: string,
+  prompt: string
+): Promise<{ text: string; modelUsed: string }> {
+  const primaryModel = getGeminiModel();
+  const fallbackModel = getFallbackModel();
+  const backoffMs = [10_000, 30_000]; // wait before retry 1 and retry 2
+  const maxRetries = backoffMs.length;
+
+  let lastError: Error | null = null;
+
+  for (let attempt = 0; attempt <= maxRetries; attempt++) {
+    if (attempt > 0) {
+      const waitMs = backoffMs[attempt - 1];
+      incrementRetryCount(db, subjectId, triggerEvent);
+      updateJobProgress(
+        db,
+        subjectId,
+        triggerEvent,
+        "retrying",
+        `Retry ${attempt}/${maxRetries} after ${waitMs / 1000}s (previous error: ${lastError?.message?.slice(0, 120) ?? "unknown"})`
+      );
+      await new Promise((resolve) => setTimeout(resolve, waitMs));
+    }
+
+    try {
+      const text = await callGemini(prompt, primaryModel);
+      return { text, modelUsed: primaryModel };
+    } catch (err) {
+      lastError = err instanceof Error ? err : new Error(String(err));
+      if (!isRetryableError(err)) {
+        // Non-retryable error (e.g. auth, parse error) — fail fast
+        throw lastError;
+      }
+      console.error(
+        `[lesson-harness] Gemini attempt ${attempt + 1} failed (retryable): ${lastError.message}`
+      );
+    }
+  }
+
+  // All primary model retries exhausted — try fallback model if configured
+  if (fallbackModel) {
+    updateJobProgress(
+      db,
+      subjectId,
+      triggerEvent,
+      "retrying",
+      `Switching to fallback model "${fallbackModel}" after ${maxRetries + 1} failed attempts with primary model`
+    );
+    console.error(
+      `[lesson-harness] All retries exhausted for primary model "${primaryModel}". Trying fallback "${fallbackModel}".`
+    );
+    try {
+      const text = await callGemini(prompt, fallbackModel);
+      return { text, modelUsed: fallbackModel };
+    } catch (fbErr) {
+      const fbMsg = fbErr instanceof Error ? fbErr.message : String(fbErr);
+      throw new Error(
+        `Primary model "${primaryModel}" failed after ${maxRetries + 1} attempts and fallback "${fallbackModel}" also failed: ${fbMsg}`
+      );
+    }
+  }
+
+  // No fallback configured — throw the last error
+  throw new Error(
+    `Gemini call failed after ${maxRetries + 1} attempts (no fallback configured): ${lastError?.message ?? "unknown error"}`
+  );
 }
 
 // ─── Learner context query ────────────────────────────────────────────────────
@@ -1098,10 +1202,17 @@ async function handleLessonCompleted(
   updateJobProgress(db, subjectId, triggerEvent, "researching", "Reading learner evidence from database");
   const context = buildLearnerContext(db, subjectId, learnerId);
 
-  // Call Gemini
+  // Call Gemini (with automatic retry + fallback model on transient failures)
   updateJobProgress(db, subjectId, triggerEvent, "authoring", "Calling Gemini to generate adaptive lesson content");
   const prompt = buildLessonPrompt(context, event.event);
-  const raw = await callGemini(prompt);
+  let raw: string;
+  let modelUsed: string;
+  try {
+    ({ text: raw, modelUsed } = await callGeminiWithRetry(db, subjectId, triggerEvent, prompt));
+  } catch (geminiErr) {
+    const msg = geminiErr instanceof Error ? geminiErr.message : String(geminiErr);
+    return { ok: false, error: `Gemini generation failed: ${msg}` };
+  }
 
   // Parse response
   let draft: GeminiLessonDraft;
@@ -1143,7 +1254,7 @@ async function handleLessonCompleted(
     ok: true,
     ref: `agent-harness-lesson-${lessonId}`,
     lesson_id: lessonId,
-    provider_used: `google-ai-studio/${getGeminiModel()}`,
+    provider_used: getGeneratorId(modelUsed),
     stage_reached: "finalizing",
   };
 }
@@ -1166,7 +1277,14 @@ async function handleLessonDiscarded(
 
   updateJobProgress(db, subjectId, triggerEvent, "authoring", "Calling Gemini to generate replacement lesson");
   const prompt = buildLessonPrompt(context, event.event, event.discarded_lesson_title);
-  const raw = await callGemini(prompt);
+  let raw: string;
+  let modelUsed: string;
+  try {
+    ({ text: raw, modelUsed } = await callGeminiWithRetry(db, subjectId, triggerEvent, prompt));
+  } catch (geminiErr) {
+    const msg = geminiErr instanceof Error ? geminiErr.message : String(geminiErr);
+    return { ok: false, error: `Gemini generation failed: ${msg}` };
+  }
 
   let draft: GeminiLessonDraft;
   try {
@@ -1202,7 +1320,7 @@ async function handleLessonDiscarded(
     ok: true,
     ref: `agent-harness-lesson-${lessonId}`,
     lesson_id: lessonId,
-    provider_used: `google-ai-studio/${getGeminiModel()}`,
+    provider_used: getGeneratorId(modelUsed),
     stage_reached: "finalizing",
   };
 }
