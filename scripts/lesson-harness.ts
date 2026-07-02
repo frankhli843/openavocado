@@ -533,7 +533,7 @@ Non-negotiable lesson-depth rules:
 - EVERY AUDIO SEGMENT NEEDS A TRANSCRIPT AND TIMED VISUAL SCENE. Treat audio_script as a learner-visible transcript. For lesson parts, include a synced visual plan whose cues cover the audio duration and change the scene as playback advances. The cues must show what the section receives, what changes during the narration, and what is passed forward.
 - EVERY AUDIO SYNCED VISUAL NEEDS A GENERATED SCENE PLAN. Do not rely on registered widgets, regex-selected scenes, or repeated receive/transform/pass cards. Each orientation_visual and audio.synced_visual must include a unique "scene" object with scene_id, title, motif, description, and generated panels. The renderer draws these generated panels dynamically.
 - AUDIO + INTERACTIVE SIDE-BY-SIDE FOR ORIENTATION. The top-level audio activity must include orientation_visual using the same timed cue scene pattern as lesson parts, and every lesson_part audio segment must include audio.synced_visual. The learner should see the paired visual beside the audio on desktop and immediately below it on mobile. Do not make the learner listen to a long orientation before they can see the moving object, pipeline, matrix, or state transition being described.
-- FORMAL MATH REQUIREMENT. Whenever you use mathematical notation or formulas, include a reading block of type "formula" with LaTeX, plain_english, and variable definitions with shapes/units where relevant.
+- FORMAL MATH REQUIREMENT. Whenever you use mathematical notation or formulas, include a reading block of type "formula" with these EXACT field names: "type" must be "formula", "latex" must be a LaTeX string, "plain_english" must be a clear English explanation of at least 20 characters, and "variables" must be an array of objects where each object has "symbol" (the LaTeX symbol string), "meaning" (what it represents in plain English, at least 8 characters), and an optional "shape" field (a string describing matrix dimension or data type). Do NOT use "variable_definitions", "description", or "unit" as field names. Example: { "type": "formula", "latex": "y = Wx + b", "plain_english": "A linear transformation applies a weight matrix W and bias b to input x to produce output y.", "variables": [{ "symbol": "W", "meaning": "weight matrix of learned parameters", "shape": "d_out × d_in" }, { "symbol": "x", "meaning": "input vector", "shape": "d_in" }, { "symbol": "b", "meaning": "bias vector", "shape": "d_out" }, { "symbol": "y", "meaning": "output vector after linear transformation", "shape": "d_out" }] }
 - AUDIO-ADJACENT VISUALS MUST BE SCOPED TO THE CURRENT AUDIO. The visual beside an audio player should show only the object, stage, state transition, or tiny example that the audio is currently narrating, with minimal before/after handoff context. Do not put a broad whole-lesson map, all-step simulator, or later exploratory interactive beside the audio if most of it is unrelated to the spoken segment. Use a dedicated focused orientation artifact or timed synced scene for the audio, then place the broader exploratory interactive later in its own lesson activity.
 - USE A MANIM / 3BLUE1BROWN SCENE MINDSET. Build visuals as staged objects and transformations, not text cards. Define positions, tables, matrices, arrows, moving focus, camera/framing emphasis, before/after states, and visible consequences. Multiple coordinated components are preferred when they clarify the concept.
 - DEFINE MAJOR NOUNS UNLESS EVIDENCE PROVES THEY ARE KNOWN. Do not assume the learner understands terms such as transformer block, attention, MLP, residual stream, normalization, logits, loss, gradient, KV cache, matrix, vector, tensor, prior, likelihood, or cache from a title or curriculum outline alone.
@@ -781,6 +781,34 @@ Return ONLY a valid JSON object matching this exact schema (no markdown, no pros
   ],
   "concept_tags": ["tag1", "tag2", "tag3"]
 }`;
+}
+
+// ─── Formula block field normalizer ────────────────────────────────────────────
+// Secondary defense: Gemini sometimes generates variable_definitions (with variable/description/unit)
+// instead of variables (with symbol/meaning/shape?). This normalizer fixes the mismatch before DB write.
+
+function normalizeFormulaBlocks(blocks: ReadingBlock[]): ReadingBlock[] {
+  return blocks.map((block) => {
+    const b = block as unknown as Record<string, unknown>;
+    if (b.type !== "formula") return block;
+    if (Array.isArray(b.variables) && b.variables.length > 0) return block;
+    const varDefs = b.variable_definitions;
+    if (!Array.isArray(varDefs) || varDefs.length === 0) return block;
+    const normalized: Record<string, unknown> = { ...b };
+    normalized.variables = varDefs.map((entry: Record<string, unknown>) => {
+      const mapped: Record<string, unknown> = {
+        symbol: String(entry.variable ?? entry.symbol ?? ""),
+        meaning: String(entry.description ?? entry.meaning ?? ""),
+      };
+      const unitVal = entry.unit ?? entry.shape;
+      if (unitVal && String(unitVal).trim() && String(unitVal).toLowerCase() !== "dimensionless") {
+        mapped.shape = String(unitVal);
+      }
+      return mapped;
+    });
+    delete normalized.variable_definitions;
+    return normalized as unknown as ReadingBlock;
+  });
 }
 
 // ─── Lesson assembly and DB write ─────────────────────────────────────────────
@@ -1231,6 +1259,16 @@ async function handleLessonCompleted(
     };
   }
 
+  // Normalize formula blocks: map variable_definitions -> variables if needed
+  draft.reading_blocks = normalizeFormulaBlocks(draft.reading_blocks);
+  if (Array.isArray(draft.lesson_parts)) {
+    for (const part of draft.lesson_parts) {
+      if (part.reading?.blocks) {
+        part.reading.blocks = normalizeFormulaBlocks(part.reading.blocks);
+      }
+    }
+  }
+
   // Write to DB
   updateJobProgress(db, subjectId, triggerEvent, "validating", "Writing lesson to database");
   const lessonId = insertGeneratedLesson(db, draft, subjectId, learnerId, event.event);
@@ -1299,6 +1337,16 @@ async function handleLessonDiscarded(
       ok: false,
       error: "Gemini returned incomplete lesson draft (missing required fields)",
     };
+  }
+
+  // Normalize formula blocks: map variable_definitions -> variables if needed
+  draft.reading_blocks = normalizeFormulaBlocks(draft.reading_blocks);
+  if (Array.isArray(draft.lesson_parts)) {
+    for (const part of draft.lesson_parts) {
+      if (part.reading?.blocks) {
+        part.reading.blocks = normalizeFormulaBlocks(part.reading.blocks);
+      }
+    }
   }
 
   updateJobProgress(db, subjectId, triggerEvent, "validating", "Writing replacement lesson to database");
