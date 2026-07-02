@@ -91,7 +91,7 @@ describe("AudioSyncedLessonVisual", () => {
     expect(screen.getByText("The current beat should highlight the attention panel in place.")).toBeInTheDocument();
     expect(screen.getByText("Attention panel").closest("[aria-current='step']")).toBeTruthy();
 
-    expect(container.innerHTML).toContain("grid grid-cols-1 gap-2");
+    expect(container.innerHTML).toContain("flex min-w-0 gap-2 overflow-x-auto");
     expect(container.innerHTML).not.toContain("grid-cols-2 gap-2 sm:grid-cols-4");
   });
 

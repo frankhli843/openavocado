@@ -119,7 +119,7 @@ export function LessonPartSection({
       ) : (
         <>
           <PartBlock title="Audio">
-            <div className={syncedVisual ? "grid min-w-0 gap-5 xl:grid-cols-[minmax(18rem,0.7fr)_minmax(0,1.3fr)] xl:items-start" : "min-w-0 space-y-3"}>
+            <div className="min-w-0 space-y-5">
               <div className="min-w-0 space-y-3">
                 {artifact?.file_path ? (
                   <div
@@ -397,14 +397,14 @@ export function AudioSyncedLessonVisual({
 
       <div className="grid min-w-0 gap-4 pt-4 pb-16 sm:pb-0">
         <div className="space-y-4">
-          <div className="grid grid-cols-1 gap-2">
+          <div className="flex min-w-0 gap-2 overflow-x-auto pb-1" aria-label="Audio visual steps">
             {pipelineCues.map((stage, index) => {
               const done = index < activePipelineIndex;
               const active = index === activePipelineIndex;
               return (
                 <div
                   key={`${stage.start}-${stage.label}`}
-                  className={`border-b-2 px-1 py-2 text-center text-xs font-medium ${
+                  className={`min-w-[7rem] flex-1 border-b-2 px-2 py-2 text-center text-xs font-medium ${
                     active
                       ? "border-blue-600 bg-blue-50 text-blue-900"
                       : done

@@ -52,7 +52,7 @@ export function AudioSection({ activity, artifact }: AudioSectionProps) {
       </div>
 
       <div className="px-3 py-4 sm:p-6">
-        <div className={orientationVisual ? "grid min-w-0 gap-5 xl:grid-cols-[minmax(18rem,0.8fr)_minmax(0,1.2fr)] xl:items-start" : "min-w-0 space-y-4"}>
+        <div className="min-w-0 space-y-5">
           <div className="min-w-0 space-y-4">
             {/* Audio player */}
             {artifact?.file_path ? (
