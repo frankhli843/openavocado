@@ -11,6 +11,7 @@ import type {
 import type { WidgetStateChange } from "./widgets/DeclarativeWidget";
 import { WidgetHost } from "./widgets/WidgetHost";
 import { LessonDiagramsView } from "./LessonDiagrams";
+import { FormulaBlock } from "./FormulaBlock";
 import { PythonSection } from "./PythonSection";
 import { LessonPartPracticeSection } from "./LessonPartPracticeSection";
 import {
@@ -1223,23 +1224,5 @@ function FormulaBlockView({
 }: {
   block: Extract<ReadingBlock, { type: "formula" }>;
 }) {
-  return (
-    <div className="border-l-2 border-indigo-300 bg-indigo-50/50 px-3 py-3">
-      <div className="overflow-x-auto rounded-md bg-white px-3 py-2 font-mono text-sm text-indigo-950">
-        {block.latex}
-      </div>
-      <p className="mt-2 text-sm leading-6 text-gray-700">{block.plain_english}</p>
-      <dl className="mt-3 grid gap-2 text-sm sm:grid-cols-2">
-        {block.variables.map((variable) => (
-          <div key={variable.symbol} className="border-t border-indigo-100 pt-2">
-            <dt className="font-mono font-semibold text-indigo-900">{variable.symbol}</dt>
-            <dd className="text-gray-600">
-              {variable.meaning}
-              {variable.shape ? <span className="text-gray-400"> ({variable.shape})</span> : null}
-            </dd>
-          </div>
-        ))}
-      </dl>
-    </div>
-  );
+  return <FormulaBlock block={block} />;
 }
