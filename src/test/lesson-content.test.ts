@@ -552,6 +552,7 @@ function validLessonPartContent() {
       duration_hint: 90,
       synced_visual: {
         strategy: "timeline",
+        artifact_slug: "part-concept-audio-artifact",
         scene: {
           scene_id: "part-concept-generated-scene",
           title: "Part object transformation",
@@ -888,6 +889,14 @@ describe("validateGeneratedContent — richer lessons", () => {
     const r = validateLessonPartContent(content, ["declarative"], validateWidgetSpec);
     expect(r.valid).toBe(false);
     expect(r.errors.join(" ")).toMatch(/generated bespoke scene plan/);
+  });
+
+  it("rejects audio-synced visuals without an approved bespoke artifact slug", () => {
+    const content = validLessonPartContent();
+    delete (content.audio.synced_visual as Partial<typeof content.audio.synced_visual>).artifact_slug;
+    const r = validateLessonPartContent(content, ["declarative"], validateWidgetSpec);
+    expect(r.valid).toBe(false);
+    expect(r.errors.join(" ")).toMatch(/artifact_slug/);
   });
 
   it("rejects select-one practice questions with select-all answer metadata", () => {

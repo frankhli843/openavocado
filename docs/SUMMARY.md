@@ -171,7 +171,7 @@ The richer-lessons upgrade added `src/test/lesson-content.test.ts` (reading/medi
 - Expression evaluator rejects: `process.exit`, assignment operators, member access, template literals, unknown identifiers
 - Widget schema validation: missing version, missing type, missing instructions, bad control references, unsafe formulas, unsupported registered types
 - Widget compute: ordered dependency evaluation, template interpolation, curve sampling, formatValue formatting
-- DeclarativeWidget live recompute on slider change + initialState restore (jsdom tests)
+- WidgetHost runtime policy: registered/declarative specs fail visibly, approved bespoke artifact specs render through the sandboxed artifact iframe
 
 ---
 
@@ -200,10 +200,10 @@ NODE_OPTIONS="--localstorage-file=/tmp/avocado-ls.json" pnpm dev --port 3456
 | `src/lib/widgets/schema.ts` | WidgetSpec types + validateWidgetSpec + formatValue |
 | `src/lib/widgets/expression.ts` | No-eval recursive-descent safe expression evaluator |
 | `src/lib/widgets/compute.ts` | Ordered output evaluation, template interpolation, curve sampling |
-| `src/lib/widgets/registry.ts` | Registered widget type list |
-| `src/components/lesson/widgets/WidgetHost.tsx` | Dispatcher: declarative vs registered vs error state |
-| `src/components/lesson/widgets/DeclarativeWidget.tsx` | Generic data-driven widget renderer |
-| `src/components/lesson/widgets/SupplyDemandWidget.tsx` | Market equilibrium registered widget |
+| `src/lib/widgets/registry.ts` | Legacy widget type list for migration/backfill inspection only |
+| `src/components/lesson/widgets/WidgetHost.tsx` | Runtime gate: only approved DB-backed bespoke artifacts render |
+| `src/components/lesson/widgets/BespokeArtifactRenderer.tsx` | Sandboxed iframe renderer for approved visual_artifacts bundles |
+| `src/components/lesson/widgets/DeclarativeWidget.tsx` | Legacy renderer retained for tests/migration reference, not dispatched by WidgetHost |
 | `src/components/lesson/widgets/Controls.tsx` | Slider, Toggle, Segmented control primitives |
 | `src/components/lesson/widgets/Charts.tsx` | SVG BarChart and CurveChart |
 | `src/test/schema.test.ts` | 14 Vitest schema tests |
@@ -229,9 +229,9 @@ The flagship Bayes lesson: first-class written teaching text (definition, worked
 
 ![Lesson — written text plus media](screenshots/lesson-text-media.png)
 
-### Multiple visualizations for one concept
+### Multiple Visualizations For One Concept
 
-One declarative widget, one slider set, three live views — a bar chart, a frequency table, and a population tree — plus an explanatory panel.
+Current generated lessons use approved DB-backed bespoke artifacts for each visualization. Older screenshots may show declarative fixtures from the historical seed set; those are no longer the learner-facing authoring path.
 
 ![Lesson — multiple visualization blocks](screenshots/lesson-multiviz.png)
 

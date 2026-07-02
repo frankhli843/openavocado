@@ -601,10 +601,13 @@ export function PythonSection({
         className={previewMode === "phone" ? "mx-auto w-full max-w-[390px] pb-20" : "w-full"}
         data-preview-mode={previewMode}
       >
-      <div className={embedded ? "border-t border-gray-100 pt-4" : "bg-white rounded-xl border border-gray-200 overflow-hidden"}>
+      <div
+        data-code-section-shell={embedded ? "embedded" : "standalone"}
+        className={embedded ? "border-t border-gray-100 px-3 py-3" : "bg-white rounded-xl border border-gray-200 overflow-hidden"}
+      >
         {/* Header */}
-        <div className={`flex flex-col gap-3 border-b border-gray-100 py-4 sm:flex-row sm:items-center ${
-          embedded ? "px-0 bg-transparent" : "px-4 bg-gray-50/50 sm:px-6"
+        <div className={`flex flex-col gap-3 border-b border-gray-100 sm:flex-row sm:items-center ${
+          embedded ? "bg-transparent pb-3" : "bg-gray-50/50 px-4 py-4 sm:px-6"
         }`}>
           <div className="flex items-center gap-3 min-w-0">
             <span className="text-xl" aria-hidden="true">&#128187;</span>
@@ -640,8 +643,8 @@ export function PythonSection({
 
         <div className={`space-y-4 ${
           isPhonePreview
-            ? embedded ? "py-3 text-[15px]" : "p-3 text-[15px]"
-            : embedded ? "py-4" : "p-4 sm:p-6"
+            ? embedded ? "pt-3 text-[15px]" : "p-3 text-[15px]"
+            : embedded ? "pt-3" : "p-4 sm:p-6"
         }`}>
           {optionalNotice}
 

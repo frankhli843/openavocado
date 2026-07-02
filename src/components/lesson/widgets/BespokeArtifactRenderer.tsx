@@ -17,7 +17,8 @@
  *   - Popups, top-navigation, and form submission are blocked
  */
 import { useEffect, useRef, useState } from "react";
-import type { WidgetStateChange } from "./DeclarativeWidget";
+
+type WidgetStateChange = { controls: Record<string, number> };
 
 interface BespokeArtifactRendererProps {
   /** Artifact slug as stored in visual_artifacts.slug */
@@ -85,6 +86,14 @@ export function BespokeArtifactRenderer({
     window.addEventListener("message", handleMessage);
     return () => window.removeEventListener("message", handleMessage);
   }, [initialState, onStateChange, minHeight]);
+
+  useEffect(() => {
+    if (!isReady || !initialState) return;
+    iframeRef.current?.contentWindow?.postMessage(
+      { type: "SET_STATE", state: initialState },
+      "*"
+    );
+  }, [isReady, initialState]);
 
   if (error) {
     return (

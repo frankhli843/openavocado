@@ -86,6 +86,30 @@ describe("PythonSection", () => {
     vi.restoreAllMocks();
   });
 
+  it("keeps embedded code practice spacing consistent without nested-card padding", async () => {
+    vi.spyOn(console, "warn").mockImplementation(() => undefined);
+
+    const { container } = render(
+      <PythonSection
+        activity={practiceActivity()}
+        learnerId={1}
+        initialCode=""
+        initialOutput=""
+        initialTests={{}}
+        onChange={vi.fn()}
+        embedded
+      />
+    );
+
+    const shell = container.querySelector('[data-code-section-shell="embedded"]');
+    expect(shell).toBeInTheDocument();
+    expect(shell).toHaveClass("px-3");
+    expect(shell).toHaveClass("py-3");
+    expect(shell).not.toHaveClass("rounded-xl");
+    expect(shell).not.toHaveClass("p-6");
+    await waitFor(() => expect(console.warn).toHaveBeenCalled());
+  });
+
   it("always exposes a phone preview mode for coding lessons", async () => {
     vi.spyOn(console, "warn").mockImplementation(() => undefined);
 

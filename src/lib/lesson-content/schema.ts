@@ -1438,6 +1438,9 @@ export function validateAudioSyncedVisualContent(
   if (v.strategy !== undefined && v.strategy !== "timeline" && v.strategy !== "audio-length-scaled") {
     errors.push('strategy must be "timeline" or "audio-length-scaled" when provided');
   }
+  if (typeof v.artifact_slug !== "string" || !/^[a-z0-9-]+$/.test(v.artifact_slug)) {
+    errors.push("artifact_slug is required and must reference an approved DB-backed bespoke visual artifact");
+  }
   const scene = validateAudioGeneratedScene(v.scene);
   for (const e of scene.errors) errors.push(`scene: ${e}`);
   if (!Array.isArray(v.cues) || v.cues.length < 3) {

@@ -41,4 +41,30 @@ describe("FormulaBlock", () => {
     expect(container).not.toHaveTextContent("H_{\\text{input}}");
     expect(screen.getAllByText(/L x d_model/)).toHaveLength(2);
   });
+
+  it("normalizes unsupported highlight wrappers before rendering KaTeX", () => {
+    const { container } = render(
+      <FormulaBlock
+        block={{
+          type: "formula",
+          latex:
+            String.raw`H_{\text{after-attn}} = \colorbox{#dbeafe}{H_{\text{input}}} + \colorbox{#dbeafe}{\operatorname{Attention}}(\colorbox{#dbeafe}{\operatorname{LayerNorm}}(\colorbox{#dbeafe}{H_{\text{input}}}))`,
+          plain_english:
+            "The attention sublayer normalizes the input hidden state, computes an attention update, and adds that update back to the input.",
+          variables: [
+            {
+              symbol: "H_{\\text{input}}",
+              meaning: "hidden-state matrix entering the block",
+              shape: "L x d_model",
+            },
+          ],
+        }}
+      />
+    );
+
+    expect(container.querySelector(".katex-display")).toBeInTheDocument();
+    expect(container.innerHTML).not.toContain("katex-error");
+    expect(container.innerHTML).not.toContain("colorbox");
+    expect(container).not.toHaveTextContent("\\colorbox");
+  });
 });

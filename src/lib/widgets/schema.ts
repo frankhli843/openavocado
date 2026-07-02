@@ -2,20 +2,10 @@
  * AvocadoCore interactive widget schema.
  *
  * A lesson "interactive" activity carries a structured, versioned WidgetSpec
- * instead of free-form code. The app instantiates it through a safe dispatch
- * layer. There are three families:
+ * instead of free-form code. The learner-facing app instantiates only one
+ * family:
  *
- *  1. `declarative` widgets — fully data-driven. The generator describes
- *     controls (sliders/toggles/segmented), derived outputs (safe formulas),
- *     explanatory panels (template text), and an optional chart. No code is
- *     executed; outputs are computed by the sandboxed expression evaluator.
- *
- *  2. registered widgets — a named `widget_type` resolved from a curated
- *     registry of hand-written, reviewed React components (e.g. "supply-demand").
- *     The generator supplies typed `params`, never code. This is now a legacy
- *     compatibility path; new concept visuals should be `bespoke-artifact`.
- *
- *  3. `bespoke-artifact` widgets — DB-backed, purpose-built React components
+ *  1. `bespoke-artifact` widgets — DB-backed, purpose-built React components
  *     authored by the lesson-generation agent for a specific concept. The
  *     `bespoke-artifact` spec carries only a stable slug (no code). The
  *     visual-artifacts pipeline (src/lib/visual-artifacts/) compiles the
@@ -24,13 +14,23 @@
  *     only inside a sandboxed iframe via BespokeArtifactRenderer, and only
  *     after the artifact reaches qa_approved status.
  *
+ * Legacy parser families are retained below so old lessons can be identified
+ * and backfilled, but WidgetHost no longer renders them:
+ *
+ *  - `declarative` widgets — fully data-driven. The generator describes
+ *     controls (sliders/toggles/segmented), derived outputs (safe formulas),
+ *     explanatory panels (template text), and an optional chart.
+ *
+ *  - registered widgets — a named `widget_type` resolved from a curated
+ *     registry of hand-written, reviewed React components (e.g. "supply-demand").
+ *     The generator supplies typed `params`, never code.
+ *
  * SAFETY: the main app never executes AI-authored React/JS directly from the
  * lesson record or SQLite source column. AI-authored components reach a learner
- * only through (a) the declarative schema, (b) a reviewed registry component, or
- * (c) the bespoke-artifact pipeline, which compiles in isolation, gates on an
- * explicit approval status, and renders the compiled bundle in a narrow-bridge
- * sandboxed iframe. A failed or unapproved artifact surfaces a visible failure
- * state instead of falling back to a fake visualization.
+ * only through the bespoke-artifact pipeline, which compiles in isolation,
+ * gates on an explicit approval status, and renders the compiled bundle in a
+ * narrow-bridge sandboxed iframe. A failed or unapproved artifact surfaces a
+ * visible failure state instead of falling back to a fake visualization.
  */
 
 import { parseExpression, collectIdentifiers, ExpressionError } from "./expression";

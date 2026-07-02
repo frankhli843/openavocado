@@ -2,8 +2,7 @@
 
 import { useMemo } from "react";
 import type { LessonActivity } from "@/types";
-import { WidgetHost } from "./widgets/WidgetHost";
-import type { WidgetStateChange } from "./widgets/DeclarativeWidget";
+import { WidgetHost, type WidgetStateChange } from "./widgets/WidgetHost";
 
 interface InteractiveSectionProps {
   activity: LessonActivity;

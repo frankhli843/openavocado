@@ -1,8 +1,13 @@
 /**
+ * @vitest-environment jsdom
+ *
  * Tests for the interactive widget schema, the sandboxed expression evaluator,
  * runtime computation, and the generator-contract validation of widget specs.
  */
 import { describe, it, expect } from "vitest";
+import "@testing-library/jest-dom/vitest";
+import { render, screen } from "@testing-library/react";
+import React from "react";
 import {
   parseExpression,
   evaluate,
@@ -17,6 +22,7 @@ import {
 } from "../lib/widgets/schema";
 import { computeOutputs, renderTemplate, sampleCurve } from "../lib/widgets/compute";
 import { validateGeneratedContent } from "../lib/lesson-generator/contract";
+import { WidgetHost } from "../components/lesson/widgets/WidgetHost";
 import type { GeneratedLessonContent } from "../types";
 
 // ─── Safe expression evaluator ──────────────────────────────────────────────
@@ -241,6 +247,31 @@ describe("validateWidgetSpec", () => {
   });
 });
 
+describe("WidgetHost runtime policy", () => {
+  it("renders only DB-backed bespoke artifacts, not declarative or registered precreated widgets", () => {
+    const { rerender } = render(React.createElement(WidgetHost, { spec: validDeclarative }));
+    expect(screen.getByRole("alert")).toHaveTextContent(/only renders approved DB-backed bespoke visual artifacts/i);
+    expect(screen.getByRole("alert")).toHaveTextContent(/precreated template components/i);
+
+    rerender(React.createElement(WidgetHost, { spec: { schema_version: "1.0", widget_type: "supply-demand", instructions: "x" } }));
+    expect(screen.getByRole("alert")).toHaveTextContent(/only renders approved DB-backed bespoke visual artifacts/i);
+
+    rerender(
+      React.createElement(WidgetHost, {
+        spec: {
+          schema_version: "1.0",
+          widget_type: "bespoke-artifact",
+          instructions: "Explore.",
+          params: { artifact_slug: "runtime-policy-artifact" },
+        },
+      })
+    );
+    const iframe = document.querySelector("iframe") as HTMLIFrameElement;
+    expect(iframe).toBeInTheDocument();
+    expect(iframe.getAttribute("src")).toBe("/api/visual-artifacts/runtime-policy-artifact/sandbox");
+  });
+});
+
 // ─── Runtime compute ────────────────────────────────────────────────────────
 
 describe("computeOutputs", () => {
@@ -367,6 +398,7 @@ function baseContent(interactiveContent: Record<string, unknown>): GeneratedLess
           duration_hint: 900,
           orientation_visual: {
             strategy: "timeline",
+            artifact_slug: "widget-test-orientation-artifact",
             scene: {
               scene_id: "widget-test-orientation-scene",
               title: "Widget test orientation",

@@ -79,11 +79,9 @@ The lesson generator may add optional sections, such as reading, flashcards, wor
 
 ## Interactive Widget System
 
-Interactive activities use a typed `WidgetSpec` contract stored as JSON in `lesson_activities.content`. Two widget kinds are supported:
+Interactive activities use a typed `WidgetSpec` contract stored as JSON in `lesson_activities.content`. The learner-facing runtime supports only `widget_type: "bespoke-artifact"` specs that reference an approved `visual_artifacts.slug`. The generated React source is stored in the database, compiled by the artifact pipeline, QA-approved, and rendered inside the sandboxed iframe route.
 
-**Declarative widgets** (`widget_type: "declarative"`) are fully data-driven. The lesson generator emits controls (sliders, toggles, segmented selectors), derived outputs (computed via a sandboxed expression evaluator), explanatory panels with template interpolation, and one or more charts. A widget may carry a single `chart` and/or a `charts: []` array so the **same controls can drive several visual perspectives at once**. Chart types: `bar`, `curve`, `table` (a frequency/contingency grid of live-computed cells), and `tree` (a population-split / flow diagram with live counts). No executable code is embedded — the spec is a declarative description only. Key files: `src/lib/widgets/schema.ts`, `compute.ts`, `expression.ts`, `src/components/lesson/widgets/Charts.tsx`.
-
-**Registered widgets** are hand-written React components with known, safe behaviour. The lesson generator emits a typed `widget_type` string and a `params` object; the component registry dispatches to the correct renderer. Key file: `src/lib/widgets/registry.ts`. Current registered types: `supply-demand` (market equilibrium simulator with SVG curve chart).
+Declarative widgets and registered widgets are legacy parser families kept only so old records can be inspected and backfilled. `WidgetHost` no longer dispatches them to learner-facing UI.
 
 Widget state (control values) is autosaved per activity to `lesson_autosave.widget_state` on a 1-second debounce and restored on page load. Autosave never triggers lesson completion — that path is manual-only.
 
@@ -91,7 +89,7 @@ The expression evaluator (`src/lib/widgets/expression.ts`) is a no-eval recursiv
 
 Widget rendering is gated by `validateWidgetSpec` which checks schema version, required fields, control references in formulas (including `table` cell and `tree` node formulas), and known types. Invalid or unrecognised specs display a clear amber error state rather than a blank section.
 
-Multiple visualizations per lesson are supported by several `interactive` activities and by coordinated views inside one approved `bespoke-artifact`. Older seeded lessons may still render declarative multi-chart specs for compatibility, but new generated lessons must reference approved DB-backed bespoke artifacts rather than registered or declarative widget specs.
+Multiple visualizations per lesson are supported by several `interactive` activities and by coordinated views inside one approved `bespoke-artifact`. Generated lessons and backfills must reference approved DB-backed bespoke artifacts rather than registered, declarative, or local panel-template specs.
 
 ## Written Text, Media, and Scaffolded Code
 

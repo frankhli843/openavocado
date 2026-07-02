@@ -1,19 +1,9 @@
 /**
- * Temporary bridge for interactive visual components.
+ * Legacy widget catalog kept only for migration/backfill inspection.
  *
- * This registry is not the long-term lesson-authoring model. Frank's target
- * architecture is a dynamic visual artifact pipeline where each lesson part can
- * carry a bespoke generated React component through source storage, isolated
- * build, Chrome MCP QA, approval metadata, and sandboxed rendering without
- * editing app source for every new visual.
- *
- * Until that pipeline exists, purpose-built components are wired here so the
- * app never executes raw React/JS from lesson JSON or SQLite. `declarative`
- * remains only as a legacy/simple fallback, not the default quality bar for
- * future lessons.
- *
- * This module is intentionally React-free so the validator and the
- * lesson-generator contract can import it without pulling in the UI layer.
+ * The learner-facing runtime no longer dispatches these precreated components.
+ * New and backfilled Avo interactives must be approved DB-backed bespoke
+ * artifacts rendered by slug through BespokeArtifactRenderer.
  */
 
 export interface RegisteredWidgetInfo {
@@ -74,12 +64,9 @@ export const REGISTERED_WIDGETS: RegisteredWidgetInfo[] = [
   },
 ];
 
-/** All widget types the app can render, including the generic declarative one. */
+/** Legacy schema catalog, not the learner-facing render contract. */
 export const SUPPORTED_WIDGET_TYPES: string[] = [
-  "declarative",
-  // DB-backed bespoke artifact pipeline: artifact_slug routes to BespokeArtifactRenderer
   "bespoke-artifact",
-  ...REGISTERED_WIDGETS.map((w) => w.type),
 ];
 
 export function isSupportedWidgetType(type: string): boolean {
