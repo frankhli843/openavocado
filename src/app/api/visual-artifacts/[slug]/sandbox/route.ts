@@ -106,11 +106,26 @@ function buildSandboxHtml(title: string, bundleUrl: string): string {
       max-width: 100%;
     }
     #root * {
+      min-width: 0;
+      max-width: 100%;
       overflow-wrap: break-word;
     }
     @media (max-width: 430px) {
       body {
         font-size: 14px;
+      }
+      #root [style*="display: grid"],
+      #root [style*="display:grid"] {
+        grid-template-columns: minmax(0, 1fr) !important;
+      }
+      #root [style*="display: flex"],
+      #root [style*="display:flex"] {
+        flex-wrap: wrap !important;
+      }
+      #root [style*="width:"],
+      #root [style*="min-width"],
+      #root [style*="minWidth"] {
+        max-width: 100% !important;
       }
     }
     #artifact-loading {
