@@ -21,6 +21,7 @@ import * as path from "path";
 import * as os from "os";
 import type { ArtifactManifest, BuildResult } from "./types";
 import { findBlockedImports } from "./manifest";
+import { validateArtifactSource } from "./source-validation";
 
 /**
  * Runtime artifacts base directory.
@@ -163,6 +164,14 @@ export async function buildArtifact(
   source: string,
   manifest: ArtifactManifest
 ): Promise<BuildResult> {
+  const sourceValidation = validateArtifactSource(source);
+  if (!sourceValidation.valid) {
+    return {
+      ok: false,
+      error: `Artifact source failed validation: ${sourceValidation.errors.join("; ")}`,
+    };
+  }
+
   // 1. Pre-flight: check for blocked imports before invoking esbuild
   const blocked = findBlockedImports(source, manifest.allowed_imports);
   if (blocked.length > 0) {

@@ -153,9 +153,16 @@ enforced by `validateGeneratedContent`; the rest is a hard authoring rule.
   panel JSON, or any other precreated component path. Lessons must use the
   DB-backed `bespoke-artifact` pipeline: generate per-part React components,
   store source and manifest in SQLite, compile in isolation, attach build hash
-  and compiled artifact reference, run Chrome MCP desktop/mobile sandbox QA with
-  screenshots, record QA evidence, then approve. Lesson JSON stores only
+  and compiled artifact reference, run Chrome MCP desktop and 390px mobile
+  sandbox QA with screenshots, record QA evidence, then approve. Lesson JSON stores only
   `widget_type: "bespoke-artifact"` plus the stable approved slug.
+- **Bespoke artifact source must be mobile-first.** Each visual artifact's React
+  source must be authored for both desktop and 390px mobile before it is built:
+  use responsive layout primitives such as `flexWrap`, `minmax()` or
+  `auto-fit` grids, `clamp()`, `width/maxWidth: "100%"`, `overflow-x:auto` for
+  wide tables, and explicit text wrapping. Fixed desktop widths, imported
+  registered/declarative widgets, local template components, tiny placeholders,
+  and irrelevant demo metaphors fail source validation before build or approval.
 - **Generic visuals are forbidden for new generation.** Do not use the generic
   declarative chart renderer, a registered widget, or local generated panels,
   even if one is close. If a visual needs a bar chart, matrix, stage map, or
@@ -711,8 +718,10 @@ deployment configuration.
 - [ ] At least two visual perspectives on the core concept, and every
       visualization has an audio explanation clip or per-part audio script.
 - [ ] Every new interactive uses `widget_type: "bespoke-artifact"` and has
-      Chrome MCP sandbox QA evidence, including desktop and mobile screenshots,
-      before the lesson references it.
+      Chrome MCP sandbox QA evidence, including desktop and 390px mobile
+      screenshots, before the lesson references it. Approval is blocked unless
+      the QA notes and screenshot refs explicitly mention both desktop and
+      mobile/390px evidence.
 - [ ] Media (if used) has reason + fallback and resolves to a valid video id.
 - [ ] Code has a prompt, progressive unboxable hints all the way to the answer
       explanation, public + hidden tests, comments documenting any external
@@ -772,7 +781,7 @@ examples, wrong difficulty calibration, audio that sounds robotic or truncated).
    POST /api/visual-artifacts
    POST /api/visual-artifacts/{slug}/build
    open /api/visual-artifacts/{slug}/sandbox with Chrome MCP
-   take desktop and mobile screenshots
+   take desktop and 390px mobile screenshots
    POST /api/visual-artifacts/{slug}/qa-evidence
    POST /api/visual-artifacts/{slug}/approve
    ```

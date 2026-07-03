@@ -65,7 +65,41 @@ function seedLesson(db: InstanceType<typeof Database>): number {
     .run(subjectId).lastInsertRowid as number;
 }
 
-const VALID_SOURCE = "export default function C() { return <div>hi</div>; }";
+const VALID_SOURCE = `
+import React from "react";
+
+export default function C() {
+  const rows = ["input", "transform", "output"];
+  return (
+    <section
+      style={{
+        width: "100%",
+        maxWidth: "100%",
+        display: "grid",
+        gridTemplateColumns: "repeat(auto-fit, minmax(160px, 1fr))",
+        gap: 12,
+        overflowWrap: "anywhere",
+        fontFamily: "Inter, system-ui, sans-serif",
+      }}
+    >
+      <h2 style={{ gridColumn: "1 / -1" }}>Lesson-specific visual artifact</h2>
+      {rows.map((row) => (
+        <div key={row} style={{ border: "1px solid #cbd5e1", padding: 12 }}>
+          <strong>{row}</strong>
+          <p>This bespoke artifact uses responsive columns and wrapped text for mobile QA.</p>
+        </div>
+      ))}
+    </section>
+  );
+}
+`;
+
+const QA_EVIDENCE = {
+  qa_notes: "Chrome MCP desktop 1280 and mobile 390px reviewed. Bespoke lesson-specific artifact controls and labels fit.",
+  qa_snapshot_ref: "state/qa/demo-desktop.snapshot.txt,state/qa/demo-mobile-390.snapshot.txt",
+  qa_screenshot_ref: "state/qa/demo-desktop-1280.png,state/qa/demo-mobile-390.png",
+  approved_by: "qa-agent",
+};
 
 function buildOk(): BuildResult {
   return {
@@ -105,6 +139,32 @@ describe("createArtifact", () => {
     expect(() =>
       createArtifact({ slug: "demo", title: "X", source_react: "   " })
     ).toThrow(/source_react/);
+  });
+
+  it("rejects tiny generic source that is not a bespoke mobile-friendly artifact", () => {
+    expect(() =>
+      createArtifact({ slug: "demo", title: "X", source_react: "export default function C() { return <div>hi</div>; }" })
+    ).toThrow(/bespoke|responsive/i);
+  });
+
+  it("rejects source that tries to reuse registered or declarative widget components", () => {
+    expect(() =>
+      createArtifact({
+        slug: "demo",
+        title: "X",
+        source_react: `${VALID_SOURCE}\nconst Bad = WidgetHost;`,
+      })
+    ).toThrow(/not bespoke|WidgetHost/i);
+  });
+
+  it("rejects source with fixed desktop width that would overflow 390px mobile", () => {
+    expect(() =>
+      createArtifact({
+        slug: "demo",
+        title: "X",
+        source_react: VALID_SOURCE.replace('width: "100%"', 'width: "760px"'),
+      })
+    ).toThrow(/fixed desktop width/i);
   });
 
   it("enforces the UNIQUE slug constraint at the DB level", () => {
@@ -190,10 +250,10 @@ describe("build status transitions", () => {
   it("updateSource resets an approved artifact back to pending_build with a new hash", () => {
     markBuilding("demo");
     markBuildSuccess("demo", buildOk());
-    approveArtifact("demo", { qa_notes: "looks good" });
+    approveArtifact("demo", QA_EVIDENCE);
     const before = getArtifactBySlug("demo")!;
 
-    const updated = updateSource("demo", "export default function C2() { return <span>v2</span>; }");
+    const updated = updateSource("demo", VALID_SOURCE.replace("Lesson-specific visual artifact", "Lesson-specific visual artifact v2"));
     expect(updated.build_status).toBe("pending_build");
     expect(updated.compiled_asset_path).toBeNull();
     expect(updated.approved_at).toBeNull();
@@ -220,16 +280,24 @@ describe("approval gate", () => {
     markBuilding("demo");
     markBuildSuccess("demo", buildOk());
     const approved = approveArtifact("demo", {
-      qa_notes: "control changes all stages; insight updates",
-      qa_snapshot_ref: "state/qa/demo-snapshot.txt",
-      qa_screenshot_ref: "state/qa/demo-screenshot.png",
-      approved_by: "qa-agent",
+      ...QA_EVIDENCE,
     });
     expect(approved.build_status).toBe("qa_approved");
-    expect(approved.qa_snapshot_ref).toBe("state/qa/demo-snapshot.txt");
-    expect(approved.qa_screenshot_ref).toBe("state/qa/demo-screenshot.png");
+    expect(approved.qa_snapshot_ref).toBe("state/qa/demo-desktop.snapshot.txt,state/qa/demo-mobile-390.snapshot.txt");
+    expect(approved.qa_screenshot_ref).toBe("state/qa/demo-desktop-1280.png,state/qa/demo-mobile-390.png");
     expect(approved.approved_by).toBe("qa-agent");
     expect(approved.approved_at).toBeTruthy();
+  });
+
+  it("refuses approval without explicit desktop and mobile QA evidence", () => {
+    markBuilding("demo");
+    markBuildSuccess("demo", buildOk());
+    expect(() =>
+      approveArtifact("demo", {
+        qa_notes: "looks good",
+        qa_screenshot_ref: "state/qa/demo.png",
+      })
+    ).toThrow(/desktop|mobile|390px/i);
   });
 
   it("rejectArtifact moves → qa_rejected with notes", () => {
@@ -253,7 +321,7 @@ describe("recordQaEvidence", () => {
   it("attaches QA snapshot/screenshot refs without changing build_status", () => {
     markBuilding("demo");
     markBuildSuccess("demo", buildOk());
-    approveArtifact("demo", {});
+    approveArtifact("demo", QA_EVIDENCE);
     const updated = recordQaEvidence("demo", {
       qa_notes: "Chrome MCP: control changes all stages",
       qa_snapshot_ref: "state/qa/demo-snapshot.txt",

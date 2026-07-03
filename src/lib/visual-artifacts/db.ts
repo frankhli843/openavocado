@@ -17,6 +17,10 @@ import type {
   BuildResult,
 } from "./types";
 import { DEFAULT_ALLOWED_IMPORTS } from "./types";
+import {
+  validateArtifactApprovalEvidence,
+  validateArtifactSource,
+} from "./source-validation";
 
 function db(): Database.Database {
   return getDb();
@@ -75,6 +79,10 @@ export function createArtifact(input: CreateArtifactInput): VisualArtifact {
   if (!input.source_react?.trim()) {
     throw new Error("source_react is required");
   }
+  const sourceValidation = validateArtifactSource(input.source_react);
+  if (!sourceValidation.valid) {
+    throw new Error(`Invalid artifact source: ${sourceValidation.errors.join("; ")}`);
+  }
 
   const manifest = {
     allowed_imports: DEFAULT_ALLOWED_IMPORTS,
@@ -114,6 +122,10 @@ export function updateSource(
 ): VisualArtifact {
   const artifact = getArtifactBySlug(slug);
   if (!artifact) throw new Error(`Artifact not found: ${slug}`);
+  const sourceValidation = validateArtifactSource(source_react);
+  if (!sourceValidation.valid) {
+    throw new Error(`Invalid artifact source: ${sourceValidation.errors.join("; ")}`);
+  }
 
   const newManifest = manifest
     ? validateManifest({ ...artifact.manifest, ...manifest }).normalized
@@ -198,6 +210,14 @@ export function approveArtifact(
   }
   if (!artifact.compiled_asset_path) {
     throw new Error("Cannot approve artifact without a compiled asset.");
+  }
+  const sourceValidation = validateArtifactSource(artifact.source_react);
+  if (!sourceValidation.valid) {
+    throw new Error(`Cannot approve artifact source: ${sourceValidation.errors.join("; ")}`);
+  }
+  const evidenceValidation = validateArtifactApprovalEvidence(opts);
+  if (!evidenceValidation.valid) {
+    throw new Error(`Cannot approve artifact without complete QA evidence: ${evidenceValidation.errors.join("; ")}`);
   }
 
   db()

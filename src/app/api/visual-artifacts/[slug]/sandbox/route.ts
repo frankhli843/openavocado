@@ -82,10 +82,37 @@ function buildSandboxHtml(title: string, bundleUrl: string): string {
     html, body {
       margin: 0;
       padding: 0;
+      width: 100%;
+      max-width: 100%;
+      min-width: 0;
+      overflow-x: hidden;
       font-family: system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
       background: transparent;
     }
-    #root { padding: 0; }
+    #root {
+      width: 100%;
+      max-width: 100%;
+      min-width: 0;
+      padding: 0;
+    }
+    #root img, #root svg, #root canvas, #root video {
+      max-width: 100%;
+    }
+    #root pre, #root code {
+      white-space: pre-wrap;
+      overflow-wrap: anywhere;
+    }
+    #root table {
+      max-width: 100%;
+    }
+    #root * {
+      overflow-wrap: break-word;
+    }
+    @media (max-width: 430px) {
+      body {
+        font-size: 14px;
+      }
+    }
     #artifact-loading {
       padding: 16px;
       color: #6b7280;
