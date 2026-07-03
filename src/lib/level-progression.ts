@@ -369,7 +369,7 @@ function buildPhaseEvidencePacket(
   const assessmentResults = db
     .prepare(
       `SELECT id, lesson_id, question_id, question_type, concept, difficulty,
-              outcome, score, answer_text, created_at
+              outcome, answer_text, created_at
        FROM assessment_results
        WHERE subject_id = ? AND learner_id = ?
        ORDER BY created_at ASC, id ASC`
