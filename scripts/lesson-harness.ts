@@ -356,6 +356,14 @@ async function callGeminiWithRetry(
   const backoffMs = [10_000, 30_000]; // wait before retry 1 and retry 2
   const maxRetries = backoffMs.length;
 
+  // For thinking models (gemini-2.5-*): disable thinking to prevent thinking
+  // tokens from consuming the output budget, and raise the token limit so the
+  // full lesson JSON fits without truncation.
+  const isThinkingModel = (m: string) => /gemini-2\.5/i.test(m);
+  const primaryConfig = isThinkingModel(primaryModel)
+    ? { maxOutputTokens: 65536, thinkingBudget: 0 }
+    : undefined;
+
   let lastError: Error | null = null;
 
   for (let attempt = 0; attempt <= maxRetries; attempt++) {
@@ -373,7 +381,7 @@ async function callGeminiWithRetry(
     }
 
     try {
-      const text = await callGemini(prompt, primaryModel);
+      const text = await callGemini(prompt, primaryModel, primaryConfig);
       return { text, modelUsed: primaryModel };
     } catch (err) {
       lastError = err instanceof Error ? err : new Error(String(err));
