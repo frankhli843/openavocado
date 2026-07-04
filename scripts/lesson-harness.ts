@@ -332,8 +332,11 @@ function incrementRetryCount(
 function isRetryableError(err: unknown): boolean {
   if (!(err instanceof Error)) return false;
   const msg = err.message;
-  // Retry only on HTTP 500 (server-side transient).
-  return msg.includes("Gemini HTTP 500");
+  // Retry on HTTP 500 (server-side transient) or HTTP 429 (rate limit — may
+  // reset within the backoff window). Daily quota exhaustion is also 429 but
+  // will exhaust retries and fall through to the fallback model, which is
+  // correct behaviour.
+  return msg.includes("Gemini HTTP 500") || msg.includes("Gemini HTTP 429");
 }
 
 function isTimeoutError(err: unknown): boolean {
@@ -353,7 +356,7 @@ async function callGeminiWithRetry(
 ): Promise<{ text: string; modelUsed: string }> {
   const primaryModel = getGeminiModel();
   const fallbackModel = getFallbackModel();
-  const backoffMs = [10_000, 30_000]; // wait before retry 1 and retry 2
+  const backoffMs = [15_000, 60_000]; // wait before retry 1 and retry 2 (longer for rate-limit recovery)
   const maxRetries = backoffMs.length;
 
   // For thinking models (gemini-2.5-*): disable thinking to prevent thinking
