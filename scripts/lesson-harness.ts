@@ -13,7 +13,7 @@
  * Environment:
  *   AVOCADOCORE_DB_PATH                       — SQLite DB path (same as app)
  *   GOOGLE_AI_STUDIO_API_KEY                  — Gemini API key (server-side only, never logged)
- *   GOOGLE_AI_STUDIO_MODEL                    — model name (default: gemma-4-26b-a4b-it)
+ *   GOOGLE_AI_STUDIO_MODEL                    — model name (default: gemini-2.5-flash)
  *   AVOCADOCORE_AGENT_HARNESS_FALLBACK_MODEL  — fallback model after all retries fail (e.g. gemini-2.0-flash)
  *   AVOCADOCORE_FEEDBACK_PROVIDER             — secondary provider config (google = Gemini)
  *   AVOCADOCORE_LOCAL_QUEUE_AUDIO             — "skip" to skip audio generation (testing)
@@ -228,12 +228,24 @@ function getGeminiKey(): string {
   return (process.env.GOOGLE_AI_STUDIO_API_KEY ?? "").trim();
 }
 
+// Pattern that matches quantized/GGUF local model name suffixes (e.g. q4_k_m, a4b, f16, gguf).
+// Google AI Studio API model IDs never contain these suffixes — only local llama.cpp/GGUF filenames do.
+const QUANTIZED_SUFFIX_PATTERN = /[-_](q[0-9]|q4_k|q5_k|q8_0|a4b|f16|f32|gguf)/i;
+
 function getGeminiModel(): string {
-  return (
+  const model = (
     process.env.GOOGLE_AI_STUDIO_MODEL ??
     process.env.AVOCADOCORE_FEEDBACK_MODEL ??
-    "gemma-4-26b-a4b-it"
-  );
+    "gemini-2.5-flash"
+  ).trim();
+  if (QUANTIZED_SUFFIX_PATTERN.test(model)) {
+    process.stderr.write(
+      `[lesson-harness] WARNING: configured model '${model}' looks like a local quantized/GGUF model name. ` +
+        `Google AI Studio API requires model IDs without quantization suffixes (e.g. 'gemini-2.5-flash', 'gemma-4-27b-it'). ` +
+        `Set GOOGLE_AI_STUDIO_MODEL to a valid API model name.\n`
+    );
+  }
+  return model;
 }
 
 function getFallbackModel(): string | null {
