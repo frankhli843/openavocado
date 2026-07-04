@@ -868,6 +868,16 @@ function normalizeFormulaBlocks(blocks: ReadingBlock[]): ReadingBlock[] {
   });
 }
 
+/**
+ * Repair bare backslashes in JSON produced by Gemini.
+ * The model often emits LaTeX (\frac, \int, \sum) or other notation without
+ * double-escaping. Replace every backslash not followed by a valid JSON
+ * escape character with \\.
+ */
+function repairJsonEscapes(text: string): string {
+  return text.replace(/\\(?!["\\/bfnrtu])/g, "\\\\");
+}
+
 // Coerce string fields that Gemini occasionally returns as objects/arrays
 function normalizeDraftStringFields(draft: GeminiLessonDraft): void {
   const coerce = (val: unknown): string => {
@@ -1331,7 +1341,17 @@ async function handleLessonCompleted(
     draft = JSON.parse(cleanRaw) as GeminiLessonDraft;
   } catch (err) {
     const msg = err instanceof Error ? err.message : String(err);
-    return { ok: false, error: `Gemini response parse failed: ${msg}` };
+    if (msg.includes("Bad escaped character")) {
+      try {
+        draft = JSON.parse(repairJsonEscapes(cleanRaw)) as GeminiLessonDraft;
+        console.warn("[lesson-harness] JSON escape repair applied to lesson draft");
+      } catch (err2) {
+        const msg2 = err2 instanceof Error ? err2.message : String(err2);
+        return { ok: false, error: `Gemini response parse failed: ${msg2}` };
+      }
+    } else {
+      return { ok: false, error: `Gemini response parse failed: ${msg}` };
+    }
   }
 
   // Validate essential fields
@@ -1424,7 +1444,17 @@ async function handleLessonDiscarded(
     draft = JSON.parse(cleanRaw2) as GeminiLessonDraft;
   } catch (err) {
     const msg = err instanceof Error ? err.message : String(err);
-    return { ok: false, error: `Gemini response parse failed: ${msg}` };
+    if (msg.includes("Bad escaped character")) {
+      try {
+        draft = JSON.parse(repairJsonEscapes(cleanRaw2)) as GeminiLessonDraft;
+        console.warn("[lesson-harness] JSON escape repair applied to replacement lesson draft");
+      } catch (err2) {
+        const msg2 = err2 instanceof Error ? err2.message : String(err2);
+        return { ok: false, error: `Gemini response parse failed: ${msg2}` };
+      }
+    } else {
+      return { ok: false, error: `Gemini response parse failed: ${msg}` };
+    }
   }
 
   if (!draft.title || !draft.audio_script || !draft.reading_blocks) {
