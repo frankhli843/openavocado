@@ -896,17 +896,38 @@ function repairGeminiJson(text: string): string {
     if (escaped) {
       // Inside a string after a backslash — check if this is a valid escape
       if (!validEscapeChars.has(c)) {
-        // Invalid escape char: insert an extra backslash so \x becomes \\x
-        out.push("\\");
+        if (code < 0x20) {
+          // \<literal-control-char>: e.g. backslash + literal newline (line-
+          // continuation inside string).  Undo the \ we already pushed and emit
+          // the proper JSON escape sequence for the control char instead.
+          out.pop();
+          switch (c) {
+            case "\n": out.push("\\n"); break;
+            case "\r": out.push("\\r"); break;
+            case "\t": out.push("\\t"); break;
+            case "\b": out.push("\\b"); break;
+            case "\f": out.push("\\f"); break;
+            default:   out.push("\\u" + code.toString(16).padStart(4, "0")); break;
+          }
+        } else {
+          // Non-control invalid escape char: insert an extra backslash so \x → \\x
+          out.push("\\");
+          out.push(c);
+        }
+      } else {
+        out.push(c);
       }
-      out.push(c);
       escaped = false;
       continue;
     }
 
-    if (c === "\\" && inString) {
-      out.push(c);
-      escaped = true;
+    if (c === "\\") {
+      if (inString) {
+        out.push(c);
+        escaped = true;
+      }
+      // Outside a string: backslash is never valid JSON (line-continuation
+      // artifact from Gemini); drop it silently.
       continue;
     }
 
