@@ -869,13 +869,63 @@ function normalizeFormulaBlocks(blocks: ReadingBlock[]): ReadingBlock[] {
 }
 
 /**
- * Repair bare backslashes in JSON produced by Gemini.
- * The model often emits LaTeX (\frac, \int, \sum) or other notation without
- * double-escaping. Replace every backslash not followed by a valid JSON
- * escape character with \\.
+ * Repair common JSON errors produced by Gemini:
+ * 1. Bare backslashes not followed by a valid JSON escape char (LaTeX, paths).
+ * 2. Literal control characters inside JSON strings (unescaped newlines/tabs).
+ *
+ * Uses a lightweight state machine so it only modifies characters inside
+ * string values, leaving structural whitespace untouched.
  */
-function repairJsonEscapes(text: string): string {
-  return text.replace(/\\(?!["\\/bfnrtu])/g, "\\\\");
+function repairGeminiJson(text: string): string {
+  const out: string[] = [];
+  let inString = false;
+  let escaped = false;
+  const validEscapeChars = new Set([..."\"\\/ bfnrtu"]);
+
+  for (let i = 0; i < text.length; i++) {
+    const c = text[i];
+    const code = c.charCodeAt(0);
+
+    if (escaped) {
+      // Inside a string after a backslash — check if this is a valid escape
+      if (!validEscapeChars.has(c)) {
+        // Invalid escape char: insert an extra backslash so \x becomes \\x
+        out.push("\\");
+      }
+      out.push(c);
+      escaped = false;
+      continue;
+    }
+
+    if (c === "\\" && inString) {
+      out.push(c);
+      escaped = true;
+      continue;
+    }
+
+    if (c === '"') {
+      inString = !inString;
+      out.push(c);
+      continue;
+    }
+
+    if (inString && code < 0x20) {
+      // Literal control character inside a string — escape it
+      switch (c) {
+        case "\n": out.push("\\n"); break;
+        case "\r": out.push("\\r"); break;
+        case "\t": out.push("\\t"); break;
+        case "\b": out.push("\\b"); break;
+        case "\f": out.push("\\f"); break;
+        default:   out.push("\\u" + code.toString(16).padStart(4, "0"));
+      }
+      continue;
+    }
+
+    out.push(c);
+  }
+
+  return out.join("");
 }
 
 // Coerce string fields that Gemini occasionally returns as objects/arrays
@@ -1341,10 +1391,10 @@ async function handleLessonCompleted(
     draft = JSON.parse(cleanRaw) as GeminiLessonDraft;
   } catch (err) {
     const msg = err instanceof Error ? err.message : String(err);
-    if (msg.includes("Bad escaped character")) {
+    if (msg.includes("Bad escaped character") || msg.includes("Bad control character")) {
       try {
-        draft = JSON.parse(repairJsonEscapes(cleanRaw)) as GeminiLessonDraft;
-        console.warn("[lesson-harness] JSON escape repair applied to lesson draft");
+        draft = JSON.parse(repairGeminiJson(cleanRaw)) as GeminiLessonDraft;
+        console.warn("[lesson-harness] JSON repair applied to lesson draft");
       } catch (err2) {
         const msg2 = err2 instanceof Error ? err2.message : String(err2);
         return { ok: false, error: `Gemini response parse failed: ${msg2}` };
@@ -1444,10 +1494,10 @@ async function handleLessonDiscarded(
     draft = JSON.parse(cleanRaw2) as GeminiLessonDraft;
   } catch (err) {
     const msg = err instanceof Error ? err.message : String(err);
-    if (msg.includes("Bad escaped character")) {
+    if (msg.includes("Bad escaped character") || msg.includes("Bad control character")) {
       try {
-        draft = JSON.parse(repairJsonEscapes(cleanRaw2)) as GeminiLessonDraft;
-        console.warn("[lesson-harness] JSON escape repair applied to replacement lesson draft");
+        draft = JSON.parse(repairGeminiJson(cleanRaw2)) as GeminiLessonDraft;
+        console.warn("[lesson-harness] JSON repair applied to replacement lesson draft");
       } catch (err2) {
         const msg2 = err2 instanceof Error ? err2.message : String(err2);
         return { ok: false, error: `Gemini response parse failed: ${msg2}` };
