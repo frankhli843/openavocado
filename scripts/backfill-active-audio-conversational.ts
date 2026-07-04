@@ -11,7 +11,7 @@ import { generateLessonAudio } from "../src/lib/audio/generate-lesson-audio";
 import { validateLearnerFacingAudioTranscript } from "../src/lib/audio/transcript-quality";
 
 const BAD_AUDIO_RE =
-  /(?:here is the lesson content|point\s+\d+\s*:\s*(?:lesson part|code practice|assessment)|the lesson is [^.\n]+, in |\b(?:lesson part|code exercise|practice question|assessment question|final integrator|the practice|this part belongs|section title)\b|treat these as signposts|ask four questions|what would the variable names be|do not try to memorize|don't try to memorize|listen for the object|object and the handoff|before we dive into details|building a mental map|guided conversation and less like a lecture|not rushing through a table of contents|look for in the visual|watch in the visual)/i;
+  /(?:here is the lesson content|point\s+\d+\s*:\s*(?:lesson part|code practice|assessment)|the lesson is [^.\n]+, in |\b(?:lesson part|code exercise|practice question|assessment question|final integrator|the practice|this part belongs|section title)\b|treat these as signposts|ask four questions|what would the variable names be|do not try to memorize|don't try to memorize|listen for the object|object and the handoff|before we dive into details|building a mental map|guided conversation and less like a lecture|not rushing through a table of contents|look for in the visual|watch in the visual|start socratically|go one layer deeper|first layer\s*:|second layer\s*:|third layer\s*:|same-shape evidence refinement machine)/i;
 
 interface ActivityRow {
   lesson_id: number;

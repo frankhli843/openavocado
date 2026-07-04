@@ -73,4 +73,17 @@ Leo: Treat these as signposts and ask four questions.`;
     expect(loopResult.ok).toBe(false);
     expect(loopResult.errors.join(" ")).toMatch(/repeated padding loops/i);
   });
+
+  it("rejects mechanical Socratic scaffolding that sounds like a prompt", () => {
+    const scripted = `${goodTranscript()}
+
+Maya: Start Socratically. First layer: why does the row change? Second layer: what does that buy us? Third layer: how does it help prediction?
+
+Leo: This same-shape evidence refinement machine makes the topic clear.`;
+
+    const result = validateLearnerFacingAudioTranscript(scripted, { requireLongOverview: true });
+
+    expect(result.ok).toBe(false);
+    expect(result.errors.join(" ")).toMatch(/generator-outline|generic study-coaching|metadata/i);
+  });
 });
