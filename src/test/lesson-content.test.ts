@@ -793,6 +793,24 @@ describe("validateGeneratedContent — richer lessons", () => {
     expect(r.errors.join(" ")).toMatch(/learner-facing/i);
   });
 
+  it("fails when top-level overview audio leaks lesson-outline scaffolding or generic study coaching", () => {
+    const lesson = richLesson();
+    const audio = lesson.activities.find((a) => a.activity_type === "audio")!;
+    const content = audio.content as Record<string, unknown>;
+    content.script = `${longOverviewAudioScript("the fixture lesson")}
+
+Leo: Here is the lesson content we are carrying through the route. Point 1: Lesson part "How Q, K, V Produce Attention Scores" introduces the next block.
+
+Maya: Treat these as signposts, not disconnected slides. Ask four questions: what are we receiving, what are we changing, what are we preserving, and what are we passing forward.
+
+Leo: What would the variable names be? What would a small input look like?`;
+    content.transcript = content.script;
+    const r = validateGeneratedContent(lesson);
+
+    expect(r.valid).toBe(false);
+    expect(r.errors.join(" ")).toMatch(/learner-facing|generic listening/i);
+  });
+
   it("fails when the top-level overview audio reads raw formula notation aloud", () => {
     const lesson = richLesson();
     const audio = lesson.activities.find((a) => a.activity_type === "audio")!;

@@ -48,10 +48,10 @@ enforced by `validateGeneratedContent`; the rest is a hard authoring rule.
   return **HTTP 200** with an `audio/*` content type — a metadata row pointing at a
   404 does **not** count as generated audio.
 - **Start with the why, not the mechanics.** Before formulas or code, explain
-  the higher-level purpose of the lesson and the mismatch, failure mode, or
-  decision the learner is trying to understand. For preprocessing-style lessons,
-  each step must answer: "what breaks or becomes invalid if we skip this?" A
-  lesson that only lists operations is not ready.
+  the higher-level purpose of the lesson and the causal chain the learner is
+  trying to understand. Each major step should make clear what object changes,
+  how it changes, and why that change improves the next prediction, decision,
+  or action. A lesson that only lists operations is not ready.
 - **No undocumented assumptions.** Do not assume a domain fact, prerequisite,
   learner weakness, or next-step need unless it is documented in AvocadoCore
   context, visible in the local SQLite learner evidence, or verified and then
@@ -175,22 +175,24 @@ enforced by `validateGeneratedContent`; the rest is a hard authoring rule.
 - **Metaphors, simple examples, and step-specific visuals.** For multi-step
   lessons, each major step should have a plain-language handle, a fitting
   metaphor, easy examples, and its own visual/interactive treatment when that
-  would clarify what the step changes or what breaks if skipped.
-- **Top-level overview audio is a long-form walkthrough, not a short caption.**
-  The first audio activity must be detailed enough for the learner to understand
-  the high-level picture, the why, and concrete worked examples before using the
-  interactives. Normal lessons must target at least 15 minutes of substantive
-  Doraemon-voice audio, which means at least 2,700 words in the source script.
-  Start the overview with the big map, then revisit the same ideas from
-  multiple perspectives: metaphor or analogy, tiny worked example, mechanism
-  trace, implementation intuition, misconception or failure mode, and final
-  synthesis. The transcript must read like a conversational two-host podcast lesson with
-  clear male/female speaker labels such as `Leo:` and `Maya:`. Use a calm
-  long-form interview or NotebookLM-style back-and-forth without imitating any
-  specific living person: one host asks learner-like clarifying questions, the
-  other unpacks the mechanism. Define every major noun before relying on it. Go
-  shorter only for explicitly short reference/diagnostic content and document
-  why. If it sounds like a quick summary or table of contents, regenerate it.
+  would clarify what the step changes and why the changed object matters.
+- **Top-level overview audio is a stand-alone audio lesson, not a short
+  caption.** The first audio activity must be detailed enough for the learner
+  to understand the high-level picture, the why, and concrete worked examples
+  without looking at the screen. Normal lessons must target at least 15 minutes
+  of substantive Doraemon-voice audio, which means at least 2,700 words in the
+  source script. Do not use overview audio to enumerate lesson parts, exercises,
+  practice, assessments, or page structure. The transcript must read like a
+  conversational two-host podcast lesson with clear male/female speaker labels
+  such as `Leo:` and `Maya:`. Use a calm long-form interview or
+  NotebookLM-style back-and-forth without imitating any specific living person.
+  Leo teaches the mechanism in plain language. Maya is a curious skeptical
+  student: she challenges vague terms, asks why the concept matters, asks how
+  the actual object changes, asks how that change helps the next prediction,
+  decision, or action, and keeps drilling until the causal chain is clear.
+  Define every major noun before relying on it. Go shorter only for explicitly
+  short reference/diagnostic content and document why. If it sounds like a quick
+  summary, table of contents, or page tour, regenerate it.
 - **Audio scripts must be learner-facing, never author-facing.** The top-level
   overview and all lesson-part audio must sound like two hosts speaking
   directly to the learner with natural questions and answers. Do not leak
@@ -198,15 +200,33 @@ enforced by `validateGeneratedContent`; the rest is a hard authoring rule.
   such as "the learner should", "the lesson should", "the overview should",
   "the audio should", and "the transcript should" are authoring notes, not
   spoken lesson text. Teach the concept directly with concrete examples,
-  mechanism traces, contrasts, and references to the actual visual objects.
-  Do not spend overview time telling the learner how to listen, how not to
-  memorize, or how to use the lesson.
+  mechanism traces, contrasts, and causal explanations. Do not spend overview
+  time telling the learner how to listen, how not to memorize, how to use the
+  lesson, or which practice/exercise comes later.
 - **No generic listening-coach filler.** Avoid phrases such as "before we dive
   in, you need the route", "do not try to memorize everything", "listen for the
   object and the handoff", "we are building a mental map", or "this is a guided
   conversation, not a lecture." Those are authoring reminders, not lesson
   content. If orientation is needed, make it topic-specific: name the actual
   object, actual transformation, actual evidence, and actual next stage.
+- **No generator-outline narration.** The transcript must not read from the
+  lesson plan or prompt. Reject wording such as "Here is the lesson content",
+  "Point 1: Lesson part", "Code practice...", "Assessment... checks whether",
+  "treat these as signposts", "ask four questions", "what would the variable
+  names be", or other generic instructions about how to learn. The learner
+  should hear the concept being taught, not the generator explaining how it
+  organized the lesson.
+- **Transcript LLM QA is required.** Deterministic checks only catch obvious
+  leaks. A separate reviewer agent must read the full top-level transcript and
+  at least one lesson-part transcript as a learner. The reviewer must decide
+  whether the conversation is interesting, useful, concept-specific, and
+  genuinely teaching the lesson. It should contain real host back-and-forth,
+  useful learner questions, analogies, concrete examples, mechanism
+  explanations, skeptical follow-up questions, and concrete causal chains tied
+  to the actual topic. If the transcript is boring, generic, repetitive,
+  structural, references page sections/practice, or sounds like a lesson plan
+  instead of people teaching, QA sends it back for revision and records the
+  requested improvements.
 - **Local model boundary.** Local AvocadoCore may use a low-latency local model
   for instant learner-facing paths such as chat, short-answer grading,
   code-submission feedback, hints, and immediate formative feedback. Do not use
@@ -780,9 +800,12 @@ examples, wrong difficulty calibration, audio that sounds robotic or truncated).
    validateGeneratedContent(content)          // must return { valid: true }
    validateMultipleChoiceQuizContent(quiz)    // must return { valid: true } for normal lessons
    validateKnowledgeGraphData(graph)          // must return { valid: true, errors: [] }
+   pnpm audit:transcripts                     // hard preflight only, not semantic approval
    ```
    A lesson that fails any of these must be regenerated or fixed — it cannot
-   proceed to QA.
+   proceed to QA. Passing `pnpm audit:transcripts` only means obvious metadata,
+   generator-outline, and generic coaching failures were not found. It does not
+   replace LLM transcript QA.
 
    For each new bespoke artifact, also run:
    ```
@@ -797,9 +820,17 @@ examples, wrong difficulty calibration, audio that sounds robotic or truncated).
 
 4. **Manual QA review.** A reviewer (not the same agent that generated the
    lesson) opens the lesson in the browser and works through it:
-   - Listen to the full audio or scan the script. Is it substantive? Does it
-     cover all goals? Does it use explicit preview wording for high-level
-     concepts?
+   - Read the full top-level transcript and at least one lesson-part transcript
+     as a learner. The reviewer must explicitly judge whether the hosts are
+     actually conversing, asking useful learner questions, using helpful
+     analogies, teaching the exact lesson concepts, naming concrete examples
+     and failure modes, and making the mechanism easier to understand. If the
+     transcript is boring, generic, repetitive, structural, or sounds like a
+     lesson plan, QA fails and the reviewer sends it back with specific rewrite
+     instructions.
+   - Listen to enough audio to verify that the transcript and generated MP3
+     match and that the audio is substantive. Does it cover the goals? Does it
+     use explicit preview wording for high-level concepts?
    - Read the written section. Does it stand alone without the audio?
    - Interact with every widget. Do the controls produce sensible output? Are
      chart labels legible at 390px mobile width?
@@ -894,6 +925,8 @@ MACHINE CHECKS (must all pass before QA):
 - validateGeneratedContent(content) → { valid: true }
 - validateMultipleChoiceQuizContent(quiz) → { valid: true } (required for normal lessons)
 - validateKnowledgeGraphData(graph) → { valid: true, errors: [] }
+- pnpm audit:transcripts → hard preflight passes, with the reminder that LLM
+  transcript QA is still required.
 
 IMPLEMENTATION EVIDENCE (required in task notes before QA):
 - POST /api/lessons created with the full generated content; record the lesson id.
@@ -922,8 +955,13 @@ LIVE / FRESH-DB VERIFICATION (required before QA):
   section that looks correct but has never been executed does not pass QA.
 
 MANUAL QA REVIEW (must be done by a DIFFERENT agent/reviewer than the one that generated):
-- Listen to the audio script or play the audio. Substantive? Covers all goals?
-  Uses explicit preview wording for high-level concepts?
+- Read the full top-level transcript and at least one lesson-part transcript.
+  Does it sound like two people genuinely teaching the learner, asking useful
+  questions, using analogies, giving concrete examples, naming failure modes,
+  and deepening understanding of this exact lesson? If not, send it back with
+  specific rewrite requests before approval.
+- Listen to enough audio to verify transcript and MP3 match. Substantive? Covers
+  all goals? Uses explicit preview wording for high-level concepts?
 - Read the written section. Stands alone without audio?
 - Interact with every widget. Controls work? Legible at 390px?
 - Attempt the code exercise. Progressive hints? Tests actually test the concept?
@@ -936,6 +974,7 @@ COMPLETION EVIDENCE:
 - Link to commit or lesson id in the database.
 - Live URL screenshot (desktop + mobile).
 - QA reviewer label (different from generator agent).
+- Transcript LLM QA verdict and any send-back/rewrite notes.
 - Confirmation that lessons.status was set to the appropriate active state.
 ```
 

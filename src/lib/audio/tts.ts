@@ -382,7 +382,7 @@ export async function synthesizeSpeech(
   const wantOpenAI = opts.provider === "openai-tts";
   const wantEspeak = opts.provider === "espeak-ng";
   const doraemonVoice = opts.voice ?? "en-US-BrianNeural";
-  const femalePodcastVoice = "en-US-JennyNeural";
+  const femalePodcastVoice = "en-US-AvaNeural";
   const openaiVoice = opts.voice ?? "alloy";
   const espeakVoice = opts.voice ?? "en-us";
   const wpm = opts.espeakWpm ?? 165;

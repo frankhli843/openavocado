@@ -103,9 +103,6 @@ export function LessonPartSection({
                     >
                       Your browser does not support audio playback.
                     </audio>
-                    <div className="text-xs text-gray-400">
-                      {artifact.voice ? `Voice: ${artifact.voice}` : "Generated audio"}
-                    </div>
                   </div>
                 ) : (
                   <div className="border-l-2 border-amber-200 bg-amber-50/70 px-3 py-2 text-xs text-amber-700">

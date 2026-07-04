@@ -101,7 +101,7 @@ describe.runIf(HAS_DORAEMON_EDGE)("synthesizeSpeech (default Doraemon voice)", (
     );
 
     expect(res.provider).toBe("doraemon-edge-tts");
-    expect(res.voice).toBe("en-US-BrianNeural+en-US-JennyNeural");
+    expect(res.voice).toBe("en-US-BrianNeural+en-US-AvaNeural");
     expect(existsSync(out)).toBe(true);
     expect(statSync(out).size).toBeGreaterThan(1000);
     expect(res.durationSec).toBeGreaterThan(0);

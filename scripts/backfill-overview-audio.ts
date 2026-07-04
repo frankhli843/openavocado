@@ -200,16 +200,16 @@ function summarizeActivities(activities: ActivityRow[]): string[] {
       const summary = typeof reading.summary === "string" ? reading.summary : "";
       const blocks = Array.isArray(reading.blocks) ? reading.blocks : [];
       const blockText = blocks.map(textFromBlock).filter(Boolean).slice(0, 5).join(" ");
-      out.push(`Lesson part "${partTitle}": ${[intro, blockText, summary].filter(Boolean).join(" ")}`.slice(0, 800));
+      out.push(`Section "${partTitle}" teaches: ${[intro, blockText, summary].filter(Boolean).join(" ")}`.slice(0, 800));
     } else if (activity.activity_type === "interactive") {
       const instructions = typeof content.instructions === "string" ? content.instructions : "";
       const widgetTitle = typeof content.title === "string" ? content.title : activity.title;
       out.push(`Interactive "${widgetTitle}": ${instructions}`.slice(0, 420));
     } else if (activity.activity_type === "practice_code") {
       const prompt = typeof content.prompt === "string" ? content.prompt : "";
-      out.push(`Code practice "${activity.title}": ${prompt}`.slice(0, 420));
+      out.push(`The coding reinforcement applies the mechanism by asking for: ${prompt}`.slice(0, 420));
     } else if (activity.activity_type === "assessment") {
-      out.push(`Assessment "${activity.title}" checks whether the learner can explain and use the lesson ideas.`);
+      out.push(`The final check asks for explanation, ordering, classification, and transfer using the same concepts.`);
     }
   }
   return out.filter((line) => line.trim().length > 20);
@@ -219,20 +219,20 @@ function buildLongOverviewScript(lesson: LessonRow, outline: string[]): string {
   const topic = `${lesson.subject_title}: ${lesson.title}`;
   const description = audioFriendly(lesson.description?.trim() || "This lesson is part of your active curriculum.");
   const outlineText = outline.length
-    ? outline.map((line, index) => `Point ${index + 1}: ${audioFriendly(line)}`).join(" ")
+    ? outline.map((line) => audioFriendly(line)).join(" ")
     : "This lesson introduces the main object, names the transformation, shows what changes, and gives you practice evidence.";
   const turns = [
     [
       "Leo",
-      `Let's start with the high-level map for ${topic}. ${description} Before we dive into details, you need the route. This gets much easier when you can say what object enters, what operation changes it, what evidence proves the change, and what object leaves for the next step. In this overview, every major noun gets a job description before it becomes a technical term. We are not rushing through a table of contents. We are building a mental map sturdy enough that you can place every later visual, paragraph, practice question, and code exercise onto the same route.`,
+      `Let's build the high-level picture for ${topic}. ${description} The useful starting point is the actual object being transformed. In this lesson, we will keep returning to that object, show what information it carries, show which operation changes it, and name the evidence that proves the operation worked.`,
     ],
     [
       "Maya",
-      `So as you listen, don't try to memorize the entire lesson at once. Listen for the object and the handoff. What is being received, what is being changed, what stays stable, and what gets passed forward. That makes this feel more like a guided conversation and less like a lecture where a lot of terms fly by.`,
+      `Good. So this is not a table of contents. It is the concept itself, told from several angles. Start with the object, then the operation, then the consequence. If the topic has formulas, we will describe what each part means before treating the notation as compact shorthand.`,
     ],
     [
       "Leo",
-      `Exactly. Here is the lesson content we are carrying through the route. ${outlineText} Treat these as signposts, not as disconnected slides. For each signpost, ask four questions: what are we receiving, what are we changing, what are we preserving, and what are we passing forward. When you can answer those four questions, even a dense technical topic becomes a sequence of visible handoffs instead of a fog of labels.`,
+      `Here is the substance this overview will unpack. ${outlineText} The important move is to connect those pieces as one mechanism. A term is useful only when it tells us what information is present, what operation happens next, and what the next representation can now support.`,
     ],
     [
       "Maya",
@@ -244,7 +244,7 @@ function buildLongOverviewScript(lesson: LessonRow, outline: string[]): string {
     ],
     [
       "Maya",
-      `Now make it tiny. Pick one small object from the lesson and keep it small. If this is an LLM pipeline lesson, the object might be a short string, a token ID, a vector row, a hidden state, a score, a probability, a cache row, or a request payload. If it is another domain, it might be a variable, a service account, a hand position, a market quantity, or a probability statement. The exact object matters less than the habit: name it, state its shape, say what information it carries, apply one operation, and say what changed.`,
+      `Now make it concrete with a tiny example from the topic. Instead of talking about the whole system at once, follow one small representation. If it is a vector row, name the row and its width. If it is a score, say what two things produced it. If it is a probability, say which alternatives it ranks. The tiny version should still be faithful to the real mechanism.`,
     ],
     [
       "Leo",
@@ -256,11 +256,11 @@ function buildLongOverviewScript(lesson: LessonRow, outline: string[]): string {
     ],
     [
       "Leo",
-      `Now switch to the implementation perspective. Even while this overview stays high level, you should know how the idea would feel in code or in a system diagram. What would the variable names be? What would a small input look like? What output would a test assert? What hidden assumption would cause a bug? What would a debugger print if the mental model were wrong? The code section later is optional reinforcement, but it should not feel like a different lesson. It is the same object, the same handoff, and the same mechanism expressed with executable evidence.`,
+      `Now switch to the implementation perspective without turning this into a coding lecture. The same concept should have a recognizable input, an intermediate value you could inspect, and an output whose shape or meaning can be checked. The code section later is optional reinforcement, but it should feel like executable evidence for the same mechanism we are explaining here.`,
     ],
     [
       "Maya",
-      `Now name a common misconception. You may confuse the object with its label, the map with the territory, a raw score with a probability, a stage name with the operation inside the stage, or an implementation detail with the concept itself. The fix is to repeat the correct relationship from another angle. If two terms sound close, we explain which one receives, which one transforms, and which one passes forward. If a later concept is only being previewed, we say that clearly. A preview is allowed. Pretending the preview is mastery is not allowed.`,
+      `Now name a common misconception from the topic itself. A raw score is not yet a probability. A stage name is not the operation inside the stage. A vector label is not the information carried by that vector. The fix is to show the same relationship from another angle until the object, operation, and consequence line up.`,
     ],
     [
       "Leo",
