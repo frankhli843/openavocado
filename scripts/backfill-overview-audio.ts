@@ -232,7 +232,7 @@ function buildLongOverviewScript(lesson: LessonRow, outline: string[]): string {
     ],
     [
       "Leo",
-      `Here is the substance this overview will unpack. ${outlineText} The important move is to connect those pieces as one mechanism. A term is useful only when it tells us what information is present, what operation happens next, and what the next representation can now support.`,
+      `Here is the actual mechanism we need to understand. ${outlineText} The important move is to connect those ideas as one chain. A term is useful only when it tells us what information is present, what operation happens next, and what the next representation can now support.`,
     ],
     [
       "Maya",
@@ -240,7 +240,7 @@ function buildLongOverviewScript(lesson: LessonRow, outline: string[]): string {
     ],
     [
       "Leo",
-      `That analogy is useful because most learning failures happen when the tag sounds familiar but you cannot say what happened to the object. In this lesson, whenever a term appears, ask what arrived at the bench, which tool touched it, what changed, and what the next bench receives. If a word sounds important but those questions are still fuzzy, that word needs another pass, another example, or another visual.`,
+      `That analogy is useful because a technical label can sound familiar while the mechanism underneath is still fuzzy. Here, whenever a term appears, we should be able to say what arrived at the bench, which tool touched it, what changed, and what the next bench receives. If a word sounds important but those answers are still vague, we make the example smaller and trace it again.`,
     ],
     [
       "Maya",
@@ -252,7 +252,7 @@ function buildLongOverviewScript(lesson: LessonRow, outline: string[]): string {
     ],
     [
       "Maya",
-      `I like that because it separates comfort from understanding. You can feel comfortable with a phrase, but the mechanism asks a harder question: could you predict what breaks if this step is missing or wired incorrectly? If the answer is no, we slow down and show the failure mode.`,
+      `I like that because it separates comfort from understanding. You can feel comfortable with a phrase, but the mechanism asks a harder question: can you predict how the representation would change if this operation were different? If the answer is no, we slow down until the cause, the change, and the consequence line up.`,
     ],
     [
       "Leo",
@@ -264,11 +264,11 @@ function buildLongOverviewScript(lesson: LessonRow, outline: string[]): string {
     ],
     [
       "Leo",
-      `Use a second metaphor too. Think of this as translation between languages. The first language is your intuitive picture. The second language is the formal vocabulary. The third language is the visualization. The fourth language is code or practice evidence. A strong mental model lets you translate the same idea among all four. If you only know the formal word, you may pass a multiple-choice question but fail to use the idea. If you only know the metaphor, you may feel comfortable but miss the details. We want both.`,
+      `Use a second metaphor too. Think of this as translation between languages. The first language is your intuitive picture. The second language is the formal vocabulary. The third language is the visualization. The fourth language is a concrete trace you could check. A strong mental model lets you translate the same idea among all four. If you only know the formal word, you may recognize it without being able to use it. If you only know the metaphor, you may feel comfortable but miss the details. We want both.`,
     ],
     [
       "Maya",
-      `Return to the map and prepare for the actual sequence. First, listen for the route and the objects. Second, study the text beside the visuals so the named objects and operations stay close together. Third, use the interactive pieces to change one thing and watch the consequence. Fourth, do the practice problems and code to check whether the model is usable. By the end, you should be able to explain this from the pipeline perspective, the analogy perspective, the tiny-example perspective, the mechanism perspective, the implementation perspective, and the misconception perspective.`,
+      `Let me try to say the standard back. A useful explanation names the object, shows the operation, says what changed, and then explains why the changed object is useful for the next step. By the end, we should be able to explain the same mechanism from the pipeline perspective, the analogy perspective, the tiny-example perspective, the formal perspective, and the skeptical-question perspective.`,
     ],
   ] satisfies Array<[string, string]>;
 
@@ -276,7 +276,7 @@ function buildLongOverviewScript(lesson: LessonRow, outline: string[]): string {
   let pass = 2;
   while (script.trim().split(/\s+/).length < MIN_WORDS) {
     const speaker = pass % 2 === 0 ? "Leo" : "Maya";
-    script += `\n\n${speaker}: Revisit ${topic} one more time from a slightly different angle. Do not treat repetition as filler. Repetition is what lets a new mental model survive pressure. Say the incoming object again. Say the operation again. Say the output again. Then connect it to one concrete lesson signpost: ${audioFriendly(outline[pass % Math.max(outline.length, 1)] ?? description)}. If you can explain that signpost using the workshop bench, the tiny example, the mechanism trace, and the implementation check, this has moved from recognition toward usable understanding. We will keep the vibe conversational, like a careful podcast host pausing to make sure the listener is still with the idea before moving deeper.`;
+    script += `\n\n${speaker}: Revisit ${topic} one more time from a slightly different angle. Do not treat repetition as filler. Repetition is what lets a new mental model survive pressure. Say the incoming object again. Say the operation again. Say the output again. Then connect it to one concrete idea: ${audioFriendly(outline[pass % Math.max(outline.length, 1)] ?? description)}. If you can explain that idea using the workshop bench, the tiny example, the mechanism trace, and the formal check, this has moved from recognition toward usable understanding. We will keep the vibe conversational, like a careful podcast host pausing to make sure the listener is still with the idea before moving deeper.`;
     pass += 1;
   }
   return script;
@@ -409,7 +409,7 @@ function longOrientationVisual(existing: unknown, lesson: LessonRow, formulaPane
     ...formulaPhases,
     { label: "Implementation", headline: "Connect to code and tests" },
     { label: "Misconception", headline: "Separate nearby ideas" },
-    { label: "Synthesis", headline: "Return to the route and prepare practice" },
+    { label: "Synthesis", headline: "Restate the mechanism from multiple angles" },
   ];
   const step = MIN_DURATION / phases.length;
   const cues = phases.map((phase, index) => {

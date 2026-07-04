@@ -193,6 +193,14 @@ enforced by `validateGeneratedContent`; the rest is a hard authoring rule.
   Define every major noun before relying on it. Go shorter only for explicitly
   short reference/diagnostic content and document why. If it sounds like a quick
   summary, table of contents, or page tour, regenerate it.
+- **Socratic depth beats repetition.** Audio must be written as one coherent
+  authored transcript, not padded by looping repeated summary passes. After the
+  high-level frame, go deeper into each major concept individually. The student
+  speaker should ask 3-4 layer follow-up chains: why the mechanism matters, what
+  changed inside the object, how that change affects the next score or decision,
+  and what evidence would prove the explanation. Speaker labels are structural:
+  put `Leo:` and `Maya:` only at the start of a new turn, never inside another
+  speaker's paragraph, because TTS uses those labels to assign voices.
 - **Audio scripts must be learner-facing, never author-facing.** The top-level
   overview and all lesson-part audio must sound like two hosts speaking
   directly to the learner with natural questions and answers. Do not leak
@@ -257,8 +265,9 @@ enforced by `validateGeneratedContent`; the rest is a hard authoring rule.
 - **Interactive sections must deepen understanding.** A widget is not acceptable
   just because it displays a chart. Each interactive must have a clear learning
   objective, a learner-controlled variable, a visible consequence, and a written
-  takeaway that explains what changed and why. Prefer "what breaks if..." and
-  before/after/counterfactual views over decorative graphs. QA should reject any
+  takeaway that explains what changed and why. Prefer before/after and
+  counterfactual views that show how the object changes and why that changed
+  object matters. QA should reject any
   visual whose labels could be swapped and reused for an unrelated lesson.
 - **Every control must move a visible object.** A dial, slider, toggle, picker,
   or input fails QA if it only changes a number, caption, or invisible internal

@@ -16,6 +16,7 @@ export interface TranscriptQualityResult {
 export const TRANSCRIPT_BAD_PATTERN_RE =
   /(?:audio session|provider:|voice:|here is the lesson content|point\s+\d+\s*:\s*(?:lesson part|code practice|assessment|reading|interactive)|lesson part\s+"|code practice\s+"|assessment\s+".*checks whether|\b(?:lesson part|code exercise|practice question|assessment question|final integrator|the practice|this part belongs|section title)\b|treat these as signposts|ask four questions|what would the variable names be|what would a small input look like|what output would a test assert|do not try to memorize|don't try to memorize|listen for the object|object and the handoff|before we dive into details|building a mental map|guided conversation and less like a lecture|not rushing through a table of contents|pick one small object from the lesson|exact object matters less than the habit|this mechanism pass is slower on purpose|if a word sounds important|look for in the visual|watch in the visual)/i;
 
+const INLINE_SPEAKER_LABEL_RE = /[^\n][ \t]+(?:Leo|Maya)\s*:/;
 const LEO_RE = /^(?:\*\*)?Leo(?:\*\*)?:/gim;
 const MAYA_RE = /^(?:\*\*)?Maya(?:\*\*)?:/gim;
 const ANALOGY_RE = /\b(?:analogy|metaphor|think of|imagine|like a|as if|picture|same way)\b/i;
@@ -24,6 +25,24 @@ const FAILURE_RE = /\b(?:mistake|misconception|failure|breaks|wrong|bug|invalid|
 
 function wordCount(text: string): number {
   return text.trim().split(/\s+/).filter(Boolean).length;
+}
+
+function hasRepeatedPaddingBlock(text: string): boolean {
+  const normalized = text
+    .toLowerCase()
+    .replace(/^(?:leo|maya):/gim, "")
+    .replace(/[^a-z0-9\s]/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+  const words = normalized.split(" ").filter(Boolean);
+  const seen = new Map<string, number>();
+  for (let i = 0; i + 16 <= words.length; i += 1) {
+    const key = words.slice(i, i + 16).join(" ");
+    const count = (seen.get(key) ?? 0) + 1;
+    if (count >= 3) return true;
+    seen.set(key, count);
+  }
+  return false;
 }
 
 export function validateLearnerFacingAudioTranscript(
@@ -67,6 +86,12 @@ export function validateLearnerFacingAudioTranscript(
   }
   if (TRANSCRIPT_BAD_PATTERN_RE.test(text)) {
     errors.push("transcript must not include provider/debug metadata, generator-outline narration, or generic study-coaching instructions");
+  }
+  if (INLINE_SPEAKER_LABEL_RE.test(text)) {
+    errors.push("speaker labels must start a new turn; do not place Leo: or Maya: inside another speaker paragraph");
+  }
+  if (hasRepeatedPaddingBlock(text)) {
+    errors.push("transcript must be a coherent authored conversation, not repeated padding loops");
   }
 
   return { ok: errors.length === 0, errors, metrics };

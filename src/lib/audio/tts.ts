@@ -53,38 +53,40 @@ interface DialogueSegment {
   text: string;
 }
 
+const SPEAKER_LABEL_RE =
+  /(?:\*\*)?(Leo|Male host|Host A|Doraemon|Daniel|Alex|Maya|Female host|Host B|Guest|Ava|Mina)(?:\*\*)?\s*:\s*/gi;
+
 function sha256File(p: string): string {
   const buf = fs.readFileSync(p);
   return "sha256:" + createHash("sha256").update(buf).digest("hex");
 }
 
-function parseDialogueSegments(script: string): DialogueSegment[] {
+export function parseDialogueSegments(script: string): DialogueSegment[] {
   const segments: DialogueSegment[] = [];
-  let current: DialogueSegment | null = null;
-  for (const rawLine of script.split(/\n+/)) {
-    const line = rawLine.trim();
-    if (!line) continue;
-    const match = line.match(/^(?:\*\*)?(Leo|Male host|Host A|Doraemon|Daniel|Alex|Maya|Female host|Host B|Guest|Ava|Mina)(?:\*\*)?\s*:\s*(.+)$/i);
-    if (match) {
-      if (current?.text.trim()) segments.push({ ...current, text: current.text.trim() });
-      const label = match[1].toLowerCase();
-      current = {
-        speaker:
-          label.includes("maya") ||
-          label.includes("female") ||
-          label.includes("host b") ||
-          label.includes("guest") ||
-          label.includes("ava") ||
-          label.includes("mina")
-            ? "female"
-            : "male",
-        text: match[2],
-      };
-    } else if (current) {
-      current.text += ` ${line}`;
-    }
+  const matches = Array.from(script.matchAll(SPEAKER_LABEL_RE));
+  if (matches.length === 0) return [];
+
+  for (let i = 0; i < matches.length; i += 1) {
+    const match = matches[i];
+    const label = String(match[1] ?? "").toLowerCase();
+    const start = (match.index ?? 0) + match[0].length;
+    const end = matches[i + 1]?.index ?? script.length;
+    const text = script.slice(start, end).replace(/\s+/g, " ").trim();
+    if (!text) continue;
+    segments.push({
+      speaker:
+        label.includes("maya") ||
+        label.includes("female") ||
+        label.includes("host b") ||
+        label.includes("guest") ||
+        label.includes("ava") ||
+        label.includes("mina")
+          ? "female"
+          : "male",
+      text,
+    });
   }
-  if (current?.text.trim()) segments.push({ ...current, text: current.text.trim() });
+
   return segments.length >= 4 && new Set(segments.map((s) => s.speaker)).size >= 2 ? segments : [];
 }
 

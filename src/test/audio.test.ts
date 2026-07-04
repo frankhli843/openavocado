@@ -27,6 +27,7 @@ import {
   synthesizeSpeech,
   espeakAvailable,
   doraemonEdgeAvailable,
+  parseDialogueSegments,
 } from "@/lib/audio/tts";
 import { generateLessonAudio } from "@/lib/audio/generate-lesson-audio";
 
@@ -105,6 +106,22 @@ describe.runIf(HAS_DORAEMON_EDGE)("synthesizeSpeech (default Doraemon voice)", (
     expect(existsSync(out)).toBe(true);
     expect(statSync(out).size).toBeGreaterThan(1000);
     expect(res.durationSec).toBeGreaterThan(0);
+  });
+});
+
+describe("dialogue transcript parsing", () => {
+  it("splits inline speaker labels so Leo text cannot be swallowed by Maya's voice", () => {
+    const segments = parseDialogueSegments(
+      [
+        "Leo: Start with the hidden-state matrix.",
+        "Maya: Why does that help? Leo: Because the next token depends on the changed row.",
+        "Maya: Go one layer deeper.",
+        "Leo: The attention update changes which token evidence is carried forward.",
+      ].join("\n\n")
+    );
+
+    expect(segments.map((s) => s.speaker)).toEqual(["male", "female", "male", "female", "male"]);
+    expect(segments[2].text).toBe("Because the next token depends on the changed row.");
   });
 });
 

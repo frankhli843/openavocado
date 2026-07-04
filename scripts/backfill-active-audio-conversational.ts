@@ -569,13 +569,29 @@ function buildScript(_row: ActivityRow, profile: AudioProfile): string {
   let script = turns.map(([speaker, text]) => `${speaker}: ${audioFriendly(text)}`).join("\n\n");
 
   const deeperPasses = [
-    `Maya: I want to push on the causal chain again. Why does the mechanism matter after the definition already sounds clear?\n\nLeo: The definition is only the doorway. The mechanism matters because it changes what the next step can use. ${profile.misconception} More concretely, the next step receives a representation that either carries the right information or does not. That is why we keep returning to the intermediate object instead of only celebrating a final answer.`,
-    `Maya: Now connect it to a simple debugging habit.\n\nLeo: Debug the representation, not just the final output. Inspect ${profile.coreObject}. Then inspect the operation that changes it. Then inspect the output promised by the operation. ${profile.implementation} If those checks line up, the concept is not just memorized, it is usable.`,
-    `Maya: Give me the shortest useful mental model.\n\nLeo: ${profile.closing} Keep that version in mind, then use the details to make it precise.`,
+    [
+      "Maya",
+      "I want to push on the causal chain again. Why does the mechanism matter after the definition already sounds clear?",
+    ],
+    [
+      "Leo",
+      `The definition is only the doorway. The mechanism matters because it changes what the next step can use. ${profile.misconception} More concretely, the next step receives a representation that either carries the right information or does not. That is why we keep returning to the intermediate object instead of only celebrating a final answer.`,
+    ],
+    ["Maya", "Now connect it to a simple debugging habit."],
+    [
+      "Leo",
+      `Debug the representation, not just the final output. Inspect ${profile.coreObject}. Then inspect the operation that changes it. Then inspect the output promised by the operation. ${profile.implementation} If those checks line up, the concept is not just memorized, it is usable.`,
+    ],
+    ["Maya", "Give me the shortest useful mental model."],
+    ["Leo", `${profile.closing} Keep that version in mind, then use the details to make it precise.`],
   ];
 
   while (wordCount(script) < 2750) {
-    script += "\n\n" + deeperPasses.map(audioFriendly).join("\n\n");
+    script +=
+      "\n\n" +
+      deeperPasses
+        .map(([speaker, text]) => `${speaker}: ${audioFriendly(text)}`)
+        .join("\n\n");
   }
 
   return script;

@@ -113,7 +113,7 @@ export function LessonPartSection({
                   <summary className="cursor-pointer select-none py-2 text-xs font-semibold uppercase tracking-wider text-gray-500 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-300">
                     Transcript
                   </summary>
-                  <div className="mt-2 max-h-56 overflow-y-auto border-t border-gray-100 pt-3 text-sm leading-relaxed text-gray-600">
+                  <div className="mt-2 max-h-56 overflow-y-auto whitespace-pre-wrap break-words border-t border-gray-100 pt-3 text-sm leading-relaxed text-gray-600">
                     {part.audio.transcript ?? part.audio.script}
                   </div>
                 </details>
