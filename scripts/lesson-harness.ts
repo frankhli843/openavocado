@@ -256,27 +256,36 @@ function getGeneratorId(modelOverride?: string): string {
   return `agent-harness/google-ai-studio/${modelOverride ?? getGeminiModel()}/v1`;
 }
 
-async function callGemini(prompt: string, modelOverride?: string): Promise<string> {
+async function callGemini(
+  prompt: string,
+  modelOverride?: string,
+  configOverride?: { maxOutputTokens?: number; thinkingBudget?: number }
+): Promise<string> {
   const key = getGeminiKey();
   if (!key) throw new Error("GOOGLE_AI_STUDIO_API_KEY is not set");
 
   const model = modelOverride ?? getGeminiModel();
   const url = `https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(model)}:generateContent`;
 
+  const generationConfig: Record<string, unknown> = {
+    responseMimeType: "application/json",
+    maxOutputTokens: configOverride?.maxOutputTokens ?? 32768,
+    temperature: 0.7,
+  };
+  if (configOverride?.thinkingBudget !== undefined) {
+    generationConfig.thinkingConfig = { thinkingBudget: configOverride.thinkingBudget };
+  }
+
   const body = {
     contents: [{ role: "user", parts: [{ text: prompt }] }],
-    generationConfig: {
-      responseMimeType: "application/json",
-      maxOutputTokens: 32768,
-      temperature: 0.7,
-    },
+    generationConfig,
   };
 
   const res = await fetch(url, {
     method: "POST",
     headers: { "Content-Type": "application/json", "X-goog-api-key": key },
     body: JSON.stringify(body),
-    signal: AbortSignal.timeout(300_000),
+    signal: AbortSignal.timeout(420_000),
   });
 
   if (!res.ok) {
@@ -398,7 +407,13 @@ async function callGeminiWithRetry(
       `[lesson-harness] All retries exhausted for primary model "${primaryModel}". Trying fallback "${fallbackModel}".`
     );
     try {
-      const text = await callGemini(prompt, fallbackModel);
+      // For thinking models (gemini-2.5-*), disable thinking to keep output within
+      // token limits and reduce latency for the fallback path.
+      const isThinkingModel = /gemini-2\.5/i.test(fallbackModel);
+      const fallbackConfig = isThinkingModel
+        ? { maxOutputTokens: 65536, thinkingBudget: 0 }
+        : undefined;
+      const text = await callGemini(prompt, fallbackModel, fallbackConfig);
       return { text, modelUsed: fallbackModel };
     } catch (fbErr) {
       const fbMsg = fbErr instanceof Error ? fbErr.message : String(fbErr);
