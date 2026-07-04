@@ -19,6 +19,12 @@ const REGISTERED_OR_TEMPLATE_PATTERNS: Array<{ pattern: RegExp; label: string }>
   { pattern: /\bdeclarative widget\b/i, label: "references declarative widget templates" },
   { pattern: /\bgenerated panel\b/i, label: "uses generated panel terminology" },
   { pattern: /\bpet fish\b/i, label: "contains irrelevant generic demo metaphor text" },
+  { pattern: /\bStart with Visual\b/, label: "uses a generic audio visual template stage" },
+  { pattern: /\bShow the operation\b/, label: "uses a generic audio visual template stage" },
+  { pattern: /\bPass the result forward\b/, label: "uses a generic audio visual template stage" },
+  { pattern: /\bready state\b/, label: "uses generic state-machine filler text" },
+  { pattern: /\bcurrent mechanism\b/, label: "uses generic state-machine filler text" },
+  { pattern: /\bchanged state\b/, label: "uses generic state-machine filler text" },
 ];
 
 const RESPONSIVE_PATTERNS: RegExp[] = [

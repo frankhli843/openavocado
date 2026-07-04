@@ -154,7 +154,10 @@ enforced by `validateGeneratedContent`; the rest is a hard authoring rule.
   DB-backed `bespoke-artifact` pipeline: generate per-part React components,
   store source and manifest in SQLite, compile in isolation, attach build hash
   and compiled artifact reference, run Chrome MCP desktop and 390px mobile
-  sandbox QA with screenshots, record QA evidence, then approve. Lesson JSON stores only
+  sandbox QA with screenshots, record QA evidence, then approve. Pending artifacts
+  must be inspected through the local-only route
+  `/api/visual-artifacts/{slug}/sandbox?qa=pending`; approved artifacts use
+  `/api/visual-artifacts/{slug}/sandbox`. Lesson JSON stores only
   `widget_type: "bespoke-artifact"` plus the stable approved slug.
 - **Bespoke artifact source must be mobile-first.** Each visual artifact's React
   source must be authored for both desktop and 390px mobile before it is built:
@@ -465,14 +468,19 @@ gate, and lesson JSON references only the slug.
   with short explanations. These examples should let the learner predict the
   behavior before reading or editing code.
 - `visualization` — a compact behavior map with labelled input, process, and
-  output items. It should make the data flow visible even if the learner skips
-  the runnable editor on phone.
+  output items. It should make the data flow visible even if the learner uses
+  Learn mode instead of the runnable editor.
 - `starter_code` — scaffolding only.
 - `worked_examples` — two full-code references: one `label: "basic"` readable
   implementation and one `label: "concise"` best concise implementation. These
-  are rendered in a controlled study area and are especially important in phone
-  preview, where the learner studies the answer/reference path without typing
-  in the editor.
+  are rendered in a controlled study area and are especially important in Learn
+  mode, where the learner studies the answer/reference path without typing in
+  the editor.
+- Learn mode comprehension ladder — the no-typing study path must include
+  high-level multiple-choice about the algorithm, a concrete input/output trace,
+  select-all questions about concise-code lines, ordering questions for the
+  function reasoning path, and function/data-type questions for every important
+  helper and object. It is not enough to show only the final answers.
 - `constraints` and `guided_steps` — rules and an ordered path that guide
   without giving the answer.
 - `hints` — progressive and unboxable: start with a conceptual nudge, then a
@@ -780,7 +788,8 @@ examples, wrong difficulty calibration, audio that sounds robotic or truncated).
    ```
    POST /api/visual-artifacts
    POST /api/visual-artifacts/{slug}/build
-   open /api/visual-artifacts/{slug}/sandbox with Chrome MCP
+   open `/api/visual-artifacts/{slug}/sandbox?qa=pending` with Chrome MCP before
+   approval, then `/api/visual-artifacts/{slug}/sandbox` after approval
    take desktop and 390px mobile screenshots
    POST /api/visual-artifacts/{slug}/qa-evidence
    POST /api/visual-artifacts/{slug}/approve
@@ -901,12 +910,12 @@ LIVE / FRESH-DB VERIFICATION (required before QA):
 - Take a desktop screenshot (1280px) and a mobile screenshot (390px).
 - Confirm the knowledge graph renders at the top, audio player shows real duration (not 0:00),
   and all activities are visible without horizontal overflow at 390px.
-- If the lesson has a code exercise, use the code exercise Desktop/Phone preview
-  control and verify Phone mode. Phone mode must be read-only: no code editor,
-  no Run/Submit controls, no runtime badge. It must show the optional-coding
+- If the lesson has a code exercise, use the code exercise Attempt/Learn control
+  and verify Learn mode. Learn mode must be read-only: no code editor, no
+  Run/Submit controls, no runtime badge. It must show the optional-coding
   notice, walkthrough, expected input/output examples, behavior visualization,
-  and full reference answers inside the 390px preview without horizontal
-  overflow.
+  no-typing comprehension questions, and full reference answers inside the
+  390px preview without horizontal overflow.
 - Run the actual code exercise in the browser. Click Run tests and Submit with
   the starter or intended solution path in Desktop mode, verify public and hidden tests execute,
   and fix any runtime/package failure such as missing Pyodide packages. A code
@@ -918,7 +927,7 @@ MANUAL QA REVIEW (must be done by a DIFFERENT agent/reviewer than the one that g
 - Read the written section. Stands alone without audio?
 - Interact with every widget. Controls work? Legible at 390px?
 - Attempt the code exercise. Progressive hints? Tests actually test the concept?
-  Phone preview mode present and usable?
+  Learn mode present, read-only, and useful without typing?
 - Answer sample quiz questions. Distractors require real understanding? IDK works?
 - Fill in end-of-lesson diagnostics. Prompts relevant to this lesson?
 - Check knowledge graph. Accurately reflects covered / previewed / later?

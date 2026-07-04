@@ -170,6 +170,22 @@ describe("Schema columns and constraints", () => {
     expect(hasColumn(db, "next_lesson_jobs", "discarded_lesson_id")).toBe(true);
   });
 
+  it("next_lesson_jobs table has separate QA evidence columns", () => {
+    for (const column of [
+      "qa_status",
+      "qa_stage",
+      "qa_events",
+      "qa_agent_ref",
+      "qa_lesson_url",
+      "qa_desktop_screenshot_ref",
+      "qa_mobile_screenshot_ref",
+      "qa_notes",
+      "qa_completed_at",
+    ]) {
+      expect(hasColumn(db, "next_lesson_jobs", column), column).toBe(true);
+    }
+  });
+
   it("next_lesson_jobs trigger_event CHECK rejects unknown values", () => {
     const learnerId = seedLearner(db);
     const subjectId = seedSubject(db, learnerId);

@@ -263,6 +263,22 @@ CREATE TABLE IF NOT EXISTS next_lesson_jobs (
   payload         TEXT,   -- JSON: the event payload (lesson.completed or lesson.discarded)
   adapter_ref     TEXT,   -- external reference (dora task id, webhook delivery id, etc.)
   error           TEXT,
+  harness_status  TEXT,   -- native harness state; nullable for adapter compatibility
+  harness_stage   TEXT,   -- current harness stage name
+  progress_events TEXT,   -- JSON array of timestamped generation progress events
+  retry_count     INTEGER NOT NULL DEFAULT 0,
+  last_error_detail TEXT,
+  provider_name   TEXT,
+  output_lesson_id INTEGER REFERENCES lessons(id) ON DELETE SET NULL,
+  qa_status       TEXT,   -- pending/running/passed/failed style QA lifecycle
+  qa_stage        TEXT,   -- current separate-reviewer QA stage
+  qa_events       TEXT,   -- JSON array of timestamped QA progress events
+  qa_agent_ref    TEXT,   -- reviewer agent/session/task reference
+  qa_lesson_url   TEXT,   -- local or prod URL opened for browser QA
+  qa_desktop_screenshot_ref TEXT,
+  qa_mobile_screenshot_ref  TEXT,
+  qa_notes        TEXT,
+  qa_completed_at TEXT,
   dispatched_at   TEXT,
   completed_at    TEXT,
   created_at      TEXT    NOT NULL DEFAULT (datetime('now')),

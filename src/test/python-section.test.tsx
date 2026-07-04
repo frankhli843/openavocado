@@ -1,8 +1,8 @@
 /**
  * @vitest-environment jsdom
  *
- * Practice-code UX guardrails. Coding exercises must keep a phone preview mode
- * so lesson QA can inspect exactly what the exercise feels like at mobile width.
+ * Practice-code UX guardrails. Coding exercises must keep a Learn mode
+ * so learners can study code comprehension without typing.
  */
 import { afterEach, describe, expect, it, vi } from "vitest";
 import "@testing-library/jest-dom/vitest";
@@ -110,7 +110,7 @@ describe("PythonSection", () => {
     await waitFor(() => expect(console.warn).toHaveBeenCalled());
   });
 
-  it("always exposes a phone preview mode for coding lessons", async () => {
+  it("always exposes Attempt and Learn modes for coding lessons", async () => {
     vi.spyOn(console, "warn").mockImplementation(() => undefined);
 
     const { container } = render(
@@ -124,15 +124,15 @@ describe("PythonSection", () => {
       />
     );
 
-    const desktop = screen.getByRole("button", { name: /desktop/i });
-    const phone = screen.getByRole("button", { name: /phone/i });
-    expect(desktop).toHaveAttribute("aria-pressed", "true");
-    expect(phone).toHaveAttribute("title", "View phone mode");
+    const attempt = screen.getByRole("button", { name: /attempt/i });
+    const learn = screen.getByRole("button", { name: /learn/i });
+    expect(attempt).toHaveAttribute("aria-pressed", "true");
+    expect(learn).toHaveAttribute("title", "View learn mode");
 
-    fireEvent.click(phone);
+    fireEvent.click(learn);
 
-    expect(phone).toHaveAttribute("aria-pressed", "true");
-    expect(container.querySelector('[data-preview-mode="phone"]')).toBeInTheDocument();
+    expect(learn).toHaveAttribute("aria-pressed", "true");
+    expect(container.querySelector('[data-preview-mode="learn"]')).toBeInTheDocument();
     expect(container.querySelector(".max-w-\\[390px\\]")).toBeInTheDocument();
     expect(screen.queryByLabelText("Python code editor")).not.toBeInTheDocument();
     expect(screen.queryByRole("button", { name: /run tests/i })).not.toBeInTheDocument();
@@ -144,6 +144,38 @@ describe("PythonSection", () => {
     expect(screen.getByText("Trace the value before coding")).toBeInTheDocument();
     expect(screen.getByText("Single token")).toBeInTheDocument();
     expect(screen.getByText("Token ids move into score slots")).toBeInTheDocument();
+    expect(screen.getByText("Learn path")).toBeInTheDocument();
+    expect(screen.getByText("Question 1 of 8")).toBeInTheDocument();
+    expect(screen.getByText("1. Algorithm")).toBeInTheDocument();
+    expect(screen.queryByText("2. Example trace")).not.toBeInTheDocument();
+    expect(screen.getAllByRole("radio")).toHaveLength(4);
+    expect(screen.getByText(/Make logits\(\[1\]\) produce \{1: 1\}/)).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole("button", { name: /next/i }));
+    expect(screen.getByText("Question 2 of 8")).toBeInTheDocument();
+    expect(screen.getByText("2. Example trace")).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole("button", { name: /next/i }));
+    expect(screen.getByText("Question 3 of 8")).toBeInTheDocument();
+    expect(screen.getByText("3. Concise syntax")).toBeInTheDocument();
+    expect(container).toHaveTextContent("def logits(ids):");
+    expect(container).toHaveTextContent("return {token_id: ids.count(token_id) for token_id in set(ids)}");
+    expect(screen.getAllByRole("checkbox")).toHaveLength(4);
+
+    fireEvent.click(screen.getByRole("button", { name: /next/i }));
+    expect(screen.getByText("4. Reasoning order")).toBeInTheDocument();
+    fireEvent.click(screen.getByLabelText(/Read the prompt and examples/i));
+    expect(screen.getByText("Your order")).toBeInTheDocument();
+    expect(container).toHaveTextContent("1. Read the prompt and examples");
+
+    for (let i = 0; i < 3; i += 1) {
+      fireEvent.click(screen.getByRole("button", { name: /next/i }));
+    }
+    expect(screen.getByText("Function 1")).toBeInTheDocument();
+    expect(screen.getByText(/What inputs it receives, what output it promises/)).toBeInTheDocument();
+    expect(screen.getAllByRole("checkbox")).toHaveLength(4);
+    fireEvent.click(screen.getByLabelText(/Which intermediate value would make/i));
+    expect(screen.getByLabelText(/Which intermediate value would make/i)).toBeChecked();
     await waitFor(() => expect(console.warn).toHaveBeenCalled());
   });
 

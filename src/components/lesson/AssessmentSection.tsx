@@ -25,7 +25,12 @@ export function AssessmentSection({ activity, answers, onChange }: AssessmentSec
     ? JSON.parse(activity.content)
     : {};
 
-  const questions: Question[] = content.questions ?? [];
+  const rawQuestions: Question[] = content.questions ?? [];
+  const questions = rawQuestions.filter((question) => {
+    const text = typeof question.text === "string" ? question.text.trim() : "";
+    return question.id && text.length > 0;
+  });
+  const skippedQuestionCount = rawQuestions.length - questions.length;
 
   function handleChange(questionId: string, value: string) {
     const updated = { ...answers, [questionId]: value };
@@ -73,7 +78,9 @@ export function AssessmentSection({ activity, answers, onChange }: AssessmentSec
 
         {questions.length === 0 && (
           <div className="py-8 text-center text-gray-400 text-sm">
-            No assessment questions yet.
+            {skippedQuestionCount > 0
+              ? "Assessment questions were generated without usable prompts. This lesson needs repair before assessment."
+              : "No assessment questions yet."}
           </div>
         )}
       </div>

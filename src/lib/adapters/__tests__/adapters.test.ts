@@ -214,6 +214,15 @@ function makeDb() {
     ["next_lesson_jobs", "last_error_detail", "ALTER TABLE next_lesson_jobs ADD COLUMN last_error_detail TEXT"],
     ["next_lesson_jobs", "provider_name", "ALTER TABLE next_lesson_jobs ADD COLUMN provider_name TEXT"],
     ["next_lesson_jobs", "output_lesson_id", "ALTER TABLE next_lesson_jobs ADD COLUMN output_lesson_id INTEGER"],
+    ["next_lesson_jobs", "qa_status", "ALTER TABLE next_lesson_jobs ADD COLUMN qa_status TEXT"],
+    ["next_lesson_jobs", "qa_stage", "ALTER TABLE next_lesson_jobs ADD COLUMN qa_stage TEXT"],
+    ["next_lesson_jobs", "qa_events", "ALTER TABLE next_lesson_jobs ADD COLUMN qa_events TEXT"],
+    ["next_lesson_jobs", "qa_agent_ref", "ALTER TABLE next_lesson_jobs ADD COLUMN qa_agent_ref TEXT"],
+    ["next_lesson_jobs", "qa_lesson_url", "ALTER TABLE next_lesson_jobs ADD COLUMN qa_lesson_url TEXT"],
+    ["next_lesson_jobs", "qa_desktop_screenshot_ref", "ALTER TABLE next_lesson_jobs ADD COLUMN qa_desktop_screenshot_ref TEXT"],
+    ["next_lesson_jobs", "qa_mobile_screenshot_ref", "ALTER TABLE next_lesson_jobs ADD COLUMN qa_mobile_screenshot_ref TEXT"],
+    ["next_lesson_jobs", "qa_notes", "ALTER TABLE next_lesson_jobs ADD COLUMN qa_notes TEXT"],
+    ["next_lesson_jobs", "qa_completed_at", "ALTER TABLE next_lesson_jobs ADD COLUMN qa_completed_at TEXT"],
   ] as const;
   for (const [table, col, sql] of additive) {
     if (!hasColumn(table, col)) db.exec(sql);
@@ -560,7 +569,7 @@ describe("dora-task prompts embed the lesson quality bar", () => {
     "LESSON QUALITY BAR",
     "skills/avocadocore-lesson-authoring/SKILL.md",
     "Generated audio AVAILABLE AT CREATION",
-    "at least 10 minutes",
+    "at least 15 minutes",
     "WHY-FIRST TEACHING",
     "NO UNDOCUMENTED ASSUMPTIONS",
     "PLANNING STAGE BEFORE AUTHORING",
@@ -568,10 +577,10 @@ describe("dora-task prompts embed the lesson quality bar", () => {
     "update the subject workpad and long-term plan",
     "DYNAMIC, BESPOKE AUTHORING",
     "bespoke-artifact",
-    "forbidden for new generated lessons",
+    "forbidden as learner-facing Avo interactives",
     "AUDIO + INTERACTIVE SIDE-BY-SIDE FOR ORIENTATION",
     "orientation_visual",
-    "same timed cue scene pattern as lesson parts",
+    "paired DB-backed bespoke artifact",
     "visible alongside the audio",
     "AUDIO-ADJACENT VISUALS MUST BE SCOPED TO THE CURRENT AUDIO",
     "Do not reuse a broad whole-lesson interactive",
@@ -582,9 +591,9 @@ describe("dora-task prompts embed the lesson quality bar", () => {
     "MANIM / 3BLUE1BROWN-STYLE SCENE DESIGN",
     "attention score grids",
     "MLP layer expansion/compression",
-    "Chrome MCP QA on the sandbox URL",
+    "Chrome MCP QA on the local pending sandbox URL",
     "qa-evidence",
-    "desktop and mobile screenshots",
+    "desktop and 390px mobile screenshots",
     "DEFINE MAJOR NOUNS",
     "transformer block",
     "MLP",
@@ -631,8 +640,8 @@ describe("dora-task prompts embed the lesson quality bar", () => {
     "validateGeneratedContent",
     // Manual authoring requirement — must travel to every generator agent
     "MANUAL AUTHORING",
-    // Dora task and QA requirement — must reference acceptance criteria template
-    "acceptance criteria template",
+    // Dora task and QA requirement — must reference the harness QA gate
+    "DORA TASK / HARNESS QA",
     // Knowledge graph orientation requirement
     "KNOWLEDGE GRAPH ORIENTATION",
   ];
@@ -1039,6 +1048,15 @@ describe("summarizeJobProgress", () => {
       retry_count: 0,
       provider_name: null,
       output_lesson_id: null,
+      qa_status: null,
+      qa_stage: null,
+      qa_events: null,
+      qa_agent_ref: null,
+      qa_lesson_url: null,
+      qa_desktop_screenshot_ref: null,
+      qa_mobile_screenshot_ref: null,
+      qa_notes: null,
+      qa_completed_at: null,
       ...overrides,
     };
   }

@@ -471,6 +471,16 @@ export interface NextLessonJob {
   last_error_detail: string | null;
   provider_name: string | null;
   output_lesson_id: number | null;
+  // Separate reviewer/browser QA extension columns.
+  qa_status: string | null;
+  qa_stage: string | null;
+  qa_events: string | null; // JSON array of {ts, stage, message}
+  qa_agent_ref: string | null;
+  qa_lesson_url: string | null;
+  qa_desktop_screenshot_ref: string | null;
+  qa_mobile_screenshot_ref: string | null;
+  qa_notes: string | null;
+  qa_completed_at: string | null;
 }
 
 // ─── View / Aggregate types ───────────────────────────────────────────────────

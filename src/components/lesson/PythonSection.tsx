@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import dynamic from "next/dynamic";
-import { Maximize2, Minimize2, Monitor, Smartphone } from "lucide-react";
+import { BookOpen, Keyboard, Maximize2, Minimize2 } from "lucide-react";
 import type { LessonActivity, PracticeCodeContent, CodeTest } from "@/types";
 import { createPyodideExecutor, stubExecutor, type PythonExecutor } from "@/lib/python-sandbox";
 import { MarkdownText } from "@/components/MarkdownText";
@@ -23,7 +23,16 @@ interface PythonSectionProps {
   lessonDescription?: string | null;
 }
 
-type PreviewMode = "desktop" | "phone";
+type PreviewMode = "attempt" | "learn";
+
+type LearnQuestionItem = {
+  eyebrow: string;
+  typeLabel: string;
+  prompt: string;
+  code?: string;
+  options: string[];
+  answer: string;
+};
 
 /**
  * Scaffolded code exercise with a real submission workflow.
@@ -70,11 +79,12 @@ export function PythonSection({
   const [executor, setExecutor] = useState<PythonExecutor>(stubExecutor);
   const [pyStatus, setPyStatus] = useState<"loading" | "ready" | "unavailable">("loading");
   const [isFullscreen, setIsFullscreen] = useState(false);
-  const [previewMode, setPreviewMode] = useState<PreviewMode>("desktop");
+  const [previewMode, setPreviewMode] = useState<PreviewMode>("attempt");
+  const [learnQuestionIndex, setLearnQuestionIndex] = useState(0);
   const [codeFeedback, setCodeFeedback] = useState<string | null>(null);
   const [codeFeedbackLoading, setCodeFeedbackLoading] = useState(false);
   const executorRef = useRef(executor);
-  const isPhonePreview = previewMode === "phone" && !isFullscreen;
+  const isLearnPreview = previewMode === "learn" && !isFullscreen;
 
   useEffect(() => {
     if (typeof window === "undefined") return;
@@ -346,16 +356,57 @@ export function PythonSection({
     </div>
   ) : null;
 
+  const conciseExample = content.worked_examples?.find((example) => example.label === "concise")
+    ?? content.worked_examples?.[content.worked_examples.length - 1];
+  const basicExample = content.worked_examples?.find((example) => example.label === "basic")
+    ?? content.worked_examples?.[0];
+  const conciseLines = (conciseExample?.code ?? starterCode)
+    .split("\n")
+    .map((line) => line.trimEnd())
+    .filter((line) => line.trim().length > 0)
+    .slice(0, 8);
+  const functionNames = Array.from(
+    new Set(
+      (basicExample?.code ?? starterCode)
+        .match(/def\s+([A-Za-z_][A-Za-z0-9_]*)\s*\(/g)
+        ?.map((match) => match.replace(/def\s+|\s*\(/g, "")) ?? []
+    )
+  );
+  const dataTypeHints = Array.from(
+    new Set(
+      [
+        ...(content.io_examples ?? []).flatMap((example) => [example.input, example.expected_output]),
+        basicExample?.code ?? "",
+        conciseExample?.code ?? "",
+      ]
+        .join("\n")
+        .match(/\b(list|dict|tuple|set|string|int|float|bool|array|matrix|token|row|vector)\b/gi)
+        ?.map((item) => item.toLowerCase()) ?? []
+    )
+  ).slice(0, 6);
+  const primaryIoExample = content.io_examples?.[0] ?? null;
+  const reasoningSteps = guidedSteps.length >= 3
+    ? guidedSteps.slice(0, 5)
+    : [
+        "Read the prompt and examples before thinking about syntax.",
+        "Name the input object and the output object.",
+        "Trace one concrete example by hand.",
+        "Connect each code line to that trace.",
+        "Only then compare against tests.",
+      ];
+  const functionStudyCards = functionNames.length ? functionNames.slice(0, 4) : ["the helper function"];
+  const dataTypeStudyCards = dataTypeHints.length ? dataTypeHints : ["input value", "intermediate value", "return value"];
+
   const workedExamples = content.worked_examples && content.worked_examples.length > 0 ? (
     <div className="space-y-3">
       <div className="text-xs font-semibold uppercase tracking-wider text-gray-400">
-        {isPhonePreview ? "Reference answers" : "Full code examples"}
+        {isLearnPreview ? "Reference answers" : "Full code examples"}
       </div>
-      <div className={`grid min-w-0 gap-3 ${isPhonePreview ? "grid-cols-1" : "lg:grid-cols-2"}`}>
+      <div className={`grid min-w-0 gap-3 ${isLearnPreview ? "grid-cols-1" : "lg:grid-cols-2"}`}>
         {content.worked_examples.map((example) => (
           <details
             key={example.label}
-            open={isPhonePreview}
+            open={isLearnPreview}
             className="min-w-0 border-l-2 border-gray-200 bg-gray-50/50"
           >
             <summary className="cursor-pointer select-none break-words px-3 py-2 text-sm font-semibold text-gray-700">
@@ -375,23 +426,153 @@ export function PythonSection({
     </div>
   ) : null;
 
+  const learnQuestions: LearnQuestionItem[] = [
+    {
+      eyebrow: "1. Algorithm",
+      typeLabel: "Multiple choice",
+      prompt: "Before looking at syntax, what is the coding exercise mainly asking this helper to do?",
+      options: [
+        content.prompt ?? "Match the described input to the expected output.",
+        primaryIoExample
+          ? `Make ${primaryIoExample.input} produce ${primaryIoExample.expected_output}.`
+          : "Make the shown input produce the shown expected output.",
+        "Choose the shortest possible Python syntax before understanding the behavior.",
+        "Hard-code one visible example and ignore the rest of the contract.",
+      ],
+      answer: "Start with behavior: what input arrives, what output must leave, and which transformation connects them. Syntax is only useful after that route is clear.",
+    },
+    ...(primaryIoExample ? [{
+      eyebrow: "2. Example trace",
+      typeLabel: "Multiple choice",
+      prompt: "Use the first example as a tiny trace. What must stay connected?",
+      code: `${primaryIoExample.input}\n=> ${primaryIoExample.expected_output}`,
+      options: [
+        "The concrete input shape, the transformation step, and the expected output.",
+        "Only the exact visible value, even if a later test changes it.",
+        "Only the variable names in the reference answer.",
+        "The output format, because tests usually compare structure as well as meaning.",
+      ],
+      answer: "The useful trace connects the input shape, transformation, and output format. Do not memorize only one visible value.",
+    }] : []),
+    {
+      eyebrow: primaryIoExample ? "3. Concise syntax" : "2. Concise syntax",
+      typeLabel: "Select all that apply",
+      prompt: "Look at the concise reference code. What should you understand before copying this syntax?",
+      code: conciseExample?.code ?? conciseLines.join("\n") ?? starterCode,
+      options: [
+        "Which function boundary or expression the rest of the exercise depends on.",
+        "Which values enter the algorithm and which value leaves.",
+        "That short syntax replaces the need to understand the examples.",
+        "How the line maps back to an input/output example.",
+      ],
+      answer: "Correct: concise syntax is useful only after you can name the operation, the incoming values, the returned object, and the example it satisfies. Short code should not hide the data movement.",
+    },
+    {
+      eyebrow: primaryIoExample ? "4. Reasoning order" : "3. Reasoning order",
+      typeLabel: "Order",
+      prompt: `Put the work inside ${functionNames[0] ? `${functionNames[0]}()` : "the helper function"} in the order you should reason about it.`,
+      options: reasoningSteps,
+      answer: "The safest order is behavior first, concrete trace second, code-line mapping third, then tests. This prevents syntax from hiding a wrong model.",
+    },
+    ...conciseLines.slice(0, 5).map((line, index) => ({
+      eyebrow: `Line ${index + 1}`,
+      typeLabel: "Select all that apply",
+      prompt: "What job does this concise-code line do?",
+      code: line,
+      options: [
+        describeCodeLine(line),
+        "Connect this line back to one concrete input/output example.",
+        "Check whether this line creates, transforms, filters, or returns a value.",
+        "Treat this line as magic and skip the data movement.",
+      ],
+      answer: "Correct answers should name the line's job, connect it to an example, and identify the data movement. The wrong move is treating concise syntax as magic.",
+    })),
+    ...functionStudyCards.map((name, index) => ({
+      eyebrow: `Function ${index + 1}`,
+      typeLabel: "Select all that apply",
+      prompt: `What should you understand about ${name}${name.endsWith("function") ? "" : "()"} before typing?`,
+      options: [
+        "What inputs it receives, what output it promises, and what examples prove that promise.",
+        "The shortest possible implementation, even if the output contract is unclear.",
+        "Which intermediate value would make the transformation easy to inspect.",
+        "Which tests would fail if the function hard-coded one example.",
+      ],
+      answer: "For each function, understand the input contract, output contract, inspectable intermediate value, and failure mode for hard-coding.",
+    })),
+    {
+      eyebrow: "Data movement",
+      typeLabel: "Select all that apply",
+      prompt: "Which data objects matter for understanding this code?",
+      options: [
+        ...dataTypeStudyCards.map((item) => `${item}: track where it enters, how it changes, and whether it is returned`),
+        "hidden test: a private check, not a value your function should hard-code",
+      ].slice(0, 6),
+      answer: "Focus on the objects that move through the function: inputs, intermediate containers, rows/vectors/tokens when present, and the returned output. Hidden tests are checks, not values to hard-code.",
+    },
+  ];
+  const boundedLearnQuestionIndex = Math.min(learnQuestionIndex, Math.max(learnQuestions.length - 1, 0));
+  const activeLearnQuestion = learnQuestions[boundedLearnQuestionIndex];
+
+  const learnQuestionsPanel = (
+    <div className="space-y-4" data-code-learn-path="true">
+      <div className="border-l-2 border-blue-400 bg-blue-50/60 px-3 py-3">
+        <div className="text-xs font-semibold uppercase tracking-wider text-blue-700">Learn path</div>
+        <p className="mt-1 text-sm leading-6 text-blue-950">
+          Work through the idea without typing code. The questions move from the algorithm, to the concise syntax, to function order, to the data types the code moves around.
+        </p>
+      </div>
+
+      <div className="min-w-0 border border-blue-100 bg-white">
+        <div className="flex flex-wrap items-center justify-between gap-2 border-b border-blue-100 px-3 py-2">
+          <div className="text-xs font-semibold uppercase tracking-wider text-blue-700">
+            Question {boundedLearnQuestionIndex + 1} of {learnQuestions.length}
+          </div>
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              onClick={() => setLearnQuestionIndex((index) => Math.max(0, index - 1))}
+              disabled={boundedLearnQuestionIndex === 0}
+              className="border border-gray-200 bg-gray-50 px-2.5 py-1 text-xs font-semibold text-gray-600 disabled:opacity-40"
+            >
+              Previous
+            </button>
+            <button
+              type="button"
+              onClick={() => setLearnQuestionIndex((index) => Math.min(learnQuestions.length - 1, index + 1))}
+              disabled={boundedLearnQuestionIndex >= learnQuestions.length - 1}
+              className="border border-blue-200 bg-blue-50 px-2.5 py-1 text-xs font-semibold text-blue-700 disabled:opacity-40"
+            >
+              Next
+            </button>
+          </div>
+        </div>
+        {activeLearnQuestion && (
+          <LearnQuestion
+            key={`${activeLearnQuestion.eyebrow}-${boundedLearnQuestionIndex}`}
+            {...activeLearnQuestion}
+          />
+        )}
+      </div>
+    </div>
+  );
+
   // Shared editor area rendered both inline and in fullscreen overlay
   const editorArea = (
-    <div className={`flex h-full flex-col ${isPhonePreview ? "min-h-[360px]" : ""}`}>
+    <div className={`flex h-full flex-col ${isLearnPreview ? "min-h-[360px]" : ""}`}>
       <div
         className={`mb-1.5 font-mono text-gray-400 ${
-          isPhonePreview ? "flex flex-col gap-0.5 text-[11px] leading-4" : "flex items-center gap-2 text-xs"
+          isLearnPreview ? "flex flex-col gap-0.5 text-[11px] leading-4" : "flex items-center gap-2 text-xs"
         }`}
       >
         <span>Python 3 (Pyodide/WASM)</span>
-        {!isPhonePreview && <span className="text-gray-300">·</span>}
+        {!isLearnPreview && <span className="text-gray-300">·</span>}
         <span className="text-gray-500 text-xs">syntax highlighting · auto-indent · Tab=4 spaces</span>
       </div>
       <div className="flex-1 min-h-0 rounded-lg overflow-hidden border border-gray-200 bg-white focus-within:ring-2 focus-within:ring-blue-200">
         <CodeMirrorEditor
           value={code}
           onChange={handleCodeChange}
-          height={isFullscreen ? "100%" : isPhonePreview ? "360px" : "208px"}
+          height={isFullscreen ? "100%" : isLearnPreview ? "360px" : "208px"}
           fullscreen={isFullscreen}
         />
       </div>
@@ -399,12 +580,12 @@ export function PythonSection({
   );
 
   const actionBar = (
-    <div className={`flex flex-wrap items-center gap-2 ${isPhonePreview ? "items-stretch" : ""}`}>
+    <div className={`flex flex-wrap items-center gap-2 ${isLearnPreview ? "items-stretch" : ""}`}>
       <button
         onClick={handleRun}
         disabled={running || submitting || pyStatus !== "ready"}
         className={`flex items-center justify-center gap-1.5 rounded-lg border border-gray-300 bg-white px-3 py-1.5 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50 disabled:opacity-40 ${
-          isPhonePreview ? "flex-1" : ""
+          isLearnPreview ? "flex-1" : ""
         }`}
       >
         {running ? "Running..." : "Run tests"}
@@ -413,7 +594,7 @@ export function PythonSection({
         onClick={handleSubmit}
         disabled={running || submitting || pyStatus !== "ready"}
         className={`flex items-center justify-center gap-1.5 rounded-lg bg-blue-600 px-4 py-1.5 text-sm font-medium text-white transition-colors hover:bg-blue-700 disabled:opacity-40 ${
-          isPhonePreview ? "flex-1" : ""
+          isLearnPreview ? "flex-1" : ""
         }`}
       >
         {submitting ? "Submitting..." : "Submit"}
@@ -430,7 +611,7 @@ export function PythonSection({
         title={isFullscreen ? "Exit fullscreen (Esc)" : "Fullscreen focus mode"}
         aria-label={isFullscreen ? "Exit fullscreen" : "Enter fullscreen"}
         className={`rounded-lg border border-gray-200 bg-gray-100 px-3 py-1.5 text-sm font-medium text-gray-500 transition-colors hover:bg-gray-200 ${
-          isPhonePreview ? "" : "ml-auto"
+          isLearnPreview ? "" : "ml-auto"
         }`}
       >
         {isFullscreen ? (
@@ -450,7 +631,7 @@ export function PythonSection({
           onClick={() => setHintsShown((n) => Math.min(n + 1, hints.length))}
           disabled={hintsShown >= hints.length}
           className={`rounded-lg border border-amber-100 bg-amber-50 px-3 py-1.5 text-sm font-medium text-amber-700 transition-colors hover:bg-amber-100 disabled:opacity-40 ${
-            isPhonePreview ? "w-full" : ""
+            isLearnPreview ? "w-full" : ""
           }`}
         >
           {hintsShown >= hints.length ? "All hints shown" : `Show hint (${hintsShown}/${hints.length})`}
@@ -598,7 +779,7 @@ export function PythonSection({
 
       {/* Inline card (always rendered, editor area hidden when fullscreen so CodeMirror doesn't double-mount) */}
       <div
-        className={previewMode === "phone" ? "mx-auto w-full max-w-[390px] pb-20" : "w-full"}
+        className={previewMode === "learn" ? "mx-auto w-full max-w-[390px] pb-20" : "w-full"}
         data-preview-mode={previewMode}
       >
       <div
@@ -620,7 +801,7 @@ export function PythonSection({
           </div>
           <div className="flex flex-wrap items-center gap-2 sm:ml-auto">
             <PreviewModeToggle mode={previewMode} onChange={setPreviewMode} />
-            {!isPhonePreview && (
+            {!isLearnPreview && (
               <span
                 className={`inline-flex items-center gap-1 text-xs px-2 py-0.5 rounded-full shrink-0 ${
                   pyStatus === "ready"
@@ -642,7 +823,7 @@ export function PythonSection({
         </div>
 
         <div className={`space-y-4 ${
-          isPhonePreview
+          isLearnPreview
             ? embedded ? "pt-3 text-[15px]" : "p-3 text-[15px]"
             : embedded ? "pt-3" : "p-4 sm:p-6"
         }`}>
@@ -681,34 +862,35 @@ export function PythonSection({
           {walkthroughPanel}
           {ioExamplesPanel}
           {visualizationPanel}
-          {isPhonePreview && workedExamples}
-          {isPhonePreview && !workedExamples && (
+          {isLearnPreview && learnQuestionsPanel}
+          {isLearnPreview && workedExamples}
+          {isLearnPreview && !workedExamples && (
             <div className="border-l-2 border-amber-300 bg-amber-50 px-3 py-3 text-sm leading-6 text-amber-900">
               Reference answers have not been generated for this older coding exercise yet.
             </div>
           )}
 
-          {/* Editor — hidden in phone preview and when fullscreen so CodeMirror doesn't double-mount */}
-          {!isFullscreen && !isPhonePreview && (
+          {/* Editor — hidden in Learn mode and when fullscreen so CodeMirror doesn't double-mount */}
+          {!isFullscreen && !isLearnPreview && (
             <div className="space-y-2">
               {editorArea}
             </div>
           )}
-          {isFullscreen && !isPhonePreview && (
+          {isFullscreen && !isLearnPreview && (
             <div className="border-l-2 border-gray-200 bg-gray-50 px-3 py-3 text-sm text-gray-500 text-center">
               Editor open in focus mode &mdash; press <kbd className="bg-white border border-gray-200 text-gray-600 px-1 rounded text-xs">Esc</kbd> or click <strong>⊠ Exit focus</strong> to return.
             </div>
           )}
 
           {/* Actions */}
-          {!isFullscreen && !isPhonePreview && actionBar}
+          {!isFullscreen && !isLearnPreview && actionBar}
 
-          {!isFullscreen && !isPhonePreview && workedExamples}
+          {!isFullscreen && !isLearnPreview && workedExamples}
 
           {/* Focus mode button when fullscreen not active (also in actionBar, but easy to find here) */}
 
           {/* Progressive hints */}
-          {!isFullscreen && !isPhonePreview && hintsShown > 0 && (
+          {!isFullscreen && !isLearnPreview && hintsShown > 0 && (
             <div className="space-y-1.5">
               {hints.slice(0, hintsShown).map((h, i) => (
                 <div key={i} className="border-l-2 border-amber-300 bg-amber-50 px-3 py-2 text-sm text-amber-900">
@@ -720,7 +902,7 @@ export function PythonSection({
           )}
 
           {/* Output */}
-          {!isFullscreen && !isPhonePreview && (output || running || submitting) && (
+          {!isFullscreen && !isLearnPreview && (output || running || submitting) && (
             <div>
               <div className="text-xs text-gray-400 mb-1.5 font-mono">Output</div>
               <pre className="w-full min-h-12 border-l-2 border-gray-200 bg-gray-50 px-3 py-3 text-xs font-mono text-gray-700 overflow-x-auto whitespace-pre-wrap">
@@ -730,7 +912,7 @@ export function PythonSection({
           )}
 
           {/* Public tests */}
-          {!isFullscreen && !isPhonePreview && publicTests.length > 0 && (
+          {!isFullscreen && !isLearnPreview && publicTests.length > 0 && (
             <div>
               <div className="flex items-center gap-2 mb-2">
                 <div className="text-xs text-gray-400 font-mono">Tests</div>
@@ -760,7 +942,7 @@ export function PythonSection({
           )}
 
           {/* Hidden tests — count only, assertions never shown */}
-          {!isFullscreen && !isPhonePreview && hiddenTests.length > 0 && (
+          {!isFullscreen && !isLearnPreview && hiddenTests.length > 0 && (
             <div
               className={`flex items-center justify-between gap-2 px-3 py-2 rounded-lg text-sm border ${
                 submitted
@@ -781,7 +963,7 @@ export function PythonSection({
           )}
 
           {/* Submission feedback */}
-          {!isFullscreen && !isPhonePreview && submitted && (
+          {!isFullscreen && !isLearnPreview && submitted && (
             <div
               className={`rounded-lg px-4 py-3 text-sm border ${
                 allPassed
@@ -797,9 +979,9 @@ export function PythonSection({
             </div>
           )}
 
-          {!isFullscreen && !isPhonePreview && codeFeedbackPanel}
+          {!isFullscreen && !isLearnPreview && codeFeedbackPanel}
 
-          {!isPhonePreview && <p className="text-xs text-gray-400">
+          {!isLearnPreview && <p className="text-xs text-gray-400">
             Your code, output, and results save automatically. Submitting or passing tests does not complete the lesson — use &quot;Mark Complete&quot; for that.
           </p>}
         </div>
@@ -824,28 +1006,162 @@ function PreviewModeToggle({
     >
       <button
         type="button"
-        onClick={() => onChange("desktop")}
-        aria-pressed={mode === "desktop"}
-        title="View desktop mode"
+        onClick={() => onChange("attempt")}
+        aria-pressed={mode === "attempt"}
+        title="View attempt mode"
         className={`inline-flex items-center gap-1.5 rounded-md px-2.5 text-xs font-medium transition-colors ${
-          mode === "desktop" ? "bg-gray-900 text-white" : "text-gray-500 hover:bg-gray-50 hover:text-gray-700"
+          mode === "attempt" ? "bg-gray-900 text-white" : "text-gray-500 hover:bg-gray-50 hover:text-gray-700"
         }`}
       >
-        <Monitor className="h-3.5 w-3.5" aria-hidden="true" />
-        Desktop
+        <Keyboard className="h-3.5 w-3.5" aria-hidden="true" />
+        Attempt
       </button>
       <button
         type="button"
-        onClick={() => onChange("phone")}
-        aria-pressed={mode === "phone"}
-        title="View phone mode"
+        onClick={() => onChange("learn")}
+        aria-pressed={mode === "learn"}
+        title="View learn mode"
         className={`inline-flex items-center gap-1.5 rounded-md px-2.5 text-xs font-medium transition-colors ${
-          mode === "phone" ? "bg-gray-900 text-white" : "text-gray-500 hover:bg-gray-50 hover:text-gray-700"
+          mode === "learn" ? "bg-gray-900 text-white" : "text-gray-500 hover:bg-gray-50 hover:text-gray-700"
         }`}
       >
-        <Smartphone className="h-3.5 w-3.5" aria-hidden="true" />
-        Phone
+        <BookOpen className="h-3.5 w-3.5" aria-hidden="true" />
+        Learn
       </button>
     </div>
   );
+}
+
+function LearnQuestion({
+  eyebrow,
+  typeLabel,
+  prompt,
+  code,
+  options,
+  answer,
+}: {
+  eyebrow: string;
+  typeLabel: string;
+  prompt: string;
+  code?: string;
+  options: string[];
+  answer: string;
+}) {
+  const questionKind = typeLabel.toLowerCase().includes("order")
+    ? "order"
+    : typeLabel.toLowerCase().includes("select all")
+      ? "multiple"
+      : "single";
+  const [selectedIndexes, setSelectedIndexes] = useState<number[]>([]);
+
+  function toggleOption(index: number) {
+    if (questionKind === "single") {
+      setSelectedIndexes([index]);
+      return;
+    }
+    if (questionKind === "multiple") {
+      setSelectedIndexes((current) =>
+        current.includes(index)
+          ? current.filter((item) => item !== index)
+          : [...current, index]
+      );
+      return;
+    }
+    setSelectedIndexes((current) =>
+      current.includes(index) ? current : [...current, index]
+    );
+  }
+
+  return (
+    <div className="min-w-0 bg-gray-50/70 px-3 py-3">
+      <div className="flex flex-wrap items-center gap-2">
+        <div className="text-[11px] font-semibold uppercase tracking-wider text-gray-500">{eyebrow}</div>
+        <div className="bg-white px-2 py-0.5 text-[11px] font-semibold uppercase tracking-wider text-blue-700">{typeLabel}</div>
+      </div>
+      <div className="mt-2 break-words text-sm font-semibold leading-6 text-gray-800">{prompt}</div>
+      {code && (
+        <pre className="mt-2 overflow-x-auto whitespace-pre-wrap break-words bg-white px-3 py-2 text-xs leading-5 text-gray-700">
+          <code>{code}</code>
+        </pre>
+      )}
+      <div className="mt-2 grid min-w-0 gap-1.5">
+        {options.map((option, index) => (
+          <label
+            key={`${option}-${index}`}
+            className={`flex min-w-0 cursor-pointer gap-2 border px-2 py-1.5 text-sm leading-5 ${
+              selectedIndexes.includes(index)
+                ? "border-blue-300 bg-blue-50 text-blue-950"
+                : "border-gray-100 bg-white text-gray-700"
+            }`}
+          >
+            <input
+              type={questionKind === "single" ? "radio" : "checkbox"}
+              name={`learn-question-${eyebrow}`}
+              checked={selectedIndexes.includes(index)}
+              onChange={() => toggleOption(index)}
+              className="mt-1 h-3.5 w-3.5 shrink-0"
+            />
+            <span className="min-w-0 break-words">
+              <span className="mr-2 font-semibold text-gray-400">{String.fromCharCode(65 + index)}.</span>
+              {option}
+            </span>
+          </label>
+        ))}
+      </div>
+      {questionKind === "order" && (
+        <div className="mt-2 border-l-2 border-blue-300 bg-white px-3 py-2">
+          <div className="mb-1 text-[11px] font-semibold uppercase tracking-wider text-blue-700">Your order</div>
+          {selectedIndexes.length ? (
+            <ol className="space-y-1 text-sm leading-5 text-gray-700">
+              {selectedIndexes.map((index, orderIndex) => (
+                <li key={`${index}-${orderIndex}`} className="break-words">
+                  {orderIndex + 1}. {options[index]}
+                </li>
+              ))}
+            </ol>
+          ) : (
+            <p className="text-sm text-gray-500">Select the steps above in order.</p>
+          )}
+          {selectedIndexes.length > 0 && (
+            <button
+              type="button"
+              onClick={() => setSelectedIndexes([])}
+              className="mt-2 text-xs font-semibold uppercase tracking-wider text-blue-700"
+            >
+              Reset order
+            </button>
+          )}
+        </div>
+      )}
+      <details className="mt-2">
+        <summary className="cursor-pointer select-none text-xs font-semibold uppercase tracking-wider text-blue-700">
+          Check understanding
+        </summary>
+        <p className="mt-2 break-words text-sm leading-6 text-blue-950">{answer}</p>
+      </details>
+    </div>
+  );
+}
+
+function describeCodeLine(line: string): string {
+  const trimmed = line.trim();
+  if (/^def\s+/.test(trimmed)) {
+    return "Defines the function boundary: name, inputs, and where the returned value must come from.";
+  }
+  if (/^return\b/.test(trimmed)) {
+    return "Returns the final object, so it must match the expected output format.";
+  }
+  if (/^for\s+/.test(trimmed)) {
+    return "Loops through input pieces one at a time so the helper can build or update a result.";
+  }
+  if (/^if\s+/.test(trimmed) || /^elif\s+/.test(trimmed) || /^else\b/.test(trimmed)) {
+    return "Chooses a branch, so the learner should ask which cases go down this path.";
+  }
+  if (/\bfor\b.+\bin\b/.test(trimmed) && /[\[{(]/.test(trimmed)) {
+    return "Uses a comprehension or compact loop to transform a collection into another collection.";
+  }
+  if (/=/.test(trimmed)) {
+    return "Creates or updates a named intermediate value that should be traced against the examples.";
+  }
+  return "Performs one step in the input-to-output route and should be tied back to a concrete example.";
 }

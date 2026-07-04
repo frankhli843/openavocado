@@ -2,10 +2,15 @@
  * GET /api/visual-artifacts/[slug]/sandbox
  *
  * APPROVAL GATE: Returns a full HTML page that loads and auto-renders the
- * compiled artifact bundle. Only serves HTML when:
+ * compiled artifact bundle. Normally serves HTML only when:
  *   1. The artifact exists.
  *   2. build_status = 'qa_approved'.
  *   3. compiled_asset_path is set.
+ *
+ * QA PREVIEW: local-only reviewer automation may render pending artifacts with
+ * ?qa=pending while build_status = 'pending_qa'. This lets Chrome MCP inspect
+ * the exact compiled bundle before approval without exposing unapproved code
+ * through public/prod hostnames.
  *
  * The main app wraps this in <iframe sandbox="allow-scripts allow-same-origin">
  * so Chrome MCP can inspect the rendered output during QA and live lessons.
@@ -19,11 +24,15 @@
  */
 import { NextResponse, type NextRequest } from "next/server";
 import { getArtifactBySlug } from "@/lib/visual-artifacts/db";
+import {
+  canServeArtifactSandbox,
+  hostnameFromRequestHost,
+} from "@/lib/visual-artifacts/sandbox-access";
 
 type Params = { slug: string };
 
 export async function GET(
-  _req: NextRequest,
+  req: NextRequest,
   { params }: { params: Promise<Params> }
 ) {
   const { slug } = await params;
@@ -36,7 +45,14 @@ export async function GET(
     });
   }
 
-  if (artifact.build_status !== "qa_approved") {
+  const qaMode = req.nextUrl.searchParams.get("qa");
+  const requestHostname =
+    hostnameFromRequestHost(req.headers.get("host")) ?? req.nextUrl.hostname;
+  if (!canServeArtifactSandbox({
+    buildStatus: artifact.build_status,
+    qaMode,
+    hostname: requestHostname,
+  })) {
     return new NextResponse(
       `Artifact "${slug}" is not approved for rendering (status: ${artifact.build_status}).`,
       { status: 403, headers: { "Content-Type": "text/plain" } }
@@ -60,6 +76,7 @@ export async function GET(
     headers: {
       "Content-Type": "text/html; charset=utf-8",
       "X-Frame-Options": "SAMEORIGIN",
+      "X-Artifact-QA-Preview": qaMode === "pending" ? "local-pending" : "approved",
       // No caching — approval status can change, and we want fresh content in Chrome MCP
       "Cache-Control": "no-store",
     },
@@ -106,8 +123,8 @@ function buildSandboxHtml(title: string, bundleUrl: string): string {
       max-width: 100%;
     }
     #root * {
-      min-width: 0;
-      max-width: 100%;
+      min-width: 0 !important;
+      max-width: 100% !important;
       overflow-wrap: break-word;
     }
     @media (max-width: 430px) {
@@ -125,6 +142,8 @@ function buildSandboxHtml(title: string, bundleUrl: string): string {
       #root [style*="width:"],
       #root [style*="min-width"],
       #root [style*="minWidth"] {
+        width: auto !important;
+        min-width: 0 !important;
         max-width: 100% !important;
       }
     }

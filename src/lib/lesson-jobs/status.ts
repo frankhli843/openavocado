@@ -38,6 +38,11 @@ const STAGE_LABELS: Record<string, string> = {
   "lesson.generated": "Lesson ready",
   generating_audio: "Generating audio",
   "browser.verifying": "Verifying in browser",
+  "qa.requested": "Waiting for QA",
+  "qa.browser_check": "QA browser check",
+  "qa.repair_needed": "QA repair needed",
+  "qa.passed": "QA passed",
+  "qa.failed": "QA failed",
   "repairing": "Repairing lesson",
   finalizing: "Finalizing",
   completed: "Done",
@@ -61,6 +66,11 @@ const STAGE_OFFSETS: Record<string, number> = {
   "lesson.generated": 130,
   generating_audio: 145,
   "browser.verifying": 165,
+  "qa.requested": 170,
+  "qa.browser_check": 175,
+  "qa.repair_needed": 175,
+  "qa.passed": 178,
+  "qa.failed": 180,
   repairing: 175,
   finalizing: 175,
   completed: 180,
@@ -96,9 +106,13 @@ export function parseJobProgressEvents(raw: string | null | undefined): JobProgr
 }
 
 export function summarizeJobProgress(job: NextLessonJob, nowMs = Date.now()): JobProgressView {
-  const events = parseJobProgressEvents(job.progress_events);
+  const events = [
+    ...parseJobProgressEvents(job.progress_events),
+    ...parseJobProgressEvents(job.qa_events),
+  ];
   const lastEvent = [...events].reverse().find((event) => event.stage || event.message);
   const stage =
+    job.qa_stage ||
     job.harness_stage ||
     lastEvent?.stage ||
     (job.status === "completed" ? "completed" : job.status === "failed" ? "failed" : "queued");

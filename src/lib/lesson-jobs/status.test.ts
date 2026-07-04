@@ -29,6 +29,15 @@ function job(overrides: Partial<NextLessonJob> = {}): NextLessonJob {
     last_error_detail: null,
     provider_name: null,
     output_lesson_id: null,
+    qa_status: null,
+    qa_stage: null,
+    qa_events: null,
+    qa_agent_ref: null,
+    qa_lesson_url: null,
+    qa_desktop_screenshot_ref: null,
+    qa_mobile_screenshot_ref: null,
+    qa_notes: null,
+    qa_completed_at: null,
     ...overrides,
   };
 }
@@ -68,6 +77,25 @@ describe("lesson job progress status", () => {
     expect(summary.percent).toBe(100);
     expect(summary.remainingSeconds).toBe(0);
     expect(summary.detail).toBe("Ready to open");
+  });
+
+  it("includes separate QA events in the progress trail", () => {
+    const summary = summarizeJobProgress(
+      job({
+        harness_stage: null,
+        qa_status: "running",
+        qa_stage: "qa.browser_check",
+        qa_events: JSON.stringify([
+          { ts: "2026-06-29T13:01:10.000Z", stage: "qa.requested", message: "Separate QA requested" },
+          { ts: "2026-06-29T13:01:20.000Z", stage: "qa.browser_check", message: "Reviewer opened mobile lesson URL" },
+        ]),
+      }),
+      Date.parse("2026-06-29T13:02:00.000Z")
+    );
+
+    expect(summary.stageLabel).toBe("QA browser check");
+    expect(summary.events).toHaveLength(5);
+    expect(summary.events.at(-1)?.message).toBe("Reviewer opened mobile lesson URL");
   });
 
   it("formats time estimates compactly", () => {

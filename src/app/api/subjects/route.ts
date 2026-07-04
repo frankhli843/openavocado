@@ -232,7 +232,10 @@ export async function GET(request: Request) {
                     j.trigger_event, j.adapter, j.status, j.payload, j.adapter_ref, j.error,
                     j.dispatched_at, j.completed_at, j.created_at, j.updated_at,
                     j.harness_status, j.harness_stage, j.progress_events, j.retry_count,
-                    j.last_error_detail, j.provider_name, j.output_lesson_id
+                    j.last_error_detail, j.provider_name, j.output_lesson_id,
+                    j.qa_status, j.qa_stage, j.qa_events, j.qa_agent_ref, j.qa_lesson_url,
+                    j.qa_desktop_screenshot_ref, j.qa_mobile_screenshot_ref, j.qa_notes,
+                    j.qa_completed_at
              FROM next_lesson_jobs j
              LEFT JOIN lessons output_lesson ON output_lesson.id = j.output_lesson_id
              WHERE j.subject_id = ?

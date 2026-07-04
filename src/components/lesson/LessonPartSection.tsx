@@ -263,16 +263,16 @@ export function AudioSyncedLessonVisual({
   };
 
   return (
-    <div className="min-w-0 border-t border-gray-100 pt-4 xl:border-t-0 xl:pt-0">
+    <div className="w-full min-w-0 max-w-full overflow-hidden border-t border-gray-100 pt-4 xl:border-t-0 xl:pt-0">
       <div className="border-b border-gray-100 pb-3">
         <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-          <div>
+          <div className="min-w-0">
             <div className="text-xs font-semibold uppercase tracking-wider text-blue-600">
               Audio-synced visual
             </div>
-            <div className="text-sm font-semibold text-gray-900">{cue.headline}</div>
+            <div className="min-w-0 break-words text-sm font-semibold text-gray-900">{cue.headline}</div>
           </div>
-          <div className="text-xs tabular-nums text-gray-500">
+          <div className="shrink-0 text-xs tabular-nums text-gray-500">
             {formatTime(currentTime)} / {formatTime(safeDuration)}
           </div>
         </div>
@@ -281,16 +281,20 @@ export function AudioSyncedLessonVisual({
         </div>
       </div>
 
-      <div className="grid min-w-0 gap-4 pt-4 pb-16 sm:pb-0">
-        <div className="space-y-4">
-          <div className="flex min-w-0 gap-2 overflow-x-auto pb-1" aria-label="Audio visual steps">
+      <div className="grid w-full min-w-0 max-w-full gap-4 pt-4 pb-16 sm:pb-0">
+        <div className="min-w-0 space-y-4">
+          <div
+            className="grid min-w-0 gap-2 pb-1"
+            style={{ gridTemplateColumns: "repeat(auto-fit, minmax(min(8rem, 100%), 1fr))" }}
+            aria-label="Audio visual steps"
+          >
             {pipelineCues.map((stage, index) => {
               const done = index < activePipelineIndex;
               const active = index === activePipelineIndex;
               return (
                 <div
                   key={`${stage.start}-${stage.label}`}
-                  className={`min-w-[7rem] flex-1 border-b-2 px-2 py-2 text-center text-xs font-medium ${
+                  className={`min-w-0 border-b-2 px-2 py-2 text-center text-xs font-medium leading-4 ${
                     active
                       ? "border-blue-600 bg-blue-50 text-blue-900"
                       : done
@@ -298,23 +302,26 @@ export function AudioSyncedLessonVisual({
                       : "border-gray-100 bg-gray-50/40 text-gray-400"
                   }`}
                 >
-                  {stage.label}
+                  <span className="block min-w-0 break-words">{stage.label}</span>
                 </div>
               );
             })}
           </div>
 
-          <div className="grid gap-3">
+          <div className="grid min-w-0 gap-2 md:grid-cols-3">
             <PipelineCard label="Receives" text={cue.receive ?? "prior visual state"} tone="gray" />
             <PipelineCard label="Current operation" text={cue.transform ?? cue.headline} tone="blue" />
             <PipelineCard label="Passes forward" text={cue.pass ?? "updated visual state"} tone="green" />
           </div>
-          <div className="border-l-2 border-gray-200 bg-gray-50/60 px-3 py-2 text-sm leading-6 text-gray-600">
+          <div className="min-w-0 break-words border-l-2 border-gray-200 bg-gray-50/60 px-3 py-2 text-sm leading-6 text-gray-600">
             {cue.narration}
           </div>
 
           {activeArtifactSlug ? (
-            <div className="border-t border-gray-100 pt-3" data-audio-synced-artifact={activeArtifactSlug}>
+            <div
+              className="w-full min-w-0 max-w-full overflow-hidden border-t border-gray-100 pt-3"
+              data-audio-synced-artifact={activeArtifactSlug}
+            >
               <BespokeArtifactRenderer
                 key={activeArtifactSlug}
                 artifactSlug={activeArtifactSlug}
@@ -410,9 +417,9 @@ function PipelineCard({
         ? "border-emerald-200 bg-emerald-50/70 text-emerald-900"
         : "border-gray-200 bg-gray-50/80 text-gray-700";
   return (
-    <div className={`border-l-2 px-3 py-2 ${toneClass}`}>
-      <div className="text-[11px] font-semibold uppercase tracking-wider opacity-70">{label}</div>
-      <div className="mt-0.5 text-sm leading-5">{text}</div>
+    <div className={`min-w-0 border-l-2 px-3 py-2 ${toneClass}`}>
+      <div className="min-w-0 break-words text-[11px] font-semibold uppercase tracking-wider opacity-70">{label}</div>
+      <div className="mt-0.5 min-w-0 break-words text-sm leading-5">{text}</div>
     </div>
   );
 }

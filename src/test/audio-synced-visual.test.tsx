@@ -74,16 +74,42 @@ describe("AudioSyncedLessonVisual", () => {
 
     expect(screen.getAllByText("Context vector leaves attention").length).toBeGreaterThan(0);
     expect(screen.getByText("The approved artifact should receive cueIndex 1 for this beat.")).toBeInTheDocument();
-    expect(screen.getByLabelText("Audio visual steps")).toBeInTheDocument();
+    const steps = screen.getByLabelText("Audio visual steps");
+    expect(steps).toBeInTheDocument();
+    expect(steps).toHaveStyle({
+      gridTemplateColumns: "repeat(auto-fit, minmax(min(8rem, 100%), 1fr))",
+    });
     expect(container.querySelector('[data-audio-synced-artifact="attention-score-grid-artifact"]')).toBeInTheDocument();
     const iframe = container.querySelector("iframe") as HTMLIFrameElement;
     expect(iframe).toBeInTheDocument();
     expect(iframe.getAttribute("src")).toBe("/api/visual-artifacts/attention-score-grid-artifact/sandbox");
+    expect(iframe.className).toContain("max-w-full");
 
     expect(screen.queryByText("Input panel")).not.toBeInTheDocument();
     expect(screen.queryByText("Attention panel")).not.toBeInTheDocument();
     expect(screen.queryByText("Timed scene board")).not.toBeInTheDocument();
     expect(screen.queryByText("Transformer block scene")).not.toBeInTheDocument();
+  });
+
+  it("wraps long cue labels and pipeline text instead of requiring horizontal mobile scroll", () => {
+    const longVisual = {
+      ...visual,
+      cues: visual.cues.map((cue, index) => ({
+        ...cue,
+        label: `${cue.label} with a long explanatory label ${index}`,
+        receive: "A long received hidden-state object description that must wrap inside the mobile lesson card.",
+        transform: "A long current operation description that must wrap instead of clipping.",
+        pass: "A long pass-forward description that must stay within the viewport.",
+      })),
+    } satisfies AudioSyncedVisualContent;
+
+    const { container } = render(<AudioSyncedLessonVisual visual={longVisual} currentTime={12} duration={30} onSeek={vi.fn()} />);
+
+    expect(screen.getByLabelText("Audio visual steps")).toHaveClass("grid");
+    for (const label of ["Receives", "Current operation", "Passes forward"]) {
+      expect(screen.getByText(label).closest("div")).toHaveClass("break-words");
+    }
+    expect(container.querySelector("[data-audio-synced-artifact]")).toHaveClass("overflow-hidden");
   });
 
   it("fails loudly instead of drawing a generic panel when artifact_slug is missing", () => {

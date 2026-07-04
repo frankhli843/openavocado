@@ -108,7 +108,7 @@ export function BespokeArtifactRenderer({
   }
 
   return (
-    <div className="relative w-full" style={{ minHeight }}>
+    <div className="relative w-full min-w-0 max-w-full overflow-hidden" style={{ minHeight }}>
       {!isReady && (
         <div className="absolute inset-0 flex items-center justify-center text-gray-400 text-sm">
           Loading visualization…
@@ -120,8 +120,11 @@ export function BespokeArtifactRenderer({
         title={`Visual artifact: ${artifactSlug}`}
         // allow-same-origin needed for Chrome MCP inspection during QA
         sandbox="allow-scripts allow-same-origin"
-        className="w-full border-0"
+        className="block w-full max-w-full border-0"
         style={{
+          width: "100%",
+          maxWidth: "100%",
+          minWidth: 0,
           height: iframeHeight,
           opacity: isReady ? 1 : 0,
           transition: "opacity 0.2s ease",

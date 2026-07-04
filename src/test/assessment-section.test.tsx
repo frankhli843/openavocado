@@ -155,4 +155,40 @@ describe("AssessmentSection", () => {
       "second",
     ]);
   });
+
+  it("does not render blank generated assessment prompts as numbered empty questions", () => {
+    render(
+      <AssessmentSection
+        activity={activity({
+          questions: [
+            { id: "blank", text: "", type: "free_text" },
+            { id: "valid", text: "Explain what changed.", type: "free_text" },
+          ],
+        })}
+        answers={{}}
+        onChange={() => undefined}
+      />
+    );
+
+    expect(screen.queryByText(/^1\.\s*$/)).not.toBeInTheDocument();
+    expect(screen.getByPlaceholderText("Write your answer here...")).toBeInTheDocument();
+    expect(screen.getByText("1. Explain what changed.")).toBeInTheDocument();
+  });
+
+  it("shows a repair message when every generated assessment prompt is blank", () => {
+    render(
+      <AssessmentSection
+        activity={activity({
+          questions: [
+            { id: "blank", text: " ", type: "free_text" },
+          ],
+        })}
+        answers={{}}
+        onChange={() => undefined}
+      />
+    );
+
+    expect(screen.getByText(/generated without usable prompts/)).toBeInTheDocument();
+    expect(screen.queryByPlaceholderText("Write your answer here...")).not.toBeInTheDocument();
+  });
 });

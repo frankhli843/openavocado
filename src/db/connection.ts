@@ -270,6 +270,35 @@ function applyAdditiveMigrations(db: Database.Database): void {
   if (!hasColumn("next_lesson_jobs", "output_lesson_id")) {
     db.exec("ALTER TABLE next_lesson_jobs ADD COLUMN output_lesson_id INTEGER REFERENCES lessons(id) ON DELETE SET NULL");
   }
+  // Separate QA lifecycle for prod/local harness jobs. Generation is not
+  // complete until a different reviewer records browser evidence.
+  if (!hasColumn("next_lesson_jobs", "qa_status")) {
+    db.exec("ALTER TABLE next_lesson_jobs ADD COLUMN qa_status TEXT");
+  }
+  if (!hasColumn("next_lesson_jobs", "qa_stage")) {
+    db.exec("ALTER TABLE next_lesson_jobs ADD COLUMN qa_stage TEXT");
+  }
+  if (!hasColumn("next_lesson_jobs", "qa_events")) {
+    db.exec("ALTER TABLE next_lesson_jobs ADD COLUMN qa_events TEXT");
+  }
+  if (!hasColumn("next_lesson_jobs", "qa_agent_ref")) {
+    db.exec("ALTER TABLE next_lesson_jobs ADD COLUMN qa_agent_ref TEXT");
+  }
+  if (!hasColumn("next_lesson_jobs", "qa_lesson_url")) {
+    db.exec("ALTER TABLE next_lesson_jobs ADD COLUMN qa_lesson_url TEXT");
+  }
+  if (!hasColumn("next_lesson_jobs", "qa_desktop_screenshot_ref")) {
+    db.exec("ALTER TABLE next_lesson_jobs ADD COLUMN qa_desktop_screenshot_ref TEXT");
+  }
+  if (!hasColumn("next_lesson_jobs", "qa_mobile_screenshot_ref")) {
+    db.exec("ALTER TABLE next_lesson_jobs ADD COLUMN qa_mobile_screenshot_ref TEXT");
+  }
+  if (!hasColumn("next_lesson_jobs", "qa_notes")) {
+    db.exec("ALTER TABLE next_lesson_jobs ADD COLUMN qa_notes TEXT");
+  }
+  if (!hasColumn("next_lesson_jobs", "qa_completed_at")) {
+    db.exec("ALTER TABLE next_lesson_jobs ADD COLUMN qa_completed_at TEXT");
+  }
 
   // Per-user provider configuration for the native harness.
   // Credentials (encrypted_api_key) are stored server-side only and never

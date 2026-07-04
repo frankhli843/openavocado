@@ -43,7 +43,6 @@ function makeDb() {
   db.pragma("journal_mode = WAL");
   db.pragma("foreign_keys = ON");
   db.exec(readFileSync(path.join(process.cwd(), "src", "db", "schema.sql"), "utf-8"));
-  db.exec("ALTER TABLE next_lesson_jobs ADD COLUMN output_lesson_id INTEGER");
   return db;
 }
 
