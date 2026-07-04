@@ -26,6 +26,7 @@
  * real-time so the subject page can show granular status while it runs.
  */
 
+import fs from "fs";
 import { getDb, closeDb } from "../src/db/connection";
 import { generateInitialAssessment } from "../src/lib/lesson-generator/initial-assessment";
 import { generateLessonAudio } from "../src/lib/audio/generate-lesson-audio";
@@ -277,6 +278,11 @@ async function callGemini(
   }
 
   const body = {
+    systemInstruction: {
+      parts: [{
+        text: "You output strict RFC 8259 JSON. Every backslash inside a JSON string value must be doubled (\\\\). LaTeX like \\frac, \\sigma, \\alpha must be written as \\\\frac, \\\\sigma, \\\\alpha. Never emit a raw (single) backslash inside a string. All newlines inside string values must be the two-character sequence \\n, never a literal newline character.",
+      }],
+    },
     contents: [{ role: "user", parts: [{ text: prompt }] }],
     generationConfig,
   };
@@ -1392,11 +1398,19 @@ async function handleLessonCompleted(
   } catch (err) {
     const msg = err instanceof Error ? err.message : String(err);
     if (msg.includes("Bad escaped character") || msg.includes("Bad control character")) {
+      const repaired = repairGeminiJson(cleanRaw);
       try {
-        draft = JSON.parse(repairGeminiJson(cleanRaw)) as GeminiLessonDraft;
+        draft = JSON.parse(repaired) as GeminiLessonDraft;
         console.warn("[lesson-harness] JSON repair applied to lesson draft");
       } catch (err2) {
         const msg2 = err2 instanceof Error ? err2.message : String(err2);
+        // Save debug dump so we can inspect what the repair produced
+        try {
+          const ts = Date.now();
+          fs.writeFileSync(`/tmp/avo-raw-${ts}.json`, cleanRaw.slice(0, 60000));
+          fs.writeFileSync(`/tmp/avo-repaired-${ts}.json`, repaired.slice(0, 60000));
+          console.error(`[lesson-harness] Debug dumps: /tmp/avo-raw-${ts}.json and /tmp/avo-repaired-${ts}.json`);
+        } catch (_) {}
         return { ok: false, error: `Gemini response parse failed: ${msg2}` };
       }
     } else {
