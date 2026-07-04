@@ -1297,10 +1297,23 @@ async function handleLessonCompleted(
     return { ok: false, error: `Gemini generation failed: ${msg}` };
   }
 
-  // Parse response
+  // Parse response — strip markdown fences if the model wrapped the JSON
+  // despite responseMimeType: "application/json" (happens with thinkingBudget=0).
+  const cleanRaw = (() => {
+    const t = raw.trim();
+    const fence = t.match(/^```(?:json)?\s*\n?([\s\S]*?)\n?```\s*$/);
+    if (fence) return fence[1].trim();
+    // Trim trailing garbage after the closing brace/bracket
+    const lastBrace = t.lastIndexOf("}");
+    const lastBracket = t.lastIndexOf("]");
+    const end = Math.max(lastBrace, lastBracket);
+    if (end !== -1 && end < t.length - 1) return t.slice(0, end + 1);
+    return t;
+  })();
+
   let draft: GeminiLessonDraft;
   try {
-    draft = JSON.parse(raw) as GeminiLessonDraft;
+    draft = JSON.parse(cleanRaw) as GeminiLessonDraft;
   } catch (err) {
     const msg = err instanceof Error ? err.message : String(err);
     return { ok: false, error: `Gemini response parse failed: ${msg}` };
@@ -1379,9 +1392,20 @@ async function handleLessonDiscarded(
     return { ok: false, error: `Gemini generation failed: ${msg}` };
   }
 
+  const cleanRaw2 = (() => {
+    const t = raw.trim();
+    const fence = t.match(/^```(?:json)?\s*\n?([\s\S]*?)\n?```\s*$/);
+    if (fence) return fence[1].trim();
+    const lastBrace = t.lastIndexOf("}");
+    const lastBracket = t.lastIndexOf("]");
+    const end = Math.max(lastBrace, lastBracket);
+    if (end !== -1 && end < t.length - 1) return t.slice(0, end + 1);
+    return t;
+  })();
+
   let draft: GeminiLessonDraft;
   try {
-    draft = JSON.parse(raw) as GeminiLessonDraft;
+    draft = JSON.parse(cleanRaw2) as GeminiLessonDraft;
   } catch (err) {
     const msg = err instanceof Error ? err.message : String(err);
     return { ok: false, error: `Gemini response parse failed: ${msg}` };
