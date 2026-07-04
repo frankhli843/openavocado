@@ -41,7 +41,7 @@ export function ensureDemoLessonsForLearner(db: Database.Database, learnerId: nu
       .run(
         learnerId,
         DEMO_SUBJECT_TITLE,
-        "A built-in three-lesson demo track that shows how AvocadoCore teaches AI model building with audio, reading, interactive widgets, and assessment.",
+        "An enriched built-in demo track that shows how AvocadoCore teaches AI model building with long-form audio, DB-backed bespoke visuals, code practice, and assessment.",
         "Understand the core path from text to tokens, transformer predictions, and efficient LLM serving.",
         "Keep the demo hands-on and visual. Each lesson must work without external credentials and should show core AI concepts through generated bespoke visual artifacts, audio-synced visuals, coding walkthroughs, and varied assessments."
       ).lastInsertRowid as number);
