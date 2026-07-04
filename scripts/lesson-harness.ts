@@ -868,6 +868,19 @@ function normalizeFormulaBlocks(blocks: ReadingBlock[]): ReadingBlock[] {
   });
 }
 
+// Coerce string fields that Gemini occasionally returns as objects/arrays
+function normalizeDraftStringFields(draft: GeminiLessonDraft): void {
+  const coerce = (val: unknown): string => {
+    if (typeof val === "string") return val;
+    if (val == null) return "";
+    return JSON.stringify(val);
+  };
+  const d = draft as unknown as Record<string, unknown>;
+  d.comprehensive_lesson_plan = coerce(draft.comprehensive_lesson_plan);
+  d.planning_rationale = coerce(draft.planning_rationale);
+  d.reading_summary = coerce(draft.reading_summary);
+}
+
 // ─── Lesson assembly and DB write ─────────────────────────────────────────────
 
 function insertGeneratedLesson(
@@ -1338,6 +1351,7 @@ async function handleLessonCompleted(
       }
     }
   }
+  normalizeDraftStringFields(draft);
 
   // Write to DB
   updateJobProgress(db, subjectId, triggerEvent, "validating", "Writing lesson to database");
@@ -1429,6 +1443,7 @@ async function handleLessonDiscarded(
       }
     }
   }
+  normalizeDraftStringFields(draft);
 
   updateJobProgress(db, subjectId, triggerEvent, "validating", "Writing replacement lesson to database");
   const lessonId = insertGeneratedLesson(db, draft, subjectId, learnerId, event.event);
