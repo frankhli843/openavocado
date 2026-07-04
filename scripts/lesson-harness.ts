@@ -323,9 +323,17 @@ function incrementRetryCount(
 function isRetryableError(err: unknown): boolean {
   if (!(err instanceof Error)) return false;
   const msg = err.message;
-  // Retry only on HTTP 500 (server-side transient). Timeout/AbortError goes
-  // straight to the fallback model — retrying a slow prompt won't help.
+  // Retry only on HTTP 500 (server-side transient).
   return msg.includes("Gemini HTTP 500");
+}
+
+function isTimeoutError(err: unknown): boolean {
+  if (!(err instanceof Error)) return false;
+  return (
+    err.name === "AbortError" ||
+    err.message.includes("AbortError") ||
+    err.message.includes("The operation was aborted")
+  );
 }
 
 async function callGeminiWithRetry(
@@ -360,8 +368,15 @@ async function callGeminiWithRetry(
       return { text, modelUsed: primaryModel };
     } catch (err) {
       lastError = err instanceof Error ? err : new Error(String(err));
+      if (isTimeoutError(err)) {
+        // Timeout: no point retrying the same slow call — break and try fallback
+        console.error(
+          `[lesson-harness] Gemini attempt ${attempt + 1} timed out; skipping to fallback model`
+        );
+        break;
+      }
       if (!isRetryableError(err)) {
-        // Non-retryable error (e.g. auth, parse error) — fail fast
+        // Non-retryable error (e.g. auth, parse error) — fail fast, skip fallback
         throw lastError;
       }
       console.error(
