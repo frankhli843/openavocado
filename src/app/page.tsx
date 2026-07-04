@@ -9,6 +9,7 @@ import { Logo } from "@/components/Logo";
 import { SubjectForm } from "@/components/SubjectForm";
 import { ProfileSwitcher } from "@/components/ProfileSwitcher";
 import { readLessonResumeState } from "@/lib/lesson-resume";
+import { isBuiltInDemoSubjectTitle } from "@/lib/demo-subject";
 
 const subjectListCache = new Map<number, SubjectSummary[]>();
 
@@ -165,6 +166,8 @@ function DashboardContent() {
 
   const activeSubjects = subjects.filter((s) => s.status !== "archived");
   const archivedSubjects = subjects.filter((s) => s.status === "archived");
+  const hasPersonalActiveSubject = activeSubjects.some((s) => !isBuiltInDemoSubjectTitle(s.title));
+  const shouldShowCreateSubjectCallout = !loading && !error && activeSubjects.length > 0 && !hasPersonalActiveSubject;
 
   return (
     <div className="min-h-screen bg-white">
@@ -219,6 +222,27 @@ function DashboardContent() {
         {/* Subject grid */}
         {!loading && !error && (
           <>
+            {shouldShowCreateSubjectCallout && (
+              <section className="mb-6 overflow-hidden rounded-lg border-2 border-blue-400 bg-blue-50 shadow-sm ring-2 ring-blue-200 animate-pulse">
+                <div className="flex flex-col gap-4 px-4 py-4 sm:flex-row sm:items-center sm:justify-between sm:px-5">
+                  <div className="min-w-0">
+                    <div className="text-xs font-semibold uppercase tracking-wider text-blue-700">
+                      Start your own path
+                    </div>
+                    <p className="mt-1 break-words text-sm font-medium leading-relaxed text-blue-950">
+                      You are only viewing the built-in demo right now. Create a subject to generate lessons around your own goal.
+                    </p>
+                  </div>
+                  <button
+                    onClick={openCreateForm}
+                    className="shrink-0 rounded-lg bg-blue-700 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-blue-800 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-400"
+                  >
+                    Create subject
+                  </button>
+                </div>
+              </section>
+            )}
+
             {activeSubjects.length > 0 && (
               <section id="active-subjects" className="mb-10 scroll-mt-24">
                 <h2 className="text-sm font-semibold text-gray-500 uppercase tracking-wider mb-4">

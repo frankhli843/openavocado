@@ -1,8 +1,8 @@
 import type Database from "better-sqlite3";
 import { generateLessonAudio } from "@/lib/audio/generate-lesson-audio";
 import type { TtsProvider } from "@/lib/audio/tts";
+import { DEMO_SUBJECT_TITLE } from "@/lib/demo-subject";
 
-export const DEMO_SUBJECT_TITLE = "Demo Lesson: Build your own LLM AI";
 export const DEMO_GENERATOR = "prodavo-demo-seed/v1";
 
 interface LessonSeed {

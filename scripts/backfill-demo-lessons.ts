@@ -11,10 +11,10 @@
  */
 import { closeDb, getDb } from "../src/db/connection";
 import {
-  DEMO_SUBJECT_TITLE,
   ensureDemoLessonAudioForLearner,
   ensureDemoLessonsForLearner,
 } from "../src/lib/demo-lessons";
+import { DEMO_SUBJECT_TITLE } from "../src/lib/demo-subject";
 
 interface LearnerRow {
   id: number;
