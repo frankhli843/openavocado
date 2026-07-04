@@ -50,6 +50,20 @@ export function BespokeArtifactRenderer({
 
   const sandboxUrl = `/api/visual-artifacts/${encodeURIComponent(artifactSlug)}/sandbox`;
 
+  useEffect(() => {
+    setIsReady(false);
+    setError(null);
+    setIframeHeight(minHeight);
+  }, [artifactSlug, minHeight]);
+
+  useEffect(() => {
+    if (isReady || error) return;
+    const timer = window.setTimeout(() => {
+      setError(`Artifact "${artifactSlug}" did not finish loading. Check that it is QA approved, compiled, and sending READY from the sandbox.`);
+    }, 7000);
+    return () => window.clearTimeout(timer);
+  }, [artifactSlug, isReady, error]);
+
   // Listen to messages from the iframe
   useEffect(() => {
     function handleMessage(evt: MessageEvent) {
@@ -61,6 +75,7 @@ export function BespokeArtifactRenderer({
       switch (msg.type) {
         case "READY":
           setIsReady(true);
+          setError(null);
           // Push initial state into the iframe after it's ready
           if (initialState && Object.keys(initialState).length > 0) {
             iframeRef.current?.contentWindow?.postMessage(

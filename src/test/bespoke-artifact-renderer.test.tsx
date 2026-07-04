@@ -12,7 +12,7 @@
  *  - forwards STATE_CHANGE messages to onStateChange
  *  - surfaces an ERROR message as a visible failure state (no fake fallback)
  */
-import { describe, it, expect, vi, beforeEach } from "vitest";
+import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import "@testing-library/jest-dom/vitest";
 import { render, screen, act } from "@testing-library/react";
 import { BespokeArtifactRenderer } from "../components/lesson/widgets/BespokeArtifactRenderer";
@@ -32,6 +32,10 @@ function postFromIframe(data: unknown) {
 describe("BespokeArtifactRenderer", () => {
   beforeEach(() => {
     // jsdom does not navigate iframes; we only assert on attributes + messaging.
+  });
+
+  afterEach(() => {
+    vi.useRealTimers();
   });
 
   it("renders an iframe pointed at the approval-gated sandbox route for the slug", () => {
@@ -82,6 +86,23 @@ describe("BespokeArtifactRenderer", () => {
     expect(alert).toHaveTextContent(/ReferenceError: foo is not defined/);
     // Failure state replaces the iframe entirely (no fake fallback visual).
     expect(document.querySelector("iframe")).toBeNull();
+  });
+
+  it("times out instead of showing the loading state forever when READY never arrives", () => {
+    vi.useFakeTimers();
+    render(<BespokeArtifactRenderer artifactSlug="stuck-visual" />);
+
+    expect(screen.getByText(/Loading visualization/i)).toBeInTheDocument();
+
+    act(() => {
+      vi.advanceTimersByTime(7000);
+    });
+
+    const alert = screen.getByRole("alert");
+    expect(alert).toHaveTextContent(/Visualization rendering error/i);
+    expect(alert).toHaveTextContent(/stuck-visual/);
+    expect(alert).toHaveTextContent(/did not finish loading/i);
+    expect(screen.queryByText(/Loading visualization/i)).not.toBeInTheDocument();
   });
 
   it("ignores messages whose source is not the artifact iframe", () => {
