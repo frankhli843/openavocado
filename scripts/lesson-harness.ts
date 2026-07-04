@@ -359,12 +359,14 @@ async function callGeminiWithRetry(
   const backoffMs = [15_000, 60_000]; // wait before retry 1 and retry 2 (longer for rate-limit recovery)
   const maxRetries = backoffMs.length;
 
-  // For thinking models (gemini-2.5-*): disable thinking to prevent thinking
-  // tokens from consuming the output budget, and raise the token limit so the
-  // full lesson JSON fits without truncation.
+  // For thinking models (gemini-2.5-*): raise the token budget and allow a
+  // small thinking window (1024 tokens). Full thinking causes the lesson JSON
+  // to overflow; zero thinking causes malformed JSON escapes. 1024 is the
+  // sweet spot: enough reasoning to produce valid JSON, small enough to leave
+  // plenty of room for the lesson content within the 65536-token limit.
   const isThinkingModel = (m: string) => /gemini-2\.5/i.test(m);
   const primaryConfig = isThinkingModel(primaryModel)
-    ? { maxOutputTokens: 65536, thinkingBudget: 0 }
+    ? { maxOutputTokens: 65536, thinkingBudget: 1024 }
     : undefined;
 
   let lastError: Error | null = null;
@@ -422,7 +424,7 @@ async function callGeminiWithRetry(
       // token limits and reduce latency for the fallback path.
       const isThinkingModel = /gemini-2\.5/i.test(fallbackModel);
       const fallbackConfig = isThinkingModel
-        ? { maxOutputTokens: 65536, thinkingBudget: 0 }
+        ? { maxOutputTokens: 65536, thinkingBudget: 1024 }
         : undefined;
       const text = await callGemini(prompt, fallbackModel, fallbackConfig);
       return { text, modelUsed: fallbackModel };
