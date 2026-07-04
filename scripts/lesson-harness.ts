@@ -276,7 +276,7 @@ async function callGemini(prompt: string, modelOverride?: string): Promise<strin
     method: "POST",
     headers: { "Content-Type": "application/json", "X-goog-api-key": key },
     body: JSON.stringify(body),
-    signal: AbortSignal.timeout(240_000),
+    signal: AbortSignal.timeout(300_000),
   });
 
   if (!res.ok) {
@@ -323,13 +323,9 @@ function incrementRetryCount(
 function isRetryableError(err: unknown): boolean {
   if (!(err instanceof Error)) return false;
   const msg = err.message;
-  // Retry on HTTP 500 (server-side capacity/transient) or AbortSignal timeout
-  return (
-    msg.includes("Gemini HTTP 500") ||
-    msg.includes("AbortError") ||
-    err.name === "AbortError" ||
-    msg.includes("The operation was aborted")
-  );
+  // Retry only on HTTP 500 (server-side transient). Timeout/AbortError goes
+  // straight to the fallback model — retrying a slow prompt won't help.
+  return msg.includes("Gemini HTTP 500");
 }
 
 async function callGeminiWithRetry(
