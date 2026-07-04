@@ -886,7 +886,8 @@ function repairGeminiJson(text: string): string {
   const out: string[] = [];
   let inString = false;
   let escaped = false;
-  const validEscapeChars = new Set([..."\"\\/ bfnrtu"]);
+  // Valid JSON escape chars after \: " \ / b f n r t u (NOT space)
+  const validEscapeChars = new Set(['"', '\\', '/', 'b', 'f', 'n', 'r', 't', 'u']);
 
   for (let i = 0; i < text.length; i++) {
     const c = text[i];
