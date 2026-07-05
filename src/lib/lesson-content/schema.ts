@@ -1510,17 +1510,20 @@ export function validateAudioSyncedVisualContent(
       `timed cues must cover at least 80% of duration_hint (${duration}s) so the visual changes through the entire audio; last cue ends at ${lastEnd}s`
     );
   }
-  // Minimum cue density: at least 1 cue per 30 seconds for audio > 60s
-  if (duration !== null && duration > 60) {
-    const minCues = Math.ceil(duration / 30);
+  // Minimum cue density: at least 1 cue per 60 seconds for lesson-part audio
+  // (60s < duration <= 600s). Overview audio (> 600s) may use fewer broader
+  // cues. This catches the Lesson 15 Section 86 bug class: 3 cues for 162s.
+  if (duration !== null && duration > 60 && duration <= 600) {
+    const minCues = Math.max(3, Math.ceil(duration / 60));
     if (v.cues.length < minCues) {
       errors.push(
-        `audio of ${duration}s needs at least ${minCues} cues (one per ~30s); got ${v.cues.length}. Plan visual beats roughly every 5-10 seconds.`
+        `audio of ${duration}s needs at least ${minCues} cues (one per ~60s minimum); got ${v.cues.length}. Plan visual beats roughly every 5-10 seconds.`
       );
     }
   }
-  // Gap detection: no gap > 30s between consecutive cues for audio > 60s
-  if (duration !== null && duration > 60 && v.cues.length >= 2) {
+  // Gap detection: no gap > 30s between consecutive cues for lesson-part audio
+  // (60s < duration <= 600s). Overview audio uses broader cues and is exempt.
+  if (duration !== null && duration > 60 && duration <= 600 && v.cues.length >= 2) {
     for (let i = 1; i < v.cues.length; i++) {
       const prev = v.cues[i - 1] as Record<string, unknown>;
       const curr = v.cues[i] as Record<string, unknown>;

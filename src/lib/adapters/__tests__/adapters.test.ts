@@ -588,6 +588,8 @@ describe("dora-task prompts embed the lesson quality bar", () => {
     "audio.synced_visual",
     "FIVE-SECOND VISUAL BEATS",
     "one moving visual beat per 5 seconds",
+    "at least 80% of the audio duration",
+    "no gap exceeding 30 seconds",
     "MANIM / 3BLUE1BROWN-STYLE SCENE DESIGN",
     "attention score grids",
     "MLP layer expansion/compression",
