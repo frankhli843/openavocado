@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { getDb } from "@/db/connection";
 import { getAssessmentAdapter } from "@/lib/assessment";
-import { loadSubjectTags, persistAssessment } from "@/lib/assessment-store";
+import { loadReusableTags, persistAssessment } from "@/lib/assessment-store";
 import { recordLearningEvidence } from "@/lib/learning-evidence";
 import type { Difficulty } from "@/types";
 
@@ -77,7 +77,10 @@ export async function POST(request: Request) {
       );
     }
 
-    const subjectTags = loadSubjectTags(db, subject_id);
+    // Match against the cross-subject tag vocabulary (subject tags first, then
+    // every other subject's tags) so semantically-matching concept labels are
+    // reused across subjects instead of forking near-duplicate rows.
+    const subjectTags = loadReusableTags(db, subject_id);
     const adapter = getAssessmentAdapter();
 
     const outcome = await adapter.assess({

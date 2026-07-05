@@ -15,7 +15,7 @@ import Database from "better-sqlite3";
 import { readFileSync } from "fs";
 import path from "path";
 import { deterministicAssessmentAdapter } from "@/lib/assessment";
-import { persistAssessment, loadSubjectTags } from "@/lib/assessment-store";
+import { persistAssessment, loadSubjectTags, loadReusableTags } from "@/lib/assessment-store";
 import {
   validateAssessmentContent,
   validateNextLessonDiagnostics,
@@ -164,6 +164,66 @@ describe("persistAssessment", () => {
     // And it was created as a misconception (wrong answer).
     const tag = db.prepare("SELECT tag_type FROM tags WHERE name = 'sequential-testing'").get() as { tag_type: string };
     expect(tag.tag_type).toBe("misconception");
+  });
+
+  it("reuses a concept label across subjects instead of forking a duplicate tag", () => {
+    const { learnerId } = seedLearner(db);
+    const subjectA = seedSubject(db, learnerId, "Transformers");
+    const subjectB = seedSubject(db, learnerId, "Attention Deep Dive");
+
+    // Subject A mints a concept tag.
+    const outA = deterministicAssessmentAdapter.assess({
+      question_type: "mc",
+      question_text: "q",
+      concept: "Softmax Scaling",
+      difficulty: "medium",
+      mc_outcome: "correct",
+      subject_tags: loadReusableTags(db, subjectA),
+    });
+    const persistedA = persistAssessment(db, {
+      learner_id: learnerId,
+      subject_id: subjectA,
+      question_id: "qa",
+      question_type: "mc",
+      concept: "Softmax Scaling",
+      difficulty: "medium",
+      outcome: outA,
+    });
+    expect(persistedA.created_tag_names).toContain("softmax-scaling");
+    const tagCountAfterA = (db.prepare("SELECT COUNT(*) AS n FROM tags WHERE name = 'softmax-scaling'").get() as { n: number }).n;
+    expect(tagCountAfterA).toBe(1);
+
+    // Subject B does NOT yet have this tag in its own vocabulary...
+    expect(loadSubjectTags(db, subjectB).map((t) => t.name)).not.toContain("softmax-scaling");
+    // ...but the cross-subject reusable vocabulary surfaces it for matching.
+    expect(loadReusableTags(db, subjectB).map((t) => t.name)).toContain("softmax-scaling");
+
+    // Subject B assesses the same concept; the matcher reuses the existing tag.
+    const outB = deterministicAssessmentAdapter.assess({
+      question_type: "mc",
+      question_text: "q",
+      concept: "Softmax Scaling",
+      difficulty: "medium",
+      mc_outcome: "correct",
+      subject_tags: loadReusableTags(db, subjectB),
+    });
+    persistAssessment(db, {
+      learner_id: learnerId,
+      subject_id: subjectB,
+      question_id: "qb",
+      question_type: "mc",
+      concept: "Softmax Scaling",
+      difficulty: "medium",
+      outcome: outB,
+    });
+
+    // No duplicate global tag row was created...
+    const tagCountAfterB = (db.prepare("SELECT COUNT(*) AS n FROM tags WHERE name = 'softmax-scaling'").get() as { n: number }).n;
+    expect(tagCountAfterB).toBe(1);
+    // ...and the shared tag is now linked to BOTH subjects for cross-subject mastery.
+    const tagId = (db.prepare("SELECT id FROM tags WHERE name = 'softmax-scaling'").get() as { id: number }).id;
+    const links = (db.prepare("SELECT COUNT(*) AS n FROM subject_tags WHERE tag_id = ?").get(tagId) as { n: number }).n;
+    expect(links).toBe(2);
   });
 
   it("IDK answer persists a low-confidence review_needed signal", () => {

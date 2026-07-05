@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { getDb } from "@/db/connection";
 import { getCompletionAdapter } from "@/lib/adapters";
 import { getAssessmentAdapter } from "@/lib/assessment";
-import { loadSubjectTags, persistAssessment } from "@/lib/assessment-store";
+import { loadReusableTags, persistAssessment } from "@/lib/assessment-store";
 import { deserializeQuizState } from "@/lib/quiz-state";
 import { createSubjectJournalEntry } from "@/lib/subject-journal";
 import { evaluateSubjectLevelProgressionWithAi } from "@/lib/level-progression";
@@ -103,7 +103,7 @@ export async function POST(request: Request) {
 
     // ─── Assess freeform assessment answers (tags + mastery evidence) ────────
     const assessor = getAssessmentAdapter();
-    const subjectTags = loadSubjectTags(db, lesson.subject_id);
+    const subjectTags = loadReusableTags(db, lesson.subject_id);
     const assessOne = (
       qid: string,
       text: string,

@@ -54,6 +54,29 @@ export function loadSubjectTags(db: Database.Database, subjectId: number): Subje
   return rows;
 }
 
+/**
+ * Load a cross-subject reusable tag vocabulary for semantic matching. The
+ * current subject's tags come first (so in-subject matches are preferred), then
+ * every other tag in the global `tags` table. This lets the assessor reuse a
+ * semantically-matching concept label owned by another subject instead of
+ * minting a near-duplicate, so shared concepts accumulate cross-subject mastery
+ * evidence. Tags are unique by name globally, so no de-duplication is needed
+ * beyond excluding the subject's own ids from the tail.
+ */
+export function loadReusableTags(db: Database.Database, subjectId: number): SubjectTagRef[] {
+  const inSubject = loadSubjectTags(db, subjectId);
+  const seen = new Set(inSubject.map((t) => t.id));
+  const others = db
+    .prepare(
+      `SELECT t.id AS id, t.name AS name, t.tag_type AS tag_type
+       FROM tags t
+       ORDER BY t.name ASC`
+    )
+    .all() as Array<{ id: number; name: string; tag_type: TagType }>;
+  const tail = others.filter((t) => !seen.has(t.id));
+  return [...inSubject, ...tail];
+}
+
 /** Resolve a tag by name, creating it if absent. Reports whether it was new. */
 function upsertTag(
   db: Database.Database,
