@@ -22,6 +22,7 @@ import {
   validateReadingContent,
   validateMediaContent,
   validatePracticeCodeContent,
+  validateCodeDrillContent,
   validateNextLessonDiagnostics,
   validateLessonPartContent,
   validateAudioSyncedVisualContent,
@@ -377,6 +378,14 @@ export function validateGeneratedContent(
       }
       for (const e of validateGeneratedCodeStudySupport(activity.content)) {
         errors.push(`practice_code ${label}: ${e}`);
+      }
+    }
+
+    // Timed drills are a single scaffolded rep with progressive hints.
+    if (activity.activity_type === "code_drill") {
+      const result = validateCodeDrillContent(activity.content);
+      if (!result.valid) {
+        for (const e of result.errors) errors.push(`code_drill ${label}: ${e}`);
       }
     }
   }

@@ -795,6 +795,141 @@ export function validatePracticeCodeContent(content: unknown): { valid: boolean;
 
 export { YT_ID_RE };
 
+// ─── Code Drill (timed practice mode) ────────────────────────────────────────
+
+/**
+ * A progressive hint for a code drill. Unlocks once the elapsed fraction of the
+ * target time reaches `unlock_at_pct` (a percent in 1..100). Typical drills use
+ * three tiers at 33 / 66 / 100 percent so help appears as time pressure builds
+ * without being punitive.
+ */
+export interface CodeDrillHint {
+  /** Percent of target time elapsed (1..100) at which this hint unlocks. */
+  unlock_at_pct: number;
+  text: string;
+}
+
+/**
+ * Content spec for a `code_drill` activity — a single-pattern timed rep. The
+ * learner sees one prompt, writes code against visible tests, and gets
+ * progressive hints as the timer advances. Timing/hint/attempt data is recorded
+ * as learning evidence so the adaptive model can track execution speed, not just
+ * correctness.
+ */
+export interface CodeDrillContent {
+  /** Canonical concept/pattern slug this drill targets (feeds evidence.concept). */
+  pattern: string;
+  /** The single problem the learner must solve. */
+  prompt: string;
+  /** Target completion time in seconds (60..3600; plan default 300..900). */
+  target_seconds: number;
+  difficulty: "easy" | "medium" | "hard";
+  /** Execution language; defaults to python when omitted. */
+  language?: string;
+  /** Starter scaffold — never the completed solution. */
+  starter_code?: string;
+  /** Visible tests the learner runs while drilling. */
+  tests: CodeTest[];
+  /** Progressive hints, unlocked by elapsed-time thresholds. */
+  hints?: CodeDrillHint[];
+  /** Reference solution, revealed only after submit. */
+  solution?: string;
+}
+
+export function validateCodeDrillContent(content: unknown): { valid: boolean; errors: string[] } {
+  const errors: string[] = [];
+  if (!content || typeof content !== "object") {
+    return { valid: false, errors: ["code_drill content must be an object"] };
+  }
+  const c = content as Record<string, unknown>;
+
+  if (typeof c.pattern !== "string" || !c.pattern.trim()) {
+    errors.push("code_drill requires a non-empty pattern slug");
+  }
+  if (typeof c.prompt !== "string" || !c.prompt.trim()) {
+    errors.push("code_drill requires a non-empty prompt");
+  }
+  if (
+    typeof c.target_seconds !== "number" ||
+    !Number.isFinite(c.target_seconds) ||
+    c.target_seconds < 60 ||
+    c.target_seconds > 3600
+  ) {
+    errors.push("code_drill target_seconds must be a number between 60 and 3600");
+  }
+  if (!["easy", "medium", "hard"].includes(String(c.difficulty))) {
+    errors.push('code_drill difficulty must be "easy", "medium", or "hard"');
+  }
+  if (c.language !== undefined && (typeof c.language !== "string" || !c.language.trim())) {
+    errors.push("code_drill language must be a non-empty string when present");
+  }
+  if (c.starter_code !== undefined && typeof c.starter_code !== "string") {
+    errors.push("code_drill starter_code must be a string when present");
+  }
+
+  if (!Array.isArray(c.tests) || c.tests.length === 0) {
+    errors.push("code_drill requires a non-empty tests array");
+  } else {
+    const ids = new Set<string>();
+    for (const [i, raw] of c.tests.entries()) {
+      if (!raw || typeof raw !== "object") {
+        errors.push(`code_drill tests[${i}] must be an object`);
+        continue;
+      }
+      const t = raw as Record<string, unknown>;
+      if (typeof t.id !== "string" || !t.id.trim()) {
+        errors.push(`code_drill tests[${i}] missing id`);
+      } else if (ids.has(t.id)) {
+        errors.push(`code_drill tests[${i}] duplicate id "${t.id}"`);
+      } else {
+        ids.add(t.id);
+      }
+      if (typeof t.description !== "string" || !t.description.trim()) {
+        errors.push(`code_drill tests[${i}] missing description`);
+      }
+      if (typeof t.assert !== "string" || !t.assert.trim()) {
+        errors.push(`code_drill tests[${i}] missing assert expression`);
+      }
+    }
+  }
+
+  if (c.hints !== undefined) {
+    if (!Array.isArray(c.hints)) {
+      errors.push("code_drill hints must be an array");
+    } else {
+      let previousPct = 0;
+      for (const [i, raw] of c.hints.entries()) {
+        if (!raw || typeof raw !== "object") {
+          errors.push(`code_drill hints[${i}] must be an object`);
+          continue;
+        }
+        const h = raw as Record<string, unknown>;
+        if (typeof h.text !== "string" || !h.text.trim()) {
+          errors.push(`code_drill hints[${i}] missing text`);
+        }
+        if (
+          typeof h.unlock_at_pct !== "number" ||
+          !Number.isFinite(h.unlock_at_pct) ||
+          h.unlock_at_pct < 1 ||
+          h.unlock_at_pct > 100
+        ) {
+          errors.push(`code_drill hints[${i}] unlock_at_pct must be a number between 1 and 100`);
+        } else if (h.unlock_at_pct <= previousPct) {
+          errors.push(`code_drill hints[${i}] unlock_at_pct must strictly increase (progressive reveal)`);
+        } else {
+          previousPct = h.unlock_at_pct;
+        }
+      }
+    }
+  }
+
+  if (c.solution !== undefined && typeof c.solution !== "string") {
+    errors.push("code_drill solution must be a string when present");
+  }
+
+  return { valid: errors.length === 0, errors };
+}
+
 // ─── Multiple-choice quiz content ────────────────────────────────────────────
 
 /**
@@ -1128,7 +1263,12 @@ export interface AssessmentContent {
 
 // ─── Lesson parts ────────────────────────────────────────────────────────────
 
-export type LessonPartPracticeQuestionType = "select_one" | "select_all" | "ordering" | "written";
+export type LessonPartPracticeQuestionType =
+  | "select_one"
+  | "select_all"
+  | "ordering"
+  | "written"
+  | "pattern_recognition";
 
 export interface LessonPartPracticeQuestion {
   id: string;
@@ -1142,6 +1282,18 @@ export interface LessonPartPracticeQuestion {
   correct_index?: number;
   /** Empty array means "none of these are correct" for select_all. */
   correct_indices?: number[];
+  /**
+   * pattern_recognition — indices of `choices` that are the PRIMARY (required)
+   * algorithmic patterns. All primary patterns must be selected to pass; missing
+   * any primary, or selecting a distractor, fails the question.
+   */
+  primary_indices?: number[];
+  /**
+   * pattern_recognition — indices of `choices` that are SECONDARY (bonus)
+   * patterns. Selecting them raises the partial-credit score but is not required
+   * to pass; omitting them never fails the question.
+   */
+  secondary_indices?: number[];
   items?: string[];
   correct_order?: string[];
   actual_answer?: string;
@@ -1307,6 +1459,7 @@ export function validateLessonPartPracticeContent(content: unknown): { valid: bo
     select_all: 0,
     ordering: 0,
     written: 0,
+    pattern_recognition: 0,
   };
   let hasNoneSelectAll = false;
   let hasSomeSelectAll = false;
@@ -1325,8 +1478,10 @@ export function validateLessonPartPracticeContent(content: unknown): { valid: bo
     } else {
       seen.add(q.id);
     }
-    if (!["select_one", "select_all", "ordering", "written"].includes(String(q.type))) {
-      errors.push(`questions[${i}] type must be select_one, select_all, ordering, or written`);
+    if (!["select_one", "select_all", "ordering", "written", "pattern_recognition"].includes(String(q.type))) {
+      errors.push(
+        `questions[${i}] type must be select_one, select_all, ordering, written, or pattern_recognition`
+      );
       continue;
     }
     typeCounts[type]++;
@@ -1428,6 +1583,68 @@ export function validateLessonPartPracticeContent(content: unknown): { valid: bo
       }
       if (typeof q.rubric !== "string" || q.rubric.trim().length < 20) {
         errors.push(`questions[${i}] written requires a substantive rubric`);
+      }
+    }
+
+    if (type === "pattern_recognition") {
+      const choices = q.choices;
+      const choiceCount = Array.isArray(choices) ? choices.length : 0;
+      if (!Array.isArray(choices) || choices.length < 3 || choices.length > 14) {
+        errors.push(`questions[${i}] pattern_recognition choices must contain 3 to 14 patterns`);
+      } else if (!choices.every((choice) => typeof choice === "string" && choice.trim())) {
+        errors.push(`questions[${i}] pattern_recognition choices must be non-empty strings`);
+      }
+      if (q.correct_index !== undefined || q.correct_indices !== undefined) {
+        errors.push(
+          `questions[${i}] pattern_recognition uses primary_indices/secondary_indices, not correct_index/correct_indices`
+        );
+      }
+      const primary = q.primary_indices;
+      const secondary = q.secondary_indices ?? [];
+      if (!Array.isArray(primary) || primary.length === 0) {
+        errors.push(`questions[${i}] pattern_recognition requires a non-empty primary_indices array`);
+      } else if (!primary.every((idx) => Number.isInteger(idx) && Number(idx) >= 0)) {
+        errors.push(`questions[${i}] pattern_recognition primary_indices must be non-negative integers`);
+      } else {
+        if (choiceCount > 0 && primary.some((idx) => Number(idx) >= choiceCount)) {
+          errors.push(`questions[${i}] pattern_recognition primary_indices contains an out-of-range index`);
+        }
+        if (new Set(primary).size !== primary.length) {
+          errors.push(`questions[${i}] pattern_recognition primary_indices must not contain duplicates`);
+        }
+      }
+      if (!Array.isArray(secondary)) {
+        errors.push(`questions[${i}] pattern_recognition secondary_indices must be an array when present`);
+      } else if (secondary.length > 0) {
+        if (!secondary.every((idx) => Number.isInteger(idx) && Number(idx) >= 0)) {
+          errors.push(`questions[${i}] pattern_recognition secondary_indices must be non-negative integers`);
+        }
+        if (choiceCount > 0 && secondary.some((idx) => Number(idx) >= choiceCount)) {
+          errors.push(`questions[${i}] pattern_recognition secondary_indices contains an out-of-range index`);
+        }
+        if (new Set(secondary).size !== secondary.length) {
+          errors.push(`questions[${i}] pattern_recognition secondary_indices must not contain duplicates`);
+        }
+        if (Array.isArray(primary)) {
+          const primarySet = new Set(primary.map(Number));
+          if (secondary.some((idx) => primarySet.has(Number(idx)))) {
+            errors.push(`questions[${i}] pattern_recognition secondary_indices must be disjoint from primary_indices`);
+          }
+        }
+      }
+      // Like select_all, pattern_recognition must not carry an authored "none"
+      // choice — a learner who thinks no pattern applies simply selects nothing.
+      if (Array.isArray(choices)) {
+        const authoredNone = choices.findIndex(
+          (choice) =>
+            typeof choice === "string" &&
+            /^\s*none of (the above|these|the below|them)\s*\.?\s*$/i.test(choice)
+        );
+        if (authoredNone >= 0) {
+          errors.push(
+            `questions[${i}] pattern_recognition must not include an authored "none" choice (choices[${authoredNone}]); the learner selects nothing when no pattern applies`
+          );
+        }
       }
     }
   }

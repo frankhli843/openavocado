@@ -25,6 +25,8 @@ export type {
   MediaContent,
   CodeTest,
   CodeHint,
+  CodeDrillContent,
+  CodeDrillHint,
   PracticeCodeContent,
   PracticeCodeIoExample,
   PracticeCodeVisualization,
@@ -52,6 +54,7 @@ export type ActivityType =
   | "lesson_part"
   | "interactive"
   | "practice_code"
+  | "code_drill"
   | "assessment"
   | "flashcards"
   | "case_study"

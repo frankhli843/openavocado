@@ -3,6 +3,10 @@
 import { useMemo, useState } from "react";
 import type { Lesson, LessonActivity } from "@/types";
 import type { LessonPartPracticeContent, LessonPartPracticeQuestion } from "@/lib/lesson-content/schema";
+import {
+  gradePatternRecognition,
+  patternRecognitionCorrectChoices,
+} from "@/lib/lesson-content/pattern-recognition";
 import type { QuizAssessContext } from "./MultipleChoiceAssessmentSection";
 
 type AnswerState = Record<string, string | string[]>;
@@ -258,8 +262,14 @@ function PracticeInput({
   const correctChoices = getCorrectChoices(question);
   const noneSelected = question.type === "select_all" && Array.isArray(answer) && answer.length === 0;
   const noneCorrect = question.type === "select_all" && (question.correct_indices ?? []).length === 0;
+  const isMulti = question.type === "select_all" || question.type === "pattern_recognition";
   return (
     <div className="mt-3 space-y-2">
+      {question.type === "pattern_recognition" && (
+        <p className="text-xs text-gray-500">
+          Select every algorithmic pattern that applies before writing code.
+        </p>
+      )}
       {question.type === "select_all" && (
         <ChoiceButton
           label="None of these"
@@ -282,7 +292,7 @@ function PracticeInput({
             selected={checked}
             correct={correct}
             showResults={showResults}
-            multi={question.type === "select_all"}
+            multi={isMulti}
             onClick={() => {
               if (question.type === "select_one") {
                 onAnswer(choice);
@@ -374,6 +384,10 @@ function getCorrectChoices(question: LessonPartPracticeQuestion): Set<string> {
   if (question.type === "select_all") {
     return new Set((question.correct_indices ?? []).map((idx) => choices[idx]).filter(Boolean));
   }
+  if (question.type === "pattern_recognition") {
+    const { primary, secondary } = patternRecognitionCorrectChoices(question);
+    return new Set([...primary, ...secondary]);
+  }
   return new Set();
 }
 
@@ -401,6 +415,21 @@ function gradeDeterministic(
       text: ok ? question.explanation ?? "Correct." : `Not quite. Correct selections: ${correctText}. ${question.explanation ?? ""}`.trim(),
     };
   }
+  if (question.type === "pattern_recognition") {
+    const choices = question.choices ?? [];
+    const selected = Array.isArray(answer) ? answer : [];
+    const grade = gradePatternRecognition(
+      choices,
+      question.primary_indices ?? [],
+      question.secondary_indices ?? [],
+      selected
+    );
+    const explanation = question.explanation ? ` ${question.explanation}` : "";
+    return {
+      correct: grade.correct,
+      text: `${grade.text}${explanation}`.trim(),
+    };
+  }
   const expected = question.correct_order ?? [];
   const selected = Array.isArray(answer) ? answer : [];
   const ok = expected.length === selected.length && expected.every((item, idx) => selected[idx] === item);
@@ -413,6 +442,7 @@ function gradeDeterministic(
 function hasAnswer(question: LessonPartPracticeQuestion, answer: string | string[] | undefined): boolean {
   if (question.type === "ordering") return Array.isArray(answer) && answer.length > 1;
   if (question.type === "select_all") return Array.isArray(answer);
+  if (question.type === "pattern_recognition") return Array.isArray(answer) && answer.length > 0;
   return typeof answer === "string" && answer.trim().length > 0;
 }
 

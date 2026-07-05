@@ -10,6 +10,7 @@ import { InteractiveSection } from "@/components/lesson/InteractiveSection";
 import { LessonPartSection } from "@/components/lesson/LessonPartSection";
 import { CollapsibleLessonSection } from "@/components/lesson/CollapsibleLessonSection";
 import { PythonSection } from "@/components/lesson/PythonSection";
+import { CodeDrillSection } from "@/components/lesson/CodeDrillSection";
 import { AssessmentSection } from "@/components/lesson/AssessmentSection";
 import { MultipleChoiceAssessmentSection } from "@/components/lesson/MultipleChoiceAssessmentSection";
 import { NextLessonDiagnosticsSection } from "@/components/lesson/NextLessonDiagnosticsSection";
@@ -31,7 +32,7 @@ interface LessonData {
 
 // Canonical section order. Multiple `interactive` activities keep their relative
 // (stable-sorted) order, so a lesson can show several visualization perspectives.
-const ACTIVITY_ORDER = ["audio", "reading", "lesson_part", "interactive", "practice_code", "assessment", "media"];
+const ACTIVITY_ORDER = ["audio", "reading", "lesson_part", "interactive", "practice_code", "code_drill", "assessment", "media"];
 
 const DIAGNOSTICS_ACTIVITY_ID = 0;
 
@@ -517,6 +518,9 @@ export default function LessonPage({ params }: { params: Promise<{ id: string }>
         />
       );
     }
+    if (activity.activity_type === "code_drill") {
+      return <CodeDrillSection activity={activity} learnerId={activeLearnerId} />;
+    }
     if (activity.activity_type === "assessment") {
       return (
         <div className="space-y-6">
@@ -775,6 +779,8 @@ function activityKindLabel(activity: LessonActivity): string {
       return "Interactive";
     case "practice_code":
       return "Code";
+    case "code_drill":
+      return "Code drill";
     case "assessment":
       return "Assessment";
     default:

@@ -21,6 +21,13 @@ export async function POST(request: Request) {
       run_output?: string | null;
       test_results?: Record<string, string> | null;
       prompt?: string | null;
+      /**
+       * Present for `code_drill` submissions: timing/hint/attempt evidence built
+       * by buildDrillEvidenceMetadata. Merged into the learning_evidence metadata
+       * and (when it carries a pattern) used as the evidence concept so drill
+       * speed is queryable per pattern.
+       */
+      drill?: Record<string, unknown> | null;
     };
     const { activity_id, learner_id, passed } = body;
 
@@ -66,7 +73,11 @@ export async function POST(request: Request) {
       passed ? 1 : 0
     );
 
-    const concept = activity.title ?? "code exercise";
+    const drill = body.drill && typeof body.drill === "object" ? body.drill : null;
+    const drillPattern = drill && typeof drill.pattern === "string" ? drill.pattern.trim() : "";
+    // Drills tag evidence with the pattern slug so execution speed is queryable
+    // per pattern; plain exercises fall back to the activity title.
+    const concept = drillPattern || activity.title || "code exercise";
     const evidenceId = recordLearningEvidence(db, {
       learner_id,
       subject_id: activity.subject_id,
@@ -82,6 +93,7 @@ export async function POST(request: Request) {
       metadata: {
         attempt_id: attemptResult.lastInsertRowid,
         test_results: body.test_results ?? null,
+        ...(drill ? { drill } : {}),
       },
     });
 

@@ -140,6 +140,12 @@ function applyAdditiveMigrations(db: Database.Database): void {
   // checks the stored table SQL for the 'media' value before doing anything.
   migrateActivityTypeCheck(db);
 
+  // The lesson_activities.activity_type CHECK predates the 'code_drill' type
+  // (timed practice mode). Any DB already migrated to allow 'lesson_part' will
+  // NOT be re-touched by migrateActivityTypeCheck (its guard sees 'lesson_part'),
+  // so a dedicated rebuild guarded on 'code_drill' rolls the new value out.
+  migrateActivityTypeCodeDrillCheck(db);
+
   // Ensure subject_workpads table exists (added after initial schema).
   // CREATE TABLE IF NOT EXISTS in schema.sql handles fresh installs; this
   // also runs on existing DBs where schema.sql was already applied without it.
@@ -573,6 +579,58 @@ function migrateActivityTypeCheck(db: Database.Database): void {
           activity_type   TEXT    NOT NULL CHECK (activity_type IN (
                             'audio', 'reading', 'media', 'lesson_part', 'interactive',
                             'practice_code', 'assessment',
+                            'flashcards', 'case_study', 'diagram',
+                            'project', 'debate', 'reference'
+                          )),
+          is_core         INTEGER NOT NULL DEFAULT 1 CHECK (is_core IN (0, 1)),
+          sequence_order  INTEGER NOT NULL DEFAULT 0,
+          title           TEXT,
+          content         TEXT,
+          created_at      TEXT    NOT NULL DEFAULT (datetime('now')),
+          updated_at      TEXT    NOT NULL DEFAULT (datetime('now'))
+        );
+      `);
+      db.exec(
+        `INSERT INTO lesson_activities__new
+           (id, lesson_id, activity_type, is_core, sequence_order, title, content, created_at, updated_at)
+         SELECT id, lesson_id, activity_type, is_core, sequence_order, title, content, created_at, updated_at
+         FROM lesson_activities;`
+      );
+      db.exec("DROP TABLE lesson_activities;");
+      db.exec("ALTER TABLE lesson_activities__new RENAME TO lesson_activities;");
+      db.exec(
+        "CREATE INDEX IF NOT EXISTS idx_lesson_activities_lesson_id ON lesson_activities(lesson_id);"
+      );
+    });
+    rebuild();
+  } finally {
+    if (fkWasOn) db.pragma("foreign_keys = ON");
+  }
+}
+
+/**
+ * Rebuild lesson_activities when its activity_type CHECK predates the
+ * 'code_drill' type. Same non-destructive table-rebuild pattern as
+ * migrateActivityTypeCheck; idempotent via the '/code_drill/' guard on the
+ * stored table SQL.
+ */
+function migrateActivityTypeCodeDrillCheck(db: Database.Database): void {
+  const row = db
+    .prepare("SELECT sql FROM sqlite_master WHERE type='table' AND name='lesson_activities'")
+    .get() as { sql: string } | undefined;
+  if (!row || /'code_drill'/.test(row.sql)) return; // already allows code drills
+
+  const fkWasOn = (db.pragma("foreign_keys", { simple: true }) as number) === 1;
+  if (fkWasOn) db.pragma("foreign_keys = OFF");
+  try {
+    const rebuild = db.transaction(() => {
+      db.exec(`
+        CREATE TABLE lesson_activities__new (
+          id              INTEGER PRIMARY KEY AUTOINCREMENT,
+          lesson_id       INTEGER NOT NULL REFERENCES lessons(id) ON DELETE CASCADE,
+          activity_type   TEXT    NOT NULL CHECK (activity_type IN (
+                            'audio', 'reading', 'media', 'lesson_part', 'interactive',
+                            'practice_code', 'code_drill', 'assessment',
                             'flashcards', 'case_study', 'diagram',
                             'project', 'debate', 'reference'
                           )),
