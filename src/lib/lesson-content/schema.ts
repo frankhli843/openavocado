@@ -1376,6 +1376,23 @@ export function validateLessonPartPracticeContent(content: unknown): { valid: bo
         }
         if (indices.length === 0) hasNoneSelectAll = true;
         if (indices.length > 1) hasSomeSelectAll = true;
+        // Lesson-part select_all must NOT carry an authored "none" choice: the
+        // practice UI supplies a virtual none option for the true no-correct
+        // case (correct_indices: []), so an authored none is a duplicate that
+        // renders twice. This is the opposite of the top-level assessment quiz,
+        // which requires a real "None of the above" choice.
+        if (Array.isArray(choices)) {
+          const authoredNone = choices.findIndex(
+            (choice) =>
+              typeof choice === "string" &&
+              /^\s*none of (the above|these|the below|them)\s*\.?\s*$/i.test(choice)
+          );
+          if (authoredNone >= 0) {
+            errors.push(
+              `questions[${i}] select_all must not include an authored "none" choice (choices[${authoredNone}]); the UI supplies a virtual none for correct_indices: []`
+            );
+          }
+        }
       }
     }
 

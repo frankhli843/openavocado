@@ -885,6 +885,18 @@ Leo: What would the variable names be? What would a small input look like?`;
     expect(r.errors.join(" ")).toMatch(/mixed practice|practice_code/);
   });
 
+  it("rejects an authored none choice in a lesson-part select_all (UI supplies a virtual none)", () => {
+    const content = validLessonPartContent();
+    const q = content.practice.questions.find((x) => x.id === "p2") as {
+      choices: string[];
+      correct_indices: number[];
+    };
+    q.choices = [...q.choices, "None of the above"];
+    const r = validateLessonPartContent(content, ["declarative"], validateWidgetSpec);
+    expect(r.valid).toBe(false);
+    expect(r.errors.join(" ")).toMatch(/must not include an authored "none" choice/);
+  });
+
   it("rejects legacy char-offset audio cues that cannot sync to playback time", () => {
     const content = validLessonPartContent();
     content.audio.synced_visual = {
