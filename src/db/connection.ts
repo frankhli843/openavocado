@@ -7,7 +7,10 @@ import path from "path";
 import fs from "fs";
 import { readFileSync } from "fs";
 import { scryptSync, randomBytes } from "crypto";
-import { ensureLearningEvidenceSchema } from "@/lib/learning-evidence";
+import {
+  ensureLearningEvidenceSchema,
+  migrateLearningEvidenceSourceTypeCheck,
+} from "@/lib/learning-evidence";
 
 const DB_PATH =
   process.env.AVOCADOCORE_DB_PATH ||
@@ -241,8 +244,31 @@ function applyAdditiveMigrations(db: Database.Database): void {
   db.exec("CREATE INDEX IF NOT EXISTS idx_visual_artifacts_build_status ON visual_artifacts(build_status)");
   db.exec("CREATE INDEX IF NOT EXISTS idx_visual_artifacts_lesson_id ON visual_artifacts(lesson_id)");
 
+  // Semantic QA reviewer audit trail. One row per review pass; verdict_json holds
+  // the full evidence-backed verdict. Added after the initial schema, so create
+  // it here too for existing DBs (CREATE TABLE IF NOT EXISTS in schema.sql covers
+  // fresh installs).
+  db.exec(`
+    CREATE TABLE IF NOT EXISTS qa_reviews (
+      id                  INTEGER PRIMARY KEY AUTOINCREMENT,
+      lesson_id           INTEGER NOT NULL REFERENCES lessons(id) ON DELETE CASCADE,
+      approved            INTEGER NOT NULL DEFAULT 0 CHECK (approved IN (0, 1)),
+      attempt             INTEGER NOT NULL DEFAULT 1,
+      reviewer_ref        TEXT,
+      verdict_json        TEXT    NOT NULL,
+      prescreen_flags     TEXT,
+      feedback            TEXT,
+      created_at          TEXT    NOT NULL DEFAULT (datetime('now'))
+    )
+  `);
+  db.exec("CREATE INDEX IF NOT EXISTS idx_qa_reviews_lesson_id ON qa_reviews(lesson_id, id DESC)");
+
   // Unified learner input stream for next-lesson planning.
   ensureLearningEvidenceSchema(db);
+  // Older DBs predate the 'historical_import' source type (external prior
+  // evidence, e.g. the algorithms repo comfort-level import). Rebuild to extend
+  // the CHECK constraint; idempotent no-op once already present.
+  migrateLearningEvidenceSourceTypeCheck(db);
 
   // Harness job lifecycle columns on next_lesson_jobs.
   // These are additive and nullable so existing rows are unaffected.

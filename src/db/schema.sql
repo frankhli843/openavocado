@@ -223,7 +223,7 @@ CREATE TABLE IF NOT EXISTS learning_evidence (
   activity_id     INTEGER REFERENCES lesson_activities(id) ON DELETE SET NULL,
   source_type     TEXT    NOT NULL CHECK (source_type IN (
                     'practice_answer', 'assessment_answer', 'diagnostic_answer',
-                    'code_submission', 'lesson_chat'
+                    'code_submission', 'lesson_chat', 'historical_import'
                   )),
   source_id       TEXT,
   concept         TEXT,
@@ -454,8 +454,35 @@ CREATE TABLE IF NOT EXISTS visual_artifacts (
   updated_at          TEXT    NOT NULL DEFAULT (datetime('now'))
 );
 
+-- ─── SEMANTIC QA REVIEWS ───────────────────────────────────────────────────────
+-- Evidence-backed verdicts from the semantic LLM QA reviewer that evaluates a
+-- generated lesson's transcript, visual-transcript alignment, practice question,
+-- and code exercise quality BEFORE the content reaches the learner. Complements
+-- the deterministic validators in lesson-content/schema.ts. One row per review
+-- pass (a lesson may be reviewed multiple times across regeneration attempts),
+-- kept as an audit trail. The full structured verdict lives in verdict_json.
+
+CREATE TABLE IF NOT EXISTS qa_reviews (
+  id                  INTEGER PRIMARY KEY AUTOINCREMENT,
+  lesson_id           INTEGER NOT NULL REFERENCES lessons(id) ON DELETE CASCADE,
+  -- Verdict outcome: approved lessons may reach the learner; rejected ones must regenerate.
+  approved            INTEGER NOT NULL DEFAULT 0 CHECK (approved IN (0, 1)),
+  -- Which generation attempt this verdict is for (1-based), for the retry loop.
+  attempt             INTEGER NOT NULL DEFAULT 1,
+  -- Reviewer agent/session/task reference (the ACP worker that produced the verdict).
+  reviewer_ref        TEXT,
+  -- JSON: full { approved, evidence[], rejections[{criterion, quote, explanation, fix_suggestion}] } verdict.
+  verdict_json        TEXT    NOT NULL,
+  -- JSON: deterministic pre-screen flags surfaced to the reviewer (audit only, never the final gate).
+  prescreen_flags     TEXT,
+  -- Newline-joined fix suggestions injected into the next regeneration prompt (null when approved).
+  feedback            TEXT,
+  created_at          TEXT    NOT NULL DEFAULT (datetime('now'))
+);
+
 -- ─── INDEXES ───────────────────────────────────────────────────────────────────
 
+CREATE INDEX IF NOT EXISTS idx_qa_reviews_lesson_id ON qa_reviews(lesson_id, id DESC);
 CREATE INDEX IF NOT EXISTS idx_visual_artifacts_slug ON visual_artifacts(slug);
 CREATE INDEX IF NOT EXISTS idx_visual_artifacts_build_status ON visual_artifacts(build_status);
 CREATE INDEX IF NOT EXISTS idx_visual_artifacts_lesson_id ON visual_artifacts(lesson_id);

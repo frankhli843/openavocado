@@ -31,6 +31,7 @@ import { getDb, closeDb } from "../src/db/connection";
 import { generateInitialAssessment } from "../src/lib/lesson-generator/initial-assessment";
 import { generateLessonAudio } from "../src/lib/audio/generate-lesson-audio";
 import { COMPREHENSIVE_LESSON_PLAN_TEMPLATE } from "../src/lib/lesson-generator/plan-template";
+import { reviewLessonWithRetry, type RegenerateFn } from "../src/lib/lesson-qa";
 import type Database from "better-sqlite3";
 import type {
   SubjectCreatedEvent,
@@ -970,6 +971,62 @@ function normalizeDraftStringFields(draft: GeminiLessonDraft): void {
   d.reading_summary = coerce(draft.reading_summary);
 }
 
+// ─── Draft JSON cleaning / parsing / normalization ────────────────────────────
+// Shared by both event handlers and the semantic-QA regeneration path so the
+// clean → parse(+repair) → normalize pipeline stays identical everywhere.
+
+function cleanRawLessonJson(raw: string): string {
+  const t = raw.trim();
+  const fence = t.match(/^```(?:json)?\s*\n?([\s\S]*?)\n?```\s*$/);
+  if (fence) return fence[1].trim();
+  // Trim trailing garbage after the closing brace/bracket.
+  const lastBrace = t.lastIndexOf("}");
+  const lastBracket = t.lastIndexOf("]");
+  const end = Math.max(lastBrace, lastBracket);
+  if (end !== -1 && end < t.length - 1) return t.slice(0, end + 1);
+  return t;
+}
+
+function parseLessonDraft(cleanRaw: string, opts?: { debugDump?: boolean }): GeminiLessonDraft {
+  try {
+    return JSON.parse(cleanRaw) as GeminiLessonDraft;
+  } catch (err) {
+    const msg = err instanceof Error ? err.message : String(err);
+    if (msg.includes("Bad escaped character") || msg.includes("Bad control character")) {
+      const repaired = repairGeminiJson(cleanRaw);
+      try {
+        const draft = JSON.parse(repaired) as GeminiLessonDraft;
+        console.warn("[lesson-harness] JSON repair applied to lesson draft");
+        return draft;
+      } catch (err2) {
+        const msg2 = err2 instanceof Error ? err2.message : String(err2);
+        if (opts?.debugDump) {
+          try {
+            const ts = Date.now();
+            fs.writeFileSync(`/tmp/avo-raw-${ts}.json`, cleanRaw.slice(0, 60000));
+            fs.writeFileSync(`/tmp/avo-repaired-${ts}.json`, repaired.slice(0, 60000));
+            console.error(`[lesson-harness] Debug dumps: /tmp/avo-raw-${ts}.json and /tmp/avo-repaired-${ts}.json`);
+          } catch {}
+        }
+        throw new Error(`Gemini response parse failed: ${msg2}`);
+      }
+    }
+    throw new Error(`Gemini response parse failed: ${msg}`);
+  }
+}
+
+function normalizeLessonDraft(draft: GeminiLessonDraft): void {
+  draft.reading_blocks = normalizeFormulaBlocks(draft.reading_blocks);
+  if (Array.isArray(draft.lesson_parts)) {
+    for (const part of draft.lesson_parts) {
+      if (part.reading?.blocks) {
+        part.reading.blocks = normalizeFormulaBlocks(part.reading.blocks);
+      }
+    }
+  }
+  normalizeDraftStringFields(draft);
+}
+
 // ─── Lesson assembly and DB write ─────────────────────────────────────────────
 
 function insertGeneratedLesson(
@@ -1330,6 +1387,160 @@ function upsertWorkpad(
   }
 }
 
+// ─── Semantic QA gate ─────────────────────────────────────────────────────────
+// Opt-in (AVOCADOCORE_QA_REVIEW=1). After a lesson is written, an ACP reviewer
+// agent semantically evaluates transcript/visual/question/code quality. On
+// rejection the reviewer's fix suggestions are injected into a regeneration and
+// the new lesson is reviewed again, up to AVOCADOCORE_QA_MAX_ATTEMPTS (default 3).
+
+interface SemanticQaGateParams {
+  lessonId: number;
+  subjectId: number;
+  learnerId: number;
+  triggerEvent: string;
+  eventType: string;
+  context: string;
+  discardedLessonTitle?: string;
+}
+
+type QaJobFields = Partial<{
+  qa_status: string;
+  qa_stage: string;
+  qa_agent_ref: string;
+  qa_notes: string;
+  qa_completed_at: string;
+}>;
+
+function updateJobQaStatus(
+  db: Database.Database,
+  subjectId: number,
+  triggerEvent: string,
+  fields: QaJobFields
+): void {
+  try {
+    const job = db
+      .prepare(
+        `SELECT id FROM next_lesson_jobs
+         WHERE subject_id = ? AND trigger_event = ? AND status = 'dispatched'
+         ORDER BY id DESC LIMIT 1`
+      )
+      .get(subjectId, triggerEvent) as { id: number } | undefined;
+    if (!job) return;
+    const entries = Object.entries(fields).filter(([, v]) => v !== undefined);
+    if (entries.length === 0) return;
+    const setClause = entries.map(([k]) => `${k} = ?`).join(", ");
+    const values = entries.map(([, v]) => v as string);
+    db.prepare(
+      `UPDATE next_lesson_jobs SET ${setClause}, updated_at = datetime('now') WHERE id = ?`
+    ).run(...values, job.id);
+  } catch {
+    // Best-effort — never fail the harness over a QA status update.
+  }
+}
+
+async function runSemanticQaGate(db: Database.Database, p: SemanticQaGateParams): Promise<number> {
+  if (process.env.AVOCADOCORE_QA_REVIEW !== "1") return p.lessonId;
+
+  if (!process.env.AVOCADOCORE_QA_REVIEWER_COMMAND?.trim()) {
+    // Gate requested but no ACP reviewer configured. Do not silently "pass" —
+    // record that QA was skipped and keep the generated lesson.
+    console.error(
+      "[lesson-harness] AVOCADOCORE_QA_REVIEW=1 but AVOCADOCORE_QA_REVIEWER_COMMAND is unset; skipping semantic QA gate."
+    );
+    updateJobQaStatus(db, p.subjectId, p.triggerEvent, {
+      qa_status: "skipped",
+      qa_stage: "reviewer_unconfigured",
+    });
+    return p.lessonId;
+  }
+
+  const maxAttempts = Math.max(1, Number(process.env.AVOCADOCORE_QA_MAX_ATTEMPTS || 3));
+  updateJobProgress(db, p.subjectId, p.triggerEvent, "qa_review", "Semantic QA reviewer evaluating generated content");
+  updateJobQaStatus(db, p.subjectId, p.triggerEvent, { qa_status: "running", qa_stage: "reviewing" });
+
+  let lastGeneratedId = p.lessonId;
+  const regenerate: RegenerateFn = async (feedback, attempt) => {
+    updateJobProgress(
+      db,
+      p.subjectId,
+      p.triggerEvent,
+      "qa_review",
+      `QA rejected — regenerating (attempt ${attempt}/${maxAttempts}) with reviewer feedback`
+    );
+    const prompt = `${buildLessonPrompt(p.context, p.eventType, p.discardedLessonTitle)}\n\n${feedback}`;
+    const { text } = await callGeminiWithRetry(db, p.subjectId, p.triggerEvent, prompt);
+    const draft = parseLessonDraft(cleanRawLessonJson(text), { debugDump: true });
+    if (!draft.title || !draft.audio_script || !draft.reading_blocks) {
+      throw new Error("QA regeneration produced an incomplete lesson draft");
+    }
+    normalizeLessonDraft(draft);
+    const newId = insertGeneratedLesson(db, draft, p.subjectId, p.learnerId, p.eventType);
+    // Discard the rejected candidate so only the surviving lesson stays live.
+    try {
+      db.prepare(
+        `UPDATE lessons SET status = 'discarded', discarded_at = datetime('now'), discard_reason = ?
+         WHERE id = ? AND status = 'queued'`
+      ).run("semantic QA rejection — regenerated with reviewer feedback", lastGeneratedId);
+    } catch {
+      // non-fatal
+    }
+    lastGeneratedId = newId;
+    return newId;
+  };
+
+  try {
+    const outcome = await reviewLessonWithRetry(db, p.lessonId, regenerate, {
+      maxAttempts,
+      reviewerRef: `agent-harness/qa/${p.eventType}`,
+    });
+    if (outcome.approved) {
+      updateJobProgress(
+        db,
+        p.subjectId,
+        p.triggerEvent,
+        "qa_review",
+        `Semantic QA passed after ${outcome.attempts} attempt(s) (lesson ${outcome.finalLessonId})`
+      );
+      updateJobQaStatus(db, p.subjectId, p.triggerEvent, {
+        qa_status: "passed",
+        qa_stage: "approved",
+        qa_completed_at: new Date().toISOString(),
+        qa_notes: outcome.verdict.evidence.slice(0, 3).join(" | ").slice(0, 1000),
+      });
+    } else {
+      const reasons = outcome.verdict.rejections
+        .map((r) => `[${r.criterion}] ${r.explanation}`)
+        .join(" | ")
+        .slice(0, 1200);
+      updateJobProgress(
+        db,
+        p.subjectId,
+        p.triggerEvent,
+        "qa_review",
+        `Semantic QA did NOT pass after ${outcome.attempts} attempts — escalating (lesson ${outcome.finalLessonId})`
+      );
+      updateJobQaStatus(db, p.subjectId, p.triggerEvent, {
+        qa_status: "failed",
+        qa_stage: "escalated",
+        qa_completed_at: new Date().toISOString(),
+        qa_notes: reasons,
+      });
+    }
+    return outcome.finalLessonId;
+  } catch (qaErr) {
+    // A reviewer/infra failure must not destroy the generated lesson — keep the
+    // latest generated candidate and record the error for follow-up.
+    const msg = qaErr instanceof Error ? qaErr.message : String(qaErr);
+    console.error(`[lesson-harness] Semantic QA gate error (non-fatal): ${msg}`);
+    updateJobQaStatus(db, p.subjectId, p.triggerEvent, {
+      qa_status: "error",
+      qa_stage: "reviewer_error",
+      qa_notes: msg.slice(0, 500),
+    });
+    return lastGeneratedId;
+  }
+}
+
 // ─── Event handlers ───────────────────────────────────────────────────────────
 
 async function handleSubjectCreated(
@@ -1403,42 +1614,11 @@ async function handleLessonCompleted(
 
   // Parse response — strip markdown fences if the model wrapped the JSON
   // despite responseMimeType: "application/json" (happens with thinkingBudget=0).
-  const cleanRaw = (() => {
-    const t = raw.trim();
-    const fence = t.match(/^```(?:json)?\s*\n?([\s\S]*?)\n?```\s*$/);
-    if (fence) return fence[1].trim();
-    // Trim trailing garbage after the closing brace/bracket
-    const lastBrace = t.lastIndexOf("}");
-    const lastBracket = t.lastIndexOf("]");
-    const end = Math.max(lastBrace, lastBracket);
-    if (end !== -1 && end < t.length - 1) return t.slice(0, end + 1);
-    return t;
-  })();
-
   let draft: GeminiLessonDraft;
   try {
-    draft = JSON.parse(cleanRaw) as GeminiLessonDraft;
-  } catch (err) {
-    const msg = err instanceof Error ? err.message : String(err);
-    if (msg.includes("Bad escaped character") || msg.includes("Bad control character")) {
-      const repaired = repairGeminiJson(cleanRaw);
-      try {
-        draft = JSON.parse(repaired) as GeminiLessonDraft;
-        console.warn("[lesson-harness] JSON repair applied to lesson draft");
-      } catch (err2) {
-        const msg2 = err2 instanceof Error ? err2.message : String(err2);
-        // Save debug dump so we can inspect what the repair produced
-        try {
-          const ts = Date.now();
-          fs.writeFileSync(`/tmp/avo-raw-${ts}.json`, cleanRaw.slice(0, 60000));
-          fs.writeFileSync(`/tmp/avo-repaired-${ts}.json`, repaired.slice(0, 60000));
-          console.error(`[lesson-harness] Debug dumps: /tmp/avo-raw-${ts}.json and /tmp/avo-repaired-${ts}.json`);
-        } catch (_) {}
-        return { ok: false, error: `Gemini response parse failed: ${msg2}` };
-      }
-    } else {
-      return { ok: false, error: `Gemini response parse failed: ${msg}` };
-    }
+    draft = parseLessonDraft(cleanRawLessonJson(raw), { debugDump: true });
+  } catch (parseErr) {
+    return { ok: false, error: parseErr instanceof Error ? parseErr.message : String(parseErr) };
   }
 
   // Validate essential fields
@@ -1450,19 +1630,22 @@ async function handleLessonCompleted(
   }
 
   // Normalize formula blocks: map variable_definitions -> variables if needed
-  draft.reading_blocks = normalizeFormulaBlocks(draft.reading_blocks);
-  if (Array.isArray(draft.lesson_parts)) {
-    for (const part of draft.lesson_parts) {
-      if (part.reading?.blocks) {
-        part.reading.blocks = normalizeFormulaBlocks(part.reading.blocks);
-      }
-    }
-  }
-  normalizeDraftStringFields(draft);
+  normalizeLessonDraft(draft);
 
   // Write to DB
   updateJobProgress(db, subjectId, triggerEvent, "validating", "Writing lesson to database");
-  const lessonId = insertGeneratedLesson(db, draft, subjectId, learnerId, event.event);
+  let lessonId = insertGeneratedLesson(db, draft, subjectId, learnerId, event.event);
+
+  // Semantic QA gate (opt-in): reviewer agent evaluates the generated content and
+  // can drive up to N feedback-injected regenerations before the lesson is shown.
+  lessonId = await runSemanticQaGate(db, {
+    lessonId,
+    subjectId,
+    learnerId,
+    triggerEvent,
+    eventType: event.event,
+    context,
+  });
 
   // Generate audio
   if (process.env.AVOCADOCORE_LOCAL_QUEUE_AUDIO !== "skip") {
@@ -1515,33 +1698,11 @@ async function handleLessonDiscarded(
     return { ok: false, error: `Gemini generation failed: ${msg}` };
   }
 
-  const cleanRaw2 = (() => {
-    const t = raw.trim();
-    const fence = t.match(/^```(?:json)?\s*\n?([\s\S]*?)\n?```\s*$/);
-    if (fence) return fence[1].trim();
-    const lastBrace = t.lastIndexOf("}");
-    const lastBracket = t.lastIndexOf("]");
-    const end = Math.max(lastBrace, lastBracket);
-    if (end !== -1 && end < t.length - 1) return t.slice(0, end + 1);
-    return t;
-  })();
-
   let draft: GeminiLessonDraft;
   try {
-    draft = JSON.parse(cleanRaw2) as GeminiLessonDraft;
-  } catch (err) {
-    const msg = err instanceof Error ? err.message : String(err);
-    if (msg.includes("Bad escaped character") || msg.includes("Bad control character")) {
-      try {
-        draft = JSON.parse(repairGeminiJson(cleanRaw2)) as GeminiLessonDraft;
-        console.warn("[lesson-harness] JSON repair applied to replacement lesson draft");
-      } catch (err2) {
-        const msg2 = err2 instanceof Error ? err2.message : String(err2);
-        return { ok: false, error: `Gemini response parse failed: ${msg2}` };
-      }
-    } else {
-      return { ok: false, error: `Gemini response parse failed: ${msg}` };
-    }
+    draft = parseLessonDraft(cleanRawLessonJson(raw));
+  } catch (parseErr) {
+    return { ok: false, error: parseErr instanceof Error ? parseErr.message : String(parseErr) };
   }
 
   if (!draft.title || !draft.audio_script || !draft.reading_blocks) {
@@ -1552,18 +1713,21 @@ async function handleLessonDiscarded(
   }
 
   // Normalize formula blocks: map variable_definitions -> variables if needed
-  draft.reading_blocks = normalizeFormulaBlocks(draft.reading_blocks);
-  if (Array.isArray(draft.lesson_parts)) {
-    for (const part of draft.lesson_parts) {
-      if (part.reading?.blocks) {
-        part.reading.blocks = normalizeFormulaBlocks(part.reading.blocks);
-      }
-    }
-  }
-  normalizeDraftStringFields(draft);
+  normalizeLessonDraft(draft);
 
   updateJobProgress(db, subjectId, triggerEvent, "validating", "Writing replacement lesson to database");
-  const lessonId = insertGeneratedLesson(db, draft, subjectId, learnerId, event.event);
+  let lessonId = insertGeneratedLesson(db, draft, subjectId, learnerId, event.event);
+
+  // Semantic QA gate (opt-in): same reviewer + feedback-loop as the completed path.
+  lessonId = await runSemanticQaGate(db, {
+    lessonId,
+    subjectId,
+    learnerId,
+    triggerEvent,
+    eventType: event.event,
+    context,
+    discardedLessonTitle: event.discarded_lesson_title,
+  });
 
   if (process.env.AVOCADOCORE_LOCAL_QUEUE_AUDIO !== "skip") {
     updateJobProgress(db, subjectId, triggerEvent, "generating_audio", "Generating audio for replacement lesson");
