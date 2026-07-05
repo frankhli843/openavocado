@@ -14,8 +14,11 @@ describe("lesson audio player sticky lifecycle", () => {
       expect(source).toContain("audioPlaying");
       expect(source).toContain("sticky top-[4.75rem]");
       expect(source).toContain("onPlay={() => setAudioPlaying(true)}");
-      expect(source).toContain("onPause={() => setAudioPlaying(false)}");
-      expect(source).toContain("onEnded={() => setAudioPlaying(false)}");
+      expect(source).toContain("onPause={(event) =>");
+      expect(source).toContain("setAudioPlaying(false)");
+      expect(source).toContain("saveAudioTime(event.currentTarget.currentTime, true)");
+      expect(source).toContain("onEnded={() =>");
+      expect(source).toContain("clearAudioResumeTime(window.localStorage, resumeKey)");
     }
   });
 });

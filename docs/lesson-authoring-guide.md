@@ -329,7 +329,11 @@ enforced by `validateGeneratedContent`; the rest is a hard authoring rule.
   pointer, highlight a matrix cell, shift a row, update an arrow, reveal a
   layer, change camera focus, or transition a before/after state. It must not
   merely display the next sentence of the transcript. Long static intervals fail
-  QA.
+  QA. Machine-enforced minimums: cues must cover at least 80% of the audio
+  duration (via `end` timestamps), at least 1 cue per 30 seconds of audio, and
+  no gap exceeding 30 seconds between consecutive cues. A 160-second audio
+  segment needs at least 6 cues with the last one ending near 160s, not just
+  the first 48 seconds.
 - **Use a Manim / 3Blue1Brown scene mindset.** The reference workflow from
   Grant Sanderson's 3Blue1Brown Manim demo is not "put text beside a chart"; it
   is scene construction. Define objects, positions, transforms, camera emphasis,
@@ -607,6 +611,14 @@ Lesson-part rules:
 - Each part must include mixed `practice.questions`: at least six prompts,
   including select-one, select-all with multiple correct choices, select-all
   with no correct choices, ordering, and written response.
+- **Select-all answer feedback uses color-coded buttons**: green for correctly
+  selected answers, red for incorrectly selected answers, and yellow/amber
+  outline for missed correct answers the learner did not select. The UI
+  provides a virtual "None of these" button automatically for every select-all
+  question. Do NOT author a "None of these" / "None" choice in the `choices`
+  array. The correct_indices can be an empty array `[]` to indicate that none
+  of the authored choices are correct (the virtual button is the right answer).
+  Duplicate "None" choices in authored content are a QA failure.
 - Written part-practice questions must provide `actual_answer` and `rubric`.
   The UI calls `/api/answer-judge` for immediate LLM feedback when the provider
   is configured, and falls back loudly to local rubric comparison only when the

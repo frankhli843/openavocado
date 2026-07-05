@@ -1505,8 +1505,33 @@ export function validateAudioSyncedVisualContent(
       errors.push(`cue[${index}].active_elements must be an array of strings when present`);
     }
   }
-  if (duration !== null && duration > 0 && lastEnd < duration * 0.65) {
-    errors.push("timed cues must cover most of duration_hint so the visual changes through the audio");
+  if (duration !== null && duration > 0 && lastEnd < duration * 0.80) {
+    errors.push(
+      `timed cues must cover at least 80% of duration_hint (${duration}s) so the visual changes through the entire audio; last cue ends at ${lastEnd}s`
+    );
+  }
+  // Minimum cue density: at least 1 cue per 30 seconds for audio > 60s
+  if (duration !== null && duration > 60) {
+    const minCues = Math.ceil(duration / 30);
+    if (v.cues.length < minCues) {
+      errors.push(
+        `audio of ${duration}s needs at least ${minCues} cues (one per ~30s); got ${v.cues.length}. Plan visual beats roughly every 5-10 seconds.`
+      );
+    }
+  }
+  // Gap detection: no gap > 30s between consecutive cues for audio > 60s
+  if (duration !== null && duration > 60 && v.cues.length >= 2) {
+    for (let i = 1; i < v.cues.length; i++) {
+      const prev = v.cues[i - 1] as Record<string, unknown>;
+      const curr = v.cues[i] as Record<string, unknown>;
+      const prevEnd = typeof prev.end === "number" ? prev.end : (typeof prev.start === "number" ? prev.start : 0);
+      const currStart = typeof curr.start === "number" ? curr.start : 0;
+      if (currStart - prevEnd > 30) {
+        errors.push(
+          `gap of ${Math.round(currStart - prevEnd)}s between cue[${i - 1}] and cue[${i}] exceeds 30s maximum; add intermediate cues to keep the visual changing`
+        );
+      }
+    }
   }
   if (!hasFallbackArtifact && cueArtifactCount !== v.cues.length) {
     errors.push("audio synced visual requires a fallback artifact_slug or an approved cue.artifact_slug on every cue");

@@ -7,6 +7,12 @@ import type {
   AudioSyncedVisualCue,
   LessonPartContent,
 } from "@/lib/lesson-content/schema";
+import {
+  audioResumeKey,
+  clearAudioResumeTime,
+  readAudioResumeTime,
+  writeAudioResumeTime,
+} from "@/lib/audio-resume";
 import { WidgetHost, type WidgetStateChange } from "./widgets/WidgetHost";
 import { LessonDiagramsView } from "./LessonDiagrams";
 import { FormulaBlock } from "./FormulaBlock";
@@ -58,16 +64,26 @@ export function LessonPartSection({
 
   const part = parsed.part;
   const audioRef = useRef<HTMLAudioElement | null>(null);
+  const lastSavedAudioTimeRef = useRef(0);
   const [audioTime, setAudioTime] = useState(0);
   const [audioDuration, setAudioDuration] = useState(0);
   const [audioPlaying, setAudioPlaying] = useState(false);
   const syncedVisual = part?.audio.synced_visual ?? null;
+  const resumeKey = audioResumeKey(activity.id, artifact?.file_path);
 
   const seekAudio = (time: number) => {
     if (!audioRef.current) return;
     audioRef.current.currentTime = time;
     setAudioTime(time);
+    writeAudioResumeTime(window.localStorage, resumeKey, time);
+    lastSavedAudioTimeRef.current = time;
     void audioRef.current.play().catch(() => undefined);
+  };
+
+  const saveAudioTime = (time: number, force = false) => {
+    if (!force && Math.abs(time - lastSavedAudioTimeRef.current) < 2) return;
+    writeAudioResumeTime(window.localStorage, resumeKey, time);
+    lastSavedAudioTimeRef.current = time;
   };
 
   return (
@@ -95,11 +111,31 @@ export function LessonPartSection({
                       controls
                       className="h-10 w-full min-w-0 max-w-full"
                       src={`/runtime/${artifact.file_path}`}
-                      onLoadedMetadata={(event) => setAudioDuration(event.currentTarget.duration || 0)}
-                      onTimeUpdate={(event) => setAudioTime(event.currentTarget.currentTime)}
+                      onLoadedMetadata={(event) => {
+                        const duration = event.currentTarget.duration || 0;
+                        setAudioDuration(duration);
+                        const savedTime = readAudioResumeTime(window.localStorage, resumeKey, duration);
+                        if (savedTime > 0) {
+                          event.currentTarget.currentTime = savedTime;
+                          setAudioTime(savedTime);
+                          lastSavedAudioTimeRef.current = savedTime;
+                        }
+                      }}
+                      onTimeUpdate={(event) => {
+                        const time = event.currentTarget.currentTime;
+                        setAudioTime(time);
+                        saveAudioTime(time);
+                      }}
                       onPlay={() => setAudioPlaying(true)}
-                      onPause={() => setAudioPlaying(false)}
-                      onEnded={() => setAudioPlaying(false)}
+                      onPause={(event) => {
+                        setAudioPlaying(false);
+                        saveAudioTime(event.currentTarget.currentTime, true);
+                      }}
+                      onEnded={() => {
+                        setAudioPlaying(false);
+                        clearAudioResumeTime(window.localStorage, resumeKey);
+                        lastSavedAudioTimeRef.current = 0;
+                      }}
                     >
                       Your browser does not support audio playback.
                     </audio>
@@ -235,6 +271,9 @@ export function AudioSyncedLessonVisual({
   );
   const activeIndex = foundIndex >= 0 ? foundIndex : currentTime >= cues[cues.length - 1].end ? cues.length - 1 : 0;
   const cue = cues[Math.max(activeIndex, 0)] ?? cues[0];
+  const cueMeta = cue as AudioSyncedVisualCue & { phase_index?: number };
+  const cueLocalTime = Math.max(0, currentTime - cue.start);
+  const cueDuration = Math.max(1, cue.end - cue.start);
   const progressPct = Math.min(100, Math.max(0, (currentTime / safeDuration) * 100));
   const activeArtifactSlug = cue.artifact_slug ?? visual.artifact_slug;
 
@@ -256,6 +295,10 @@ export function AudioSyncedLessonVisual({
     stage: activeIndex,
     cueStart: cue.start,
     cueEnd: cue.end,
+    cueLocalTime,
+    cueProgressPct: Math.min(100, Math.max(0, (cueLocalTime / cueDuration) * 100)),
+    cueBeat: Math.floor(cueLocalTime / 3),
+    cuePhase: typeof cueMeta.phase_index === "number" ? cueMeta.phase_index : activeIndex,
     progressPct,
   };
 
@@ -272,9 +315,6 @@ export function AudioSyncedLessonVisual({
           <div className="shrink-0 text-xs tabular-nums text-gray-500">
             {formatTime(currentTime)} / {formatTime(safeDuration)}
           </div>
-        </div>
-        <div className="mt-3 h-2 rounded-full bg-gray-100">
-          <div className="h-2 rounded-full bg-blue-600" style={{ width: `${progressPct}%` }} />
         </div>
       </div>
 

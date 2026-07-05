@@ -209,6 +209,33 @@ CREATE TABLE IF NOT EXISTS assessment_result_tags (
   PRIMARY KEY (result_id, tag_id)
 );
 
+-- ─── LEARNING EVIDENCE ───────────────────────────────────────────────────────
+-- Append-only learner input stream used by future lesson planning. This keeps
+-- every checked answer, code submission, and lesson-chat question in one
+-- queryable place instead of forcing the generator to infer from scattered UI
+-- state.
+
+CREATE TABLE IF NOT EXISTS learning_evidence (
+  id              INTEGER PRIMARY KEY AUTOINCREMENT,
+  learner_id      INTEGER NOT NULL REFERENCES learner_profiles(id) ON DELETE CASCADE,
+  subject_id      INTEGER NOT NULL REFERENCES subjects(id) ON DELETE CASCADE,
+  lesson_id       INTEGER REFERENCES lessons(id) ON DELETE SET NULL,
+  activity_id     INTEGER REFERENCES lesson_activities(id) ON DELETE SET NULL,
+  source_type     TEXT    NOT NULL CHECK (source_type IN (
+                    'practice_answer', 'assessment_answer', 'diagnostic_answer',
+                    'code_submission', 'lesson_chat'
+                  )),
+  source_id       TEXT,
+  concept         TEXT,
+  difficulty      TEXT    CHECK (difficulty IN ('easy', 'medium', 'hard') OR difficulty IS NULL),
+  outcome         TEXT,
+  prompt          TEXT,
+  learner_input   TEXT,
+  system_response TEXT,
+  metadata        TEXT,
+  created_at      TEXT    NOT NULL DEFAULT (datetime('now'))
+);
+
 -- ─── PROGRESS POINTS ───────────────────────────────────────────────────────────
 -- Time-series data for graphing
 
@@ -451,3 +478,5 @@ CREATE INDEX IF NOT EXISTS idx_subject_journal_subject_learner ON subject_journa
 CREATE INDEX IF NOT EXISTS idx_assessment_results_learner_subject ON assessment_results(learner_id, subject_id);
 CREATE INDEX IF NOT EXISTS idx_assessment_results_lesson ON assessment_results(lesson_id);
 CREATE INDEX IF NOT EXISTS idx_assessment_result_tags_tag ON assessment_result_tags(tag_id);
+CREATE INDEX IF NOT EXISTS idx_learning_evidence_subject_learner ON learning_evidence(subject_id, learner_id, id DESC);
+CREATE INDEX IF NOT EXISTS idx_learning_evidence_lesson ON learning_evidence(lesson_id, id DESC);

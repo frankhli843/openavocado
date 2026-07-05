@@ -3,6 +3,12 @@
 import { useRef, useState } from "react";
 import type { LessonActivity, GeneratedArtifact } from "@/types";
 import type { AudioSyncedVisualContent } from "@/lib/lesson-content/schema";
+import {
+  audioResumeKey,
+  clearAudioResumeTime,
+  readAudioResumeTime,
+  writeAudioResumeTime,
+} from "@/lib/audio-resume";
 import { WidgetHost } from "./widgets/WidgetHost";
 import { AudioSyncedLessonVisual } from "./LessonPartSection";
 
@@ -17,11 +23,13 @@ export function AudioSection({ activity, artifact }: AudioSectionProps) {
     : {};
   const orientationVisual = content.orientation_visual;
   const audioRef = useRef<HTMLAudioElement | null>(null);
+  const lastSavedAudioTimeRef = useRef(0);
   const [audioTime, setAudioTime] = useState(0);
   const [audioDuration, setAudioDuration] = useState(0);
   const [audioPlaying, setAudioPlaying] = useState(false);
   const syncedOrientation = isAudioSyncedVisual(orientationVisual) ? orientationVisual : null;
   const widgetOrientation = syncedOrientation ? null : orientationVisual;
+  const resumeKey = audioResumeKey(activity.id, artifact?.file_path);
 
   const durationMin = artifact?.duration_sec
     ? Math.ceil(artifact.duration_sec / 60)
@@ -32,7 +40,15 @@ export function AudioSection({ activity, artifact }: AudioSectionProps) {
     if (!audioRef.current) return;
     audioRef.current.currentTime = time;
     setAudioTime(time);
+    writeAudioResumeTime(window.localStorage, resumeKey, time);
+    lastSavedAudioTimeRef.current = time;
     void audioRef.current.play().catch(() => undefined);
+  };
+
+  const saveAudioTime = (time: number, force = false) => {
+    if (!force && Math.abs(time - lastSavedAudioTimeRef.current) < 2) return;
+    writeAudioResumeTime(window.localStorage, resumeKey, time);
+    lastSavedAudioTimeRef.current = time;
   };
 
   return (
@@ -66,11 +82,31 @@ export function AudioSection({ activity, artifact }: AudioSectionProps) {
                   controls
                   className="h-10 w-full min-w-0 max-w-full"
                   src={`/runtime/${artifact.file_path}`}
-                  onLoadedMetadata={(event) => setAudioDuration(event.currentTarget.duration || 0)}
-                  onTimeUpdate={(event) => setAudioTime(event.currentTarget.currentTime)}
+                  onLoadedMetadata={(event) => {
+                    const duration = event.currentTarget.duration || 0;
+                    setAudioDuration(duration);
+                    const savedTime = readAudioResumeTime(window.localStorage, resumeKey, duration);
+                    if (savedTime > 0) {
+                      event.currentTarget.currentTime = savedTime;
+                      setAudioTime(savedTime);
+                      lastSavedAudioTimeRef.current = savedTime;
+                    }
+                  }}
+                  onTimeUpdate={(event) => {
+                    const time = event.currentTarget.currentTime;
+                    setAudioTime(time);
+                    saveAudioTime(time);
+                  }}
                   onPlay={() => setAudioPlaying(true)}
-                  onPause={() => setAudioPlaying(false)}
-                  onEnded={() => setAudioPlaying(false)}
+                  onPause={(event) => {
+                    setAudioPlaying(false);
+                    saveAudioTime(event.currentTarget.currentTime, true);
+                  }}
+                  onEnded={() => {
+                    setAudioPlaying(false);
+                    clearAudioResumeTime(window.localStorage, resumeKey);
+                    lastSavedAudioTimeRef.current = 0;
+                  }}
                 >
                   Your browser does not support audio playback.
                 </audio>

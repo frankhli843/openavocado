@@ -1,8 +1,9 @@
 "use client";
 
 import type { ReactNode } from "react";
+import katex from "katex";
 
-type InlineKind = "text" | "strong" | "em" | "code" | "link";
+type InlineKind = "text" | "strong" | "em" | "code" | "link" | "math";
 
 interface InlineToken {
   kind: InlineKind;
@@ -15,7 +16,8 @@ type Block =
   | { kind: "heading"; level: 1 | 2 | 3 | 4; text: string }
   | { kind: "ul"; items: string[] }
   | { kind: "ol"; items: string[] }
-  | { kind: "codeblock"; lang: string; code: string };
+  | { kind: "codeblock"; lang: string; code: string }
+  | { kind: "mathblock"; latex: string };
 
 export function MarkdownText({ text, className = "" }: { text: string; className?: string }) {
   const blocks = parseBlocks(text);
@@ -28,6 +30,9 @@ export function MarkdownText({ text, className = "" }: { text: string; className
               <code>{block.code}</code>
             </pre>
           );
+        }
+        if (block.kind === "mathblock") {
+          return <DisplayMath key={index} latex={block.latex} />;
         }
         if (block.kind === "heading") {
           const className =
@@ -106,6 +111,31 @@ function parseBlocks(text: string): Block[] {
       continue;
     }
 
+    const mathFenceStart = line.trim().match(/^\$\$\s*(.*)$/);
+    if (mathFenceStart) {
+      flushParagraph();
+      flushList();
+      const firstLine = mathFenceStart[1] ?? "";
+      const mathLines: string[] = [];
+      if (firstLine.trim().endsWith("$$")) {
+        blocks.push({ kind: "mathblock", latex: firstLine.replace(/\s*\$\$\s*$/, "") });
+        i++;
+        continue;
+      }
+      if (firstLine.trim()) mathLines.push(firstLine);
+      i++;
+      while (i < lines.length && !lines[i].trim().endsWith("$$")) {
+        mathLines.push(lines[i]);
+        i++;
+      }
+      if (i < lines.length) {
+        mathLines.push(lines[i].replace(/\s*\$\$\s*$/, ""));
+        i++;
+      }
+      blocks.push({ kind: "mathblock", latex: mathLines.join("\n").trim() });
+      continue;
+    }
+
     if (!line.trim()) {
       flushParagraph();
       flushList();
@@ -122,6 +152,15 @@ function parseBlocks(text: string): Block[] {
         level: heading[1].length as 1 | 2 | 3 | 4,
         text: heading[2],
       });
+      i++;
+      continue;
+    }
+
+    const standaloneMath = line.trim().match(/^\$(.+)\$$/);
+    if (standaloneMath && shouldRenderStandaloneMath(standaloneMath[1])) {
+      flushParagraph();
+      flushList();
+      blocks.push({ kind: "mathblock", latex: standaloneMath[1] });
       i++;
       continue;
     }
@@ -184,6 +223,7 @@ function renderInline(text: string, keyPrefix = "inline"): ReactNode[] {
         </code>
       );
     }
+    if (token.kind === "math") return <InlineMath key={key} latex={token.text} />;
     if (token.kind === "link" && token.href) {
       return (
         <a
@@ -236,6 +276,15 @@ function parseInline(text: string): InlineToken[] {
       }
     }
 
+    if (text[i] === "$" && text[i + 1] !== "$") {
+      const end = findClosingMathDollar(text, i + 1);
+      if (end > i + 1) {
+        tokens.push({ kind: "math", text: text.slice(i + 1, end) });
+        i = end + 1;
+        continue;
+      }
+    }
+
     if (text.startsWith("**", i) || text.startsWith("__", i)) {
       const marker = text.slice(i, i + 2);
       const end = text.indexOf(marker, i + 2);
@@ -267,8 +316,146 @@ function parseInline(text: string): InlineToken[] {
 }
 
 function findNextSpecial(text: string, start: number): number {
-  const indexes = ["`", "*", "_", "["]
+  const indexes = ["`", "*", "_", "[", "$"]
     .map((marker) => text.indexOf(marker, start))
     .filter((index) => index >= 0);
   return indexes.length ? Math.min(...indexes) : text.length;
+}
+
+function findClosingMathDollar(text: string, start: number): number {
+  for (let index = start; index < text.length; index++) {
+    if (text[index] === "$" && text[index - 1] !== "\\") return index;
+  }
+  return -1;
+}
+
+function shouldRenderStandaloneMath(latex: string): boolean {
+  return /[=\\_^]/.test(latex) || latex.trim().length > 8;
+}
+
+function renderKatex(latex: string, displayMode: boolean): string {
+  try {
+    const rendered = katex.renderToString(normalizeMathLatex(latex), {
+      displayMode,
+      throwOnError: false,
+      strict: "warn",
+      trust: false,
+      output: "html",
+    });
+    return rendered.includes("katex-error") ? "" : rendered;
+  } catch {
+    return "";
+  }
+}
+
+function normalizeMathLatex(latex: string): string {
+  return stripUnsupportedLatexHighlights(latex.trim())
+    .replace(/\s*·\s*/g, " \\cdot ")
+    .replace(/\bsqrt\s*\(([^()]+)\)/g, "\\sqrt{$1}");
+}
+
+function stripUnsupportedLatexHighlights(latex: string): string {
+  let out = latex;
+  let previous = "";
+  while (out !== previous) {
+    previous = out;
+    out = unwrapLatexCommandWithTwoBraceArgs(out, "\\colorbox");
+    out = unwrapLatexCommandWithTwoBraceArgs(out, "\\fcolorbox");
+    out = unwrapLatexCommandWithOptionalArg(out, "\\bbox");
+  }
+  return out;
+}
+
+function unwrapLatexCommandWithTwoBraceArgs(source: string, command: string): string {
+  let out = "";
+  let index = 0;
+  while (index < source.length) {
+    const commandIndex = source.indexOf(command, index);
+    if (commandIndex < 0) {
+      out += source.slice(index);
+      break;
+    }
+    out += source.slice(index, commandIndex);
+    const first = readBraceGroup(source, commandIndex + command.length);
+    if (!first) {
+      out += source.slice(commandIndex, commandIndex + command.length);
+      index = commandIndex + command.length;
+      continue;
+    }
+    const second = readBraceGroup(source, first.end);
+    if (!second) {
+      out += source.slice(commandIndex, first.end);
+      index = first.end;
+      continue;
+    }
+    out += second.body;
+    index = second.end;
+  }
+  return out;
+}
+
+function unwrapLatexCommandWithOptionalArg(source: string, command: string): string {
+  let out = "";
+  let index = 0;
+  while (index < source.length) {
+    const commandIndex = source.indexOf(command, index);
+    if (commandIndex < 0) {
+      out += source.slice(index);
+      break;
+    }
+    out += source.slice(index, commandIndex);
+    let cursor = commandIndex + command.length;
+    if (source[cursor] === "[") {
+      const optional = readDelimitedGroup(source, cursor, "[", "]");
+      if (optional) cursor = optional.end;
+    }
+    const body = readBraceGroup(source, cursor);
+    if (!body) {
+      out += source.slice(commandIndex, cursor);
+      index = cursor;
+      continue;
+    }
+    out += body.body;
+    index = body.end;
+  }
+  return out;
+}
+
+function readBraceGroup(source: string, start: number) {
+  return readDelimitedGroup(source, start, "{", "}");
+}
+
+function readDelimitedGroup(source: string, start: number, open: string, close: string) {
+  let cursor = start;
+  while (/\s/.test(source[cursor] ?? "")) cursor += 1;
+  if (source[cursor] !== open) return null;
+  let depth = 0;
+  for (let index = cursor; index < source.length; index++) {
+    const char = source[index];
+    const escaped = index > 0 && source[index - 1] === "\\";
+    if (!escaped && char === open) depth += 1;
+    if (!escaped && char === close) depth -= 1;
+    if (depth === 0) {
+      return { body: source.slice(cursor + 1, index), end: index + 1 };
+    }
+  }
+  return null;
+}
+
+function InlineMath({ latex }: { latex: string }) {
+  const html = renderKatex(latex, false);
+  if (!html) return <code>{latex}</code>;
+  return <span aria-label={`Formula: ${latex}`} dangerouslySetInnerHTML={{ __html: html }} />;
+}
+
+function DisplayMath({ latex }: { latex: string }) {
+  const html = renderKatex(latex, true);
+  if (!html) {
+    return <code className="block whitespace-pre-wrap break-words rounded bg-black/10 px-2 py-1 font-mono text-[0.92em]">{latex}</code>;
+  }
+  return (
+    <div className="my-2 max-w-full overflow-x-auto rounded-md bg-white/70 px-2 py-2 text-gray-950">
+      <div className="min-w-max" aria-label={`Formula: ${latex}`} dangerouslySetInnerHTML={{ __html: html }} />
+    </div>
+  );
 }

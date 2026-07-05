@@ -183,7 +183,15 @@ export function PythonSection({
         await fetch("/api/code-submission", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ activity_id: activity.id, learner_id: learnerId, passed }),
+          body: JSON.stringify({
+            activity_id: activity.id,
+            learner_id: learnerId,
+            passed,
+            code,
+            run_output: newOutput,
+            test_results: results,
+            prompt: content.prompt ?? activity.title ?? "Code exercise",
+          }),
         });
       } catch {
         /* submission signal is best-effort */

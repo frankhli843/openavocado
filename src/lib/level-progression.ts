@@ -402,12 +402,23 @@ function buildPhaseEvidencePacket(
   const attempts = db
     .prepare(
       `SELECT l.id AS lesson_id, l.title AS lesson_title, la.title AS activity_title,
-              a.attempt_type, a.result, a.is_final, a.created_at
+              a.attempt_type, a.content, a.result, a.is_final, a.created_at
        FROM attempts a
        JOIN lesson_activities la ON la.id = a.activity_id
        JOIN lessons l ON l.id = la.lesson_id
        WHERE l.subject_id = ? AND a.learner_id = ?
        ORDER BY a.created_at ASC, a.id ASC`
+    )
+    .all(subjectId, learnerId) as Array<Record<string, unknown>>;
+
+  const learningEvidence = db
+    .prepare(
+      `SELECT id, lesson_id, activity_id, source_type, source_id, concept,
+              difficulty, outcome, prompt, learner_input, system_response,
+              metadata, created_at
+       FROM learning_evidence
+       WHERE subject_id = ? AND learner_id = ?
+       ORDER BY created_at ASC, id ASC`
     )
     .all(subjectId, learnerId) as Array<Record<string, unknown>>;
 
@@ -492,6 +503,13 @@ function buildPhaseEvidencePacket(
       ...row,
       answer_text: truncate(row.answer_text, 1000),
     })),
+    learning_evidence: learningEvidence.map((row) => ({
+      ...row,
+      prompt: truncate(row.prompt, 1000),
+      learner_input: truncate(row.learner_input, 1800),
+      system_response: truncate(row.system_response, 1600),
+      metadata: parseJsonField(row.metadata),
+    })),
     autosaved_assessment_answers: autosaveAnswers.map((row) => ({
       lesson_id: row.lesson_id,
       lesson_title: row.lesson_title,
@@ -501,6 +519,7 @@ function buildPhaseEvidencePacket(
     mastery_signals: masterySignals,
     code_attempts: attempts.map((attempt) => ({
       ...attempt,
+      content: parseJsonField(attempt.content),
       result: truncate(attempt.result, 1200),
     })),
     subject_workpad: workpad

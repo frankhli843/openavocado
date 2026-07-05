@@ -6,6 +6,7 @@ import {
   summarizeLessonChat,
   type LessonChatMessage as LlmChatMessage,
 } from "@/lib/feedback-llm";
+import { recordLearningEvidence } from "@/lib/learning-evidence";
 import type { Lesson, LessonActivity, LessonChatMessage, LessonChatState } from "@/types";
 
 const RECENT_MESSAGE_LIMIT = 16;
@@ -128,6 +129,20 @@ export async function POST(
       `INSERT INTO lesson_chat_messages (lesson_id, learner_id, role, content)
        VALUES (?, ?, 'assistant', ?)`
     ).run(lessonId, learnerId, reply);
+
+    recordLearningEvidence(db, {
+      learner_id: learnerId,
+      subject_id: lesson.subject_id,
+      lesson_id: lessonId,
+      source_type: "lesson_chat",
+      source_id: `lesson_chat:${lessonId}:${Date.now()}`,
+      prompt: currentSectionId ? `Lesson chat question in ${currentSectionId}` : "Lesson chat question",
+      learner_input: message,
+      system_response: reply,
+      metadata: {
+        current_section_id: currentSectionId,
+      },
+    });
 
     return NextResponse.json({
       enabled: true,

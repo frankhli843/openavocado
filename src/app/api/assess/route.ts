@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { getDb } from "@/db/connection";
 import { getAssessmentAdapter } from "@/lib/assessment";
 import { loadSubjectTags, persistAssessment } from "@/lib/assessment-store";
+import { recordLearningEvidence } from "@/lib/learning-evidence";
 import type { Difficulty } from "@/types";
 
 /**
@@ -29,6 +30,7 @@ export async function POST(request: Request) {
       difficulty?: Difficulty | null;
       mc_outcome?: "correct" | "incorrect" | "idk";
       answer_text?: string | null;
+      feedback_text?: string | null;
     };
 
     const learner_id = Number(body.learner_id);
@@ -101,6 +103,35 @@ export async function POST(request: Request) {
       outcome,
     });
 
+    const sourceType =
+      question_type === "diagnostic"
+        ? "diagnostic_answer"
+        : question_type === "freeform"
+          ? "practice_answer"
+          : "assessment_answer";
+    const evidenceId = recordLearningEvidence(db, {
+      learner_id,
+      subject_id,
+      lesson_id: body.lesson_id ?? null,
+      activity_id: body.activity_id ?? null,
+      source_type: sourceType,
+      source_id: `assessment_results:${persisted.result_id}`,
+      concept: body.concept ?? outcome.signal.concept ?? null,
+      difficulty: body.difficulty ?? outcome.signal.difficulty ?? null,
+      outcome: outcome.outcome,
+      prompt: (body.question_text || question_id).trim(),
+      learner_input: body.answer_text ?? null,
+      system_response: body.feedback_text ?? outcome.signal.detail ?? null,
+      metadata: {
+        question_id,
+        question_type,
+        assessment_result_id: persisted.result_id,
+        mastery_signal_id: persisted.signal_id,
+        signal_type: outcome.signal.signal_type,
+        tags: outcome.tags,
+      },
+    });
+
     return NextResponse.json({
       ok: true,
       assessor: adapter.name,
@@ -109,6 +140,7 @@ export async function POST(request: Request) {
       tags: outcome.tags,
       result_id: persisted.result_id,
       signal_id: persisted.signal_id,
+      evidence_id: evidenceId,
       created_tags: persisted.created_tag_names,
     });
   } catch (err) {

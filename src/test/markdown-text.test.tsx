@@ -50,4 +50,23 @@ describe("MarkdownText", () => {
     expect(screen.getByText(/<img src=x/)).toBeInTheDocument();
     expect(screen.getByText("safe").tagName).toBe("STRONG");
   });
+
+  it("renders inline and standalone LaTeX formulas", () => {
+    const { container } = render(
+      <MarkdownText
+        text={[
+          "The $Q$, $K$, and $V$ vectors come from hidden states.",
+          "",
+          "$Q = X \\cdot W_Q$",
+          "$K = X \\cdot W_K$",
+          "$V = X \\cdot W_V$",
+        ].join("\n")}
+      />
+    );
+
+    expect(container.querySelectorAll(".katex").length).toBeGreaterThanOrEqual(6);
+    expect(container.querySelectorAll(".katex-display")).toHaveLength(3);
+    expect(container.textContent).not.toContain("$Q$");
+    expect(container.textContent).not.toContain("\\cdot");
+  });
 });

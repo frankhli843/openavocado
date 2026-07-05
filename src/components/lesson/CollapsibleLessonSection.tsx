@@ -36,12 +36,20 @@ export function CollapsibleLessonSection({
     if (nextDone) setOpen(false);
   }
 
+  function toggleOpen() {
+    const nextOpen = !open;
+    setOpen(nextOpen);
+    if (nextOpen && window.location.hash !== `#${id}`) {
+      window.location.hash = id;
+    }
+  }
+
   return (
     <section id={id} className="scroll-mt-24 bg-white rounded-xl border border-gray-200 overflow-hidden">
       <div className="flex items-center gap-3 px-5 py-4 bg-gray-50/60 border-b border-gray-100">
         <button
           type="button"
-          onClick={() => setOpen((v) => !v)}
+          onClick={toggleOpen}
           className="flex min-w-0 flex-1 items-center gap-3 text-left"
           aria-expanded={open}
         >

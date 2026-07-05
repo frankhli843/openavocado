@@ -42,6 +42,8 @@ const DEFAULT_BASE_URLS: Record<FeedbackProvider, string> = {
   google: "https://generativelanguage.googleapis.com",
 };
 
+const LOCAL_LESSON_CHAT_MAX_TOKENS = 700;
+
 function feedbackBaseUrlEnvName(provider: FeedbackProvider): string {
   return `AVOCADOCORE_FEEDBACK_${provider.toUpperCase()}_BASE_URL`;
 }
@@ -180,6 +182,8 @@ Answer the learner's quick question using the current lesson context and prior c
 Rules:
 - Keep answers concise by default: 1-4 short paragraphs.
 - Explain just enough to unblock the learner, then stop.
+- If using a worked example, keep it tiny and finish the example completely. Do not start a numbered list unless you can finish every listed step.
+- For math examples, prefer at most 2 tokens and 2 dimensions unless the learner asks for more.
 - Prefer the lesson's wording and examples when available.
 - If the learner asks for a hint, give a hint, not the full answer.
 - If the learner asks for code, show the smallest useful snippet and explain the key idea.
@@ -666,7 +670,7 @@ async function callOpenAICompatibleChat(
   if (config.apiKey) headers["Authorization"] = `Bearer ${config.apiKey}`;
 
   const isLocal = config.provider === "local";
-  const effectiveMaxTokens = isLocal ? Math.min(maxTokens, 180) : maxTokens;
+  const effectiveMaxTokens = isLocal ? Math.min(maxTokens, LOCAL_LESSON_CHAT_MAX_TOKENS) : maxTokens;
   const extraBody = isLocal
     ? {
       budget_tokens: 0,
@@ -930,7 +934,7 @@ export async function getLessonChatReply(config: FeedbackConfig, req: LessonChat
     config,
     system,
     chatReq.messages,
-    config.provider === "local" ? 180 : 1200,
+    config.provider === "local" ? LOCAL_LESSON_CHAT_MAX_TOKENS : 1200,
     0.35
   );
   return answer.trim() || "I could not generate a reply for that question.";

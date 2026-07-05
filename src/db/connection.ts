@@ -7,6 +7,7 @@ import path from "path";
 import fs from "fs";
 import { readFileSync } from "fs";
 import { scryptSync, randomBytes } from "crypto";
+import { ensureLearningEvidenceSchema } from "@/lib/learning-evidence";
 
 const DB_PATH =
   process.env.AVOCADOCORE_DB_PATH ||
@@ -239,6 +240,9 @@ function applyAdditiveMigrations(db: Database.Database): void {
   db.exec("CREATE INDEX IF NOT EXISTS idx_visual_artifacts_slug ON visual_artifacts(slug)");
   db.exec("CREATE INDEX IF NOT EXISTS idx_visual_artifacts_build_status ON visual_artifacts(build_status)");
   db.exec("CREATE INDEX IF NOT EXISTS idx_visual_artifacts_lesson_id ON visual_artifacts(lesson_id)");
+
+  // Unified learner input stream for next-lesson planning.
+  ensureLearningEvidenceSchema(db);
 
   // Harness job lifecycle columns on next_lesson_jobs.
   // These are additive and nullable so existing rows are unaffected.

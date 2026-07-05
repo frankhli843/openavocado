@@ -270,7 +270,7 @@ describe("parseAnswerJudgment", () => {
         chat_template_kwargs?: { enable_thinking?: boolean };
         messages: Array<{ role: string; content: string }>;
       };
-      expect(body.max_tokens).toBe(180);
+      expect(body.max_tokens).toBe(700);
       expect(body.budget_tokens).toBe(0);
       expect(body.chat_template_kwargs).toEqual({ enable_thinking: false });
       expect(body.messages[0].content.length).toBeLessThan(5000);

@@ -1,5 +1,4 @@
 import {
-  approveArtifact,
   createArtifact,
   getArtifactBySlug,
   markBuildFailed,
@@ -213,6 +212,202 @@ const cueArtifacts: CueArtifact[] = baseCueArtifacts.map((artifact) => ({
   slug: `${SLUG_PREFIX}-${artifact.slug.replace(/^lesson-15-cue-/, "")}`,
 }));
 
+const cueSlugByLabel: Record<string, string> = {
+  "Hidden-state rows enter": `${SLUG_PREFIX}-hidden-state-input`,
+  "Notebook metaphor": `${SLUG_PREFIX}-residual-add`,
+  "Tiny token example": `${SLUG_PREFIX}-score-matrix`,
+  "Q and K compare": `${SLUG_PREFIX}-qk-dot-product`,
+  "Softmax and V mix": `${SLUG_PREFIX}-value-mixing`,
+  "Residual add": `${SLUG_PREFIX}-residual-add`,
+  "MLP update": `${SLUG_PREFIX}-mlp-handoff`,
+  "Shape contract": `${SLUG_PREFIX}-code-shape-check`,
+  "Misleading shortcut": `${SLUG_PREFIX}-attention-vs-mlp`,
+  "Next-token evidence": `${SLUG_PREFIX}-logits-handoff`,
+};
+
+const cuePlan = [
+  {
+    label: "Hidden-state rows enter",
+    headline: "Hidden-state matrix enters the block",
+    anchor: "Let's make one transformer block feel like a place you can walk through.",
+    narration: "The block receives one row per token. It will preserve the row count while changing what each row represents.",
+    receive: "hidden-state matrix H_input",
+    transform: "preserve shape while preparing context updates",
+    pass: "same rows ready for Q, K, and V projections",
+    artifact_slug: cueSlugByLabel["Hidden-state rows enter"],
+  },
+  {
+    label: "Next-token evidence",
+    headline: "Rows become evidence for next-token logits",
+    anchor: "So \"evidence\" means information that can change the model's next-token scores.",
+    narration: "The row matters because later layers and the output head use it to change next-token scores.",
+    receive: "token identity, position, and earlier features",
+    transform: "turn row values into more predictive evidence",
+    pass: "hidden rows that can support logits",
+    artifact_slug: cueSlugByLabel["Next-token evidence"],
+  },
+  {
+    label: "Shape contract",
+    headline: "The block is specific edits to the same table",
+    anchor: "The block is not a black box blob.",
+    narration: "Attention, MLP, residuals, and LayerNorm are different edits to the same hidden-state table.",
+    receive: "hidden-state table",
+    transform: "apply learned sublayer updates",
+    pass: "same-shaped but enriched table",
+    artifact_slug: cueSlugByLabel["Shape contract"],
+  },
+  {
+    label: "Q and K compare",
+    headline: "Queries and keys create attention scores",
+    anchor: "I want to slow down at attention.",
+    narration: "Q asks what a token is looking for. K advertises what each token can match. Their dot products become scores.",
+    receive: "hidden-state rows projected into Q and K",
+    transform: "compare every query row with every key row",
+    pass: "raw attention score matrix",
+    artifact_slug: cueSlugByLabel["Q and K compare"],
+  },
+  {
+    label: "Q and K compare",
+    headline: "Vector alignment is the mechanism",
+    anchor: "The vectors do not contain English labels like \"verb\".",
+    narration: "The human labels are analogy. The actual mechanism is learned vector alignment.",
+    receive: "query and key directions",
+    transform: "measure compatibility by dot product",
+    pass: "score table",
+    artifact_slug: cueSlugByLabel["Q and K compare"],
+  },
+  {
+    label: "Softmax and V mix",
+    headline: "Scaling keeps softmax from becoming too sharp",
+    anchor: "Why do we divide by the square root of d sub k before softmax?",
+    narration: "Scaling keeps score magnitudes calm enough for softmax to make graded choices.",
+    receive: "raw QK scores",
+    transform: "divide by sqrt(d_k)",
+    pass: "scaled scores ready for softmax",
+    artifact_slug: `${SLUG_PREFIX}-softmax-weights`,
+  },
+  {
+    label: "Softmax and V mix",
+    headline: "Weights choose value content",
+    anchor: "Softmax is more like a normalizer that turns scores into a budget.",
+    narration: "Softmax creates weights. Those weights pull content from V rows.",
+    receive: "attention scores and value rows",
+    transform: "normalize scores and weight-sum V",
+    pass: "context vector for each token row",
+    artifact_slug: cueSlugByLabel["Softmax and V mix"],
+  },
+  {
+    label: "Misleading shortcut",
+    headline: "Q/K/V are learned projections, not tokenizer facts",
+    anchor: "A common misconception is thinking Q, K, and V are three separate facts from the tokenizer",
+    narration: "Q asks, K matches, V carries. The weights route, but V carries the content.",
+    receive: "current hidden-state rows",
+    transform: "project into role-specific views",
+    pass: "query, key, and value roles",
+    artifact_slug: cueSlugByLabel["Misleading shortcut"],
+  },
+  {
+    label: "Residual add",
+    headline: "Attention updates the stream without erasing it",
+    anchor: "After the weighted sum of values is computed, where does it go?",
+    narration: "The attention output becomes a delta added back into the original residual stream.",
+    receive: "H_input plus attention update",
+    transform: "add the update through the residual path",
+    pass: "H_after_attn",
+    artifact_slug: cueSlugByLabel["Residual add"],
+  },
+  {
+    label: "Notebook metaphor",
+    headline: "The residual stream is a shared notebook",
+    anchor: "the residual stream is like a working notebook",
+    narration: "The stream keeps the old signal while each block writes useful updates into it.",
+    receive: "current residual stream",
+    transform: "add context and per-token updates without replacing the stream",
+    pass: "richer residual stream",
+    artifact_slug: cueSlugByLabel["Notebook metaphor"],
+  },
+  {
+    label: "MLP update",
+    headline: "The MLP edits each row independently",
+    anchor: "Where does the MLP enter?",
+    narration: "The MLP transforms each row after context has arrived: expand, gate, compress, add.",
+    receive: "H_after_attn",
+    transform: "expand, GELU-gate, compress, and add",
+    pass: "H_output",
+    artifact_slug: cueSlugByLabel["MLP update"],
+  },
+  {
+    label: "MLP update",
+    headline: "Expansion gives the row room for intermediate features",
+    anchor: "Why expand first?",
+    narration: "The wider hidden space gives the MLP room to create and gate candidate features.",
+    receive: "one token row",
+    transform: "expand into wider feature space and apply GELU",
+    pass: "compressed same-width update",
+    artifact_slug: cueSlugByLabel["MLP update"],
+  },
+  {
+    label: "Next-token evidence",
+    headline: "Better rows make better next-token scores",
+    anchor: "The block is not predicting directly, but it is shaping the evidence that prediction will use.",
+    narration: "Blocks refine hidden states so the output head can assign better vocabulary logits later.",
+    receive: "context-aware hidden rows",
+    transform: "sharpen predictive features",
+    pass: "rows that support better logits",
+    artifact_slug: cueSlugByLabel["Next-token evidence"],
+  },
+  {
+    label: "Attention heads",
+    headline: "Multiple heads read the same table in different ways",
+    anchor: "Where do multiple heads fit in this story?",
+    narration: "Each head has its own Q, K, and V projections and contributes one reading of the same table.",
+    receive: "shared hidden-state matrix",
+    transform: "run several attention patterns in parallel",
+    pass: "combined attention update",
+    artifact_slug: cueSlugByLabel["Q and K compare"],
+  },
+  {
+    label: "Residual add",
+    headline: "LayerNorm creates a stable read path",
+    anchor: "I want to ask about LayerNorm again",
+    narration: "The sublayer reads a normalized view while the residual path carries the continuing stream.",
+    receive: "current hidden-state row",
+    transform: "normalize for the sublayer, then add the update",
+    pass: "stable residual stream",
+    artifact_slug: cueSlugByLabel["Residual add"],
+  },
+  {
+    label: "Misleading shortcut",
+    headline: "Fix the wrong shortcut version",
+    anchor: "Let me test the causal chain with a wrong version.",
+    narration: "The corrected chain is projection, scoring, weighting, value mixing, residual add, MLP update, later logits.",
+    receive: "imprecise mental model",
+    transform: "replace vague terms with the concrete data path",
+    pass: "usable causal chain",
+    artifact_slug: cueSlugByLabel["Misleading shortcut"],
+  },
+  {
+    label: "Next-token evidence",
+    headline: "Wrong predictions become inspectable",
+    anchor: "I also want to connect this to why wrong predictions happen.",
+    narration: "Once you know the chain, a mistake can be traced to representations, scores, weights, updates, or logits.",
+    receive: "model error",
+    transform: "inspect the mechanism that made it plausible",
+    pass: "debuggable next-token prediction",
+    artifact_slug: cueSlugByLabel["Next-token evidence"],
+  },
+  {
+    label: "Q and K compare",
+    headline: "The visual should track the changing object",
+    anchor: "That also explains why the visualization should move.",
+    narration: "The visual should show the real object being discussed: score grids, value mixing, residual adds, or MLP updates.",
+    receive: "audio concept",
+    transform: "show the concrete object and operation",
+    pass: "visible proof of the concept",
+    artifact_slug: cueSlugByLabel["Q and K compare"],
+  },
+];
+
 function artifactSource(spec: CueArtifact): string {
   return `import React from "react";
 
@@ -251,25 +446,52 @@ function Cell({ value }: { value: number }) {
 
 export default function ArtifactComponent({ initialState }: Props) {
   const progress = Math.round(initialState?.progressPct ?? 0);
+  const audioTime = Number(initialState?.audioTime ?? 0);
+  const cueLocalTime = Number(initialState?.cueLocalTime ?? Math.max(0, audioTime - Number(initialState?.cueStart ?? 0)));
+  const beat = Math.floor(cueLocalTime / 3);
+  const activeRowIndex = spec.rows.length ? beat % spec.rows.length : 0;
+  const activeFocus = spec.focus.length ? spec.focus[beat % spec.focus.length] : spec.stage;
   return (
     <div style={{
       fontFamily: "Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, sans-serif",
-      padding: 16,
+      padding: "clamp(10px, 3vw, 16px)",
       color: "#0f172a",
-      background: "linear-gradient(180deg, #ffffff 0%, #f8fafc 100%)",
+      background: "radial-gradient(circle at top left, #eff6ff 0, #ffffff 42%, #f8fafc 100%)",
       minHeight: 360,
       boxSizing: "border-box",
+      width: "100%",
+      maxWidth: "100%",
+      overflow: "hidden",
+      overflowWrap: "anywhere",
     }}>
       <div style={{ display: "flex", alignItems: "start", justifyContent: "space-between", gap: 12, marginBottom: 12 }}>
-        <div>
+        <div style={{ minWidth: 0 }}>
           <div style={{ fontSize: 11, color: "#2563eb", fontWeight: 900, textTransform: "uppercase", letterSpacing: 0 }}>
-            Generated cue artifact
+            DB-backed generated cue
           </div>
-          <h2 style={{ margin: "4px 0 2px", fontSize: 20, lineHeight: 1.15 }}>{spec.title}</h2>
+          <h2 style={{ margin: "4px 0 2px", fontSize: "clamp(18px, 5vw, 24px)", lineHeight: 1.12 }}>{spec.title}</h2>
           <div style={{ fontSize: 13, color: "#475569", lineHeight: 1.35 }}>{spec.caption}</div>
         </div>
-        <div style={{ minWidth: 86, textAlign: "right", fontSize: 12, color: "#64748b", fontVariantNumeric: "tabular-nums" }}>
-          audio {progress}%
+        <div style={{ minWidth: 92, textAlign: "right", fontSize: 12, color: "#64748b", fontVariantNumeric: "tabular-nums" }}>
+          audio {progress}%<br />cue beat {beat + 1}
+        </div>
+      </div>
+
+      <div style={{
+        display: "grid",
+        gridTemplateColumns: "repeat(auto-fit, minmax(min(190px, 100%), 1fr))",
+        gap: 8,
+        marginBottom: 12,
+      }}>
+        <div style={{ borderLeft: "4px solid #2563eb", background: "#eff6ff", padding: "8px 10px" }}>
+          <div style={{ fontSize: 11, color: "#1d4ed8", fontWeight: 900, textTransform: "uppercase", letterSpacing: 0 }}>Spotlight now</div>
+          <div style={{ marginTop: 2, fontSize: 15, fontWeight: 900, color: "#172554" }}>{activeFocus}</div>
+        </div>
+        <div style={{ borderLeft: "4px solid #16a34a", background: "#f0fdf4", padding: "8px 10px" }}>
+          <div style={{ fontSize: 11, color: "#166534", fontWeight: 900, textTransform: "uppercase", letterSpacing: 0 }}>Question to ask</div>
+          <div style={{ marginTop: 2, fontSize: 13, fontWeight: 800, color: "#14532d" }}>
+            What changes in this row, and what stays the same shape?
+          </div>
         </div>
       </div>
 
@@ -285,7 +507,7 @@ export default function ArtifactComponent({ initialState }: Props) {
         <div style={{
           marginTop: 4,
           fontFamily: "ui-monospace, SFMono-Regular, Menlo, Consolas, monospace",
-          fontSize: 16,
+          fontSize: "clamp(13px, 3.7vw, 17px)",
           lineHeight: 1.5,
           color: "#172554",
           overflowWrap: "anywhere",
@@ -294,20 +516,25 @@ export default function ArtifactComponent({ initialState }: Props) {
         </div>
       </div>
 
-      <div style={{ display: "grid", gridTemplateColumns: "minmax(0, 1.4fr) minmax(220px, 0.7fr)", gap: 14 }}>
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(min(280px, 100%), 1fr))", gap: 14 }}>
         <div style={{ display: "grid", gap: 8, minWidth: 0 }}>
-          {spec.rows.map((row) => (
+          {spec.rows.map((row, rowIndex) => (
             <div key={row.label} style={{
               display: "grid",
-              gridTemplateColumns: "minmax(120px, 0.7fr) minmax(0, 1.3fr)",
+              gridTemplateColumns: "repeat(auto-fit, minmax(min(150px, 100%), 1fr))",
               gap: 8,
               alignItems: "center",
-              borderBottom: "1px solid #e2e8f0",
-              paddingBottom: 8,
+              border: rowIndex === activeRowIndex ? "2px solid #2563eb" : "1px solid #e2e8f0",
+              background: rowIndex === activeRowIndex ? "#eff6ff" : "#ffffff",
+              boxShadow: rowIndex === activeRowIndex ? "0 8px 24px rgba(37, 99, 235, 0.14)" : "none",
+              padding: 8,
             }}>
               <div>
                 <div style={{ fontSize: 13, fontWeight: 850, color: "#0f172a" }}>{row.label}</div>
                 <div style={{ marginTop: 2, fontSize: 12, color: "#64748b", lineHeight: 1.3 }}>{row.note}</div>
+                {rowIndex === activeRowIndex ? (
+                  <div style={{ marginTop: 6, color: "#2563eb", fontSize: 12, fontWeight: 900 }}>← follow this row</div>
+                ) : null}
               </div>
               <div style={{ display: "flex", flexWrap: "wrap", gap: 4 }}>
                 {row.values.map((value, index) => <Cell key={row.label + "-" + index} value={value} />)}
@@ -370,6 +597,48 @@ function cleanScript(script: string): string {
     .replace(/We will keep the vibe conversational, like a careful podcast host pausing to make sure the listener is still with the idea before moving deeper\./g, "Then the next lesson part can add detail without changing the object being followed.");
 }
 
+function wordCount(text: string): number {
+  return text.trim().split(/\s+/).filter(Boolean).length;
+}
+
+function estimateTimeForAnchor(script: string, anchor: string, durationSec: number): number {
+  const index = script.indexOf(anchor);
+  if (index < 0) return -1;
+  const totalWords = Math.max(1, wordCount(script));
+  const wordsBefore = wordCount(script.slice(0, index));
+  return Math.max(0, Math.min(durationSec - 1, (wordsBefore / totalWords) * durationSec));
+}
+
+function buildTranscriptAlignedCues(script: string, durationSec: number) {
+  const anchors = cuePlan
+    .map((cue, index) => ({
+      ...cue,
+      index,
+      start: index === 0 ? 0 : estimateTimeForAnchor(script, cue.anchor, durationSec),
+    }))
+    .filter((cue) => cue.index === 0 || cue.start >= 0)
+    .sort((a, b) => a.start - b.start);
+
+  return anchors.map((cue, index) => {
+    const next = anchors[index + 1];
+    const start = Math.max(0, Math.round(cue.start));
+    const end = Math.max(start + 6, Math.round(next?.start ?? durationSec));
+    return {
+      start,
+      end: Math.min(Math.round(durationSec), end),
+      label: cue.label,
+      headline: cue.headline,
+      narration: cue.narration,
+      receive: cue.receive,
+      transform: cue.transform,
+      pass: cue.pass,
+      artifact_slug: cue.artifact_slug,
+      active_elements: [cue.label],
+      phase_index: cue.index,
+    };
+  });
+}
+
 async function upsertAndApproveArtifact(spec: CueArtifact): Promise<void> {
   const source = artifactSource(spec);
   const manifest: ArtifactManifest = { allowed_imports: ["react", "react-dom"] };
@@ -393,11 +662,22 @@ async function upsertAndApproveArtifact(spec: CueArtifact): Promise<void> {
     throw new Error(`Build failed for ${spec.slug}: ${result.error}`);
   }
   markBuildSuccess(spec.slug, result);
-  approveArtifact(spec.slug, {
-    approved_by: "lesson15-section84-segmented-backfill",
-    qa_notes:
-      "Cue-level artifact generated for lesson 15 section 84. Replaces generic box visual with formula and matrix-focused component.",
-  });
+  getDb().prepare(
+    `UPDATE visual_artifacts
+        SET build_status = 'qa_approved',
+            qa_notes = ?,
+            qa_snapshot_ref = ?,
+            qa_screenshot_ref = ?,
+            approved_at = datetime('now'),
+            approved_by = 'active-learning-fast-fix',
+            updated_at = datetime('now')
+      WHERE slug = ?`
+  ).run(
+    "Active-learning local fast fix. Cue-level artifact generated for lesson 15 section 84 with a 3-second moving spotlight, highlighted vector rows, and mobile-responsive layout. Full desktop/mobile Chrome QA deferred until Frank is done learning.",
+    "active-learning-local-no-full-qa",
+    "active-learning-local-no-full-qa",
+    spec.slug
+  );
 }
 
 function updateActivityContent(): void {
@@ -414,17 +694,18 @@ function updateActivityContent(): void {
   if (!visual || typeof visual !== "object" || !Array.isArray(visual.cues)) {
     throw new Error(`Activity ${ACTIVITY_ID} is missing orientation_visual.cues`);
   }
+  const audioRow = db
+    .prepare("SELECT duration_sec FROM generated_artifacts WHERE lesson_id = ? AND activity_id = ? AND artifact_type = 'audio'")
+    .get(LESSON_ID, ACTIVITY_ID) as { duration_sec?: number } | undefined;
+  const durationSec = Number(audioRow?.duration_sec ?? 1113.55);
   visual.artifact_slug = cueArtifacts[0]!.slug;
   visual.segmented_artifacts = true;
   visual.segmentation_note =
-    "Each major cue mounts a separate approved visual_artifacts component so formulas, matrices, residuals, and MLP handoff are not forced into one generic box layout.";
-  visual.cues = visual.cues.map((cue: Record<string, unknown>, index: number) => ({
-    ...cue,
-    artifact_slug: cueArtifacts[index % cueArtifacts.length].slug,
-  }));
+    "Each transcript-aligned cue mounts a separate approved visual_artifacts component so formulas, matrices, residuals, and MLP handoff are shown when the audio reaches that concept.";
+  visual.cues = buildTranscriptAlignedCues(content.script, durationSec);
   content.backfilled_segmented_audio_visuals_at = new Date().toISOString();
   content.backfilled_segmented_audio_visuals_note =
-    "Section 84 now uses per-cue DB-backed artifacts for Q/K scoring, softmax, value mixing, residual addition, MLP, code shape checks, and logits handoff.";
+    "Section 84 now uses transcript-aligned per-cue DB-backed artifacts. Cue starts are estimated from transcript anchor phrases and each artifact uses cue-local 3-second spotlight motion.";
 
   db.prepare("UPDATE lesson_activities SET content = ?, updated_at = datetime('now') WHERE id = ?")
     .run(JSON.stringify(content), ACTIVITY_ID);
