@@ -6,6 +6,9 @@
 
 # Local learner data and generated artifacts
 data/
+# Cloned source repos used only as import inputs (e.g. code/algorithms for the
+# algo-repo history import). Large working trees; never commit.
+/code/
 local_data/
 instance/
 artifacts/

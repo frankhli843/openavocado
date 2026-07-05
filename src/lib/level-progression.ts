@@ -215,7 +215,7 @@ export async function evaluateSubjectLevelProgressionWithAi(
   };
 }
 
-function collectEvidenceSummary(db: Database.Database, subjectId: number, learnerId: number): EvidenceSummary {
+export function collectEvidenceSummary(db: Database.Database, subjectId: number, learnerId: number): EvidenceSummary {
   const lessonCounts = db
     .prepare(
       `SELECT
@@ -342,7 +342,7 @@ function loadLatestPhaseDecision(
   }
 }
 
-function buildPhaseEvidencePacket(
+export function buildPhaseEvidencePacket(
   db: Database.Database,
   subjectId: number,
   learnerId: number,
