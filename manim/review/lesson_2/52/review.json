@@ -1,0 +1,298 @@
+{
+  "lesson_id": 2,
+  "activity_id": 52,
+  "reviewed_at": "2026-07-07T22:51:38Z",
+  "iterations": 1,
+  "frames_reviewed": 41,
+  "quality": "ql",
+  "notes": "Lesson 2 Part 3 (act 52, \"Posterior reads the positive pile\", 280.1s, 14 cues rescaled to the real MP3). Payoff of the Bayes arc: the posterior is read off the POSITIVE PILE only, P(sick|+)=TP/(TP+FP). In the shared 100-person world (prior 1%, sensitivity 99%, specificity 95%) the positive pile is 1 TP + 5 FP, so posterior = 1/6 ~= 17% despite a '99% accurate' test. Reuses bayes.py idioms (positive_pile, posterior_ratio, posterior_numbers, confusion_matrix, PopGrid, prior_tree, chip, stat_row). Single clean -ql review pass: READ start/mid/end frames for all 14 cues. Per-cue checklist (formula legibility+correctness, highlighted element matches narration, contrast, nothing off-frame/overlapping, chunk timing): all pass; no fixes needed (scenes authored following the vetted act10/act11 pattern, self.guard() safe-area assertion passed for every cue at render time). Timing verified in render log: every cue within pinning tolerance (\u0394<=0.04s), final 279.6s vs audio 280.1s \u03940.5s. Cue13 end-frame lands past video end (41 frames extracted); cue13_mid shows the complete posterior math = 1/(1+5) = 1/6 ~= 17%. Concrete model shared with Parts 1 & 2: 100 people, prior 1%, sensitivity 99%, specificity 95%, TP1/FP5/FN0/TN94.",
+  "frames": [
+    {
+      "cue": 0,
+      "kind": "end",
+      "path": "lesson_2/52/cue00_end.png",
+      "verdict": "pass",
+      "notes": "posterior formula P(sick|+)=TP/(TP+FP) + the positive pile (1 green TP, 5 red FP)"
+    },
+    {
+      "cue": 0,
+      "kind": "mid",
+      "path": "lesson_2/52/cue00_mid.png",
+      "verdict": "pass",
+      "notes": "posterior formula P(sick|+)=TP/(TP+FP) + the positive pile (1 green TP, 5 red FP)"
+    },
+    {
+      "cue": 0,
+      "kind": "start",
+      "path": "lesson_2/52/cue00_start.png",
+      "verdict": "pass",
+      "notes": "start frame: reveal in progress, expected sparse"
+    },
+    {
+      "cue": 1,
+      "kind": "end",
+      "path": "lesson_2/52/cue01_end.png",
+      "verdict": "pass",
+      "notes": "denominator boxed: TP+FP = the whole positive pile"
+    },
+    {
+      "cue": 1,
+      "kind": "mid",
+      "path": "lesson_2/52/cue01_mid.png",
+      "verdict": "pass",
+      "notes": "denominator boxed: TP+FP = the whole positive pile"
+    },
+    {
+      "cue": 1,
+      "kind": "start",
+      "path": "lesson_2/52/cue01_start.png",
+      "verdict": "pass",
+      "notes": "start frame: reveal in progress, expected sparse"
+    },
+    {
+      "cue": 2,
+      "kind": "end",
+      "path": "lesson_2/52/cue02_end.png",
+      "verdict": "pass",
+      "notes": "10x10 population grid, sick (green) + 6 ringed positives, 'only 6 test positive'"
+    },
+    {
+      "cue": 2,
+      "kind": "mid",
+      "path": "lesson_2/52/cue02_mid.png",
+      "verdict": "pass",
+      "notes": "10x10 population grid, sick (green) + 6 ringed positives, 'only 6 test positive'"
+    },
+    {
+      "cue": 2,
+      "kind": "start",
+      "path": "lesson_2/52/cue02_start.png",
+      "verdict": "pass",
+      "notes": "start frame: reveal in progress, expected sparse"
+    },
+    {
+      "cue": 3,
+      "kind": "end",
+      "path": "lesson_2/52/cue03_end.png",
+      "verdict": "pass",
+      "notes": "BEFORE prior P(sick)=1% -> AFTER posterior ~=17%"
+    },
+    {
+      "cue": 3,
+      "kind": "mid",
+      "path": "lesson_2/52/cue03_mid.png",
+      "verdict": "pass",
+      "notes": "BEFORE prior P(sick)=1% -> AFTER posterior ~=17%"
+    },
+    {
+      "cue": 3,
+      "kind": "start",
+      "path": "lesson_2/52/cue03_start.png",
+      "verdict": "pass",
+      "notes": "start frame: reveal in progress, expected sparse"
+    },
+    {
+      "cue": 4,
+      "kind": "end",
+      "path": "lesson_2/52/cue04_end.png",
+      "verdict": "pass",
+      "notes": "likelihood: clue '+' fits suspect Sick P(+|sick)=99% far better than Healthy P(+|healthy)=5%"
+    },
+    {
+      "cue": 4,
+      "kind": "mid",
+      "path": "lesson_2/52/cue04_mid.png",
+      "verdict": "pass",
+      "notes": "likelihood: clue '+' fits suspect Sick P(+|sick)=99% far better than Healthy P(+|healthy)=5%"
+    },
+    {
+      "cue": 4,
+      "kind": "start",
+      "path": "lesson_2/52/cue04_start.png",
+      "verdict": "pass",
+      "notes": "start frame: reveal in progress, expected sparse"
+    },
+    {
+      "cue": 5,
+      "kind": "end",
+      "path": "lesson_2/52/cue05_end.png",
+      "verdict": "pass",
+      "notes": "detective's board -> 'only a bridge' arrow back to the posterior formula"
+    },
+    {
+      "cue": 5,
+      "kind": "mid",
+      "path": "lesson_2/52/cue05_mid.png",
+      "verdict": "pass",
+      "notes": "detective's board -> 'only a bridge' arrow back to the posterior formula"
+    },
+    {
+      "cue": 5,
+      "kind": "start",
+      "path": "lesson_2/52/cue05_start.png",
+      "verdict": "pass",
+      "notes": "start frame: reveal in progress, expected sparse"
+    },
+    {
+      "cue": 6,
+      "kind": "end",
+      "path": "lesson_2/52/cue06_end.png",
+      "verdict": "pass",
+      "notes": "stats (prior 1%, sens 99%, spec 95%) + confusion matrix TP1/FP5/FN0/TN94"
+    },
+    {
+      "cue": 6,
+      "kind": "mid",
+      "path": "lesson_2/52/cue06_mid.png",
+      "verdict": "pass",
+      "notes": "stats (prior 1%, sens 99%, spec 95%) + confusion matrix TP1/FP5/FN0/TN94"
+    },
+    {
+      "cue": 6,
+      "kind": "start",
+      "path": "lesson_2/52/cue06_start.png",
+      "verdict": "pass",
+      "notes": "start frame: reveal in progress, expected sparse"
+    },
+    {
+      "cue": 7,
+      "kind": "end",
+      "path": "lesson_2/52/cue07_end.png",
+      "verdict": "pass",
+      "notes": "posterior = true/all positives ~=17%, pile + formula"
+    },
+    {
+      "cue": 7,
+      "kind": "mid",
+      "path": "lesson_2/52/cue07_mid.png",
+      "verdict": "pass",
+      "notes": "posterior = true/all positives ~=17%, pile + formula"
+    },
+    {
+      "cue": 7,
+      "kind": "start",
+      "path": "lesson_2/52/cue07_start.png",
+      "verdict": "pass",
+      "notes": "start frame: reveal in progress, expected sparse"
+    },
+    {
+      "cue": 8,
+      "kind": "end",
+      "path": "lesson_2/52/cue08_end.png",
+      "verdict": "pass",
+      "notes": "bar chart P(+|sick)=99% (tall emerald) vs P(+|healthy)=5% (short rose)"
+    },
+    {
+      "cue": 8,
+      "kind": "mid",
+      "path": "lesson_2/52/cue08_mid.png",
+      "verdict": "pass",
+      "notes": "bar chart P(+|sick)=99% (tall emerald) vs P(+|healthy)=5% (short rose)"
+    },
+    {
+      "cue": 8,
+      "kind": "start",
+      "path": "lesson_2/52/cue08_start.png",
+      "verdict": "pass",
+      "notes": "start frame: reveal in progress, expected sparse"
+    },
+    {
+      "cue": 9,
+      "kind": "end",
+      "path": "lesson_2/52/cue09_end.png",
+      "verdict": "pass",
+      "notes": "chaining: prior 1% --+test result--> posterior 17% --+more evidence--> next"
+    },
+    {
+      "cue": 9,
+      "kind": "mid",
+      "path": "lesson_2/52/cue09_mid.png",
+      "verdict": "pass",
+      "notes": "chaining: prior 1% --+test result--> posterior 17% --+more evidence--> next"
+    },
+    {
+      "cue": 9,
+      "kind": "start",
+      "path": "lesson_2/52/cue09_start.png",
+      "verdict": "pass",
+      "notes": "start frame: reveal in progress, expected sparse"
+    },
+    {
+      "cue": 10,
+      "kind": "end",
+      "path": "lesson_2/52/cue10_end.png",
+      "verdict": "pass",
+      "notes": "'just apply Bayes rule' struck through (rose) -> a name is not the mechanism"
+    },
+    {
+      "cue": 10,
+      "kind": "mid",
+      "path": "lesson_2/52/cue10_mid.png",
+      "verdict": "pass",
+      "notes": "'just apply Bayes rule' struck through (rose) -> a name is not the mechanism"
+    },
+    {
+      "cue": 10,
+      "kind": "start",
+      "path": "lesson_2/52/cue10_start.png",
+      "verdict": "pass",
+      "notes": "start frame: reveal in progress, expected sparse"
+    },
+    {
+      "cue": 11,
+      "kind": "end",
+      "path": "lesson_2/52/cue11_end.png",
+      "verdict": "pass",
+      "notes": "test accuracy P(+|sick)=99% != what you want P(sick|+)=17%"
+    },
+    {
+      "cue": 11,
+      "kind": "mid",
+      "path": "lesson_2/52/cue11_mid.png",
+      "verdict": "pass",
+      "notes": "test accuracy P(+|sick)=99% != what you want P(sick|+)=17%"
+    },
+    {
+      "cue": 11,
+      "kind": "start",
+      "path": "lesson_2/52/cue11_start.png",
+      "verdict": "pass",
+      "notes": "start frame: reveal in progress, expected sparse"
+    },
+    {
+      "cue": 12,
+      "kind": "end",
+      "path": "lesson_2/52/cue12_end.png",
+      "verdict": "pass",
+      "notes": "prior tree: 100 people -> 1 sick / 99 healthy"
+    },
+    {
+      "cue": 12,
+      "kind": "mid",
+      "path": "lesson_2/52/cue12_mid.png",
+      "verdict": "pass",
+      "notes": "prior tree: 100 people -> 1 sick / 99 healthy"
+    },
+    {
+      "cue": 12,
+      "kind": "start",
+      "path": "lesson_2/52/cue12_start.png",
+      "verdict": "pass",
+      "notes": "start frame: reveal in progress, expected sparse"
+    },
+    {
+      "cue": 13,
+      "kind": "mid",
+      "path": "lesson_2/52/cue13_mid.png",
+      "verdict": "pass",
+      "notes": "posterior = 1/(1+5) = 1/6 ~= 17% (mathematically correct)"
+    },
+    {
+      "cue": 13,
+      "kind": "start",
+      "path": "lesson_2/52/cue13_start.png",
+      "verdict": "pass",
+      "notes": "start frame: reveal in progress, expected sparse"
+    }
+  ]
+}

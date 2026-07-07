@@ -247,6 +247,56 @@ def confusion_matrix(cell_w=2.6, cell_h=1.35, fs=24, counts=None):
     return g
 
 
+# ─── the "positive pile" (Part 3 centerpiece) ────────────────────────────────
+def positive_pile(tp=1, fp=5, r=0.2, gap=0.62, label="the positive pile"):
+    """
+    Everyone who tested positive, drawn as a small pile of person-dots:
+      tp TRUE positives  (emerald) + fp FALSE positives (rose).
+    The posterior P(sick | +) = tp / (tp + fp) is read off THIS pile ONLY, so
+    Part 3 lights the emerald share against the rose share.
+
+    Returns a VGroup with named attrs: .container (the violet frame),
+    .dots (flat list, tp first then fp), .tp_dots, .fp_dots (VGroups), and
+    .label, so scenes can box the pile, indicate the true share, etc.
+    """
+    n = tp + fp
+    cols = min(n, 6)
+    dots, tp_dots, fp_dots = [], [], []
+    for i in range(n):
+        color = C_TP if i < tp else C_FP
+        d = Dot(radius=r, color=color, fill_opacity=0.95)
+        col, row = i % cols, i // cols
+        d.move_to(RIGHT * (col - (cols - 1) / 2) * gap + DOWN * row * gap)
+        dots.append(d)
+        (tp_dots if i < tp else fp_dots).append(d)
+    body = VGroup(*dots)
+    rows = (n + cols - 1) // cols
+    cont_w = cols * gap + 0.5
+    cont_h = max(rows * gap + 0.5, 1.0)
+    container = RoundedRectangle(
+        width=cont_w, height=cont_h, corner_radius=0.16,
+        stroke_color=C_POST, stroke_width=2.6, fill_color=C_POST, fill_opacity=0.08,
+    )
+    body.move_to(container.get_center())
+    lab = fit_label(label, cont_w, 24, C_POST, "BOLD")
+    lab.next_to(container, UP, buff=0.22)
+    g = VGroup(container, body, lab)
+    g.container = container
+    g.dots = dots
+    g.tp_dots = VGroup(*tp_dots)
+    g.fp_dots = VGroup(*fp_dots)
+    g.label = lab
+    return g
+
+
+def posterior_numbers(size=42):
+    """Posterior filled with the concrete 1-true/5-false positive pile → ≈17%."""
+    return MathTex(
+        r"=\frac{1}{1+5}=\tfrac{1}{6}\approx 17\%",
+        font_size=size, color=C_POST,
+    )
+
+
 def sensitivity_formula(size=32):
     """Sensitivity = TP / (TP + FN) = P(+ | sick)."""
     return MathTex(
