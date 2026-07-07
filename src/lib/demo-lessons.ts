@@ -4,6 +4,7 @@ import type { TtsProvider } from "@/lib/audio/tts";
 import { DEMO_SUBJECT_TITLE } from "@/lib/demo-subject";
 
 export const DEMO_GENERATOR = "prodavo-demo-seed/v1";
+export const CANONICAL_DEMO_GENERATOR = "prodavo-demo-canonical-clone/v1";
 
 interface LessonSeed {
   title: string;
@@ -46,12 +47,333 @@ export function ensureDemoLessonsForLearner(db: Database.Database, learnerId: nu
         "Keep the demo hands-on and visual. Each lesson must work without external credentials and should show core AI concepts through generated bespoke visual artifacts, audio-synced visuals, coding walkthroughs, and varied assessments."
       ).lastInsertRowid as number);
 
+  const canonicalSourceSubjectId = configuredCanonicalDemoSourceSubjectId();
+  if (
+    canonicalSourceSubjectId &&
+    ensureCanonicalDemoLessonsForSubject(db, {
+      subjectId,
+      learnerId,
+      sourceSubjectId: canonicalSourceSubjectId,
+    })
+  ) {
+    return subjectId;
+  }
+
   const tx = db.transaction(() => {
     for (const lesson of DEMO_LESSONS) ensureLesson(db, subjectId, lesson);
   });
   tx();
 
   return subjectId;
+}
+
+function configuredCanonicalDemoSourceSubjectId(): number | null {
+  const raw = process.env.AVOCADOCORE_DEMO_SOURCE_SUBJECT_ID;
+  if (!raw) return null;
+  const parsed = Number(raw);
+  return Number.isSafeInteger(parsed) && parsed > 0 ? parsed : null;
+}
+
+function ensureCanonicalDemoLessonsForSubject(
+  db: Database.Database,
+  opts: { subjectId: number; learnerId: number; sourceSubjectId: number }
+): boolean {
+  if (opts.subjectId === opts.sourceSubjectId) return false;
+
+  const sourceSubject = db
+    .prepare("SELECT * FROM subjects WHERE id = ?")
+    .get(opts.sourceSubjectId) as Record<string, unknown> | undefined;
+  if (!sourceSubject) return false;
+
+  const sourceLessons = db
+    .prepare("SELECT * FROM lessons WHERE subject_id = ? ORDER BY sequence_number ASC, id ASC")
+    .all(opts.sourceSubjectId) as Array<Record<string, unknown>>;
+  if (sourceLessons.length === 0) return false;
+
+  const existingLessons = db
+    .prepare("SELECT id, status, generated_by FROM lessons WHERE subject_id = ? ORDER BY sequence_number ASC, id ASC")
+    .all(opts.subjectId) as Array<{ id: number; status: string; generated_by: string | null }>;
+
+  const alreadyCanonical =
+    existingLessons.length === sourceLessons.length &&
+    existingLessons.every((lesson) => lesson.generated_by === CANONICAL_DEMO_GENERATOR);
+  if (alreadyCanonical) return true;
+
+  const safeToReplace =
+    existingLessons.length === 0 ||
+    existingLessons.every(
+      (lesson) => lesson.generated_by === DEMO_GENERATOR && lesson.status === "queued"
+    );
+  if (!safeToReplace) return true;
+
+  const tx = db.transaction(() => {
+    replaceSubjectLessonsFromCanonical(db, {
+      subjectId: opts.subjectId,
+      learnerId: opts.learnerId,
+      sourceSubjectId: opts.sourceSubjectId,
+      sourceSubject,
+      sourceLessons,
+    });
+  });
+  tx();
+  return true;
+}
+
+function replaceSubjectLessonsFromCanonical(
+  db: Database.Database,
+  opts: {
+    subjectId: number;
+    learnerId: number;
+    sourceSubjectId: number;
+    sourceSubject: Record<string, unknown>;
+    sourceLessons: Array<Record<string, unknown>>;
+  }
+): void {
+  resetSubjectLearningState(db, opts.subjectId);
+
+  db.prepare(
+    `UPDATE subjects
+       SET description = ?,
+           goals = ?,
+           criteria = ?,
+           current_level = ?,
+           status = 'active',
+           archived_at = NULL,
+           updated_at = datetime('now')
+     WHERE id = ?`
+  ).run(
+    nullableText(opts.sourceSubject.description),
+    nullableText(opts.sourceSubject.goals),
+    nullableText(opts.sourceSubject.criteria),
+    nullableText(opts.sourceSubject.current_level) ?? "familiarity",
+    opts.subjectId
+  );
+
+  const lessonColumns = tableColumns(db, "lessons").filter((column) => column !== "id");
+  const activityColumns = tableColumns(db, "lesson_activities").filter((column) => column !== "id");
+  const generatedColumns = tableColumns(db, "generated_artifacts").filter((column) => column !== "id");
+  const workpadColumns = tableExists(db, "subject_workpads")
+    ? tableColumns(db, "subject_workpads").filter((column) => column !== "id")
+    : [];
+  const journalColumns = tableExists(db, "subject_journal_entries")
+    ? tableColumns(db, "subject_journal_entries").filter((column) => column !== "id")
+    : [];
+
+  const lessonMap = new Map<number, number>();
+  const activityMap = new Map<number, number>();
+
+  for (const sourceLesson of opts.sourceLessons) {
+    const lesson = pickColumns(sourceLesson, lessonColumns);
+    lesson.subject_id = opts.subjectId;
+    lesson.status = "queued";
+    lesson.generated_by = CANONICAL_DEMO_GENERATOR;
+    if ("generator_version" in lesson) lesson.generator_version = `source-subject-${opts.sourceSubjectId}`;
+    if ("created_at" in lesson) lesson.created_at = nowSql();
+    if ("updated_at" in lesson) lesson.updated_at = nowSql();
+
+    const newLessonId = insertDynamic(db, "lessons", lesson);
+    lessonMap.set(Number(sourceLesson.id), newLessonId);
+
+    const sourceActivities = db
+      .prepare("SELECT * FROM lesson_activities WHERE lesson_id = ? ORDER BY sequence_order ASC, id ASC")
+      .all(sourceLesson.id) as Array<Record<string, unknown>>;
+    for (const sourceActivity of sourceActivities) {
+      const activity = pickColumns(sourceActivity, activityColumns);
+      activity.lesson_id = newLessonId;
+      if ("created_at" in activity) activity.created_at = nowSql();
+      if ("updated_at" in activity) activity.updated_at = nowSql();
+      const newActivityId = insertDynamic(db, "lesson_activities", activity);
+      activityMap.set(Number(sourceActivity.id), newActivityId);
+    }
+  }
+
+  copyGeneratedArtifacts(db, opts.sourceSubjectId, generatedColumns, lessonMap, activityMap);
+  copySubjectTags(db, opts.sourceSubjectId, opts.subjectId, lessonMap);
+  copySubjectWorkpadRows(db, "subject_workpads", workpadColumns, opts.sourceSubjectId, opts.subjectId, opts.learnerId);
+  copySubjectWorkpadRows(
+    db,
+    "subject_journal_entries",
+    journalColumns,
+    opts.sourceSubjectId,
+    opts.subjectId,
+    opts.learnerId
+  );
+}
+
+function resetSubjectLearningState(db: Database.Database, subjectId: number): void {
+  const oldLessonIds = (
+    db.prepare("SELECT id FROM lessons WHERE subject_id = ?").all(subjectId) as Array<{ id: number }>
+  ).map((row) => row.id);
+  const oldActivityIds =
+    oldLessonIds.length > 0
+      ? (
+          db
+            .prepare(
+              `SELECT id FROM lesson_activities WHERE lesson_id IN (${placeholders(oldLessonIds.length)})`
+            )
+            .all(...oldLessonIds) as Array<{ id: number }>
+        ).map((row) => row.id)
+      : [];
+
+  deleteWhere(db, "next_lesson_jobs", "subject_id = ?", [subjectId]);
+  deleteWhere(db, "progress_points", "subject_id = ?", [subjectId]);
+  deleteWhere(db, "mastery_signals", "subject_id = ?", [subjectId]);
+  if (tableExists(db, "learning_evidence")) deleteWhere(db, "learning_evidence", "subject_id = ?", [subjectId]);
+  if (tableExists(db, "lesson_autosave") && oldLessonIds.length > 0) {
+    deleteWhere(db, "lesson_autosave", `lesson_id IN (${placeholders(oldLessonIds.length)})`, oldLessonIds);
+  }
+  if (tableExists(db, "assessment_result_tags")) {
+    db.prepare(
+      "DELETE FROM assessment_result_tags WHERE result_id IN (SELECT id FROM assessment_results WHERE subject_id = ?)"
+    ).run(subjectId);
+  }
+  deleteWhere(db, "assessment_results", "subject_id = ?", [subjectId]);
+  if (oldActivityIds.length > 0) {
+    deleteWhere(db, "attempts", `activity_id IN (${placeholders(oldActivityIds.length)})`, oldActivityIds);
+    deleteWhere(db, "generated_artifacts", `activity_id IN (${placeholders(oldActivityIds.length)})`, oldActivityIds);
+    db.prepare(
+      `UPDATE visual_artifacts
+          SET activity_id = NULL, updated_at = datetime('now')
+        WHERE activity_id IN (${placeholders(oldActivityIds.length)})`
+    ).run(...oldActivityIds);
+  }
+  if (oldLessonIds.length > 0) {
+    deleteWhere(db, "generated_artifacts", `lesson_id IN (${placeholders(oldLessonIds.length)})`, oldLessonIds);
+    db.prepare(
+      `UPDATE visual_artifacts
+          SET lesson_id = NULL, updated_at = datetime('now')
+        WHERE lesson_id IN (${placeholders(oldLessonIds.length)})`
+    ).run(...oldLessonIds);
+    deleteWhere(db, "lesson_activities", `lesson_id IN (${placeholders(oldLessonIds.length)})`, oldLessonIds);
+    deleteWhere(db, "lessons", `id IN (${placeholders(oldLessonIds.length)})`, oldLessonIds);
+  }
+  deleteWhere(db, "subject_tags", "subject_id = ?", [subjectId]);
+  if (tableExists(db, "subject_workpads")) deleteWhere(db, "subject_workpads", "subject_id = ?", [subjectId]);
+  if (tableExists(db, "subject_journal_entries")) {
+    deleteWhere(db, "subject_journal_entries", "subject_id = ?", [subjectId]);
+  }
+}
+
+function copyGeneratedArtifacts(
+  db: Database.Database,
+  sourceSubjectId: number,
+  generatedColumns: string[],
+  lessonMap: Map<number, number>,
+  activityMap: Map<number, number>
+): void {
+  if (generatedColumns.length === 0) return;
+  const rows = db
+    .prepare(
+      `SELECT * FROM generated_artifacts
+        WHERE lesson_id IN (SELECT id FROM lessons WHERE subject_id = ?)
+           OR activity_id IN (
+                SELECT id FROM lesson_activities
+                 WHERE lesson_id IN (SELECT id FROM lessons WHERE subject_id = ?)
+              )
+       ORDER BY id ASC`
+    )
+    .all(sourceSubjectId, sourceSubjectId) as Array<Record<string, unknown>>;
+  for (const row of rows) {
+    const artifact = pickColumns(row, generatedColumns);
+    artifact.lesson_id = lessonMap.get(Number(row.lesson_id)) ?? null;
+    artifact.activity_id = activityMap.get(Number(row.activity_id)) ?? null;
+    if ("created_at" in artifact) artifact.created_at = nowSql();
+    if ("updated_at" in artifact) artifact.updated_at = nowSql();
+    insertDynamic(db, "generated_artifacts", artifact);
+  }
+}
+
+function copySubjectTags(
+  db: Database.Database,
+  sourceSubjectId: number,
+  targetSubjectId: number,
+  lessonMap: Map<number, number>
+): void {
+  const subjectTags = db
+    .prepare("SELECT tag_id FROM subject_tags WHERE subject_id = ? ORDER BY tag_id ASC")
+    .all(sourceSubjectId) as Array<{ tag_id: number }>;
+  for (const tag of subjectTags) {
+    db.prepare("INSERT OR IGNORE INTO subject_tags (subject_id, tag_id) VALUES (?, ?)").run(
+      targetSubjectId,
+      tag.tag_id
+    );
+  }
+
+  for (const [sourceLessonId, targetLessonId] of lessonMap.entries()) {
+    const lessonTags = db
+      .prepare("SELECT tag_id FROM lesson_tags WHERE lesson_id = ? ORDER BY tag_id ASC")
+      .all(sourceLessonId) as Array<{ tag_id: number }>;
+    for (const tag of lessonTags) {
+      db.prepare("INSERT OR IGNORE INTO lesson_tags (lesson_id, tag_id) VALUES (?, ?)").run(
+        targetLessonId,
+        tag.tag_id
+      );
+    }
+  }
+}
+
+function copySubjectWorkpadRows(
+  db: Database.Database,
+  table: string,
+  columns: string[],
+  sourceSubjectId: number,
+  targetSubjectId: number,
+  targetLearnerId: number
+): void {
+  if (columns.length === 0) return;
+  const rows = db.prepare(`SELECT * FROM ${table} WHERE subject_id = ? ORDER BY id ASC`).all(
+    sourceSubjectId
+  ) as Array<Record<string, unknown>>;
+  for (const row of rows) {
+    const copy = pickColumns(row, columns);
+    copy.subject_id = targetSubjectId;
+    if ("learner_id" in copy) copy.learner_id = targetLearnerId;
+    if ("created_at" in copy) copy.created_at = nowSql();
+    if ("updated_at" in copy) copy.updated_at = nowSql();
+    insertDynamic(db, table, copy);
+  }
+}
+
+function tableExists(db: Database.Database, table: string): boolean {
+  const row = db
+    .prepare("SELECT 1 FROM sqlite_master WHERE type = 'table' AND name = ?")
+    .get(table) as { "1": number } | undefined;
+  return Boolean(row);
+}
+
+function tableColumns(db: Database.Database, table: string): string[] {
+  return (db.prepare(`PRAGMA table_info(${table})`).all() as Array<{ name: string }>).map((row) => row.name);
+}
+
+function pickColumns(row: Record<string, unknown>, columns: string[]): Record<string, unknown> {
+  const out: Record<string, unknown> = {};
+  for (const column of columns) {
+    if (column in row) out[column] = row[column];
+  }
+  return out;
+}
+
+function insertDynamic(db: Database.Database, table: string, data: Record<string, unknown>): number {
+  const names = Object.keys(data);
+  const sql = `INSERT INTO ${table} (${names.join(", ")}) VALUES (${placeholders(names.length)})`;
+  return db.prepare(sql).run(...names.map((name) => data[name])).lastInsertRowid as number;
+}
+
+function deleteWhere(db: Database.Database, table: string, where: string, values: unknown[]): void {
+  if (!tableExists(db, table)) return;
+  db.prepare(`DELETE FROM ${table} WHERE ${where}`).run(...values);
+}
+
+function placeholders(count: number): string {
+  return Array.from({ length: count }, () => "?").join(", ");
+}
+
+function nullableText(value: unknown): string | null {
+  return typeof value === "string" && value.trim() ? value : null;
+}
+
+function nowSql(): string {
+  return new Date().toISOString();
 }
 
 export async function ensureDemoLessonAudioForLearner(
