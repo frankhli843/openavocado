@@ -1161,6 +1161,95 @@ export interface LessonPartAudioContent {
   transcript?: string;
   duration_hint?: number;
   synced_visual?: AudioSyncedVisualContent;
+  /**
+   * Preferred 3Blue1Brown-style ManimCE video for this segment. When present the
+   * renderer plays this <video> (with muxed audio) instead of the <audio> +
+   * cue-swapped artifact; a broken/missing MP4 falls back to the legacy path.
+   */
+  video?: LessonSegmentVideo;
+}
+
+/**
+ * A rendered per-segment video (one MP4 per audio segment, with that segment's
+ * audio muxed in). Registered by scripts/register-video.ts after the manual
+ * frame-review loop. file_path/poster_path/captions_path are relative to the
+ * project root like audio file_paths (served under /runtime/<file_path>).
+ */
+export interface LessonSegmentVideo {
+  /** e.g. "runtime_artifacts/videos/lesson_15/activity_85.mp4" */
+  file_path: string;
+  poster_path?: string;
+  /** WebVTT captions, e.g. ".../activity_85.vtt" */
+  captions_path?: string;
+  duration_sec: number;
+  width: number;
+  height: number;
+  source: { tool: "manim-ce"; version: string; scene_module: string };
+  review: { reviewed_at: string; frames_reviewed: number; iterations: number };
+}
+
+/**
+ * Validate a LessonSegmentVideo object. Kept permissive on optional sidecars but
+ * strict on the fields the renderer and audit rely on (path shape, positive
+ * duration/dimensions, a review block proving the manual review happened).
+ */
+export function validateLessonSegmentVideo(value: unknown): { valid: boolean; errors: string[] } {
+  const errors: string[] = [];
+  if (!value || typeof value !== "object") {
+    return { valid: false, errors: ["video must be an object"] };
+  }
+  const v = value as Record<string, unknown>;
+
+  if (typeof v.file_path !== "string" || !v.file_path.trim()) {
+    errors.push("file_path must be a non-empty string");
+  } else if (!/^runtime_artifacts\/videos\/.+\.mp4$/.test(v.file_path)) {
+    errors.push("file_path must be a runtime_artifacts/videos/**.mp4 path");
+  }
+  if (v.poster_path !== undefined && (typeof v.poster_path !== "string" || !v.poster_path.trim())) {
+    errors.push("poster_path, when present, must be a non-empty string");
+  }
+  if (
+    v.captions_path !== undefined &&
+    (typeof v.captions_path !== "string" || !/\.vtt$/.test(v.captions_path as string))
+  ) {
+    errors.push("captions_path, when present, must be a .vtt path");
+  }
+  if (typeof v.duration_sec !== "number" || !(v.duration_sec > 0)) {
+    errors.push("duration_sec must be a positive number");
+  }
+  if (typeof v.width !== "number" || !(v.width > 0) || typeof v.height !== "number" || !(v.height > 0)) {
+    errors.push("width and height must be positive numbers");
+  }
+
+  const source = v.source as Record<string, unknown> | undefined;
+  if (!source || typeof source !== "object") {
+    errors.push("source must be an object");
+  } else {
+    if (source.tool !== "manim-ce") errors.push("source.tool must be 'manim-ce'");
+    if (typeof source.version !== "string" || !source.version.trim()) {
+      errors.push("source.version must be a non-empty string");
+    }
+    if (typeof source.scene_module !== "string" || !source.scene_module.trim()) {
+      errors.push("source.scene_module must be a non-empty string");
+    }
+  }
+
+  const review = v.review as Record<string, unknown> | undefined;
+  if (!review || typeof review !== "object") {
+    errors.push("review must be an object (proof the frame review happened)");
+  } else {
+    if (typeof review.reviewed_at !== "string" || !review.reviewed_at.trim()) {
+      errors.push("review.reviewed_at must be a non-empty string");
+    }
+    if (typeof review.frames_reviewed !== "number" || !(review.frames_reviewed >= 1)) {
+      errors.push("review.frames_reviewed must be >= 1");
+    }
+    if (typeof review.iterations !== "number" || !(review.iterations >= 1)) {
+      errors.push("review.iterations must be >= 1");
+    }
+  }
+
+  return { valid: errors.length === 0, errors };
 }
 
 export interface AudioSyncedVisualCue {
@@ -1259,6 +1348,10 @@ export function validateLessonPartContent(
     }
     const visual = validateAudioSyncedVisualContent(audio.synced_visual, audio.duration_hint);
     for (const e of visual.errors) errors.push(`audio.synced_visual: ${e}`);
+    if (audio.video !== undefined) {
+      const video = validateLessonSegmentVideo(audio.video);
+      for (const e of video.errors) errors.push(`audio.video: ${e}`);
+    }
   }
 
   if (widgetValidator) {

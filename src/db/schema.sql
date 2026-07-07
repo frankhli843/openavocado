@@ -233,7 +233,7 @@ CREATE TABLE IF NOT EXISTS generated_artifacts (
   id              INTEGER PRIMARY KEY AUTOINCREMENT,
   lesson_id       INTEGER REFERENCES lessons(id) ON DELETE SET NULL,
   activity_id     INTEGER REFERENCES lesson_activities(id) ON DELETE SET NULL,
-  artifact_type   TEXT    NOT NULL CHECK (artifact_type IN ('audio', 'image', 'export', 'transcript')),
+  artifact_type   TEXT    NOT NULL CHECK (artifact_type IN ('audio', 'image', 'export', 'transcript', 'video')),
   -- Audio-specific
   provider        TEXT,   -- 'openai-tts', 'local-f5', etc.
   voice           TEXT,
