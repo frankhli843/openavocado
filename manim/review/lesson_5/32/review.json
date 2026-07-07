@@ -1,0 +1,116 @@
+{
+  "lesson_id": 5,
+  "activity_id": 32,
+  "reviewed_at": "2026-07-07T18:15:49Z",
+  "iterations": 2,
+  "frames_reviewed": 15,
+  "quality": "ql",
+  "notes": "Lesson 5 orientation (act 32), 570.55s, 5 content-aligned cues (re-placed from the real 1488-word narration, not the stale 30s placeholders). Two review iterations: round-1 caught a Cue03 left-label safe-area overflow; round-2 fixed Cue01 right-edge failure-note clipping, Cue02 diagonal-arrow/label collision + violet/green overlap, and Cue04 dimmed-diagram clutter behind the why/POTTERS beats. Per-cue checklist (formula legibility+correctness, highlighted element matches narration, contrast, nothing off-frame/overlapping, chunk timing): all pass. Chunk timing verified in render log (all cues within pinning tolerance, final 570.60s vs audio 570.55s Δ0.05s). Per-cue: Cue0: The map: raw-text doc -> 7 amber stage ticks along the arrow -> running model. Highlight (7 ticks lighting) matches 'seven distinct stages'. Legible, in-frame. | Cue1: Seven-stage lifecycle ledger (Data..Release). Each stage un-dims + amber focus box in cue order matching narration; bottom-centered 'if skipped ->' failure note per stage; recap lights all 7 + full pipeline line. Fixed round-2: failure note was clipping the right edge, moved to bottom-center full-width. | Cue2: Tokenization: 'hello' -> tokenizer -> [7,4,11,11,14] token IDs -> (vertical arrow) embedding table; green fixed-vocabulary contract lock; rose silent-bug beat (swap -> [88,3,51,...] -> garbage, no error). Fixed round-2: token-IDs label moved above, embedding placed directly below IDs (vertical connector), violet 'each ID -> one learned vector' cleared of the green box. | Cue3: Vocabulary log-scale bars character 70 / LLaMA(BPE) 32,000 / GPT-4 100,000 / Gemma 4 262,144 with per-bar colored counts; embedding math 262,144 x 4096 ~ 1.07B params. Legible+correct, in-frame. Fixed round-1: left label overflow (bar_x0/max_w retune + fit_label). | Cue4: Char tokenizer: 'avocado' -> unique {a,v,o,c,d} -> sorted [a,c,d,o,v] -> char->index table -> encode('cad')=[1,0,2], decode([1,0,2])='cad' (exact inverses); then a clean 'why start here' note; then POTTERS acronym (Plan/Organize/Tokenize/Train/Evaluate/Reduce/Serve) in categorical colors. Fixed round-2: diagram now fully faded out before why/POTTERS beats (was dimmed-but-cluttered).",
+  "frames": [
+    {
+      "cue": 0,
+      "kind": "start",
+      "path": "lesson_5/32/cue00_start.png",
+      "verdict": "pass",
+      "notes": "start frame (+0.15s): reveal in progress, expected sparse"
+    },
+    {
+      "cue": 0,
+      "kind": "mid",
+      "path": "lesson_5/32/cue00_mid.png",
+      "verdict": "pass",
+      "notes": ""
+    },
+    {
+      "cue": 0,
+      "kind": "end",
+      "path": "lesson_5/32/cue00_end.png",
+      "verdict": "pass",
+      "notes": ""
+    },
+    {
+      "cue": 1,
+      "kind": "start",
+      "path": "lesson_5/32/cue01_start.png",
+      "verdict": "pass",
+      "notes": "start frame (+0.15s): reveal in progress, expected sparse"
+    },
+    {
+      "cue": 1,
+      "kind": "mid",
+      "path": "lesson_5/32/cue01_mid.png",
+      "verdict": "pass",
+      "notes": ""
+    },
+    {
+      "cue": 1,
+      "kind": "end",
+      "path": "lesson_5/32/cue01_end.png",
+      "verdict": "pass",
+      "notes": ""
+    },
+    {
+      "cue": 2,
+      "kind": "start",
+      "path": "lesson_5/32/cue02_start.png",
+      "verdict": "pass",
+      "notes": "start frame (+0.15s): reveal in progress, expected sparse"
+    },
+    {
+      "cue": 2,
+      "kind": "mid",
+      "path": "lesson_5/32/cue02_mid.png",
+      "verdict": "pass",
+      "notes": ""
+    },
+    {
+      "cue": 2,
+      "kind": "end",
+      "path": "lesson_5/32/cue02_end.png",
+      "verdict": "pass",
+      "notes": ""
+    },
+    {
+      "cue": 3,
+      "kind": "start",
+      "path": "lesson_5/32/cue03_start.png",
+      "verdict": "pass",
+      "notes": "start frame (+0.15s): reveal in progress, expected sparse"
+    },
+    {
+      "cue": 3,
+      "kind": "mid",
+      "path": "lesson_5/32/cue03_mid.png",
+      "verdict": "pass",
+      "notes": ""
+    },
+    {
+      "cue": 3,
+      "kind": "end",
+      "path": "lesson_5/32/cue03_end.png",
+      "verdict": "pass",
+      "notes": ""
+    },
+    {
+      "cue": 4,
+      "kind": "start",
+      "path": "lesson_5/32/cue04_start.png",
+      "verdict": "pass",
+      "notes": "start frame (+0.15s): reveal in progress, expected sparse"
+    },
+    {
+      "cue": 4,
+      "kind": "mid",
+      "path": "lesson_5/32/cue04_mid.png",
+      "verdict": "pass",
+      "notes": ""
+    },
+    {
+      "cue": 4,
+      "kind": "end",
+      "path": "lesson_5/32/cue04_end.png",
+      "verdict": "pass",
+      "notes": ""
+    }
+  ]
+}

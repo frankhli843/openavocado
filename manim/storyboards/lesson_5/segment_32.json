@@ -1,0 +1,62 @@
+{
+  "lesson_id": 5,
+  "activity_id": 32,
+  "activity_type": "audio",
+  "title": "Audio: The LLM Lifecycle",
+  "audio": {
+    "file_path": "runtime_artifacts/audio/lesson_5_audio.mp3",
+    "duration_sec": 570.55
+  },
+  "audio_source": "artifact",
+  "cue_source": "orientation_visual.cues",
+  "cues": [
+    {
+      "index": 0,
+      "start": 0,
+      "end": 49,
+      "duration": 49,
+      "label": "The lifecycle map",
+      "headline": "Raw text to a running model is seven contracts",
+      "narration": "The lesson opens with the map: getting from raw text to a running language model is seven distinct stages, each a contract between what came before and what comes next."
+    },
+    {
+      "index": 1,
+      "start": 49,
+      "end": 335,
+      "duration": 286,
+      "label": "The seven stages",
+      "headline": "Data → Tokenizer → Architecture → Training → Checkpoint → Quantization → Release",
+      "narration": "Each of the seven stages transforms what you have into what the next stage needs: clean data, a tokenizer, an initialized architecture, the training loop, checkpoints with evals, quantization, then packaging and release. Skip or break one and everything downstream breaks."
+    },
+    {
+      "index": 2,
+      "start": 335,
+      "end": 406,
+      "duration": 71,
+      "label": "Tokenization = translation",
+      "headline": "The tokenizer/model contract: swap it and the output turns to garbage",
+      "narration": "Tokenization is the translation layer between human text and model math. The tokenizer and model share a fixed-vocabulary contract: an ID means one learned vector. Swap the tokenizer at inference and the model silently produces nonsense with no error."
+    },
+    {
+      "index": 3,
+      "start": 406,
+      "end": 452,
+      "duration": 46,
+      "label": "Vocabulary size",
+      "headline": "70 vs 32k vs 100k vs 262,144: vocab size sets the embedding table",
+      "narration": "Vocabulary size is a real design lever: a character tokenizer has about 70 entries, LLaMA about 32,000, GPT-4 about 100,000, and Gemma 4 uses 262,144. Bigger vocab means fewer tokens per sentence but a larger embedding table (over a billion parameters at 4,096 dims)."
+    },
+    {
+      "index": 4,
+      "start": 452,
+      "end": 570.55,
+      "duration": 118.55,
+      "label": "Build a char tokenizer",
+      "headline": "Collect, sort, index: encode and decode — POTTERS",
+      "narration": "You build a character-level tokenizer the nanoGPT way: collect the unique characters, sort them, assign each an index; encoding maps char to index, decoding maps back. Remember the lifecycle with POTTERS: Plan, Organize, Tokenize, Train, Evaluate, Reduce, Serve."
+    }
+  ],
+  "cue_span_sec": 570.55,
+  "formulas": [],
+  "exported_at": "2026-07-07T17:59:38.659Z"
+}
