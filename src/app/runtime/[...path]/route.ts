@@ -47,7 +47,7 @@ function contentTypeFor(filePath: string): string {
 }
 
 /** Read [start, end] (inclusive) from a file via an fd, without loading the rest. */
-function readWindow(absPath: string, start: number, end: number): Buffer {
+function readWindow(absPath: string, start: number, end: number) {
   const length = end - start + 1;
   const buf = Buffer.allocUnsafe(length);
   const fd = fs.openSync(absPath, "r");
@@ -60,7 +60,11 @@ function readWindow(absPath: string, start: number, end: number): Buffer {
       offset += read;
       pos += read;
     }
-    return offset === length ? buf : buf.subarray(0, offset);
+    if (offset === length) return buf;
+    // Rare short read (truncated file): copy into a correctly-sized Buffer.
+    const out = Buffer.allocUnsafe(offset);
+    buf.copy(out, 0, 0, offset);
+    return out;
   } finally {
     fs.closeSync(fd);
   }
