@@ -1,0 +1,305 @@
+{
+ "lesson_id": 2,
+ "activity_id": 11,
+ "reviewed_at": "2026-07-07T22:15:39Z",
+ "iterations": 2,
+ "frames_reviewed": 42,
+ "quality": "ql",
+ "notes": "Lesson 2 Part 2 (act 11, \"Sensitivity and specificity run the test\", 298.18s, 14 cues rescaled to real MP3). New reusable idioms added to manim/bayes.py: confusion_matrix() (2x2 TP/FP/FN/TN with row/col headers + optional counts), sensitivity_formula(), specificity_formula(). Arc: two dials -> the confusion matrix sorts every outcome -> detective-board analogy -> concrete 100-person counts (TP1/FP5/FN0/TN94) -> sensitivity catches sick (sick column) -> specificity blocks healthy (healthy column) -> false-alarm rate P(+|healthy)=5% -> positive row = TP+FP = 6 -> the base-rate mistake P(+|sick)!=P(sick|+) -> posterior 1/6~=17%. Two review iterations: round-1 authored+rendered all 14; round-2 fixed Cue09 (side note crowding the matrix -> moved to bottom caption) and Cue10 (\"positive row\" label colliding with the column headers -> lifted above headers, matrix lowered) plus two pre-render safe-area repositions (Cue09 matrix left edge, Cue05 right-side matrix scale). Per-cue checklist (formula legibility+correctness, highlighted element matches narration, contrast, nothing off-frame/overlapping, chunk timing): all pass. Timing verified in render log: every cue within pinning tolerance, final 298.28s vs audio 298.18s d0.10s (<0.5s). Concrete model shared with Part 1: 100 people, prior 1%, sensitivity 99%, specificity 95%.",
+ "frames": [
+  {
+   "cue": 0,
+   "kind": "start",
+   "path": "lesson_2/11/cue00_start.png",
+   "verdict": "pass",
+   "notes": "start frame: reveal in progress, expected sparse"
+  },
+  {
+   "cue": 0,
+   "kind": "mid",
+   "path": "lesson_2/11/cue00_mid.png",
+   "verdict": "pass",
+   "notes": ""
+  },
+  {
+   "cue": 0,
+   "kind": "end",
+   "path": "lesson_2/11/cue00_end.png",
+   "verdict": "pass",
+   "notes": "two dials: Sensitivity P(+|sick) catches the sick (emerald) + Specificity P(-|healthy) blocks false alarms (blue)"
+  },
+  {
+   "cue": 1,
+   "kind": "start",
+   "path": "lesson_2/11/cue01_start.png",
+   "verdict": "pass",
+   "notes": "start frame: reveal in progress, expected sparse"
+  },
+  {
+   "cue": 1,
+   "kind": "mid",
+   "path": "lesson_2/11/cue01_mid.png",
+   "verdict": "pass",
+   "notes": ""
+  },
+  {
+   "cue": 1,
+   "kind": "end",
+   "path": "lesson_2/11/cue01_end.png",
+   "verdict": "pass",
+   "notes": "healthy row: most correctly negative (blue), one ringed false alarm (rose)"
+  },
+  {
+   "cue": 2,
+   "kind": "start",
+   "path": "lesson_2/11/cue02_start.png",
+   "verdict": "pass",
+   "notes": "start frame: reveal in progress, expected sparse"
+  },
+  {
+   "cue": 2,
+   "kind": "mid",
+   "path": "lesson_2/11/cue02_mid.png",
+   "verdict": "pass",
+   "notes": ""
+  },
+  {
+   "cue": 2,
+   "kind": "end",
+   "path": "lesson_2/11/cue02_end.png",
+   "verdict": "pass",
+   "notes": "TP from the sick + FP from the healthy -> arrows -> the positive pile (violet)"
+  },
+  {
+   "cue": 3,
+   "kind": "start",
+   "path": "lesson_2/11/cue03_start.png",
+   "verdict": "pass",
+   "notes": "start frame: reveal in progress, expected sparse"
+  },
+  {
+   "cue": 3,
+   "kind": "mid",
+   "path": "lesson_2/11/cue03_mid.png",
+   "verdict": "pass",
+   "notes": ""
+  },
+  {
+   "cue": 3,
+   "kind": "end",
+   "path": "lesson_2/11/cue03_end.png",
+   "verdict": "pass",
+   "notes": "the 2x2 confusion matrix skeleton: every result lands in TP/FP/FN/TN"
+  },
+  {
+   "cue": 4,
+   "kind": "start",
+   "path": "lesson_2/11/cue04_start.png",
+   "verdict": "pass",
+   "notes": "start frame: reveal in progress, expected sparse"
+  },
+  {
+   "cue": 4,
+   "kind": "mid",
+   "path": "lesson_2/11/cue04_mid.png",
+   "verdict": "pass",
+   "notes": ""
+  },
+  {
+   "cue": 4,
+   "kind": "end",
+   "path": "lesson_2/11/cue04_end.png",
+   "verdict": "pass",
+   "notes": "detective's board analogy: positive test pinned to who-is-sick / who-is-false-alarm"
+  },
+  {
+   "cue": 5,
+   "kind": "start",
+   "path": "lesson_2/11/cue05_start.png",
+   "verdict": "pass",
+   "notes": "start frame: reveal in progress, expected sparse"
+  },
+  {
+   "cue": 5,
+   "kind": "mid",
+   "path": "lesson_2/11/cue05_mid.png",
+   "verdict": "pass",
+   "notes": ""
+  },
+  {
+   "cue": 5,
+   "kind": "end",
+   "path": "lesson_2/11/cue05_end.png",
+   "verdict": "pass",
+   "notes": "board -> confusion matrix mapping (board dimmed, matrix highlighted)"
+  },
+  {
+   "cue": 6,
+   "kind": "start",
+   "path": "lesson_2/11/cue06_start.png",
+   "verdict": "pass",
+   "notes": "start frame: reveal in progress, expected sparse"
+  },
+  {
+   "cue": 6,
+   "kind": "mid",
+   "path": "lesson_2/11/cue06_mid.png",
+   "verdict": "pass",
+   "notes": ""
+  },
+  {
+   "cue": 6,
+   "kind": "end",
+   "path": "lesson_2/11/cue06_end.png",
+   "verdict": "pass",
+   "notes": "concrete counts filled TP1/FP5/FN0/TN94 + stats prior1%/sens99%/spec95%"
+  },
+  {
+   "cue": 7,
+   "kind": "start",
+   "path": "lesson_2/11/cue07_start.png",
+   "verdict": "pass",
+   "notes": "start frame: reveal in progress, expected sparse"
+  },
+  {
+   "cue": 7,
+   "kind": "mid",
+   "path": "lesson_2/11/cue07_mid.png",
+   "verdict": "pass",
+   "notes": ""
+  },
+  {
+   "cue": 7,
+   "kind": "end",
+   "path": "lesson_2/11/cue07_end.png",
+   "verdict": "pass",
+   "notes": "sensitivity = TP/(TP+FN) = P(+|sick); Actually-Sick column boxed emerald"
+  },
+  {
+   "cue": 8,
+   "kind": "start",
+   "path": "lesson_2/11/cue08_start.png",
+   "verdict": "pass",
+   "notes": "start frame: reveal in progress, expected sparse"
+  },
+  {
+   "cue": 8,
+   "kind": "mid",
+   "path": "lesson_2/11/cue08_mid.png",
+   "verdict": "pass",
+   "notes": ""
+  },
+  {
+   "cue": 8,
+   "kind": "end",
+   "path": "lesson_2/11/cue08_end.png",
+   "verdict": "pass",
+   "notes": "specificity = TN/(TN+FP) = P(-|healthy); Actually-Healthy column boxed blue"
+  },
+  {
+   "cue": 9,
+   "kind": "start",
+   "path": "lesson_2/11/cue09_start.png",
+   "verdict": "pass",
+   "notes": "start frame: reveal in progress, expected sparse"
+  },
+  {
+   "cue": 9,
+   "kind": "mid",
+   "path": "lesson_2/11/cue09_mid.png",
+   "verdict": "pass",
+   "notes": ""
+  },
+  {
+   "cue": 9,
+   "kind": "end",
+   "path": "lesson_2/11/cue09_end.png",
+   "verdict": "pass",
+   "notes": "P(+|healthy)=1-spec=5% false-alarm rate; FP cell boxed rose | round-2 fix: false-alarm note relocated to bottom-center, clear of matrix"
+  },
+  {
+   "cue": 10,
+   "kind": "start",
+   "path": "lesson_2/11/cue10_start.png",
+   "verdict": "pass",
+   "notes": "start frame: reveal in progress, expected sparse"
+  },
+  {
+   "cue": 10,
+   "kind": "mid",
+   "path": "lesson_2/11/cue10_mid.png",
+   "verdict": "pass",
+   "notes": ""
+  },
+  {
+   "cue": 10,
+   "kind": "end",
+   "path": "lesson_2/11/cue10_end.png",
+   "verdict": "pass",
+   "notes": "positive row = TP+FP; positives = 1+5 = 6 | round-2 fix: 'positive row' label moved above column headers (was colliding), matrix lowered"
+  },
+  {
+   "cue": 11,
+   "kind": "start",
+   "path": "lesson_2/11/cue11_start.png",
+   "verdict": "pass",
+   "notes": "start frame: reveal in progress, expected sparse"
+  },
+  {
+   "cue": 11,
+   "kind": "mid",
+   "path": "lesson_2/11/cue11_mid.png",
+   "verdict": "pass",
+   "notes": ""
+  },
+  {
+   "cue": 11,
+   "kind": "end",
+   "path": "lesson_2/11/cue11_end.png",
+   "verdict": "pass",
+   "notes": "the mistake: P(+|sick)=99% != P(sick|+); flipping the condition ignores the base rate"
+  },
+  {
+   "cue": 12,
+   "kind": "start",
+   "path": "lesson_2/11/cue12_start.png",
+   "verdict": "pass",
+   "notes": "start frame: reveal in progress, expected sparse"
+  },
+  {
+   "cue": 12,
+   "kind": "mid",
+   "path": "lesson_2/11/cue12_mid.png",
+   "verdict": "pass",
+   "notes": ""
+  },
+  {
+   "cue": 12,
+   "kind": "end",
+   "path": "lesson_2/11/cue12_end.png",
+   "verdict": "pass",
+   "notes": "BEFORE: 'the test is 99% accurate' \u2014 a number with no base rate attached"
+  },
+  {
+   "cue": 13,
+   "kind": "start",
+   "path": "lesson_2/11/cue13_start.png",
+   "verdict": "pass",
+   "notes": "start frame: reveal in progress, expected sparse"
+  },
+  {
+   "cue": 13,
+   "kind": "mid",
+   "path": "lesson_2/11/cue13_mid.png",
+   "verdict": "pass",
+   "notes": ""
+  },
+  {
+   "cue": 13,
+   "kind": "end",
+   "path": "lesson_2/11/cue13_end.png",
+   "verdict": "pass",
+   "notes": "AFTER: P(sick|+)=TP/(TP+FP)=1/(1+5)=1/6~=17%, a usable answer"
+  }
+ ]
+}

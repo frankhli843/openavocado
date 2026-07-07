@@ -185,3 +185,79 @@ def posterior_ratio(size=44):
         r"P(\text{sick}\mid +)=\frac{\text{TP}}{\text{TP}+\text{FP}}",
         font_size=size, color=INK,
     )
+
+
+# ─── 2×2 diagnostic confusion matrix (Part 2 centerpiece) ────────────────────
+def _cm_cell(label: str, color, count: str | None, w: float, h: float, fs: int) -> VGroup:
+    box = RoundedRectangle(
+        width=w, height=h, corner_radius=0.1,
+        stroke_color=color, stroke_width=2.6, fill_color=color, fill_opacity=0.14,
+    )
+    lab = Text(label, font_size=fs, color=color, weight="BOLD")
+    if count is not None:
+        cnt = Text(count, font_size=fs + 8, color=INK, weight="BOLD")
+        stack = VGroup(lab, cnt).arrange(DOWN, buff=0.12).move_to(box.get_center())
+    else:
+        stack = VGroup(lab).move_to(box.get_center())
+    g = VGroup(box, stack)
+    g.box = box
+    return g
+
+
+def confusion_matrix(cell_w=2.6, cell_h=1.35, fs=24, counts=None):
+    """
+    A 2×2 diagnostic confusion matrix.
+      columns = actual state  (Sick / Healthy)
+      rows    = test result   (Test + / Test −)
+    Cells: TP emerald (top-left), FP rose (top-right),
+           FN muted   (bottom-left), TN accent (bottom-right).
+
+    `counts`, if given, is a dict like {'tp':'1','fp':'5','fn':'0','tn':'94'}
+    that adds a bold count under each cell's label.
+
+    Returns a VGroup with named attrs: .tp .fp .fn .tn (each a cell VGroup with
+    a .box), .col_sick .col_healthy (column headers), .row_pos .row_neg (row
+    headers), and .body (the four cells), so scenes highlight exactly one part.
+    """
+    counts = counts or {}
+    hx = cell_w / 2 + 0.06   # half horizontal cell pitch (small gap)
+    hy = cell_h / 2 + 0.06
+
+    tp = _cm_cell("TP", C_TP, counts.get("tp"), cell_w, cell_h, fs).move_to(LEFT * hx + UP * hy)
+    fp = _cm_cell("FP", C_FP, counts.get("fp"), cell_w, cell_h, fs).move_to(RIGHT * hx + UP * hy)
+    fn = _cm_cell("FN", INK_MUTED, counts.get("fn"), cell_w, cell_h, fs).move_to(LEFT * hx + DOWN * hy)
+    tn = _cm_cell("TN", C_HEALTHY, counts.get("tn"), cell_w, cell_h, fs).move_to(RIGHT * hx + DOWN * hy)
+    body = VGroup(tp, fp, fn, tn)
+
+    col_sick = fit_label("Actually Sick", cell_w, 22, C_SICK, "BOLD")
+    col_sick.move_to([tp.get_center()[0], body.get_top()[1] + 0.36, 0])
+    col_healthy = fit_label("Actually Healthy", cell_w, 22, C_HEALTHY, "BOLD")
+    col_healthy.move_to([fp.get_center()[0], body.get_top()[1] + 0.36, 0])
+
+    row_pos = fit_label("Test +", 1.7, 22, INK, "BOLD")
+    row_pos.move_to([body.get_left()[0] - 1.15, tp.get_center()[1], 0])
+    row_neg = fit_label("Test −", 1.7, 22, INK_MUTED, "BOLD")
+    row_neg.move_to([body.get_left()[0] - 1.15, fn.get_center()[1], 0])
+
+    g = VGroup(body, col_sick, col_healthy, row_pos, row_neg)
+    g.tp, g.fp, g.fn, g.tn = tp, fp, fn, tn
+    g.body = body
+    g.col_sick, g.col_healthy = col_sick, col_healthy
+    g.row_pos, g.row_neg = row_pos, row_neg
+    return g
+
+
+def sensitivity_formula(size=32):
+    """Sensitivity = TP / (TP + FN) = P(+ | sick)."""
+    return MathTex(
+        r"\text{sensitivity}=\frac{\text{TP}}{\text{TP}+\text{FN}}=P(+\mid \text{sick})",
+        font_size=size, color=INK,
+    )
+
+
+def specificity_formula(size=32):
+    """Specificity = TN / (TN + FP) = P(− | healthy)."""
+    return MathTex(
+        r"\text{specificity}=\frac{\text{TN}}{\text{TN}+\text{FP}}=P(-\mid \text{healthy})",
+        font_size=size, color=INK,
+    )
