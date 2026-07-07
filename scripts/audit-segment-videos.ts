@@ -70,6 +70,7 @@ const segments = db.prepare(sql).all() as SegmentRow[];
 
 type Failure = { lesson_id: number; activity_id: number; type: string; errors: string[] };
 const failures: Failure[] = [];
+const excluded: { lesson_id: number; activity_id: number; type: string }[] = [];
 let okCount = 0;
 
 function storyboardCueCount(lessonId: number, activityId: number): number | null {
@@ -81,6 +82,27 @@ function storyboardCueCount(lessonId: number, activityId: number): number | null
     return Array.isArray(cues) ? cues.length : null;
   } catch {
     return null;
+  }
+}
+
+// Cue count straight from the DB content (single source of truth, matches
+// export-storyboard.ts): audio -> orientation_visual.cues, lesson_part ->
+// audio.synced_visual.cues. A segment with 0 cues carries a declarative/
+// interactive widget instead of a synced cue timeline, so there is nothing to
+// author one Manim scene per cue against. Such segments are EXCLUDED from the
+// required-video set (same principle as assessment-only lessons that have no
+// audio segments at all), and keep their existing interactive visual.
+function contentCueCount(content: string | null, activityType: string): number {
+  if (!content) return 0;
+  try {
+    const c = JSON.parse(content) as Record<string, any>;
+    const cues =
+      activityType === "audio"
+        ? c?.orientation_visual?.cues
+        : c?.audio?.synced_visual?.cues;
+    return Array.isArray(cues) ? cues.length : 0;
+  } catch {
+    return 0;
   }
 }
 
@@ -100,6 +122,13 @@ function ffprobeDuration(file: string): number | null {
 
 for (const seg of segments) {
   const errors: string[] = [];
+
+  // 0. cue-less segments are not video candidates (declarative/interactive
+  //    widget, no per-cue timeline to animate) -> exclude, do not require a video.
+  if (contentCueCount(seg.content, seg.activity_type) === 0) {
+    excluded.push({ lesson_id: seg.lesson_id, activity_id: seg.activity_id, type: seg.activity_type });
+    continue;
+  }
 
   // 1. video artifact row
   const videoRow = db
@@ -193,9 +222,11 @@ const lessonsWithVideo = new Set(
 const report = {
   dbPath,
   runtimeRoot,
-  segmentsExpected: segments.length,
+  segmentsExpected: segments.length - excluded.length,
   segmentsOk: okCount,
   segmentsFailing: failures.length,
+  segmentsExcluded: excluded.length,
+  excluded,
   lessonsFullyConverted: [...lessonsWithVideo].sort((a, b) => a - b),
   failures,
 };
@@ -204,7 +235,7 @@ if (json) {
   console.log(JSON.stringify(report, null, 2));
 } else {
   console.log(`segment video audit: ${dbPath}${onlyLesson != null ? ` (lesson ${onlyLesson})` : ""}`);
-  console.log(`expected segments: ${report.segmentsExpected}`);
+  console.log(`expected segments: ${report.segmentsExpected}  (excluded, no cues: ${report.segmentsExcluded})`);
   console.log(`ok: ${report.segmentsOk}  failing/missing: ${report.segmentsFailing}`);
   const byLesson = new Map<number, Failure[]>();
   for (const f of failures) {

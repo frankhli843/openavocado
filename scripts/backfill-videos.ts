@@ -52,16 +52,35 @@ type LessonState = {
   note?: string;
 };
 
+// A segment with 0 cues carries a declarative/interactive widget, not a synced
+// cue timeline, so it is not a Manim-video candidate (matches export-storyboard's
+// skip and the audit's exclusion). Filter these out so the worklist and per-lesson
+// segment set only contain authorable, cue-bearing segments.
+function contentCueCount(content: string | null, activityType: string): number {
+  if (!content) return 0;
+  try {
+    const c = JSON.parse(content) as Record<string, any>;
+    const cues =
+      activityType === "audio" ? c?.orientation_visual?.cues : c?.audio?.synced_visual?.cues;
+    return Array.isArray(cues) ? cues.length : 0;
+  } catch {
+    return 0;
+  }
+}
+
 function lessonSegments(lessonId: number): Seg[] {
-  return db
+  const rows = db
     .prepare(
-      `select g.activity_id, la.activity_type, g.duration_sec audio_dur, g.file_path audio_path
+      `select g.activity_id, la.activity_type, g.duration_sec audio_dur, g.file_path audio_path, la.content
        from generated_artifacts g
        join lesson_activities la on la.id = g.activity_id
        where g.artifact_type = 'audio' and la.activity_type in ('audio','lesson_part') and la.lesson_id = ?
        order by g.activity_id`
     )
-    .all(lessonId) as Seg[];
+    .all(lessonId) as Array<Seg & { content: string | null }>;
+  return rows
+    .filter((r) => contentCueCount(r.content, r.activity_type) > 0)
+    .map(({ content, ...seg }) => seg);
 }
 
 function publishedLessons(): LessonState[] {
