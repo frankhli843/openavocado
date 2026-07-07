@@ -59,3 +59,10 @@ out/
 # runtime_artifacts/ above and *.mp3 elsewhere in this file.
 runtime_artifacts/
 /audio/
+
+# Manim video pipeline (Phase 0-3) — venv, render output, review frames
+.venv-manim/
+manim/media/
+manim/review/
+manim/**/__pycache__/
+*.pyc
