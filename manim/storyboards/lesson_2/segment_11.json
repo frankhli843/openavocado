@@ -1,0 +1,143 @@
+{
+  "lesson_id": 2,
+  "activity_id": 11,
+  "activity_type": "lesson_part",
+  "title": "Part 2: Sensitivity and specificity run the test",
+  "audio": {
+    "file_path": "runtime_artifacts/audio/lesson_2_activity_11_audio.mp3",
+    "duration_sec": 298.18
+  },
+  "audio_source": "artifact",
+  "cue_source": "audio.synced_visual.cues",
+  "cues": [
+    {
+      "index": 0,
+      "start": 0,
+      "end": 21.121,
+      "duration": 21.121,
+      "label": "Leo Let's make Sensitivity and specific",
+      "headline": "The core idea is this Sensitivity catches sick people",
+      "narration": "Leo: Let's make Sensitivity and specificity run the test work as its own small a"
+    },
+    {
+      "index": 1,
+      "start": 21.121,
+      "end": 42.242,
+      "duration": 21.121,
+      "label": "Specificity blocks healthy false alarms",
+      "headline": "Both feed the positive-result mixture",
+      "narration": "Specificity blocks healthy false alarms"
+    },
+    {
+      "index": 2,
+      "start": 42.242,
+      "end": 63.363,
+      "duration": 21.121,
+      "label": "Both feed the positive-result mixture",
+      "headline": "Sensitivity and specificity run the testMaya What is the ",
+      "narration": "Both feed the positive-result mixture"
+    },
+    {
+      "index": 3,
+      "start": 63.363,
+      "end": 85.727,
+      "duration": 22.364,
+      "label": "Maya Why does that object matter",
+      "headline": "If I already know the vocabulary, what does following the ob",
+      "narration": "Maya: Why does that object matter"
+    },
+    {
+      "index": 4,
+      "start": 85.727,
+      "end": 106.848,
+      "duration": 21.121,
+      "label": "Leo Think of a detective board",
+      "headline": "The prior is how plausible each suspect was before the clue",
+      "narration": "Leo: Think of a detective board"
+    },
+    {
+      "index": 5,
+      "start": 106.848,
+      "end": 127.969,
+      "duration": 21.121,
+      "label": "Leo It helps because it gives the motio",
+      "headline": "But the analogy is only a bridge",
+      "narration": "Leo: It helps because it gives the motion a familiar shape"
+    },
+    {
+      "index": 6,
+      "start": 127.969,
+      "end": 149.09,
+      "duration": 21.121,
+      "label": "Leo If a rare condition affects one in ",
+      "headline": "The updated probability depends on both the rarity and the t",
+      "narration": "Leo: If a rare condition affects one in a hundred people and a test is usually r"
+    },
+    {
+      "index": 7,
+      "start": 149.09,
+      "end": 170.211,
+      "duration": 21.121,
+      "label": "Sensitivity and specificity run the test",
+      "headline": "Specificity blocks healthy false alarms",
+      "narration": "Sensitivity and specificity run the test Sensitivity catches sick people"
+    },
+    {
+      "index": 8,
+      "start": 170.211,
+      "end": 191.332,
+      "duration": 21.121,
+      "label": "Specificity blocks healthy false alarms",
+      "headline": "Both feed the positive-result mixture",
+      "narration": "Specificity blocks healthy false alarms"
+    },
+    {
+      "index": 9,
+      "start": 191.332,
+      "end": 212.453,
+      "duration": 21.121,
+      "label": "Ask how likely the evidence is if the hy",
+      "headline": "Use those likelihoods to reweight the prior",
+      "narration": "Ask how likely the evidence is if the hypothesis is false"
+    },
+    {
+      "index": 10,
+      "start": 212.453,
+      "end": 234.817,
+      "duration": 22.364,
+      "label": "In code or a table, the useful check is ",
+      "headline": "The important test is whether the next step has a clearer, m",
+      "narration": "In code or a table, the useful check is that true positives and false positives "
+    },
+    {
+      "index": 11,
+      "start": 234.817,
+      "end": 255.938,
+      "duration": 21.121,
+      "label": "Maya What is the common mistake here",
+      "headline": "Leo The common mistake is to focus only on test accuracy an",
+      "narration": "Maya: What is the common mistake here"
+    },
+    {
+      "index": 12,
+      "start": 255.938,
+      "end": 277.059,
+      "duration": 21.121,
+      "label": "Leo Before a prior belief that gets up",
+      "headline": "Change Start with a prior probability for the hypothesis",
+      "narration": "Leo: Before: a prior belief that gets updated by evidence has a limited or less "
+    },
+    {
+      "index": 13,
+      "start": 277.059,
+      "end": 298.18,
+      "duration": 21.121,
+      "label": "After the result carries information in",
+      "headline": "That is the point of the mechanism, not the title of the mec",
+      "narration": "After: the result carries information in a form the next step can use"
+    }
+  ],
+  "cue_span_sec": 298.18,
+  "formulas": [],
+  "exported_at": "2026-07-07T21:25:00.683Z"
+}

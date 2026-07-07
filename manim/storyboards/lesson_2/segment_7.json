@@ -1,0 +1,108 @@
+{
+  "lesson_id": 2,
+  "activity_id": 7,
+  "activity_type": "audio",
+  "title": "Audio: Updating Beliefs with Evidence",
+  "audio": {
+    "file_path": "runtime_artifacts/audio/lesson_2_audio.mp3",
+    "duration_sec": 1014.67
+  },
+  "audio_source": "artifact",
+  "cue_source": "orientation_visual.cues",
+  "cues": [
+    {
+      "index": 0,
+      "start": 0,
+      "end": 145.436,
+      "duration": 145.436,
+      "label": "High-level map",
+      "headline": "Locate the lesson before details",
+      "narration": "Locate the lesson before details for Bayes' Theorem in Practice.",
+      "active_elements": [
+        "Subject",
+        "Lesson"
+      ]
+    },
+    {
+      "index": 1,
+      "start": 145.436,
+      "end": 289.745,
+      "duration": 144.309,
+      "label": "Analogy",
+      "headline": "Translate the idea into a workshop metaphor",
+      "narration": "Translate the idea into a workshop metaphor for Bayes' Theorem in Practice.",
+      "active_elements": [
+        "Receive",
+        "Transform"
+      ]
+    },
+    {
+      "index": 2,
+      "start": 289.745,
+      "end": 435.181,
+      "duration": 145.436,
+      "label": "Tiny example",
+      "headline": "Follow one concrete object",
+      "narration": "Follow one concrete object for Bayes' Theorem in Practice.",
+      "active_elements": [
+        "Object",
+        "Change"
+      ]
+    },
+    {
+      "index": 3,
+      "start": 435.181,
+      "end": 579.489,
+      "duration": 144.308,
+      "label": "Mechanism",
+      "headline": "Expose what changes and why",
+      "narration": "Expose what changes and why for Bayes' Theorem in Practice.",
+      "active_elements": [
+        "Before",
+        "During"
+      ]
+    },
+    {
+      "index": 4,
+      "start": 579.489,
+      "end": 724.925,
+      "duration": 145.436,
+      "label": "Implementation",
+      "headline": "Connect to code and tests",
+      "narration": "Connect to code and tests for Bayes' Theorem in Practice.",
+      "active_elements": [
+        "Variable",
+        "Assert"
+      ]
+    },
+    {
+      "index": 5,
+      "start": 724.925,
+      "end": 869.234,
+      "duration": 144.309,
+      "label": "Misconception",
+      "headline": "Separate nearby ideas",
+      "narration": "Separate nearby ideas for Bayes' Theorem in Practice.",
+      "active_elements": [
+        "Confusing label",
+        "Correct relation"
+      ]
+    },
+    {
+      "index": 6,
+      "start": 869.234,
+      "end": 1014.67,
+      "duration": 145.436,
+      "label": "Synthesis",
+      "headline": "Return to the route and prepare practice",
+      "narration": "Return to the route and prepare practice for Bayes' Theorem in Practice.",
+      "active_elements": [
+        "Subject",
+        "Lesson"
+      ]
+    }
+  ],
+  "cue_span_sec": 1014.67,
+  "formulas": [],
+  "exported_at": "2026-07-07T21:25:00.682Z"
+}

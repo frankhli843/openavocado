@@ -1,0 +1,143 @@
+{
+  "lesson_id": 2,
+  "activity_id": 10,
+  "activity_type": "lesson_part",
+  "title": "Part 1: Prior filters the population",
+  "audio": {
+    "file_path": "runtime_artifacts/audio/lesson_2_activity_10_audio.mp3",
+    "duration_sec": 278.42
+  },
+  "audio_source": "artifact",
+  "cue_source": "audio.synced_visual.cues",
+  "cues": [
+    {
+      "index": 0,
+      "start": 0,
+      "end": 19.721,
+      "duration": 19.721,
+      "label": "Leo Let's make Prior filters the popula",
+      "headline": "The core idea is this The prior decides the size of the sic",
+      "narration": "Leo: Let's make Prior filters the population work as its own small audio lesson"
+    },
+    {
+      "index": 1,
+      "start": 19.721,
+      "end": 39.443,
+      "duration": 19.722,
+      "label": "The prior decides the size of the sick a",
+      "headline": "Prior filters the populationMaya What is the concrete obj",
+      "narration": "The prior decides the size of the sick and healthy branches before any test resu"
+    },
+    {
+      "index": 2,
+      "start": 39.443,
+      "end": 59.164,
+      "duration": 19.721,
+      "label": "The important thing is what happens to t",
+      "headline": "Maya Why does that object matter",
+      "narration": "The important thing is what happens to that object and why the next prediction, "
+    },
+    {
+      "index": 3,
+      "start": 59.164,
+      "end": 80.046,
+      "duration": 20.882,
+      "label": "It shows what information exists before ",
+      "headline": "Maya Can you give me a simple analogy before the mechanics",
+      "narration": "It shows what information exists before the operation, what the operation change"
+    },
+    {
+      "index": 4,
+      "start": 80.046,
+      "end": 99.767,
+      "duration": 19.721,
+      "label": "The likelihood is how well the clue fits",
+      "headline": "The posterior is the board after the clue is pinned on",
+      "narration": "The likelihood is how well the clue fits each suspect"
+    },
+    {
+      "index": 5,
+      "start": 99.767,
+      "end": 119.489,
+      "duration": 19.722,
+      "label": "But the analogy is only a bridge",
+      "headline": "The real understanding comes from returning to a prior belie",
+      "narration": "But the analogy is only a bridge"
+    },
+    {
+      "index": 6,
+      "start": 119.489,
+      "end": 139.21,
+      "duration": 19.721,
+      "label": "Leo If a rare condition affects one in ",
+      "headline": "The updated probability depends on both the rarity and the t",
+      "narration": "Leo: If a rare condition affects one in a hundred people and a test is usually r"
+    },
+    {
+      "index": 7,
+      "start": 139.21,
+      "end": 158.931,
+      "duration": 19.721,
+      "label": "Use the interactive as retrieval practic",
+      "headline": "The prior decides the size of the sick and healthy branches ",
+      "narration": "Use the interactive as retrieval practice: change one variable, predict what sho"
+    },
+    {
+      "index": 8,
+      "start": 158.931,
+      "end": 178.653,
+      "duration": 19.722,
+      "label": "Ask how likely the evidence is if the hy",
+      "headline": "Ask how likely the evidence is if the hypothesis is false",
+      "narration": "Ask how likely the evidence is if the hypothesis is true"
+    },
+    {
+      "index": 9,
+      "start": 178.653,
+      "end": 198.374,
+      "duration": 19.721,
+      "label": "Maya How exactly does that mechanism im",
+      "headline": "Leo It improves what comes next by changing the evidence in",
+      "narration": "Maya: How exactly does that mechanism improve what comes next"
+    },
+    {
+      "index": 10,
+      "start": 198.374,
+      "end": 219.256,
+      "duration": 20.882,
+      "label": "Maya Why is naming the mechanism not en",
+      "headline": "Leo Because a name can hide an empty explanation",
+      "narration": "Maya: Why is naming the mechanism not enough here"
+    },
+    {
+      "index": 11,
+      "start": 219.256,
+      "end": 238.977,
+      "duration": 19.721,
+      "label": "Leo The common mistake is to focus only",
+      "headline": "That mistake usually shows up when someone can repeat the la",
+      "narration": "Leo: The common mistake is to focus only on test accuracy and forget the base ra"
+    },
+    {
+      "index": 12,
+      "start": 238.977,
+      "end": 258.699,
+      "duration": 19.722,
+      "label": "Leo Before a prior belief that gets up",
+      "headline": "Change Start with a prior probability for the hypothesis",
+      "narration": "Leo: Before: a prior belief that gets updated by evidence has a limited or less "
+    },
+    {
+      "index": 13,
+      "start": 258.699,
+      "end": 278.42,
+      "duration": 19.721,
+      "label": "Use those likelihoods to reweight the pr",
+      "headline": "After the result carries information in a form the next ste",
+      "narration": "Use those likelihoods to reweight the prior"
+    }
+  ],
+  "cue_span_sec": 278.42,
+  "formulas": [],
+  "exported_at": "2026-07-07T21:25:00.683Z"
+}

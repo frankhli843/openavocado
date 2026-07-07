@@ -1,0 +1,305 @@
+{
+  "lesson_id": 2,
+  "activity_id": 10,
+  "reviewed_at": "2026-07-07T21:35:51Z",
+  "iterations": 2,
+  "frames_reviewed": 42,
+  "quality": "ql",
+  "notes": "Lesson 2 Part 1 (act 10, \"Prior filters the population\", 278.42s, 14 cues rescaled to real MP3). Reusable Bayes idioms from manim/bayes.py (PopGrid, prior_tree, bayes_spine, posterior_ratio). Two review iterations: round-1 authored+rendered all 14; round-2 fixed Cue04 (stray test+ chip overlapping Healthy branch, removed) and Cue10 (\"a label - not an explanation\" clipping the right frame edge -> repositioned below the name chip and added to safe-area guard). Per-cue checklist (formula legibility+correctness, highlighted element matches narration, contrast, nothing off-frame/overlapping, chunk timing): all pass. Chunk timing verified in render log: every cue within pinning tolerance, final 278.54s vs audio 278.42s \u03940.12s (<0.5s). Concrete model stated in Cue06: 100 people, prior 1%, sensitivity 99%, specificity 95% -> 1 TP + ~5 FP -> posterior ~17%.",
+  "frames": [
+    {
+      "cue": 0,
+      "kind": "start",
+      "path": "lesson_2/10/cue00_start.png",
+      "verdict": "pass",
+      "notes": "start frame (+0.15s): reveal in progress, expected sparse"
+    },
+    {
+      "cue": 0,
+      "kind": "mid",
+      "path": "lesson_2/10/cue00_mid.png",
+      "verdict": "pass",
+      "notes": ""
+    },
+    {
+      "cue": 0,
+      "kind": "end",
+      "path": "lesson_2/10/cue00_end.png",
+      "verdict": "pass",
+      "notes": "Title + prior->xlikelihood->posterior spine staged in; matches \"prior sets the stage\". Legible, in-frame."
+    },
+    {
+      "cue": 1,
+      "kind": "start",
+      "path": "lesson_2/10/cue01_start.png",
+      "verdict": "pass",
+      "notes": "start frame (+0.15s): reveal in progress, expected sparse"
+    },
+    {
+      "cue": 1,
+      "kind": "mid",
+      "path": "lesson_2/10/cue01_mid.png",
+      "verdict": "pass",
+      "notes": ""
+    },
+    {
+      "cue": 1,
+      "kind": "end",
+      "path": "lesson_2/10/cue01_end.png",
+      "verdict": "pass",
+      "notes": "Prior tree: 100 people -> small amber Sick.1 branch + large blue Healthy.99 branch; branch sizes encode the prior. In-frame."
+    },
+    {
+      "cue": 2,
+      "kind": "start",
+      "path": "lesson_2/10/cue02_start.png",
+      "verdict": "pass",
+      "notes": "start frame (+0.15s): reveal in progress, expected sparse"
+    },
+    {
+      "cue": 2,
+      "kind": "mid",
+      "path": "lesson_2/10/cue02_mid.png",
+      "verdict": "pass",
+      "notes": ""
+    },
+    {
+      "cue": 2,
+      "kind": "end",
+      "path": "lesson_2/10/cue02_end.png",
+      "verdict": "pass",
+      "notes": "Population grid, 1 sick ringed amber center; \"1 sick in 100 - state before any test\". Clear rarity. In-frame."
+    },
+    {
+      "cue": 3,
+      "kind": "start",
+      "path": "lesson_2/10/cue03_start.png",
+      "verdict": "pass",
+      "notes": "start frame (+0.15s): reveal in progress, expected sparse"
+    },
+    {
+      "cue": 3,
+      "kind": "mid",
+      "path": "lesson_2/10/cue03_mid.png",
+      "verdict": "pass",
+      "notes": ""
+    },
+    {
+      "cue": 3,
+      "kind": "end",
+      "path": "lesson_2/10/cue03_end.png",
+      "verdict": "pass",
+      "notes": "Before(prior belief) -> test result -> After(updated belief); operation highlighted. In-frame."
+    },
+    {
+      "cue": 4,
+      "kind": "start",
+      "path": "lesson_2/10/cue04_start.png",
+      "verdict": "pass",
+      "notes": "start frame (+0.15s): reveal in progress, expected sparse"
+    },
+    {
+      "cue": 4,
+      "kind": "mid",
+      "path": "lesson_2/10/cue04_mid.png",
+      "verdict": "pass",
+      "notes": ""
+    },
+    {
+      "cue": 4,
+      "kind": "end",
+      "path": "lesson_2/10/cue04_end.png",
+      "verdict": "pass",
+      "notes": "Likelihood labels pinned to branches: P(+|sick)=0.99 green, P(+|healthy)=0.05 rose. FIX r2: removed stray test+ chip overlapping Healthy box. In-frame."
+    },
+    {
+      "cue": 5,
+      "kind": "start",
+      "path": "lesson_2/10/cue05_start.png",
+      "verdict": "pass",
+      "notes": "start frame (+0.15s): reveal in progress, expected sparse"
+    },
+    {
+      "cue": 5,
+      "kind": "mid",
+      "path": "lesson_2/10/cue05_mid.png",
+      "verdict": "pass",
+      "notes": ""
+    },
+    {
+      "cue": 5,
+      "kind": "end",
+      "path": "lesson_2/10/cue05_end.png",
+      "verdict": "pass",
+      "notes": "Analogy(detective board, dimmed) -> the actual numbers(emerald). Bridge transition. In-frame."
+    },
+    {
+      "cue": 6,
+      "kind": "start",
+      "path": "lesson_2/10/cue06_start.png",
+      "verdict": "pass",
+      "notes": "start frame (+0.15s): reveal in progress, expected sparse"
+    },
+    {
+      "cue": 6,
+      "kind": "mid",
+      "path": "lesson_2/10/cue06_mid.png",
+      "verdict": "pass",
+      "notes": ""
+    },
+    {
+      "cue": 6,
+      "kind": "end",
+      "path": "lesson_2/10/cue06_end.png",
+      "verdict": "pass",
+      "notes": "Grid + stat panel: prior 1%, sensitivity 99%, specificity 95%; 1 sick ringed. Correct numbers, legible. In-frame."
+    },
+    {
+      "cue": 7,
+      "kind": "start",
+      "path": "lesson_2/10/cue07_start.png",
+      "verdict": "pass",
+      "notes": "start frame (+0.15s): reveal in progress, expected sparse"
+    },
+    {
+      "cue": 7,
+      "kind": "mid",
+      "path": "lesson_2/10/cue07_mid.png",
+      "verdict": "pass",
+      "notes": ""
+    },
+    {
+      "cue": 7,
+      "kind": "end",
+      "path": "lesson_2/10/cue07_end.png",
+      "verdict": "pass",
+      "notes": "Three variable chips (prior/sensitivity/specificity) -> predict->posterior?; prior chip bumped=change one variable. In-frame."
+    },
+    {
+      "cue": 8,
+      "kind": "start",
+      "path": "lesson_2/10/cue08_start.png",
+      "verdict": "pass",
+      "notes": "start frame (+0.15s): reveal in progress, expected sparse"
+    },
+    {
+      "cue": 8,
+      "kind": "mid",
+      "path": "lesson_2/10/cue08_mid.png",
+      "verdict": "pass",
+      "notes": ""
+    },
+    {
+      "cue": 8,
+      "kind": "end",
+      "path": "lesson_2/10/cue08_end.png",
+      "verdict": "pass",
+      "notes": "if SICK(true) P(+|sick)=0.99 green vs if HEALTHY(false) P(+|healthy)=0.05 rose. Symmetric, correct. In-frame."
+    },
+    {
+      "cue": 9,
+      "kind": "start",
+      "path": "lesson_2/10/cue09_start.png",
+      "verdict": "pass",
+      "notes": "start frame (+0.15s): reveal in progress, expected sparse"
+    },
+    {
+      "cue": 9,
+      "kind": "mid",
+      "path": "lesson_2/10/cue09_mid.png",
+      "verdict": "pass",
+      "notes": ""
+    },
+    {
+      "cue": 9,
+      "kind": "end",
+      "path": "lesson_2/10/cue09_end.png",
+      "verdict": "pass",
+      "notes": "Full spine Prior->xLikelihood->Posterior-> next decision drop; \"evidence leaves in usable form\". In-frame."
+    },
+    {
+      "cue": 10,
+      "kind": "start",
+      "path": "lesson_2/10/cue10_start.png",
+      "verdict": "pass",
+      "notes": "start frame (+0.15s): reveal in progress, expected sparse"
+    },
+    {
+      "cue": 10,
+      "kind": "mid",
+      "path": "lesson_2/10/cue10_mid.png",
+      "verdict": "pass",
+      "notes": ""
+    },
+    {
+      "cue": 10,
+      "kind": "end",
+      "path": "lesson_2/10/cue10_end.png",
+      "verdict": "pass",
+      "notes": "\"Bayesian updating\" chip dimmed + \"a label - not an explanation\" (rose) + posterior=TP/(TP+FP). FIX r2: label was clipping right edge -> moved below name + added to guard. In-frame."
+    },
+    {
+      "cue": 11,
+      "kind": "start",
+      "path": "lesson_2/10/cue11_start.png",
+      "verdict": "pass",
+      "notes": "start frame (+0.15s): reveal in progress, expected sparse"
+    },
+    {
+      "cue": 11,
+      "kind": "mid",
+      "path": "lesson_2/10/cue11_mid.png",
+      "verdict": "pass",
+      "notes": ""
+    },
+    {
+      "cue": 11,
+      "kind": "end",
+      "path": "lesson_2/10/cue11_end.png",
+      "verdict": "pass",
+      "notes": "Base-rate trap grid: 1 emerald TP + 5 rose FP among 100; legend TP=1 FP=5; \"99% accurate yet most positives false\". In-frame."
+    },
+    {
+      "cue": 12,
+      "kind": "start",
+      "path": "lesson_2/10/cue12_start.png",
+      "verdict": "pass",
+      "notes": "start frame (+0.15s): reveal in progress, expected sparse"
+    },
+    {
+      "cue": 12,
+      "kind": "mid",
+      "path": "lesson_2/10/cue12_mid.png",
+      "verdict": "pass",
+      "notes": ""
+    },
+    {
+      "cue": 12,
+      "kind": "end",
+      "path": "lesson_2/10/cue12_end.png",
+      "verdict": "pass",
+      "notes": "Before P(sick)=0.01 -> After + P(sick|+)~0.17. Correct posterior, legible. In-frame."
+    },
+    {
+      "cue": 13,
+      "kind": "start",
+      "path": "lesson_2/10/cue13_start.png",
+      "verdict": "pass",
+      "notes": "start frame (+0.15s): reveal in progress, expected sparse"
+    },
+    {
+      "cue": 13,
+      "kind": "mid",
+      "path": "lesson_2/10/cue13_mid.png",
+      "verdict": "pass",
+      "notes": ""
+    },
+    {
+      "cue": 13,
+      "kind": "end",
+      "path": "lesson_2/10/cue13_end.png",
+      "verdict": "pass",
+      "notes": "Posterior=TP/(TP+FP)=1/(1+5)=1/6~17%. Mathematically correct, legible. In-frame."
+    }
+  ]
+}
