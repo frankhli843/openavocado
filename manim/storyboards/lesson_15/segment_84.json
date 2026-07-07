@@ -1,0 +1,233 @@
+{
+  "lesson_id": 15,
+  "activity_id": 84,
+  "activity_type": "audio",
+  "title": "Orientation: What Happens Inside One Transformer Block",
+  "audio": {
+    "file_path": "runtime_artifacts/audio/lesson_15_audio.mp3",
+    "duration_sec": 1113.55
+  },
+  "audio_source": "artifact",
+  "cue_source": "orientation_visual.cues",
+  "cues": [
+    {
+      "index": 0,
+      "start": 0,
+      "end": 76,
+      "duration": 76,
+      "label": "Hidden-state rows enter",
+      "headline": "Hidden-state matrix enters the block",
+      "narration": "The block receives one row per token. It will preserve the row count while changing what each row represents.",
+      "active_elements": [
+        "Hidden-state rows enter"
+      ]
+    },
+    {
+      "index": 1,
+      "start": 76,
+      "end": 112,
+      "duration": 36,
+      "label": "Next-token evidence",
+      "headline": "Rows become evidence for next-token logits",
+      "narration": "The row matters because later layers and the output head use it to change next-token scores.",
+      "active_elements": [
+        "Next-token evidence"
+      ]
+    },
+    {
+      "index": 2,
+      "start": 112,
+      "end": 120,
+      "duration": 8,
+      "label": "Shape contract",
+      "headline": "The block is specific edits to the same table",
+      "narration": "Attention, MLP, residuals, and LayerNorm are different edits to the same hidden-state table.",
+      "active_elements": [
+        "Shape contract"
+      ]
+    },
+    {
+      "index": 3,
+      "start": 120,
+      "end": 175,
+      "duration": 55,
+      "label": "Q and K compare",
+      "headline": "Queries and keys create attention scores",
+      "narration": "Q asks what a token is looking for. K advertises what each token can match. Their dot products become scores.",
+      "active_elements": [
+        "Q and K compare"
+      ]
+    },
+    {
+      "index": 4,
+      "start": 175,
+      "end": 200,
+      "duration": 25,
+      "label": "Q and K compare",
+      "headline": "Vector alignment is the mechanism",
+      "narration": "The human labels are analogy. The actual mechanism is learned vector alignment.",
+      "active_elements": [
+        "Q and K compare"
+      ]
+    },
+    {
+      "index": 5,
+      "start": 200,
+      "end": 236,
+      "duration": 36,
+      "label": "Softmax and V mix",
+      "headline": "Scaling keeps softmax from becoming too sharp",
+      "narration": "Scaling keeps score magnitudes calm enough for softmax to make graded choices.",
+      "active_elements": [
+        "Softmax and V mix"
+      ]
+    },
+    {
+      "index": 6,
+      "start": 236,
+      "end": 273,
+      "duration": 37,
+      "label": "Softmax and V mix",
+      "headline": "Weights choose value content",
+      "narration": "Softmax creates weights. Those weights pull content from V rows.",
+      "active_elements": [
+        "Softmax and V mix"
+      ]
+    },
+    {
+      "index": 7,
+      "start": 273,
+      "end": 301,
+      "duration": 28,
+      "label": "Misleading shortcut",
+      "headline": "Q/K/V are learned projections, not tokenizer facts",
+      "narration": "Q asks, K matches, V carries. The weights route, but V carries the content.",
+      "active_elements": [
+        "Misleading shortcut"
+      ]
+    },
+    {
+      "index": 8,
+      "start": 301,
+      "end": 367,
+      "duration": 66,
+      "label": "Residual add",
+      "headline": "Attention updates the stream without erasing it",
+      "narration": "The attention output becomes a delta added back into the original residual stream.",
+      "active_elements": [
+        "Residual add"
+      ]
+    },
+    {
+      "index": 9,
+      "start": 367,
+      "end": 403,
+      "duration": 36,
+      "label": "Notebook metaphor",
+      "headline": "The residual stream is a shared notebook",
+      "narration": "The stream keeps the old signal while each block writes useful updates into it.",
+      "active_elements": [
+        "Notebook metaphor"
+      ]
+    },
+    {
+      "index": 10,
+      "start": 403,
+      "end": 437,
+      "duration": 34,
+      "label": "MLP update",
+      "headline": "The MLP edits each row independently",
+      "narration": "The MLP transforms each row after context has arrived: expand, gate, compress, add.",
+      "active_elements": [
+        "MLP update"
+      ]
+    },
+    {
+      "index": 11,
+      "start": 437,
+      "end": 508,
+      "duration": 71,
+      "label": "MLP update",
+      "headline": "Expansion gives the row room for intermediate features",
+      "narration": "The wider hidden space gives the MLP room to create and gate candidate features.",
+      "active_elements": [
+        "MLP update"
+      ]
+    },
+    {
+      "index": 12,
+      "start": 508,
+      "end": 613,
+      "duration": 105,
+      "label": "Next-token evidence",
+      "headline": "Better rows make better next-token scores",
+      "narration": "Blocks refine hidden states so the output head can assign better vocabulary logits later.",
+      "active_elements": [
+        "Next-token evidence"
+      ]
+    },
+    {
+      "index": 13,
+      "start": 613,
+      "end": 700,
+      "duration": 87,
+      "label": "Attention heads",
+      "headline": "Multiple heads read the same table in different ways",
+      "narration": "Each head has its own Q, K, and V projections and contributes one reading of the same table.",
+      "active_elements": [
+        "Attention heads"
+      ]
+    },
+    {
+      "index": 14,
+      "start": 700,
+      "end": 843,
+      "duration": 143,
+      "label": "Residual add",
+      "headline": "LayerNorm creates a stable read path",
+      "narration": "The sublayer reads a normalized view while the residual path carries the continuing stream.",
+      "active_elements": [
+        "Residual add"
+      ]
+    },
+    {
+      "index": 15,
+      "start": 843,
+      "end": 935,
+      "duration": 92,
+      "label": "Misleading shortcut",
+      "headline": "Fix the wrong shortcut version",
+      "narration": "The corrected chain is projection, scoring, weighting, value mixing, residual add, MLP update, later logits.",
+      "active_elements": [
+        "Misleading shortcut"
+      ]
+    },
+    {
+      "index": 16,
+      "start": 935,
+      "end": 1015,
+      "duration": 80,
+      "label": "Next-token evidence",
+      "headline": "Wrong predictions become inspectable",
+      "narration": "Once you know the chain, a mistake can be traced to representations, scores, weights, updates, or logits.",
+      "active_elements": [
+        "Next-token evidence"
+      ]
+    },
+    {
+      "index": 17,
+      "start": 1015,
+      "end": 1114,
+      "duration": 99,
+      "label": "Q and K compare",
+      "headline": "The visual should track the changing object",
+      "narration": "The visual should show the real object being discussed: score grids, value mixing, residual adds, or MLP updates.",
+      "active_elements": [
+        "Q and K compare"
+      ]
+    }
+  ],
+  "cue_span_sec": 1114,
+  "formulas": [],
+  "exported_at": "2026-07-07T11:41:37.000Z"
+}

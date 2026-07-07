@@ -111,12 +111,21 @@ render_chunk() {
     ffmpeg -y -v error -i "$raw" -vf "tpad=stop_mode=clone:stop_duration=${absdiff}" \
       -r "$FPS" -c:v libx264 -pix_fmt yuv420p -preset medium -crf 18 "$pinned"
     echo "  cue ${ii}: padded +${absdiff}s (was ${actual}s → ${cue_dur}s)"
-  elif [[ "$short" == "0" && $(echo "$absdiff > 0.25" | bc -l) == 1 ]]; then
-    echo "  cue ${ii}: TOO LONG by ${diff}s (>0.25s) — reduce animation run_times in Cue${ii}" >&2
-    exit 1
+  elif [[ "$short" == "0" && $(echo "$absdiff <= 0.25" | bc -l) == 1 ]]; then
+    # long by <=0.25s (usually a single-frame overrun from pace_to rounding) →
+    # trim to the exact cue window. Matches the design intent (short<=0.25 pad,
+    # long>0.25 fail); a sub-quarter-second overrun is baked-in frame rounding,
+    # not an authoring error, so trimming keeps chunk sync exact without a rerun.
+    ffmpeg -y -v error -i "$raw" -t "$cue_dur" \
+      -r "$FPS" -c:v libx264 -pix_fmt yuv420p -preset medium -crf 18 "$pinned"
+    echo "  cue ${ii}: trimmed -${absdiff}s (was ${actual}s → ${cue_dur}s)"
   else
-    # short by >0.25s → author should extend the scene; fail loudly.
-    echo "  cue ${ii}: OFF by ${diff}s (>0.25s) — adjust Cue${ii} pacing/run_times" >&2
+    # off by >0.25s either direction → real authoring problem; fail loudly.
+    if [[ "$short" == "0" ]]; then
+      echo "  cue ${ii}: TOO LONG by ${diff}s (>0.25s) — reduce animation run_times in Cue${ii}" >&2
+    else
+      echo "  cue ${ii}: TOO SHORT by ${diff}s (>0.25s) — extend Cue${ii} pacing/run_times" >&2
+    fi
     exit 1
   fi
 }

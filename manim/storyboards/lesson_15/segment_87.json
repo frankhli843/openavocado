@@ -1,0 +1,175 @@
+{
+  "lesson_id": 15,
+  "activity_id": 87,
+  "activity_type": "lesson_part",
+  "title": "The MLP: Per-Token Expansion and the GELU Gate",
+  "audio": {
+    "file_path": "runtime_artifacts/audio/lesson_15_activity_87_audio.mp3",
+    "duration_sec": 309.58
+  },
+  "audio_source": "artifact",
+  "cue_source": "audio.synced_visual.cues",
+  "cues": [
+    {
+      "index": 0,
+      "start": 0,
+      "end": 24,
+      "duration": 24,
+      "label": "Per-token worker",
+      "headline": "The MLP works on one token row at a time",
+      "narration": "The section starts by separating attention from the MLP. Attention lets rows talk. The MLP does private feature work inside each row.",
+      "active_elements": [
+        "per-token"
+      ]
+    },
+    {
+      "index": 1,
+      "start": 24,
+      "end": 48,
+      "duration": 24,
+      "label": "Context-aware row",
+      "headline": "The row is no longer context-free after attention",
+      "narration": "The MLP only sees one row, but that row may already contain cross-token context written by attention.",
+      "active_elements": [
+        "context"
+      ]
+    },
+    {
+      "index": 2,
+      "start": 48,
+      "end": 70,
+      "duration": 22,
+      "label": "Expand, GELU, compress",
+      "headline": "A linear layer expands, GELU gates, and another linear layer compresses",
+      "narration": "The audio walks through the shape. A d_model row expands into a wider hidden space, passes through GELU, then compresses back to d_model.",
+      "active_elements": [
+        "pipeline"
+      ]
+    },
+    {
+      "index": 3,
+      "start": 70,
+      "end": 94,
+      "duration": 24,
+      "label": "Why expand",
+      "headline": "Expansion creates room for intermediate feature combinations",
+      "narration": "The wider space acts like a workbench. It gives the MLP more temporary coordinates where candidate signals can appear.",
+      "active_elements": [
+        "expand"
+      ]
+    },
+    {
+      "index": 4,
+      "start": 94,
+      "end": 118,
+      "duration": 24,
+      "label": "GELU dimmer",
+      "headline": "GELU is a smooth gate, not a hard switch",
+      "narration": "The audio explains GELU as a dimmer. Strong positive features pass, weak features contribute a little, and negative features fade.",
+      "active_elements": [
+        "gelu"
+      ]
+    },
+    {
+      "index": 5,
+      "start": 118,
+      "end": 144,
+      "duration": 26,
+      "label": "Feature sharpening",
+      "headline": "The MLP can sharpen useful internal evidence",
+      "narration": "In the toy phrase, context about cat and sat can make location-like continuations more plausible later. The MLP changes internal evidence, not the next token directly.",
+      "active_elements": [
+        "features"
+      ]
+    },
+    {
+      "index": 6,
+      "start": 144,
+      "end": 168,
+      "duration": 24,
+      "label": "Output head reads",
+      "headline": "The output head later reads the changed hidden features",
+      "narration": "The MLP does not emit vocabulary probabilities. It changes features that the output head can later map to logits.",
+      "active_elements": [
+        "logits"
+      ]
+    },
+    {
+      "index": 7,
+      "start": 168,
+      "end": 194,
+      "duration": 26,
+      "label": "Gate internals",
+      "headline": "GELU decides which intermediate signals survive",
+      "narration": "The section goes deeper into the gate. The visual shows expanded features being damped or preserved before compression.",
+      "active_elements": [
+        "gate"
+      ]
+    },
+    {
+      "index": 8,
+      "start": 194,
+      "end": 220,
+      "duration": 26,
+      "label": "Stored associations",
+      "headline": "MLP weights can express associations without acting like a database",
+      "narration": "The audio corrects the phrase 'facts live in the MLP.' The MLP applies learned transformations when the current row activates them.",
+      "active_elements": [
+        "associations"
+      ]
+    },
+    {
+      "index": 9,
+      "start": 220,
+      "end": 246,
+      "duration": 26,
+      "label": "Not token chooser",
+      "headline": "The MLP changes the representation, not the final token",
+      "narration": "The common shortcut is too crisp. Attention writes context, the MLP performs nonlinear row work, and the output head scores later.",
+      "active_elements": [
+        "causal-chain"
+      ]
+    },
+    {
+      "index": 10,
+      "start": 246,
+      "end": 270,
+      "duration": 24,
+      "label": "MLP residual",
+      "headline": "The MLP output is added back as a residual update",
+      "narration": "The residual add matters after the MLP because the row before the MLP still carries token identity and attention context.",
+      "active_elements": [
+        "residual"
+      ]
+    },
+    {
+      "index": 11,
+      "start": 270,
+      "end": 292,
+      "duration": 22,
+      "label": "Visual expectation",
+      "headline": "A good MLP visual shows expansion, gating, compression, and add",
+      "narration": "The audio says a box labeled MLP is not enough. The visual now shows the real movement through the temporary wide layer and back.",
+      "active_elements": [
+        "visual-proof"
+      ]
+    },
+    {
+      "index": 12,
+      "start": 292,
+      "end": 310,
+      "duration": 18,
+      "label": "MLP summary",
+      "headline": "The MLP is nonlinear per-row feature work in the residual stream",
+      "narration": "The section ends by tying the pieces together: attention provides context, the MLP transforms each row, and the residual stream carries the update forward.",
+      "active_elements": [
+        "summary"
+      ]
+    }
+  ],
+  "cue_span_sec": 310,
+  "formulas": [
+    "\\operatorname{MLP}(h)=W_2\\,\\operatorname{GELU}(W_1h+b_1)+b_2"
+  ],
+  "exported_at": "2026-07-07T11:41:37.001Z"
+}

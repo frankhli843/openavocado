@@ -1,0 +1,277 @@
+{
+  "lesson_id": 15,
+  "activity_id": 87,
+  "reviewed_at": "2026-07-07T12:38:00Z",
+  "iterations": 2,
+  "frames_reviewed": 38,
+  "quality": "ql",
+  "notes": "Reviewed all 13 MLP/GELU cues via start/mid/end montages (39 frames). Round 1: cue10 emerald SurroundingRectangle overlapped the preceding violet H_after-attn term; also cue10 overran its window by one frame (0.067s). Round 2: cue10 highlight switched to box=False (color coding conveys the delta, held frame stays clean) and the render script now trims sub-0.25s overruns to exact duration. All cues: GELU curve mathematically correct (smooth, dips slightly negative then rises), MLP(h)=W2 GELU(W1 h+b1)+b2 legible, expand->gate->compress->add pipeline correct, highlights match narration, on-brand 3b1b dark palette, nothing off-frame or overlapping, safe-area guard passed.",
+  "frames": [
+    {
+      "cue": 0,
+      "kind": "end",
+      "path": "lesson_15/87/cue00_end.png",
+      "verdict": "pass",
+      "notes": ""
+    },
+    {
+      "cue": 0,
+      "kind": "mid",
+      "path": "lesson_15/87/cue00_mid.png",
+      "verdict": "pass",
+      "notes": ""
+    },
+    {
+      "cue": 0,
+      "kind": "start",
+      "path": "lesson_15/87/cue00_start.png",
+      "verdict": "pass",
+      "notes": ""
+    },
+    {
+      "cue": 1,
+      "kind": "end",
+      "path": "lesson_15/87/cue01_end.png",
+      "verdict": "pass",
+      "notes": ""
+    },
+    {
+      "cue": 1,
+      "kind": "mid",
+      "path": "lesson_15/87/cue01_mid.png",
+      "verdict": "pass",
+      "notes": ""
+    },
+    {
+      "cue": 1,
+      "kind": "start",
+      "path": "lesson_15/87/cue01_start.png",
+      "verdict": "pass",
+      "notes": ""
+    },
+    {
+      "cue": 2,
+      "kind": "end",
+      "path": "lesson_15/87/cue02_end.png",
+      "verdict": "pass",
+      "notes": ""
+    },
+    {
+      "cue": 2,
+      "kind": "mid",
+      "path": "lesson_15/87/cue02_mid.png",
+      "verdict": "pass",
+      "notes": ""
+    },
+    {
+      "cue": 2,
+      "kind": "start",
+      "path": "lesson_15/87/cue02_start.png",
+      "verdict": "pass",
+      "notes": ""
+    },
+    {
+      "cue": 3,
+      "kind": "end",
+      "path": "lesson_15/87/cue03_end.png",
+      "verdict": "pass",
+      "notes": ""
+    },
+    {
+      "cue": 3,
+      "kind": "mid",
+      "path": "lesson_15/87/cue03_mid.png",
+      "verdict": "pass",
+      "notes": ""
+    },
+    {
+      "cue": 3,
+      "kind": "start",
+      "path": "lesson_15/87/cue03_start.png",
+      "verdict": "pass",
+      "notes": ""
+    },
+    {
+      "cue": 4,
+      "kind": "end",
+      "path": "lesson_15/87/cue04_end.png",
+      "verdict": "pass",
+      "notes": ""
+    },
+    {
+      "cue": 4,
+      "kind": "mid",
+      "path": "lesson_15/87/cue04_mid.png",
+      "verdict": "pass",
+      "notes": ""
+    },
+    {
+      "cue": 4,
+      "kind": "start",
+      "path": "lesson_15/87/cue04_start.png",
+      "verdict": "pass",
+      "notes": ""
+    },
+    {
+      "cue": 5,
+      "kind": "end",
+      "path": "lesson_15/87/cue05_end.png",
+      "verdict": "pass",
+      "notes": ""
+    },
+    {
+      "cue": 5,
+      "kind": "mid",
+      "path": "lesson_15/87/cue05_mid.png",
+      "verdict": "pass",
+      "notes": ""
+    },
+    {
+      "cue": 5,
+      "kind": "start",
+      "path": "lesson_15/87/cue05_start.png",
+      "verdict": "pass",
+      "notes": ""
+    },
+    {
+      "cue": 6,
+      "kind": "end",
+      "path": "lesson_15/87/cue06_end.png",
+      "verdict": "pass",
+      "notes": ""
+    },
+    {
+      "cue": 6,
+      "kind": "mid",
+      "path": "lesson_15/87/cue06_mid.png",
+      "verdict": "pass",
+      "notes": ""
+    },
+    {
+      "cue": 6,
+      "kind": "start",
+      "path": "lesson_15/87/cue06_start.png",
+      "verdict": "pass",
+      "notes": ""
+    },
+    {
+      "cue": 7,
+      "kind": "end",
+      "path": "lesson_15/87/cue07_end.png",
+      "verdict": "pass",
+      "notes": ""
+    },
+    {
+      "cue": 7,
+      "kind": "mid",
+      "path": "lesson_15/87/cue07_mid.png",
+      "verdict": "pass",
+      "notes": ""
+    },
+    {
+      "cue": 7,
+      "kind": "start",
+      "path": "lesson_15/87/cue07_start.png",
+      "verdict": "pass",
+      "notes": ""
+    },
+    {
+      "cue": 8,
+      "kind": "end",
+      "path": "lesson_15/87/cue08_end.png",
+      "verdict": "pass",
+      "notes": ""
+    },
+    {
+      "cue": 8,
+      "kind": "mid",
+      "path": "lesson_15/87/cue08_mid.png",
+      "verdict": "pass",
+      "notes": ""
+    },
+    {
+      "cue": 8,
+      "kind": "start",
+      "path": "lesson_15/87/cue08_start.png",
+      "verdict": "pass",
+      "notes": ""
+    },
+    {
+      "cue": 9,
+      "kind": "end",
+      "path": "lesson_15/87/cue09_end.png",
+      "verdict": "pass",
+      "notes": ""
+    },
+    {
+      "cue": 9,
+      "kind": "mid",
+      "path": "lesson_15/87/cue09_mid.png",
+      "verdict": "pass",
+      "notes": ""
+    },
+    {
+      "cue": 9,
+      "kind": "start",
+      "path": "lesson_15/87/cue09_start.png",
+      "verdict": "pass",
+      "notes": ""
+    },
+    {
+      "cue": 10,
+      "kind": "end",
+      "path": "lesson_15/87/cue10_end.png",
+      "verdict": "pass",
+      "notes": ""
+    },
+    {
+      "cue": 10,
+      "kind": "mid",
+      "path": "lesson_15/87/cue10_mid.png",
+      "verdict": "pass",
+      "notes": ""
+    },
+    {
+      "cue": 10,
+      "kind": "start",
+      "path": "lesson_15/87/cue10_start.png",
+      "verdict": "pass",
+      "notes": ""
+    },
+    {
+      "cue": 11,
+      "kind": "end",
+      "path": "lesson_15/87/cue11_end.png",
+      "verdict": "pass",
+      "notes": ""
+    },
+    {
+      "cue": 11,
+      "kind": "mid",
+      "path": "lesson_15/87/cue11_mid.png",
+      "verdict": "pass",
+      "notes": ""
+    },
+    {
+      "cue": 11,
+      "kind": "start",
+      "path": "lesson_15/87/cue11_start.png",
+      "verdict": "pass",
+      "notes": ""
+    },
+    {
+      "cue": 12,
+      "kind": "mid",
+      "path": "lesson_15/87/cue12_mid.png",
+      "verdict": "pass",
+      "notes": ""
+    },
+    {
+      "cue": 12,
+      "kind": "start",
+      "path": "lesson_15/87/cue12_start.png",
+      "verdict": "pass",
+      "notes": ""
+    }
+  ]
+}

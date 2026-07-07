@@ -1,0 +1,163 @@
+{
+  "lesson_id": 15,
+  "activity_id": 85,
+  "activity_type": "lesson_part",
+  "title": "How Q, K, V Produce Attention Scores",
+  "audio": {
+    "file_path": "runtime_artifacts/audio/lesson_15_activity_85_audio.mp3",
+    "duration_sec": 272.18
+  },
+  "audio_source": "artifact",
+  "cue_source": "audio.synced_visual.cues",
+  "cues": [
+    {
+      "index": 0,
+      "start": 0,
+      "end": 24,
+      "duration": 24,
+      "label": "Projection split",
+      "headline": "One hidden row is copied into three learned views",
+      "narration": "The audio is introducing the starting object: one token's hidden row. The visual keeps that row centered, then branches it into Q, K, and V so the three roles are not mixed together.",
+      "active_elements": [
+        "split"
+      ]
+    },
+    {
+      "index": 1,
+      "start": 24,
+      "end": 47,
+      "duration": 23,
+      "label": "Q asks",
+      "headline": "The query is the current token asking what it needs",
+      "narration": "This segment talks about the query as a question. The current token's Q vector is highlighted while keys and values stay visible but secondary.",
+      "active_elements": [
+        "q"
+      ]
+    },
+    {
+      "index": 2,
+      "start": 47,
+      "end": 70,
+      "duration": 23,
+      "label": "K advertises",
+      "headline": "Every token publishes a key that can be matched",
+      "narration": "The narration has moved to keys. Each token offers a K row, like an index card saying what kind of information it can answer for.",
+      "active_elements": [
+        "k"
+      ]
+    },
+    {
+      "index": 3,
+      "start": 70,
+      "end": 89,
+      "duration": 19,
+      "label": "V carries",
+      "headline": "Values hold the content attention will retrieve",
+      "narration": "This short segment separates matching from content. Keys decide where to look, but V rows are the actual information that will be blended.",
+      "active_elements": [
+        "v"
+      ]
+    },
+    {
+      "index": 4,
+      "start": 89,
+      "end": 111,
+      "duration": 22,
+      "label": "Dot products",
+      "headline": "Q is compared with every K row",
+      "narration": "The audio is now about compatibility. The active query is dotted with each key row, producing one raw score per possible source token.",
+      "active_elements": [
+        "dot"
+      ]
+    },
+    {
+      "index": 5,
+      "start": 111,
+      "end": 126,
+      "duration": 15,
+      "label": "QK row",
+      "headline": "The dot products become a row of QK^T",
+      "narration": "This segment connects the individual dot products to matrix multiplication. One query row against all key rows forms one score row.",
+      "active_elements": [
+        "score"
+      ]
+    },
+    {
+      "index": 6,
+      "start": 126,
+      "end": 154,
+      "duration": 28,
+      "label": "Scale",
+      "headline": "Scaling keeps the raw scores from spiking too early",
+      "narration": "The narration explains why the denominator exists. Dividing by sqrt(d_k) keeps the score range controlled before softmax reads it.",
+      "active_elements": [
+        "scale"
+      ]
+    },
+    {
+      "index": 7,
+      "start": 154,
+      "end": 181,
+      "duration": 27,
+      "label": "Softmax",
+      "headline": "Softmax turns scores into an attention budget",
+      "narration": "The audio is talking about a readable distribution now. Softmax makes every weight positive and makes the row sum to one.",
+      "active_elements": [
+        "softmax"
+      ]
+    },
+    {
+      "index": 8,
+      "start": 181,
+      "end": 210,
+      "duration": 29,
+      "label": "Mix values",
+      "headline": "The weights decide how much each V row contributes",
+      "narration": "This segment is about retrieval. Each V row is multiplied by its attention weight, so high-score tokens contribute more to the answer.",
+      "active_elements": [
+        "mix"
+      ]
+    },
+    {
+      "index": 9,
+      "start": 210,
+      "end": 236,
+      "duration": 26,
+      "label": "Retrieval",
+      "headline": "High weights pull more content into the context vector",
+      "narration": "The audio reinforces the meaning of a high query-key score. The visualization shows the strongest weights pulling visible content into the combined vector.",
+      "active_elements": [
+        "mix"
+      ]
+    },
+    {
+      "index": 10,
+      "start": 236,
+      "end": 263,
+      "duration": 27,
+      "label": "Context vector",
+      "headline": "The context vector is the attention update",
+      "narration": "The narration has moved from scoring to output. The mixed value vector is now a concrete attention update for the current token position.",
+      "active_elements": [
+        "out"
+      ]
+    },
+    {
+      "index": 11,
+      "start": 263,
+      "end": 272,
+      "duration": 9,
+      "label": "Handoff",
+      "headline": "Attention hands the update back to the residual stream",
+      "narration": "The final segment shows where the result goes. The context vector leaves attention and becomes part of the next hidden-row update.",
+      "active_elements": [
+        "out"
+      ]
+    }
+  ],
+  "cue_span_sec": 272,
+  "formulas": [
+    "\\operatorname{Attention}(Q,K,V)=\\operatorname{softmax}\\left(\\frac{QK^T}{\\sqrt{d_k}}\\right)V"
+  ],
+  "exported_at": "2026-07-07T11:41:37.001Z"
+}
