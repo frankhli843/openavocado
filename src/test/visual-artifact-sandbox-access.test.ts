@@ -10,7 +10,7 @@ describe("visual artifact sandbox access", () => {
     expect(canServeArtifactSandbox({
       buildStatus: "qa_approved",
       qaMode: null,
-      hostname: "avocadocore.89-167-21-6.nip.io",
+      hostname: "avocadocore.178-105-119-249.nip.io",
     })).toBe(true);
   });
 
@@ -28,7 +28,7 @@ describe("visual artifact sandbox access", () => {
     expect(canServeArtifactSandbox({
       buildStatus: "pending_qa",
       qaMode: "pending",
-      hostname: "avocadocore.89-167-21-6.nip.io",
+      hostname: "avocadocore.178-105-119-249.nip.io",
     })).toBe(false);
     expect(canServeArtifactSandbox({
       buildStatus: "pending_qa",
