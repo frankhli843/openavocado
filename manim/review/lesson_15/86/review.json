@@ -1,0 +1,229 @@
+{
+  "lesson_id": 15,
+  "activity_id": 86,
+  "reviewed_at": "2026-07-07T12:05:00Z",
+  "iterations": 2,
+  "frames_reviewed": 31,
+  "quality": "final",
+  "notes": "Reviewed all 9 cues via montage + full-res spot checks. Round 1: cue07 'L x d_model' label overlapped Block1/Block2 tops. Round 2: repositioned label above block row (clear). All cues: formulas legible+correct, highlights match narration, dark 3b1b palette, safe-area guard passed. FINAL: 4 spot frames at 1080p reviewed, all crisp (formulas correct, highlights match, cue07 clear).",
+  "frames": [
+    {
+      "cue": 0,
+      "kind": "end",
+      "path": "lesson_15/86/cue00_end.png",
+      "verdict": "pass",
+      "notes": ""
+    },
+    {
+      "cue": 0,
+      "kind": "mid",
+      "path": "lesson_15/86/cue00_mid.png",
+      "verdict": "pass",
+      "notes": ""
+    },
+    {
+      "cue": 0,
+      "kind": "start",
+      "path": "lesson_15/86/cue00_start.png",
+      "verdict": "pass",
+      "notes": ""
+    },
+    {
+      "cue": 1,
+      "kind": "end",
+      "path": "lesson_15/86/cue01_end.png",
+      "verdict": "pass",
+      "notes": ""
+    },
+    {
+      "cue": 1,
+      "kind": "mid",
+      "path": "lesson_15/86/cue01_mid.png",
+      "verdict": "pass",
+      "notes": ""
+    },
+    {
+      "cue": 1,
+      "kind": "start",
+      "path": "lesson_15/86/cue01_start.png",
+      "verdict": "pass",
+      "notes": ""
+    },
+    {
+      "cue": 2,
+      "kind": "end",
+      "path": "lesson_15/86/cue02_end.png",
+      "verdict": "pass",
+      "notes": ""
+    },
+    {
+      "cue": 2,
+      "kind": "mid",
+      "path": "lesson_15/86/cue02_mid.png",
+      "verdict": "pass",
+      "notes": ""
+    },
+    {
+      "cue": 2,
+      "kind": "start",
+      "path": "lesson_15/86/cue02_start.png",
+      "verdict": "pass",
+      "notes": ""
+    },
+    {
+      "cue": 3,
+      "kind": "end",
+      "path": "lesson_15/86/cue03_end.png",
+      "verdict": "pass",
+      "notes": ""
+    },
+    {
+      "cue": 3,
+      "kind": "mid",
+      "path": "lesson_15/86/cue03_mid.png",
+      "verdict": "pass",
+      "notes": ""
+    },
+    {
+      "cue": 3,
+      "kind": "start",
+      "path": "lesson_15/86/cue03_start.png",
+      "verdict": "pass",
+      "notes": ""
+    },
+    {
+      "cue": 4,
+      "kind": "end",
+      "path": "lesson_15/86/cue04_end.png",
+      "verdict": "pass",
+      "notes": ""
+    },
+    {
+      "cue": 4,
+      "kind": "mid",
+      "path": "lesson_15/86/cue04_mid.png",
+      "verdict": "pass",
+      "notes": ""
+    },
+    {
+      "cue": 4,
+      "kind": "start",
+      "path": "lesson_15/86/cue04_start.png",
+      "verdict": "pass",
+      "notes": ""
+    },
+    {
+      "cue": 5,
+      "kind": "end",
+      "path": "lesson_15/86/cue05_end.png",
+      "verdict": "pass",
+      "notes": ""
+    },
+    {
+      "cue": 5,
+      "kind": "mid",
+      "path": "lesson_15/86/cue05_mid.png",
+      "verdict": "pass",
+      "notes": ""
+    },
+    {
+      "cue": 5,
+      "kind": "start",
+      "path": "lesson_15/86/cue05_start.png",
+      "verdict": "pass",
+      "notes": ""
+    },
+    {
+      "cue": 6,
+      "kind": "end",
+      "path": "lesson_15/86/cue06_end.png",
+      "verdict": "pass",
+      "notes": ""
+    },
+    {
+      "cue": 6,
+      "kind": "mid",
+      "path": "lesson_15/86/cue06_mid.png",
+      "verdict": "pass",
+      "notes": ""
+    },
+    {
+      "cue": 6,
+      "kind": "start",
+      "path": "lesson_15/86/cue06_start.png",
+      "verdict": "pass",
+      "notes": ""
+    },
+    {
+      "cue": 7,
+      "kind": "end",
+      "path": "lesson_15/86/cue07_end.png",
+      "verdict": "pass",
+      "notes": "cue07 label overlap fixed on iteration 2"
+    },
+    {
+      "cue": 7,
+      "kind": "mid",
+      "path": "lesson_15/86/cue07_mid.png",
+      "verdict": "pass",
+      "notes": "cue07 label overlap fixed on iteration 2"
+    },
+    {
+      "cue": 7,
+      "kind": "start",
+      "path": "lesson_15/86/cue07_start.png",
+      "verdict": "pass",
+      "notes": "cue07 label overlap fixed on iteration 2"
+    },
+    {
+      "cue": 8,
+      "kind": "end",
+      "path": "lesson_15/86/cue08_end.png",
+      "verdict": "pass",
+      "notes": ""
+    },
+    {
+      "cue": 8,
+      "kind": "mid",
+      "path": "lesson_15/86/cue08_mid.png",
+      "verdict": "pass",
+      "notes": ""
+    },
+    {
+      "cue": 8,
+      "kind": "start",
+      "path": "lesson_15/86/cue08_start.png",
+      "verdict": "pass",
+      "notes": ""
+    },
+    {
+      "cue": -1,
+      "kind": "final_spot",
+      "path": "lesson_15/86/final_spot1.png",
+      "verdict": "pass",
+      "notes": "1080p final quality crisp"
+    },
+    {
+      "cue": -1,
+      "kind": "final_spot",
+      "path": "lesson_15/86/final_spot2.png",
+      "verdict": "pass",
+      "notes": "1080p final quality crisp"
+    },
+    {
+      "cue": -1,
+      "kind": "final_spot",
+      "path": "lesson_15/86/final_spot3.png",
+      "verdict": "pass",
+      "notes": "1080p final quality crisp"
+    },
+    {
+      "cue": -1,
+      "kind": "final_spot",
+      "path": "lesson_15/86/final_spot4.png",
+      "verdict": "pass",
+      "notes": "1080p final quality crisp"
+    }
+  ],
+  "final_reviewed_at": "2026-07-07T12:07:00Z"
+}

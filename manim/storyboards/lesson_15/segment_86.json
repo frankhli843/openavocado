@@ -1,0 +1,129 @@
+{
+  "lesson_id": 15,
+  "activity_id": 86,
+  "activity_type": "lesson_part",
+  "title": "The Residual Stream: How Information Flows Through Blocks",
+  "audio": {
+    "file_path": "runtime_artifacts/audio/lesson_15_activity_86_audio.mp3",
+    "duration_sec": 162.14
+  },
+  "audio_source": "artifact",
+  "cue_source": "audio.synced_visual.cues",
+  "cues": [
+    {
+      "index": 0,
+      "start": 0,
+      "end": 16,
+      "duration": 16,
+      "label": "Continuity path",
+      "headline": "The residual stream carries the hidden-state matrix forward",
+      "narration": "The audio starts by naming the residual stream as the continuity path. The visual keeps the incoming hidden rows visible instead of replacing them.",
+      "active_elements": [
+        "continuity"
+      ]
+    },
+    {
+      "index": 1,
+      "start": 16,
+      "end": 34,
+      "duration": 18,
+      "label": "Update, not replacement",
+      "headline": "A sublayer contributes a delta, not a whole new row",
+      "narration": "This segment explains why addition matters. Attention and the MLP add useful deltas while token identity and prior evidence remain available.",
+      "active_elements": [
+        "delta"
+      ]
+    },
+    {
+      "index": 2,
+      "start": 34,
+      "end": 52,
+      "duration": 18,
+      "label": "Shared notebook",
+      "headline": "Sublayers annotate the same stream",
+      "narration": "The notebook metaphor is useful only if the page size stays fixed. Notes are added to the stream, but the underlying row format is preserved.",
+      "active_elements": [
+        "notebook"
+      ]
+    },
+    {
+      "index": 3,
+      "start": 52,
+      "end": 67,
+      "duration": 15,
+      "label": "Shape stability",
+      "headline": "The row count and hidden width stay unchanged",
+      "narration": "The audio now emphasizes the strict shape rule. The post-attention and post-MLP matrices keep the same L by d_model interface.",
+      "active_elements": [
+        "shape"
+      ]
+    },
+    {
+      "index": 4,
+      "start": 67,
+      "end": 88,
+      "duration": 21,
+      "label": "Pre-LN read",
+      "headline": "LayerNorm stabilizes what the sublayer reads",
+      "narration": "LayerNorm gives the sublayer a steadier view. The residual path still carries the continuing state that receives the update.",
+      "active_elements": [
+        "layernorm"
+      ]
+    },
+    {
+      "index": 5,
+      "start": 88,
+      "end": 108,
+      "duration": 20,
+      "label": "Attention add",
+      "headline": "Attention adds cross-token context to the stream",
+      "narration": "This segment distinguishes the attention update from the representation itself. Attention adds context gathered from other token rows.",
+      "active_elements": [
+        "attention"
+      ]
+    },
+    {
+      "index": 6,
+      "start": 108,
+      "end": 128,
+      "duration": 20,
+      "label": "MLP add",
+      "headline": "The MLP adds a same-width per-token update",
+      "narration": "The MLP makes the same residual move after attention. It reads each normalized row and returns an update that fits back into the same row.",
+      "active_elements": [
+        "mlp"
+      ]
+    },
+    {
+      "index": 7,
+      "start": 128,
+      "end": 145,
+      "duration": 17,
+      "label": "Stacking rule",
+      "headline": "Blocks can stack because every block returns the same shape",
+      "narration": "The visual now shows the contract between blocks. Values change, but the next block receives the same kind of matrix.",
+      "active_elements": [
+        "stack"
+      ]
+    },
+    {
+      "index": 8,
+      "start": 145,
+      "end": 162,
+      "duration": 17,
+      "label": "Residual summary",
+      "headline": "Residuals preserve the thread while updates accumulate",
+      "narration": "The section closes by summarizing residuals as additive continuity: old signal plus attention update plus MLP update.",
+      "active_elements": [
+        "summary"
+      ]
+    }
+  ],
+  "cue_span_sec": 162,
+  "formulas": [
+    "H_{\\text{after-attn}} = H_{\\text{input}} + \\operatorname{Attention}(\\operatorname{LayerNorm}(H_{\\text{input}}))",
+    "H_{\\text{output}} = H_{\\text{after-attn}} + \\operatorname{MLP}(\\operatorname{LayerNorm}(H_{\\text{after-attn}}))",
+    "H_{out}=H_{in}+\\Delta_{attention}+\\Delta_{mlp}"
+  ],
+  "exported_at": "2026-07-07T11:41:37.001Z"
+}

@@ -66,3 +66,8 @@ manim/media/
 manim/review/
 manim/**/__pycache__/
 *.pyc
+
+# keep review.json QA evidence (frames stay ignored)
+!manim/review/
+!manim/review/**/
+!manim/review/**/review.json
