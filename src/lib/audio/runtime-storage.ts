@@ -9,6 +9,10 @@ import path from "path";
 
 /** Root under which all runtime artifacts live (absolute). */
 export function runtimeRoot(): string {
+  const configured = process.env.AVOCADOCORE_RUNTIME_ROOT?.trim();
+  if (configured) {
+    return path.resolve(process.cwd(), configured);
+  }
   return path.join(process.cwd(), "runtime_artifacts");
 }
 
@@ -22,7 +26,11 @@ export function resolveRuntimeFile(relFromProjectRoot: string): string | null {
   if (!relFromProjectRoot) return null;
   // Normalise and strip any leading slash so it is treated as relative.
   const cleaned = relFromProjectRoot.replace(/^[/\\]+/, "");
-  const abs = path.resolve(process.cwd(), cleaned);
+  if (cleaned === "runtime_artifacts") return runtimeRoot();
+  const prefix = "runtime_artifacts/";
+  if (!cleaned.startsWith(prefix)) return null;
+
+  const abs = path.resolve(runtimeRoot(), cleaned.slice(prefix.length));
   const root = runtimeRoot();
   if (abs !== root && !abs.startsWith(root + path.sep)) {
     return null;
