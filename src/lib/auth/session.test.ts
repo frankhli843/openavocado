@@ -136,4 +136,108 @@ describe("ensureActiveLearnerProfile", () => {
       .get(learnerId) as { subject_count: number; lesson_count: number };
     expect(demo).toEqual({ subject_count: 1, lesson_count: 3 });
   });
+
+  it("clones the configured canonical demo subject instead of the old three-lesson seed", async () => {
+    const { getDb } = await import("@/db/connection");
+    const { ensureActiveLearnerProfile } = await import("./session");
+    const { CANONICAL_DEMO_GENERATOR } = await import("@/lib/demo-lessons");
+    const db = getDb();
+
+    const canonicalUserId = db
+      .prepare("INSERT INTO users (username, display_name) VALUES (?, ?)")
+      .run("canonical-user", "Canonical User").lastInsertRowid as number;
+    const canonicalLearnerId = db
+      .prepare("INSERT INTO learner_profiles (user_id, display_name) VALUES (?, ?)")
+      .run(canonicalUserId, "Canonical").lastInsertRowid as number;
+    const canonicalSubjectId = db
+      .prepare(
+        `INSERT INTO subjects (learner_id, title, description, goals, criteria, current_level)
+         VALUES (?, ?, ?, ?, ?, ?)`
+      )
+      .run(
+        canonicalLearnerId,
+        "Model Building and Inference",
+        "Rich canonical demo subject.",
+        "Understand the model-building path.",
+        "Use the rich subject as public demo source.",
+        "familiarity"
+      ).lastInsertRowid as number;
+
+    const insertLesson = db.prepare(
+      `INSERT INTO lessons
+         (subject_id, title, description, status, sequence_number, goals, tags, generated_by, generator_version)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`
+    );
+    const insertActivity = db.prepare(
+      `INSERT INTO lesson_activities (lesson_id, activity_type, is_core, sequence_order, title, content)
+       VALUES (?, ?, 1, ?, ?, ?)`
+    );
+    for (const [index, title] of [
+      "Initial Assessment: Model Building and Inference",
+      "The LLM Lifecycle: From Raw Text to Running Model",
+      "Inside the Transformer: From Token IDs to Next-Token Logits",
+      "Inside the Attention Block: Q, K, V, MLP, and the Residual Stream",
+    ].entries()) {
+      const lessonId = insertLesson.run(
+        canonicalSubjectId,
+        title,
+        `Canonical lesson ${index}`,
+        index < 2 ? "completed" : "in_progress",
+        index,
+        JSON.stringify(["goal"]),
+        JSON.stringify(["tag"]),
+        "canonical-source-test",
+        "test"
+      ).lastInsertRowid as number;
+      insertActivity.run(
+        lessonId,
+        index === 0 ? "assessment" : "reading",
+        1,
+        "Canonical activity",
+        JSON.stringify({ text: `activity ${index}` })
+      );
+    }
+    vi.stubEnv("AVOCADOCORE_DEMO_SOURCE_SUBJECT_ID", String(canonicalSubjectId));
+
+    const userId = db
+      .prepare("INSERT INTO users (username, display_name, is_guest) VALUES (?, ?, 1)")
+      .run("guest-canonical", "Guest learner").lastInsertRowid as number;
+    const repaired = ensureActiveLearnerProfile({
+      id: userId,
+      username: "guest-canonical",
+      display_name: "Guest learner",
+      email: null,
+      active_learner_id: null,
+      is_guest: true,
+    });
+
+    const demo = db
+      .prepare(
+        `SELECT s.title, s.description, COUNT(l.id) AS lesson_count,
+                GROUP_CONCAT(l.sequence_number, ',') AS sequences,
+                GROUP_CONCAT(l.status, ',') AS statuses,
+                GROUP_CONCAT(l.generated_by, ',') AS generators
+         FROM subjects s
+         JOIN lessons l ON l.subject_id = s.id
+         WHERE s.learner_id = ? AND s.title = 'Demo Lesson: Build your own LLM AI'
+         GROUP BY s.id`
+      )
+      .get(repaired.active_learner_id) as {
+        title: string;
+        description: string;
+        lesson_count: number;
+        sequences: string;
+        statuses: string;
+        generators: string;
+      };
+
+    expect(demo.title).toBe("Demo Lesson: Build your own LLM AI");
+    expect(demo.description).toBe("Rich canonical demo subject.");
+    expect(demo.lesson_count).toBe(4);
+    expect(demo.sequences).toBe("0,1,2,3");
+    expect(demo.statuses).toBe("queued,queued,queued,queued");
+    expect(demo.generators).toBe(
+      Array.from({ length: 4 }, () => CANONICAL_DEMO_GENERATOR).join(",")
+    );
+  });
 });
