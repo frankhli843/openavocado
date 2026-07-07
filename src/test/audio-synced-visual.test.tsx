@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 import "@testing-library/jest-dom/vitest";
-import { render, screen } from "@testing-library/react";
+import { fireEvent, render, screen } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 import { AudioSyncedLessonVisual } from "@/components/lesson/LessonPartSection";
 import type { AudioSyncedVisualContent } from "@/lib/lesson-content/schema";
@@ -76,6 +76,7 @@ describe("AudioSyncedLessonVisual", () => {
     expect(screen.getByText("The approved artifact should receive cueIndex 1 for this beat.")).toBeInTheDocument();
     const steps = screen.getByLabelText("Audio visual steps");
     expect(steps).toBeInTheDocument();
+    expect(steps).toHaveClass("hidden", "sm:grid");
     expect(steps).toHaveStyle({
       gridTemplateColumns: "repeat(auto-fit, minmax(min(8rem, 100%), 1fr))",
     });
@@ -105,11 +106,40 @@ describe("AudioSyncedLessonVisual", () => {
 
     const { container } = render(<AudioSyncedLessonVisual visual={longVisual} currentTime={12} duration={30} onSeek={vi.fn()} />);
 
-    expect(screen.getByLabelText("Audio visual steps")).toHaveClass("grid");
+    expect(screen.getByLabelText("Audio visual steps")).toHaveClass("hidden", "sm:grid");
     for (const label of ["Receives", "Current operation", "Passes forward"]) {
       expect(screen.getByText(label).closest("div")).toHaveClass("break-words");
     }
     expect(container.querySelector("[data-audio-synced-artifact]")).toHaveClass("overflow-hidden");
+  });
+
+  it("keeps the bespoke visualization first-class on mobile by hiding synced scaffold chrome below sm", () => {
+    const { container } = render(<AudioSyncedLessonVisual visual={visual} currentTime={12} duration={30} onSeek={vi.fn()} />);
+
+    const heading = nearestAncestorWithClass(screen.getByText("Audio-synced visual"), "hidden");
+    expect(heading).toHaveClass("hidden", "sm:block");
+    expect(screen.getByLabelText("Audio visual steps")).toHaveClass("hidden", "sm:grid");
+
+    const pipeline = nearestAncestorWithClass(screen.getByText("Current operation"), "sm:grid");
+    expect(pipeline).toHaveClass("hidden", "sm:grid");
+
+    const narration = screen.getByText("The approved artifact should receive cueIndex 1 for this beat.");
+    expect(narration).toHaveClass("hidden", "sm:block");
+    expect(container.querySelector('[data-audio-synced-artifact="attention-score-grid-artifact"]')).not.toHaveClass("border-t");
+  });
+
+  it("collapses the mobile synced visual disclosure by default", () => {
+    render(<AudioSyncedLessonVisual visual={visual} currentTime={12} duration={30} onSeek={vi.fn()} />);
+
+    const mobileToggle = screen.getByRole("button", {
+      name: /Visualization\s+Context vector leaves attention\s+Show/i,
+    });
+    expect(nearestAncestorWithClass(mobileToggle, "sm:hidden")).toHaveClass("sm:hidden");
+    expect(mobileToggle).toHaveAttribute("aria-expanded", "false");
+
+    fireEvent.click(mobileToggle);
+    expect(mobileToggle).toHaveAttribute("aria-expanded", "true");
+    expect(mobileToggle).toHaveTextContent("Hide");
   });
 
   it("fails loudly instead of drawing a generic panel when artifact_slug is missing", () => {
@@ -125,3 +155,12 @@ describe("AudioSyncedLessonVisual", () => {
     expect(document.querySelector("iframe")).toBeNull();
   });
 });
+
+function nearestAncestorWithClass(element: HTMLElement, className: string): HTMLElement | null {
+  let current: HTMLElement | null = element;
+  while (current) {
+    if (current.classList.contains(className)) return current;
+    current = current.parentElement;
+  }
+  return null;
+}

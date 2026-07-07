@@ -2,7 +2,7 @@
 
 import { useRef, useState } from "react";
 import type { LessonActivity, GeneratedArtifact } from "@/types";
-import type { AudioSyncedVisualContent } from "@/lib/lesson-content/schema";
+import type { AudioSyncedVisualContent, LessonSegmentVideo } from "@/lib/lesson-content/schema";
 import {
   audioResumeKey,
   clearAudioResumeTime,
@@ -11,6 +11,7 @@ import {
 } from "@/lib/audio-resume";
 import { WidgetHost } from "./widgets/WidgetHost";
 import { AudioSyncedLessonVisual } from "./LessonPartSection";
+import { SegmentVideoPlayer } from "./SegmentVideoPlayer";
 
 interface AudioSectionProps {
   activity: LessonActivity;
@@ -18,15 +19,24 @@ interface AudioSectionProps {
 }
 
 export function AudioSection({ activity, artifact }: AudioSectionProps) {
-  const content: { script?: string; transcript?: string; duration_hint?: number; orientation_visual?: unknown } = activity.content
-    ? JSON.parse(activity.content)
-    : {};
+  const content: {
+    script?: string;
+    transcript?: string;
+    duration_hint?: number;
+    orientation_visual?: unknown;
+    orientation_video?: LessonSegmentVideo;
+  } = activity.content ? JSON.parse(activity.content) : {};
   const orientationVisual = content.orientation_visual;
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const lastSavedAudioTimeRef = useRef(0);
   const [audioTime, setAudioTime] = useState(0);
   const [audioDuration, setAudioDuration] = useState(0);
   const [audioPlaying, setAudioPlaying] = useState(false);
+  const [videoFailed, setVideoFailed] = useState(false);
+  // Preferred per-segment Manim video (audio muxed in). Falls back to the legacy
+  // <audio> + cue-swapped orientation visual if absent or if the <video> errors.
+  const orientationVideo = content.orientation_video ?? null;
+  const showVideo = Boolean(orientationVideo) && !videoFailed;
   const syncedOrientation = isAudioSyncedVisual(orientationVisual) ? orientationVisual : null;
   const widgetOrientation = syncedOrientation ? null : orientationVisual;
   const resumeKey = audioResumeKey(activity.id, artifact?.file_path);
@@ -68,8 +78,14 @@ export function AudioSection({ activity, artifact }: AudioSectionProps) {
       <div className="px-3 py-4 sm:p-6">
         <div className="min-w-0 space-y-5">
           <div className="min-w-0 space-y-4">
-            {/* Audio player */}
-            {artifact?.file_path ? (
+            {/* Preferred Manim video (audio muxed in); else legacy audio player */}
+            {showVideo && orientationVideo ? (
+              <SegmentVideoPlayer
+                activityId={activity.id}
+                video={orientationVideo}
+                onError={() => setVideoFailed(true)}
+              />
+            ) : artifact?.file_path ? (
               <div
                 className={
                   audioPlaying
@@ -119,7 +135,7 @@ export function AudioSection({ activity, artifact }: AudioSectionProps) {
 
             {/* Transcript / Script */}
             {(content.transcript || content.script) && (
-              <details className="border-t border-gray-100 pt-3">
+              <details className="hidden border-t border-gray-100 pt-3 sm:block">
                 <summary className="cursor-pointer select-none py-2 text-xs font-semibold uppercase tracking-wider text-gray-500 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-300">
                   Transcript
                 </summary>
@@ -130,7 +146,7 @@ export function AudioSection({ activity, artifact }: AudioSectionProps) {
             )}
           </div>
 
-          {syncedOrientation ? (
+          {showVideo ? null : syncedOrientation ? (
             <AudioSyncedLessonVisual
               visual={syncedOrientation}
               currentTime={audioTime}

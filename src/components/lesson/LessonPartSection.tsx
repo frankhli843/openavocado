@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useRef, useState, type ReactNode } from "react";
+import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import type { GeneratedArtifact, LessonActivity, ReadingBlock } from "@/types";
 import type {
   AudioSyncedVisualContent,
@@ -18,6 +18,7 @@ import { LessonDiagramsView } from "./LessonDiagrams";
 import { FormulaBlock } from "./FormulaBlock";
 import { PythonSection } from "./PythonSection";
 import { LessonPartPracticeSection } from "./LessonPartPracticeSection";
+import { SegmentVideoPlayer } from "./SegmentVideoPlayer";
 import {
   MultipleChoiceAssessmentSection,
   type QuizAssessContext,
@@ -68,7 +69,12 @@ export function LessonPartSection({
   const [audioTime, setAudioTime] = useState(0);
   const [audioDuration, setAudioDuration] = useState(0);
   const [audioPlaying, setAudioPlaying] = useState(false);
+  const [videoFailed, setVideoFailed] = useState(false);
   const syncedVisual = part?.audio.synced_visual ?? null;
+  // Preferred per-segment Manim video (audio muxed in). Falls back to the legacy
+  // <audio> + cue-swapped artifact if absent or if the <video> errors at runtime.
+  const segmentVideo = part?.audio.video ?? null;
+  const showVideo = Boolean(segmentVideo) && !videoFailed;
   const resumeKey = audioResumeKey(activity.id, artifact?.file_path);
 
   const seekAudio = (time: number) => {
@@ -98,7 +104,13 @@ export function LessonPartSection({
           <PartBlock title="Audio">
             <div className="min-w-0 space-y-5">
               <div className="min-w-0 space-y-3">
-                {artifact?.file_path ? (
+                {showVideo && segmentVideo ? (
+                  <SegmentVideoPlayer
+                    activityId={activity.id}
+                    video={segmentVideo}
+                    onError={() => setVideoFailed(true)}
+                  />
+                ) : artifact?.file_path ? (
                   <div
                     className={`space-y-2 ${
                       audioPlaying
@@ -145,7 +157,7 @@ export function LessonPartSection({
                     Part audio artifact is not generated yet. The script below is the per-part audio source.
                   </div>
                 )}
-                <details className="border-t border-gray-100 pt-3">
+                <details className="hidden border-t border-gray-100 pt-3 sm:block">
                   <summary className="cursor-pointer select-none py-2 text-xs font-semibold uppercase tracking-wider text-gray-500 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-300">
                     Transcript
                   </summary>
@@ -154,7 +166,7 @@ export function LessonPartSection({
                   </div>
                 </details>
               </div>
-              {syncedVisual && (
+              {!showVideo && syncedVisual && (
                 <AudioSyncedLessonVisual
                   visual={syncedVisual}
                   currentTime={audioTime}
@@ -263,6 +275,17 @@ export function AudioSyncedLessonVisual({
   duration: number;
   onSeek: (time: number) => void;
 }) {
+  const [mobileExpanded, setMobileExpanded] = useState(false);
+  const [isMobileViewport, setIsMobileViewport] = useState(false);
+  useEffect(() => {
+    if (typeof window === "undefined" || typeof window.matchMedia !== "function") return;
+    const media = window.matchMedia("(max-width: 639px)");
+    const update = () => setIsMobileViewport(media.matches);
+    update();
+    media.addEventListener("change", update);
+    return () => media.removeEventListener("change", update);
+  }, []);
+
   const cues = normalizeVisualCues(visual.cues, duration);
   if (cues.length === 0) return null;
   const safeDuration = Math.max(duration, 1);
@@ -302,9 +325,119 @@ export function AudioSyncedLessonVisual({
     progressPct,
   };
 
+  const visualContent = (
+    <div className="grid w-full min-w-0 max-w-full gap-4 pt-3 pb-16 sm:pt-4 sm:pb-0">
+      <div className="min-w-0 space-y-4">
+        <div
+          className="hidden min-w-0 gap-2 pb-1 sm:grid"
+          style={{ gridTemplateColumns: "repeat(auto-fit, minmax(min(8rem, 100%), 1fr))" }}
+          aria-label="Audio visual steps"
+        >
+          {pipelineCues.map((stage, index) => {
+            const done = index < activePipelineIndex;
+            const active = index === activePipelineIndex;
+            return (
+              <div
+                key={`${stage.start}-${stage.label}`}
+                className={`min-w-0 border-b-2 px-2 py-2 text-center text-xs font-medium leading-4 ${
+                  active
+                    ? "border-blue-600 bg-blue-50 text-blue-900"
+                    : done
+                    ? "border-blue-200 bg-blue-50/40 text-blue-700"
+                    : "border-gray-100 bg-gray-50/40 text-gray-400"
+                }`}
+              >
+                <span className="block min-w-0 break-words">{stage.label}</span>
+              </div>
+            );
+          })}
+        </div>
+
+        <div className="hidden min-w-0 gap-2 sm:grid md:grid-cols-3">
+          <PipelineCard label="Receives" text={cue.receive ?? "prior visual state"} tone="gray" />
+          <PipelineCard label="Current operation" text={cue.transform ?? cue.headline} tone="blue" />
+          <PipelineCard label="Passes forward" text={cue.pass ?? "updated visual state"} tone="green" />
+        </div>
+        <div className="hidden min-w-0 break-words border-l-2 border-gray-200 bg-gray-50/60 px-3 py-2 text-sm leading-6 text-gray-600 sm:block">
+          {cue.narration}
+        </div>
+
+        {activeArtifactSlug ? (
+          <div
+            className="w-full min-w-0 max-w-full overflow-hidden sm:border-t sm:border-gray-100 sm:pt-3"
+            data-audio-synced-artifact={activeArtifactSlug}
+          >
+            <BespokeArtifactRenderer
+              key={activeArtifactSlug}
+              artifactSlug={activeArtifactSlug}
+              initialState={artifactState}
+              minHeight={360}
+            />
+          </div>
+        ) : (
+          <div
+            role="alert"
+            className="border-l-2 border-red-400 bg-red-50 px-3 py-3 text-sm leading-6 text-red-800"
+          >
+            Audio-synced visual is missing a DB-backed bespoke artifact slug. Regenerate or backfill this
+            lesson part with an approved visual_artifacts row instead of using built-in panel templates.
+          </div>
+        )}
+      </div>
+
+      <div className="hidden space-y-2">
+        <div className="grid max-h-[28rem] gap-2 overflow-y-auto pr-1 sm:grid-cols-2 lg:grid-cols-1">
+          {cues.map((item, index) => {
+            const active = item === cue;
+            return (
+              <button
+                key={item.label}
+                type="button"
+                onClick={() => onSeek(item.start)}
+                className={`border-l-2 px-3 py-2 text-left transition-colors ${
+                  active
+                    ? "border-blue-500 bg-blue-50 text-blue-900"
+                    : "border-gray-100 bg-white text-gray-600 hover:border-blue-200 hover:bg-blue-50/40"
+                }`}
+              >
+                <div className="flex items-center justify-between gap-2">
+                  <span className="text-xs font-semibold">{index + 1}. {item.label}</span>
+                  <span className="text-[11px] text-gray-400">{formatTime(item.start)}</span>
+                </div>
+                <div className="mt-0.5 text-xs leading-4">{item.headline}</div>
+              </button>
+            );
+          })}
+        </div>
+      </div>
+    </div>
+  );
+
   return (
-    <div className="w-full min-w-0 max-w-full overflow-hidden border-t border-gray-100 pt-4 xl:border-t-0 xl:pt-0">
-      <div className="border-b border-gray-100 pb-3">
+    <div className="w-full min-w-0 max-w-full overflow-hidden border-t border-gray-100 pt-3 sm:pt-4 xl:border-t-0 xl:pt-0">
+      <div className="sm:hidden">
+        <button
+          type="button"
+          className="flex w-full min-w-0 items-center justify-between gap-3 border-b border-gray-100 py-3 text-left"
+          aria-expanded={mobileExpanded}
+          onClick={() => setMobileExpanded((expanded) => !expanded)}
+        >
+          <span className="min-w-0">
+            <span className="block text-xs font-semibold uppercase tracking-wider text-blue-600">
+              Visualization
+            </span>
+            <span className="block min-w-0 break-words text-sm font-semibold text-gray-900">{cue.headline}</span>
+          </span>
+          <span className="shrink-0 text-xs font-semibold text-gray-500">
+            {mobileExpanded ? "Hide" : "Show"}
+          </span>
+        </button>
+        {mobileExpanded ? visualContent : null}
+      </div>
+
+      {!isMobileViewport ? (
+      <div className="hidden sm:block">
+        <div className="border-b border-gray-100 pb-3">
         <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
           <div className="min-w-0">
             <div className="text-xs font-semibold uppercase tracking-wider text-blue-600">
@@ -317,92 +450,9 @@ export function AudioSyncedLessonVisual({
           </div>
         </div>
       </div>
-
-      <div className="grid w-full min-w-0 max-w-full gap-4 pt-4 pb-16 sm:pb-0">
-        <div className="min-w-0 space-y-4">
-          <div
-            className="grid min-w-0 gap-2 pb-1"
-            style={{ gridTemplateColumns: "repeat(auto-fit, minmax(min(8rem, 100%), 1fr))" }}
-            aria-label="Audio visual steps"
-          >
-            {pipelineCues.map((stage, index) => {
-              const done = index < activePipelineIndex;
-              const active = index === activePipelineIndex;
-              return (
-                <div
-                  key={`${stage.start}-${stage.label}`}
-                  className={`min-w-0 border-b-2 px-2 py-2 text-center text-xs font-medium leading-4 ${
-                    active
-                      ? "border-blue-600 bg-blue-50 text-blue-900"
-                      : done
-                      ? "border-blue-200 bg-blue-50/40 text-blue-700"
-                      : "border-gray-100 bg-gray-50/40 text-gray-400"
-                  }`}
-                >
-                  <span className="block min-w-0 break-words">{stage.label}</span>
-                </div>
-              );
-            })}
-          </div>
-
-          <div className="grid min-w-0 gap-2 md:grid-cols-3">
-            <PipelineCard label="Receives" text={cue.receive ?? "prior visual state"} tone="gray" />
-            <PipelineCard label="Current operation" text={cue.transform ?? cue.headline} tone="blue" />
-            <PipelineCard label="Passes forward" text={cue.pass ?? "updated visual state"} tone="green" />
-          </div>
-          <div className="min-w-0 break-words border-l-2 border-gray-200 bg-gray-50/60 px-3 py-2 text-sm leading-6 text-gray-600">
-            {cue.narration}
-          </div>
-
-          {activeArtifactSlug ? (
-            <div
-              className="w-full min-w-0 max-w-full overflow-hidden border-t border-gray-100 pt-3"
-              data-audio-synced-artifact={activeArtifactSlug}
-            >
-              <BespokeArtifactRenderer
-                key={activeArtifactSlug}
-                artifactSlug={activeArtifactSlug}
-                initialState={artifactState}
-                minHeight={360}
-              />
-            </div>
-          ) : (
-            <div
-              role="alert"
-              className="border-l-2 border-red-400 bg-red-50 px-3 py-3 text-sm leading-6 text-red-800"
-            >
-              Audio-synced visual is missing a DB-backed bespoke artifact slug. Regenerate or backfill this
-              lesson part with an approved visual_artifacts row instead of using built-in panel templates.
-            </div>
-          )}
-        </div>
-
-        <div className="hidden space-y-2">
-          <div className="grid max-h-[28rem] gap-2 overflow-y-auto pr-1 sm:grid-cols-2 lg:grid-cols-1">
-            {cues.map((item, index) => {
-              const active = item === cue;
-              return (
-                <button
-                  key={item.label}
-                  type="button"
-                  onClick={() => onSeek(item.start)}
-                  className={`border-l-2 px-3 py-2 text-left transition-colors ${
-                    active
-                      ? "border-blue-500 bg-blue-50 text-blue-900"
-                      : "border-gray-100 bg-white text-gray-600 hover:border-blue-200 hover:bg-blue-50/40"
-                  }`}
-                >
-                  <div className="flex items-center justify-between gap-2">
-                    <span className="text-xs font-semibold">{index + 1}. {item.label}</span>
-                    <span className="text-[11px] text-gray-400">{formatTime(item.start)}</span>
-                  </div>
-                  <div className="mt-0.5 text-xs leading-4">{item.headline}</div>
-                </button>
-              );
-            })}
-          </div>
-        </div>
+        {visualContent}
       </div>
+      ) : null}
     </div>
   );
 }
