@@ -1,0 +1,71 @@
+{
+  "lesson_id": 17,
+  "activity_id": 100,
+  "activity_type": "lesson_part",
+  "title": "Part 2: Variable-size window",
+  "audio": {
+    "file_path": "runtime_artifacts/audio/lesson_17_activity_100_audio.mp3",
+    "duration_sec": 128.23
+  },
+  "audio_source": "artifact",
+  "cue_source": "audio.synced_visual.cues",
+  "cues": [
+    {
+      "index": 0,
+      "start": 0,
+      "end": 23.3,
+      "duration": 23.3,
+      "label": "Expand a, b, c",
+      "headline": "Admit while legal",
+      "narration": "The right pointer admits a, b, c — the window a,b,c has length 3."
+    },
+    {
+      "index": 1,
+      "start": 23.3,
+      "end": 51.3,
+      "duration": 28,
+      "label": "Duplicate a arrives",
+      "headline": "The rule is about to break",
+      "narration": "The next a is already inside; admitting it would create a repeat."
+    },
+    {
+      "index": 2,
+      "start": 51.3,
+      "end": 77.7,
+      "duration": 26.4,
+      "label": "Shrink from the left",
+      "headline": "Release the old a",
+      "narration": "Remove the leftmost a and advance the left pointer until the new a fits."
+    },
+    {
+      "index": 3,
+      "start": 77.7,
+      "end": 102.6,
+      "duration": 24.9,
+      "label": "Why still linear",
+      "headline": "Each index moves once",
+      "narration": "Right moves forward once, left moves forward at most once — total travel is 2n."
+    },
+    {
+      "index": 4,
+      "start": 102.6,
+      "end": 116.6,
+      "duration": 14,
+      "label": "Swap the bookkeeping",
+      "headline": "Same skeleton, new rule",
+      "narration": "Change only the validity test — a set here, a distinct-count elsewhere."
+    },
+    {
+      "index": 5,
+      "start": 116.6,
+      "end": 128.2,
+      "duration": 11.6,
+      "label": "Record the best",
+      "headline": "Track the answer",
+      "narration": "Whenever the window is legal, update the best length seen."
+    }
+  ],
+  "cue_span_sec": 128.2,
+  "formulas": [],
+  "exported_at": "2026-07-08T08:51:35.673Z"
+}

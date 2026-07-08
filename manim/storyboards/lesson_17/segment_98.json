@@ -1,0 +1,80 @@
+{
+  "lesson_id": 17,
+  "activity_id": 98,
+  "activity_type": "audio",
+  "title": "Audio: Sliding Window — the family map",
+  "audio": {
+    "file_path": "runtime_artifacts/audio/lesson_17_audio.mp3",
+    "duration_sec": 845.52
+  },
+  "audio_source": "artifact",
+  "cue_source": "orientation_visual.cues",
+  "cues": [
+    {
+      "index": 0,
+      "start": 0,
+      "end": 98.1,
+      "duration": 98.1,
+      "label": "The wasteful nested loop",
+      "headline": "Every window re-added from scratch",
+      "narration": "A size-three window over eight numbers, re-summed at every start, is O(n·k) work."
+    },
+    {
+      "index": 1,
+      "start": 98.1,
+      "end": 226.5,
+      "duration": 128.4,
+      "label": "The overlap insight",
+      "headline": "Only the two ends change",
+      "narration": "Adjacent windows share their middle; only one element leaves and one enters."
+    },
+    {
+      "index": 2,
+      "start": 226.5,
+      "end": 354.8,
+      "duration": 128.3,
+      "label": "Fixed-size branch",
+      "headline": "Width pinned by k",
+      "narration": "The left boundary trails the right by a constant gap and they slide in lockstep."
+    },
+    {
+      "index": 3,
+      "start": 354.8,
+      "end": 528.4,
+      "duration": 173.6,
+      "label": "Variable-size branch",
+      "headline": "The window breathes",
+      "narration": "Right expands greedily; left shrinks only when a rule breaks — longest-no-repeat."
+    },
+    {
+      "index": 4,
+      "start": 528.4,
+      "end": 641.7,
+      "duration": 113.3,
+      "label": "Amortized linearity",
+      "headline": "Count travel, not nested loops",
+      "narration": "Each index enters once and leaves at most once, so total pointer travel is O(n)."
+    },
+    {
+      "index": 5,
+      "start": 641.7,
+      "end": 754.9,
+      "duration": 113.2,
+      "label": "When it fails",
+      "headline": "Contiguous + monotonic only",
+      "narration": "Non-contiguous answers or negative numbers break the window's monotonic promise."
+    },
+    {
+      "index": 6,
+      "start": 754.9,
+      "end": 845.5,
+      "duration": 90.6,
+      "label": "Recognition & template",
+      "headline": "Fingerprint and skeleton",
+      "narration": "Trigger phrases plus the fixed skeleton: two boundaries, repair the ends, record."
+    }
+  ],
+  "cue_span_sec": 845.5,
+  "formulas": [],
+  "exported_at": "2026-07-08T08:51:35.672Z"
+}

@@ -1,0 +1,29 @@
+{
+  "lesson_id": 17,
+  "activity_id": 100,
+  "reviewed_at": "2026-07-08T09:30:00Z",
+  "iterations": 2,
+  "frames_reviewed": 18,
+  "quality": "ql",
+  "notes": "Lesson 17 Part 2 (act 100), 'Variable-size window', 128.23s, 6 short cues. Concrete variable-size walkthrough — longest run with no repeated character over the string a b c a b c b, with L/R boundary pointers. R expands greedily admitting a,b,c (window length 3); when the duplicate 'a' arrives at index 3 the rule breaks; L shrinks from the left, releasing the leftmost 'a' and advancing to index 1 so the window b,c,a is legal again. Right advances once per index and left advances at most once, so total travel is 2n = O(n). The skeleton is unchanged across variants — only the validity test swaps (a set for no-repeat, a count map for at-most-k-distinct); record the best length whenever the window is legal. Uses the arrays.py idiom lib (value_row, window_bracket, pointer, value_badge, complexity). Two review iterations. Round-1 (author): smoke-rendered every cue with manim -s. Round-2: after the first -ql render exposed a pointer() helper bug (it rendered ABOVE the row so the long-gap L pointer collided with the headline), fixed the helper to render BELOW the row pointing up, re-rendered, then READ start/mid/end for all 6 cues; all pass. cue05_end re-extracted @127.8s (near-EOF). Per-cue checklist (label legibility, highlighted element matches the beat, pointer clarity, contrast, nothing off-frame/overlapping via theme.guard, chunk timing within pinning tolerance): all pass. Final -ql 128.201s vs audio 128.23s (delta 0.029s, within tolerance).",
+  "frames": [
+    { "cue": 0, "kind": "start", "path": "lesson_17/100/cue00_start.png", "verdict": "pass", "notes": "reveal in progress (title 'Expand: admit while legal'), expected sparse" },
+    { "cue": 0, "kind": "mid", "path": "lesson_17/100/cue00_mid.png", "verdict": "pass", "notes": "window admits a,b (green), L pointer below index0, R pointer below index1; legible, pointers below-row (no headline collision)" },
+    { "cue": 0, "kind": "end", "path": "lesson_17/100/cue00_end.png", "verdict": "pass", "notes": "window [a,b,c] green, L@0, R@2, 'window a,b,c — all distinct', length 3; correct" },
+    { "cue": 1, "kind": "start", "path": "lesson_17/100/cue01_start.png", "verdict": "pass", "notes": "reveal in progress (title 'A duplicate is about to break the rule'), expected sparse" },
+    { "cue": 1, "kind": "mid", "path": "lesson_17/100/cue01_mid.png", "verdict": "pass", "notes": "R advanced to index3='a' (red), first 'a' index0 red, rose clash arc connecting them; legible" },
+    { "cue": 1, "kind": "end", "path": "lesson_17/100/cue01_end.png", "verdict": "pass", "notes": "+ 'the next a is already inside' / 'admitting it would create a repeat'; correct" },
+    { "cue": 2, "kind": "start", "path": "lesson_17/100/cue02_start.png", "verdict": "pass", "notes": "reveal in progress (title 'Shrink from the left: release the old a'), expected sparse" },
+    { "cue": 2, "kind": "mid", "path": "lesson_17/100/cue02_mid.png", "verdict": "pass", "notes": "illegal window [a,b,c,a] (rose outer box, first 'a' dimmed), 'illegal — a repeats', L@0 R@3; legible" },
+    { "cue": 2, "kind": "end", "path": "lesson_17/100/cue02_end.png", "verdict": "pass", "notes": "window shrunk to [b,c,a] blue (first 'a' dimmed outside), L advanced to index1, R@3, 'window b, c, a — the new a fits'; correct" },
+    { "cue": 3, "kind": "start", "path": "lesson_17/100/cue03_start.png", "verdict": "pass", "notes": "reveal in progress (title 'Why still linear: each index moves once'), expected sparse" },
+    { "cue": 3, "kind": "mid", "path": "lesson_17/100/cue03_mid.png", "verdict": "pass", "notes": "'R: forward once, never back' (blue); legible" },
+    { "cue": 3, "kind": "end", "path": "lesson_17/100/cue03_end.png", "verdict": "pass", "notes": "'R: forward once, never back' + 'L: forward at most once' + 'total travel <= 2n = O(n)'; math correct" },
+    { "cue": 4, "kind": "start", "path": "lesson_17/100/cue04_start.png", "verdict": "pass", "notes": "reveal in progress (title 'Same skeleton, new rule'), expected sparse" },
+    { "cue": 4, "kind": "mid", "path": "lesson_17/100/cue04_mid.png", "verdict": "pass", "notes": "'keep: two boundaries, expand R, repair with L, record' + 'change only: the validity test'; legible" },
+    { "cue": 4, "kind": "end", "path": "lesson_17/100/cue04_end.png", "verdict": "pass", "notes": "+ 'no-repeat -> a set' / 'at-most-k-distinct -> a count map' (emerald); correct" },
+    { "cue": 5, "kind": "start", "path": "lesson_17/100/cue05_start.png", "verdict": "pass", "notes": "reveal in progress (title 'Track the answer'), expected sparse" },
+    { "cue": 5, "kind": "mid", "path": "lesson_17/100/cue05_mid.png", "verdict": "pass", "notes": "window [b,c,a] blue, 'whenever the window is legal, update the best length', best 3 (circumscribed); correct" },
+    { "cue": 5, "kind": "end", "path": "lesson_17/100/cue05_end.png", "verdict": "pass", "notes": "settled best=3 badge (re-extracted @127.8s); correct" }
+  ]
+}

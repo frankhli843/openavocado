@@ -1,0 +1,73 @@
+{
+  "lesson_id": 17,
+  "activity_id": 99,
+  "activity_type": "lesson_part",
+  "title": "Part 1: Fixed-size window",
+  "audio": {
+    "file_path": "runtime_artifacts/audio/lesson_17_activity_99_audio.mp3",
+    "duration_sec": 117.31
+  },
+  "audio_source": "artifact",
+  "cue_source": "audio.synced_visual.cues",
+  "cues": [
+    {
+      "index": 0,
+      "start": 0,
+      "end": 21.3,
+      "duration": 21.3,
+      "label": "First window full price",
+      "headline": "Sum the first k once",
+      "narration": "4 plus 2 plus 7 is 13 — the only full addition we ever do."
+    },
+    {
+      "index": 1,
+      "start": 21.3,
+      "end": 44.1,
+      "duration": 22.8,
+      "label": "Slide one",
+      "headline": "Subtract 4, add 1",
+      "narration": "The 4 leaves, the 1 enters: 13 minus 4 plus 1 is 10."
+    },
+    {
+      "index": 2,
+      "start": 44.1,
+      "end": 67.5,
+      "duration": 23.4,
+      "label": "Overlap is free",
+      "headline": "The middle never moves",
+      "narration": "The 2 and 7 sit in both windows and are never re-added."
+    },
+    {
+      "index": 3,
+      "start": 67.5,
+      "end": 91,
+      "duration": 23.5,
+      "label": "Slide two",
+      "headline": "Subtract 2, add 9",
+      "narration": "10 minus 2 plus 9 is 17 — a new best."
+    },
+    {
+      "index": 4,
+      "start": 91,
+      "end": 106.6,
+      "duration": 15.6,
+      "label": "Constant per step",
+      "headline": "Width does not matter",
+      "narration": "A width of 3 or 300 costs the same per slide: one out, one in."
+    },
+    {
+      "index": 5,
+      "start": 106.6,
+      "end": 117.3,
+      "duration": 10.7,
+      "label": "Linear total",
+      "headline": "One setup, then a sweep",
+      "narration": "One full sum plus a constant edit at each remaining position is O(n)."
+    }
+  ],
+  "cue_span_sec": 117.3,
+  "formulas": [
+    "O(n \\cdot k) \\;\\longrightarrow\\; O(n)"
+  ],
+  "exported_at": "2026-07-08T08:51:35.673Z"
+}

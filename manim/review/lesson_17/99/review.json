@@ -1,0 +1,29 @@
+{
+  "lesson_id": 17,
+  "activity_id": 99,
+  "reviewed_at": "2026-07-08T09:30:00Z",
+  "iterations": 1,
+  "frames_reviewed": 18,
+  "quality": "ql",
+  "notes": "Lesson 17 Part 1 (act 99), 'Fixed-size window', 117.31s, 6 short cues. Concrete fixed-size walkthrough over the array [4,2,7,1,9] with window k=3: the first window is the only full addition (4+2+7=13), then every slide is a constant edit (drop the element that leaves, add the one that enters): 13-4+1=10, then 10-2+9=17 (a new best). Overlap (2,7) is never re-added; constant O(1) per step regardless of width; one full sum + a constant edit each remaining position = O(n) total. Uses the new arrays.py idiom lib (value_row, window_bracket, value_badge, edit_note, complexity) — the array/pointer vocabulary, MathTex reserved for the O(1)/O(n) bounds. One review iteration: authored, smoke-rendered every cue final frame with manim -s (fixed 2 safe-area overflows in Cue02/Cue03 by moving the sum/best badges to the right side and stacking the bottom text), then full -ql render (6 chunks, 854x480x15, niced/serial) + READ start/mid/end for all 6 cues; all pass with no further defects. cue05_end re-extracted @116.9s (near-EOF keyframe seek). Per-cue checklist (label legibility+math correctness, highlighted element matches the beat, contrast, nothing off-frame/overlapping via theme.guard, chunk timing within pinning tolerance): all pass. Final -ql 117.201s vs audio 117.31s (delta 0.109s, within tolerance).",
+  "frames": [
+    { "cue": 0, "kind": "start", "path": "lesson_17/99/cue00_start.png", "verdict": "pass", "notes": "reveal in progress (title 'The first window: sum k once' + fading-in array), expected sparse" },
+    { "cue": 0, "kind": "mid", "path": "lesson_17/99/cue00_mid.png", "verdict": "pass", "notes": "window (k=3) around [4,2,7], indices 0-4, sum badge mid-accumulation; legible" },
+    { "cue": 0, "kind": "end", "path": "lesson_17/99/cue00_end.png", "verdict": "pass", "notes": "sum=13, '4 + 2 + 7 = 13', 'the only full addition we ever do'; math correct, no collision" },
+    { "cue": 1, "kind": "start", "path": "lesson_17/99/cue01_start.png", "verdict": "pass", "notes": "reveal in progress (title 'Slide one: -4 +1'), expected sparse" },
+    { "cue": 1, "kind": "mid", "path": "lesson_17/99/cue01_mid.png", "verdict": "pass", "notes": "4 (leaves, rose) / 1 (enters, emerald) marked, window still shown; sum 13; legible" },
+    { "cue": 1, "kind": "end", "path": "lesson_17/99/cue01_end.png", "verdict": "pass", "notes": "window slid to [2,7,1], '-4 +1', '13 - 4 + 1 = 10', sum 10; math correct" },
+    { "cue": 2, "kind": "start", "path": "lesson_17/99/cue02_start.png", "verdict": "pass", "notes": "reveal in progress (title 'The overlap is free'), expected sparse" },
+    { "cue": 2, "kind": "mid", "path": "lesson_17/99/cue02_mid.png", "verdict": "pass", "notes": "first window (grey) [4,2,7] + next window (blue) [2,7,1]; shared 2,7 emerald; '2 and 7 sit in both windows'; legible" },
+    { "cue": 2, "kind": "end", "path": "lesson_17/99/cue02_end.png", "verdict": "pass", "notes": "+ 'never re-added — only the two ends change'; no collision" },
+    { "cue": 3, "kind": "start", "path": "lesson_17/99/cue03_start.png", "verdict": "pass", "notes": "reveal in progress (title 'Slide two: -2 +9 -> a new best'), expected sparse" },
+    { "cue": 3, "kind": "mid", "path": "lesson_17/99/cue03_mid.png", "verdict": "pass", "notes": "2 (leaves) / 9 (enters) marked, sum 10, best 13; legible" },
+    { "cue": 3, "kind": "end", "path": "lesson_17/99/cue03_end.png", "verdict": "pass", "notes": "window [7,1,9], '-2 +9', '10 - 2 + 9 = 17', sum 17, best 17 (circumscribed new best); math correct" },
+    { "cue": 4, "kind": "start", "path": "lesson_17/99/cue04_start.png", "verdict": "pass", "notes": "reveal in progress (title 'Constant per step — width does not matter'), expected sparse" },
+    { "cue": 4, "kind": "mid", "path": "lesson_17/99/cue04_mid.png", "verdict": "pass", "notes": "'one out' (rose) / 'one in' (emerald), window on [7,1,9]; legible" },
+    { "cue": 4, "kind": "end", "path": "lesson_17/99/cue04_end.png", "verdict": "pass", "notes": "'O(1) per step', 'width 3 or 300 — same cost per slide'; math correct" },
+    { "cue": 5, "kind": "start", "path": "lesson_17/99/cue05_start.png", "verdict": "pass", "notes": "reveal in progress (title 'One setup, then a sweep: O(n)'), expected sparse" },
+    { "cue": 5, "kind": "mid", "path": "lesson_17/99/cue05_mid.png", "verdict": "pass", "notes": "'one full sum + a constant edit at each remaining position'; legible" },
+    { "cue": 5, "kind": "end", "path": "lesson_17/99/cue05_end.png", "verdict": "pass", "notes": "O(n) big emerald (re-extracted @116.9s); math correct" }
+  ]
+}
