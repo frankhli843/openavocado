@@ -1,0 +1,71 @@
+{
+  "lesson_id": 7,
+  "activity_id": 40,
+  "activity_type": "lesson_part",
+  "title": "Part 2: Token IDs Become Hidden States",
+  "audio": {
+    "file_path": "runtime_artifacts/audio/lesson_7_activity_40_audio.mp3",
+    "duration_sec": 154.61
+  },
+  "audio_source": "artifact",
+  "cue_source": "audio.synced_visual.cues",
+  "cues": [
+    {
+      "index": 0,
+      "start": 0,
+      "end": 18,
+      "duration": 18,
+      "label": "Map",
+      "headline": "You are here in the LLM pipeline",
+      "narration": "Text has already been tokenized. This section explains the handoff into model-owned numeric state."
+    },
+    {
+      "index": 1,
+      "start": 18,
+      "end": 44,
+      "duration": 26,
+      "label": "Token IDs",
+      "headline": "Token IDs are addresses, not meaning",
+      "narration": "The list [12, 44, 91, 44] tells the model which rows to fetch from its learned embedding table."
+    },
+    {
+      "index": 2,
+      "start": 44,
+      "end": 72,
+      "duration": 28,
+      "label": "Embedding lookup",
+      "headline": "Each ID copies one learned vector row",
+      "narration": "ID 44 points to the same embedding row every time it appears, because the tokenizer and embedding table were trained as a matched pair."
+    },
+    {
+      "index": 3,
+      "start": 72,
+      "end": 96,
+      "duration": 24,
+      "label": "Position",
+      "headline": "Position vectors tell identical IDs where they are",
+      "narration": "The two 44 tokens start from the same learned row, then receive different position information because they appear in different slots."
+    },
+    {
+      "index": 4,
+      "start": 96,
+      "end": 126,
+      "duration": 30,
+      "label": "Hidden state",
+      "headline": "Rows stack into the first hidden-state matrix",
+      "narration": "The transformer does not consume raw text. It consumes this table: one row per token position and one column per hidden feature."
+    },
+    {
+      "index": 5,
+      "start": 126,
+      "end": 155,
+      "duration": 29,
+      "label": "Transformer",
+      "headline": "Transformer blocks edit the matrix next",
+      "narration": "This hidden-state matrix is the object attention and MLP layers will refine before the output head scores next-token logits."
+    }
+  ],
+  "cue_span_sec": 155,
+  "formulas": [],
+  "exported_at": "2026-07-08T02:52:42.603Z"
+}

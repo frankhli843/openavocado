@@ -1,0 +1,151 @@
+{
+  "lesson_id": 7,
+  "activity_id": 38,
+  "reviewed_at": "2026-07-08T03:26:00Z",
+  "iterations": 2,
+  "frames_reviewed": 20,
+  "quality": "ql",
+  "notes": "Lesson 7 orientation (act 38, 1009.9s / ~16.8min, 7 route-map cues @~144s). Walks the standard spiral-lesson-map route for the transformer lesson, reusing the shared transformer idiom library (pipeline map, token IDs, embedding table, L x D hidden matrix, residual/attention/MLP block pipeline, logits) so the orientation speaks the same visual vocabulary as the three lesson_part segments (39/40/41). Cue timeline was rescaled from a uniform 900s draft to the real 1009.896s MP3 before authoring. Two review iterations fixed: Cue04 rendered pseudocode as MathTex (run-together italics 'forblockinblocks') -> switched to color-coded monospace Text with indented loop body; Cue01 'the object on the bench' label collided with the title -> lowered the workshop composition. Per-cue checklist (legibility, highlight matches narration, contrast, nothing off-frame via theme.guard, chunk timing within pinning tolerance): all pass. Final 1009.736s vs audio 1009.896s (\u03940.164s<0.5). Note: cue06_end lands past the -shortest-trimmed video tail so only start/mid were sampled for cue6; the full composed Cue06 frame (recap map + takeaway + practice) was verified via a direct single-frame render.",
+  "frames": [
+    {
+      "cue": 0,
+      "kind": "start",
+      "path": "lesson_7/38/cue00_start.png",
+      "verdict": "pass",
+      "notes": "start frame (+0.15s): reveal in progress, expected sparse"
+    },
+    {
+      "cue": 0,
+      "kind": "mid",
+      "path": "lesson_7/38/cue00_mid.png",
+      "verdict": "pass",
+      "notes": "big map Subject(Deep Learning&LLMs)->Lesson(Inside the Transformer)->Next; pipeline map token IDs->embeddings->transformer blocks->logits->next token; four study-angle chips; goal line. Matches 'locate the lesson'."
+    },
+    {
+      "cue": 0,
+      "kind": "end",
+      "path": "lesson_7/38/cue00_end.png",
+      "verdict": "pass",
+      "notes": ""
+    },
+    {
+      "cue": 1,
+      "kind": "start",
+      "path": "lesson_7/38/cue01_start.png",
+      "verdict": "pass",
+      "notes": "start frame (+0.15s): reveal in progress, expected sparse"
+    },
+    {
+      "cue": 1,
+      "kind": "mid",
+      "path": "lesson_7/38/cue01_mid.png",
+      "verdict": "pass",
+      "notes": "workshop metaphor: 'a page of numbers (hidden state H)' on the bench -> Receive/Gather context(attention)/Refine features(MLP)/Pass the page on(same shape) + H <- H + block(H). Matches 'translate into a workshop metaphor'. (fixed label/title collision)"
+    },
+    {
+      "cue": 1,
+      "kind": "end",
+      "path": "lesson_7/38/cue01_end.png",
+      "verdict": "pass",
+      "notes": ""
+    },
+    {
+      "cue": 2,
+      "kind": "start",
+      "path": "lesson_7/38/cue02_start.png",
+      "verdict": "pass",
+      "notes": "start frame (+0.15s): reveal in progress, expected sparse"
+    },
+    {
+      "cue": 2,
+      "kind": "mid",
+      "path": "lesson_7/38/cue02_mid.png",
+      "verdict": "pass",
+      "notes": "follow one token: 'saw'->ID 44->embedding row->through the block(full residual pipeline)->context-rich vector->feeds logits(cat wins). Matches 'follow one concrete object'."
+    },
+    {
+      "cue": 2,
+      "kind": "end",
+      "path": "lesson_7/38/cue02_end.png",
+      "verdict": "pass",
+      "notes": ""
+    },
+    {
+      "cue": 3,
+      "kind": "start",
+      "path": "lesson_7/38/cue03_start.png",
+      "verdict": "pass",
+      "notes": "start frame (+0.15s): reveal in progress, expected sparse"
+    },
+    {
+      "cue": 3,
+      "kind": "mid",
+      "path": "lesson_7/38/cue03_mid.png",
+      "verdict": "pass",
+      "notes": "what changes: H(start,blue)->H(after 1 block,amber)->H(deeper,green); shape L x D invariant; why-line residual carries the thread. Matches 'expose what changes and why'."
+    },
+    {
+      "cue": 3,
+      "kind": "end",
+      "path": "lesson_7/38/cue03_end.png",
+      "verdict": "pass",
+      "notes": ""
+    },
+    {
+      "cue": 4,
+      "kind": "start",
+      "path": "lesson_7/38/cue04_start.png",
+      "verdict": "pass",
+      "notes": "start frame (+0.15s): reveal in progress, expected sparse"
+    },
+    {
+      "cue": 4,
+      "kind": "mid",
+      "path": "lesson_7/38/cue04_mid.png",
+      "verdict": "pass",
+      "notes": "forward pass in monospace code (embed / for block: h=h+attn(norm(h)); h=h+mlp(norm(h)) / logits=h@W_out.T) color-coded + assert h.shape==(L,D). Matches 'connect to code and tests'. (fixed MathTex->monospace)"
+    },
+    {
+      "cue": 4,
+      "kind": "end",
+      "path": "lesson_7/38/cue04_end.png",
+      "verdict": "pass",
+      "notes": ""
+    },
+    {
+      "cue": 5,
+      "kind": "start",
+      "path": "lesson_7/38/cue05_start.png",
+      "verdict": "pass",
+      "notes": "start frame (+0.15s): reveal in progress, expected sparse"
+    },
+    {
+      "cue": 5,
+      "kind": "mid",
+      "path": "lesson_7/38/cue05_mid.png",
+      "verdict": "pass",
+      "notes": "separate nearby ideas: token ID vs embedding, logits vs probabilities, attention vs MLP, position vs feature. Matches 'separate nearby ideas'."
+    },
+    {
+      "cue": 5,
+      "kind": "end",
+      "path": "lesson_7/38/cue05_end.png",
+      "verdict": "pass",
+      "notes": ""
+    },
+    {
+      "cue": 6,
+      "kind": "start",
+      "path": "lesson_7/38/cue06_start.png",
+      "verdict": "pass",
+      "notes": "start frame (+0.15s): reveal in progress, expected sparse"
+    },
+    {
+      "cue": 6,
+      "kind": "mid",
+      "path": "lesson_7/38/cue06_mid.png",
+      "verdict": "pass",
+      "notes": "return to the route: pipeline map recap + recap line + takeaway 'add attention, add MLP - same shape in, same shape out' + practice 'trace [12,44,91,44] to a logit row'. Matches 'return to the route and prepare practice'."
+    }
+  ]
+}

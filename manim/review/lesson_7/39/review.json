@@ -1,0 +1,95 @@
+{
+  "lesson_id": 7,
+  "activity_id": 39,
+  "reviewed_at": "2026-07-08T03:25:00Z",
+  "iterations": 2,
+  "frames_reviewed": 12,
+  "quality": "ql",
+  "notes": "Lesson 7 Part 39 (48.65s, 4 cues): text -> tokenizer -> integer IDs -> model-owned numeric state. Running example 'she saw the saw' -> IDs [12,44,91,44] (repeated 'saw'->44 sets up act40). One review iteration fixed Cue02: the address->row arrow originally crossed the '91' box and its arrowhead obscured the 'id 44' row label; redesigned to a vertical ID column with a small-tip arrow landing clear of the label. Per-cue checklist (legibility, highlight matches narration, contrast, nothing off-frame via theme.guard, chunk timing within pinning tolerance): all pass. Final 48.934s vs audio 48.65s (\u03940.28s<0.5).",
+  "frames": [
+    {
+      "cue": 0,
+      "kind": "start",
+      "path": "lesson_7/39/cue00_start.png",
+      "verdict": "pass",
+      "notes": "start frame (+0.15s): reveal in progress, expected sparse"
+    },
+    {
+      "cue": 0,
+      "kind": "mid",
+      "path": "lesson_7/39/cue00_mid.png",
+      "verdict": "pass",
+      "notes": "prompt 'she saw the saw' (violet token chips) -> arrow -> Transformer box with red X + 'no direct text input'. Highlight matches 'transformer cannot read text'. Legible, in-frame."
+    },
+    {
+      "cue": 0,
+      "kind": "end",
+      "path": "lesson_7/39/cue00_end.png",
+      "verdict": "pass",
+      "notes": ""
+    },
+    {
+      "cue": 1,
+      "kind": "start",
+      "path": "lesson_7/39/cue01_start.png",
+      "verdict": "pass",
+      "notes": "start frame (+0.15s): reveal in progress, expected sparse"
+    },
+    {
+      "cue": 1,
+      "kind": "mid",
+      "path": "lesson_7/39/cue01_mid.png",
+      "verdict": "pass",
+      "notes": "text pieces -> 'tokenizer vocabulary' -> IDs [12,44,91,44]; the two 'saw'->44 boxes highlighted amber. Matches 'maps text pieces to integer IDs'."
+    },
+    {
+      "cue": 1,
+      "kind": "end",
+      "path": "lesson_7/39/cue01_end.png",
+      "verdict": "pass",
+      "notes": ""
+    },
+    {
+      "cue": 2,
+      "kind": "start",
+      "path": "lesson_7/39/cue02_start.png",
+      "verdict": "pass",
+      "notes": "start frame (+0.15s): reveal in progress, expected sparse"
+    },
+    {
+      "cue": 2,
+      "kind": "mid",
+      "path": "lesson_7/39/cue02_mid.png",
+      "verdict": "pass",
+      "notes": "vertical token IDs [12,44,91] -> clean small-tip amber arrow -> highlighted 'id 44' embedding-table row. Matches 'integers are addresses into a table'. (fixed)"
+    },
+    {
+      "cue": 2,
+      "kind": "end",
+      "path": "lesson_7/39/cue02_end.png",
+      "verdict": "pass",
+      "notes": "id 44 row highlighted; arrow clear of label"
+    },
+    {
+      "cue": 3,
+      "kind": "start",
+      "path": "lesson_7/39/cue03_start.png",
+      "verdict": "pass",
+      "notes": "start frame (+0.15s): reveal in progress, expected sparse"
+    },
+    {
+      "cue": 3,
+      "kind": "mid",
+      "path": "lesson_7/39/cue03_mid.png",
+      "verdict": "pass",
+      "notes": "numeric state H (L x D) matrix -> 'hands off' arrow -> Transformer box (highlighted). Matches 'transformer receives model-owned numeric state, not text'."
+    },
+    {
+      "cue": 3,
+      "kind": "end",
+      "path": "lesson_7/39/cue03_end.png",
+      "verdict": "pass",
+      "notes": ""
+    }
+  ]
+}

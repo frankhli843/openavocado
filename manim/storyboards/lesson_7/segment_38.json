@@ -1,0 +1,108 @@
+{
+  "lesson_id": 7,
+  "activity_id": 38,
+  "activity_type": "audio",
+  "title": "Audio: Inside the Transformer — IDs to Logits",
+  "audio": {
+    "file_path": "runtime_artifacts/audio/lesson_7_audio.mp3",
+    "duration_sec": 1009.9
+  },
+  "audio_source": "artifact",
+  "cue_source": "orientation_visual.cues",
+  "cues": [
+    {
+      "index": 0,
+      "start": 0,
+      "end": 144.752,
+      "duration": 144.752,
+      "label": "High-level map",
+      "headline": "Locate the lesson before details",
+      "narration": "Locate the lesson before details for Inside the Transformer: From Token IDs to Next-Token Logits.",
+      "active_elements": [
+        "Subject",
+        "Lesson"
+      ]
+    },
+    {
+      "index": 1,
+      "start": 144.752,
+      "end": 288.381,
+      "duration": 143.629,
+      "label": "Analogy",
+      "headline": "Translate the idea into a workshop metaphor",
+      "narration": "Translate the idea into a workshop metaphor for Inside the Transformer: From Token IDs to Next-Token Logits.",
+      "active_elements": [
+        "Receive",
+        "Transform"
+      ]
+    },
+    {
+      "index": 2,
+      "start": 288.381,
+      "end": 433.133,
+      "duration": 144.752,
+      "label": "Tiny example",
+      "headline": "Follow one concrete object",
+      "narration": "Follow one concrete object for Inside the Transformer: From Token IDs to Next-Token Logits.",
+      "active_elements": [
+        "Object",
+        "Change"
+      ]
+    },
+    {
+      "index": 3,
+      "start": 433.133,
+      "end": 576.763,
+      "duration": 143.63,
+      "label": "Mechanism",
+      "headline": "Expose what changes and why",
+      "narration": "Expose what changes and why for Inside the Transformer: From Token IDs to Next-Token Logits.",
+      "active_elements": [
+        "Before",
+        "During"
+      ]
+    },
+    {
+      "index": 4,
+      "start": 576.763,
+      "end": 721.515,
+      "duration": 144.752,
+      "label": "Implementation",
+      "headline": "Connect to code and tests",
+      "narration": "Connect to code and tests for Inside the Transformer: From Token IDs to Next-Token Logits.",
+      "active_elements": [
+        "Variable",
+        "Assert"
+      ]
+    },
+    {
+      "index": 5,
+      "start": 721.515,
+      "end": 865.144,
+      "duration": 143.629,
+      "label": "Misconception",
+      "headline": "Separate nearby ideas",
+      "narration": "Separate nearby ideas for Inside the Transformer: From Token IDs to Next-Token Logits.",
+      "active_elements": [
+        "Confusing label",
+        "Correct relation"
+      ]
+    },
+    {
+      "index": 6,
+      "start": 865.144,
+      "end": 1009.896,
+      "duration": 144.752,
+      "label": "Synthesis",
+      "headline": "Return to the route and prepare practice",
+      "narration": "Return to the route and prepare practice for Inside the Transformer: From Token IDs to Next-Token Logits.",
+      "active_elements": [
+        "Subject",
+        "Lesson"
+      ]
+    }
+  ],
+  "cue_span_sec": 1009.896,
+  "formulas": [],
+  "exported_at": "2026-07-08T02:52:42.602Z"
+}

@@ -1,0 +1,704 @@
+{
+  "lesson_id": 7,
+  "activity_id": 41,
+  "reviewed_at": "2026-07-08T03:25:00Z",
+  "iterations": 2,
+  "frames_reviewed": 99,
+  "quality": "ql",
+  "notes": "Lesson 7 Part 41 (161.71s, 33 cues @5s): a guided walk through one transformer block, one moving part per cue. Design: a compact 'you-are-here' minimap of the block on the left (the current stage lit, the rest dimmed) plus a larger focus visual on the right that actually changes the named object (L x D matrix, token rows, query-key score grid, residual add, LayerNorm rescale, MLP expand->gate->compress, output head, logits). One review iteration fixed three wide horizontal focus layouts that overran the right safe edge (Cue12 residual-add equation, Cue18 row->MLP->out, Cue25 MLP-add equation) by shrinking cells and fit-centering the group. Verified representative cues across every phase (matrix setup, attention, residual, LayerNorm, MLP, output, logits): the minimap lights the correct active stage each cue and the focus matches that cue's narration. Per-cue checklist (legibility, highlight matches narration, contrast, nothing off-frame via theme.guard, chunk timing within pinning tolerance): all pass. Final 162.0s vs audio 161.71s (\u03940.29s<0.5). Note: near-boundary cueNN_end frames can sample ~0.1-0.3s into the next 5s chunk from cumulative frame-rounding drift; per-cue content verified via mid frames.",
+  "frames": [
+    {
+      "cue": 0,
+      "kind": "start",
+      "path": "lesson_7/41/cue00_start.png",
+      "verdict": "pass",
+      "notes": "start frame (+0.15s): reveal in progress, expected sparse"
+    },
+    {
+      "cue": 0,
+      "kind": "mid",
+      "path": "lesson_7/41/cue00_mid.png",
+      "verdict": "pass",
+      "notes": "matrix L x D shape label pulses [minimap: Input H]"
+    },
+    {
+      "cue": 0,
+      "kind": "end",
+      "path": "lesson_7/41/cue00_end.png",
+      "verdict": "pass",
+      "notes": ""
+    },
+    {
+      "cue": 1,
+      "kind": "start",
+      "path": "lesson_7/41/cue01_start.png",
+      "verdict": "pass",
+      "notes": "start frame (+0.15s): reveal in progress, expected sparse"
+    },
+    {
+      "cue": 1,
+      "kind": "mid",
+      "path": "lesson_7/41/cue01_mid.png",
+      "verdict": "pass",
+      "notes": "each of the 4 rows outlined amber = token positions [minimap: Input H]"
+    },
+    {
+      "cue": 1,
+      "kind": "end",
+      "path": "lesson_7/41/cue01_end.png",
+      "verdict": "pass",
+      "notes": ""
+    },
+    {
+      "cue": 2,
+      "kind": "start",
+      "path": "lesson_7/41/cue02_start.png",
+      "verdict": "pass",
+      "notes": "start frame (+0.15s): reveal in progress, expected sparse"
+    },
+    {
+      "cue": 2,
+      "kind": "mid",
+      "path": "lesson_7/41/cue02_mid.png",
+      "verdict": "pass",
+      "notes": "columns lit across rows = hidden features [minimap: Input H]"
+    },
+    {
+      "cue": 2,
+      "kind": "end",
+      "path": "lesson_7/41/cue02_end.png",
+      "verdict": "pass",
+      "notes": ""
+    },
+    {
+      "cue": 3,
+      "kind": "start",
+      "path": "lesson_7/41/cue03_start.png",
+      "verdict": "pass",
+      "notes": "start frame (+0.15s): reveal in progress, expected sparse"
+    },
+    {
+      "cue": 3,
+      "kind": "mid",
+      "path": "lesson_7/41/cue03_mid.png",
+      "verdict": "pass",
+      "notes": "4 independent rows, spread apart, 'rows independent' [minimap: Input H]"
+    },
+    {
+      "cue": 3,
+      "kind": "end",
+      "path": "lesson_7/41/cue03_end.png",
+      "verdict": "pass",
+      "notes": ""
+    },
+    {
+      "cue": 4,
+      "kind": "start",
+      "path": "lesson_7/41/cue04_start.png",
+      "verdict": "pass",
+      "notes": "start frame (+0.15s): reveal in progress, expected sparse"
+    },
+    {
+      "cue": 4,
+      "kind": "mid",
+      "path": "lesson_7/41/cue04_mid.png",
+      "verdict": "pass",
+      "notes": "a row of numeric values (0.4,-1.2,...), 'numbers not letters' [minimap: Input H]"
+    },
+    {
+      "cue": 4,
+      "kind": "end",
+      "path": "lesson_7/41/cue04_end.png",
+      "verdict": "pass",
+      "notes": ""
+    },
+    {
+      "cue": 5,
+      "kind": "start",
+      "path": "lesson_7/41/cue05_start.png",
+      "verdict": "pass",
+      "notes": "start frame (+0.15s): reveal in progress, expected sparse"
+    },
+    {
+      "cue": 5,
+      "kind": "mid",
+      "path": "lesson_7/41/cue05_mid.png",
+      "verdict": "pass",
+      "notes": "L x D = invariant emphasised [minimap: Input H]"
+    },
+    {
+      "cue": 5,
+      "kind": "end",
+      "path": "lesson_7/41/cue05_end.png",
+      "verdict": "pass",
+      "notes": ""
+    },
+    {
+      "cue": 6,
+      "kind": "start",
+      "path": "lesson_7/41/cue06_start.png",
+      "verdict": "pass",
+      "notes": "start frame (+0.15s): reveal in progress, expected sparse"
+    },
+    {
+      "cue": 6,
+      "kind": "mid",
+      "path": "lesson_7/41/cue06_mid.png",
+      "verdict": "pass",
+      "notes": "context arcs between rows, rows tint amber [minimap: Attention]"
+    },
+    {
+      "cue": 6,
+      "kind": "end",
+      "path": "lesson_7/41/cue06_end.png",
+      "verdict": "pass",
+      "notes": ""
+    },
+    {
+      "cue": 7,
+      "kind": "start",
+      "path": "lesson_7/41/cue07_start.png",
+      "verdict": "pass",
+      "notes": "start frame (+0.15s): reveal in progress, expected sparse"
+    },
+    {
+      "cue": 7,
+      "kind": "mid",
+      "path": "lesson_7/41/cue07_mid.png",
+      "verdict": "pass",
+      "notes": "L x L causal query-key score grid with query/key labels [minimap: Attention]"
+    },
+    {
+      "cue": 7,
+      "kind": "end",
+      "path": "lesson_7/41/cue07_end.png",
+      "verdict": "pass",
+      "notes": ""
+    },
+    {
+      "cue": 8,
+      "kind": "start",
+      "path": "lesson_7/41/cue08_start.png",
+      "verdict": "pass",
+      "notes": "start frame (+0.15s): reveal in progress, expected sparse"
+    },
+    {
+      "cue": 8,
+      "kind": "mid",
+      "path": "lesson_7/41/cue08_mid.png",
+      "verdict": "pass",
+      "notes": "strong attention cells brightened white-stroked [minimap: Attention]"
+    },
+    {
+      "cue": 8,
+      "kind": "end",
+      "path": "lesson_7/41/cue08_end.png",
+      "verdict": "pass",
+      "notes": ""
+    },
+    {
+      "cue": 9,
+      "kind": "start",
+      "path": "lesson_7/41/cue09_start.png",
+      "verdict": "pass",
+      "notes": "start frame (+0.15s): reveal in progress, expected sparse"
+    },
+    {
+      "cue": 9,
+      "kind": "mid",
+      "path": "lesson_7/41/cue09_mid.png",
+      "verdict": "pass",
+      "notes": "3 source vectors -> weighted mix -> amber context vector [minimap: Attention]"
+    },
+    {
+      "cue": 9,
+      "kind": "end",
+      "path": "lesson_7/41/cue09_end.png",
+      "verdict": "pass",
+      "notes": ""
+    },
+    {
+      "cue": 10,
+      "kind": "start",
+      "path": "lesson_7/41/cue10_start.png",
+      "verdict": "pass",
+      "notes": "start frame (+0.15s): reveal in progress, expected sparse"
+    },
+    {
+      "cue": 10,
+      "kind": "mid",
+      "path": "lesson_7/41/cue10_mid.png",
+      "verdict": "pass",
+      "notes": "each row gets a +Delta context update in turn [minimap: Attention]"
+    },
+    {
+      "cue": 10,
+      "kind": "end",
+      "path": "lesson_7/41/cue10_end.png",
+      "verdict": "pass",
+      "notes": ""
+    },
+    {
+      "cue": 11,
+      "kind": "start",
+      "path": "lesson_7/41/cue11_start.png",
+      "verdict": "pass",
+      "notes": "start frame (+0.15s): reveal in progress, expected sparse"
+    },
+    {
+      "cue": 11,
+      "kind": "mid",
+      "path": "lesson_7/41/cue11_mid.png",
+      "verdict": "pass",
+      "notes": "curved cross-position arrows between rows [minimap: Attention]"
+    },
+    {
+      "cue": 11,
+      "kind": "end",
+      "path": "lesson_7/41/cue11_end.png",
+      "verdict": "pass",
+      "notes": ""
+    },
+    {
+      "cue": 12,
+      "kind": "start",
+      "path": "lesson_7/41/cue12_start.png",
+      "verdict": "pass",
+      "notes": "start frame (+0.15s): reveal in progress, expected sparse"
+    },
+    {
+      "cue": 12,
+      "kind": "mid",
+      "path": "lesson_7/41/cue12_mid.png",
+      "verdict": "pass",
+      "notes": "old row (blue) + attention Delta (amber) = new row (green) [minimap: add1]"
+    },
+    {
+      "cue": 12,
+      "kind": "end",
+      "path": "lesson_7/41/cue12_end.png",
+      "verdict": "pass",
+      "notes": ""
+    },
+    {
+      "cue": 13,
+      "kind": "start",
+      "path": "lesson_7/41/cue13_start.png",
+      "verdict": "pass",
+      "notes": "start frame (+0.15s): reveal in progress, expected sparse"
+    },
+    {
+      "cue": 13,
+      "kind": "mid",
+      "path": "lesson_7/41/cue13_mid.png",
+      "verdict": "pass",
+      "notes": "residual highway (violet line) + sublayer Delta merging in [minimap: residual spine]"
+    },
+    {
+      "cue": 13,
+      "kind": "end",
+      "path": "lesson_7/41/cue13_end.png",
+      "verdict": "pass",
+      "notes": ""
+    },
+    {
+      "cue": 14,
+      "kind": "start",
+      "path": "lesson_7/41/cue14_start.png",
+      "verdict": "pass",
+      "notes": "start frame (+0.15s): reveal in progress, expected sparse"
+    },
+    {
+      "cue": 14,
+      "kind": "mid",
+      "path": "lesson_7/41/cue14_mid.png",
+      "verdict": "pass",
+      "notes": "before (uneven blue bars) -> after (even violet bars) normalized [minimap: LayerNorm]"
+    },
+    {
+      "cue": 14,
+      "kind": "end",
+      "path": "lesson_7/41/cue14_end.png",
+      "verdict": "pass",
+      "notes": ""
+    },
+    {
+      "cue": 15,
+      "kind": "start",
+      "path": "lesson_7/41/cue15_start.png",
+      "verdict": "pass",
+      "notes": "start frame (+0.15s): reveal in progress, expected sparse"
+    },
+    {
+      "cue": 15,
+      "kind": "mid",
+      "path": "lesson_7/41/cue15_mid.png",
+      "verdict": "pass",
+      "notes": "one row + mu=0,sigma=1 formula [minimap: LayerNorm]"
+    },
+    {
+      "cue": 15,
+      "kind": "end",
+      "path": "lesson_7/41/cue15_end.png",
+      "verdict": "pass",
+      "notes": ""
+    },
+    {
+      "cue": 16,
+      "kind": "start",
+      "path": "lesson_7/41/cue16_start.png",
+      "verdict": "pass",
+      "notes": "start frame (+0.15s): reveal in progress, expected sparse"
+    },
+    {
+      "cue": 16,
+      "kind": "mid",
+      "path": "lesson_7/41/cue16_mid.png",
+      "verdict": "pass",
+      "notes": "thick residual highway with signal dots carried through [minimap: residual spine]"
+    },
+    {
+      "cue": 16,
+      "kind": "end",
+      "path": "lesson_7/41/cue16_end.png",
+      "verdict": "pass",
+      "notes": ""
+    },
+    {
+      "cue": 17,
+      "kind": "start",
+      "path": "lesson_7/41/cue17_start.png",
+      "verdict": "pass",
+      "notes": "start frame (+0.15s): reveal in progress, expected sparse"
+    },
+    {
+      "cue": 17,
+      "kind": "mid",
+      "path": "lesson_7/41/cue17_mid.png",
+      "verdict": "pass",
+      "notes": "4 violet rows bracketed 'same scale' [minimap: LayerNorm]"
+    },
+    {
+      "cue": 17,
+      "kind": "end",
+      "path": "lesson_7/41/cue17_end.png",
+      "verdict": "pass",
+      "notes": ""
+    },
+    {
+      "cue": 18,
+      "kind": "start",
+      "path": "lesson_7/41/cue18_start.png",
+      "verdict": "pass",
+      "notes": "start frame (+0.15s): reveal in progress, expected sparse"
+    },
+    {
+      "cue": 18,
+      "kind": "mid",
+      "path": "lesson_7/41/cue18_mid.png",
+      "verdict": "pass",
+      "notes": "row -> MLP box -> updated row [minimap: MLP]"
+    },
+    {
+      "cue": 18,
+      "kind": "end",
+      "path": "lesson_7/41/cue18_end.png",
+      "verdict": "pass",
+      "notes": ""
+    },
+    {
+      "cue": 19,
+      "kind": "start",
+      "path": "lesson_7/41/cue19_start.png",
+      "verdict": "pass",
+      "notes": "start frame (+0.15s): reveal in progress, expected sparse"
+    },
+    {
+      "cue": 19,
+      "kind": "mid",
+      "path": "lesson_7/41/cue19_mid.png",
+      "verdict": "pass",
+      "notes": "4 rows each processed alone, 'each row processed alone' [minimap: MLP]"
+    },
+    {
+      "cue": 19,
+      "kind": "end",
+      "path": "lesson_7/41/cue19_end.png",
+      "verdict": "pass",
+      "notes": ""
+    },
+    {
+      "cue": 20,
+      "kind": "start",
+      "path": "lesson_7/41/cue20_start.png",
+      "verdict": "pass",
+      "notes": "start frame (+0.15s): reveal in progress, expected sparse"
+    },
+    {
+      "cue": 20,
+      "kind": "mid",
+      "path": "lesson_7/41/cue20_mid.png",
+      "verdict": "pass",
+      "notes": "Attention(done) -> MLP(now), 'context in the rows already' [minimap: MLP]"
+    },
+    {
+      "cue": 20,
+      "kind": "end",
+      "path": "lesson_7/41/cue20_end.png",
+      "verdict": "pass",
+      "notes": ""
+    },
+    {
+      "cue": 21,
+      "kind": "start",
+      "path": "lesson_7/41/cue21_start.png",
+      "verdict": "pass",
+      "notes": "start frame (+0.15s): reveal in progress, expected sparse"
+    },
+    {
+      "cue": 21,
+      "kind": "mid",
+      "path": "lesson_7/41/cue21_mid.png",
+      "verdict": "pass",
+      "notes": "focus box hops row-to-row 'work on one row at a time' [minimap: MLP]"
+    },
+    {
+      "cue": 21,
+      "kind": "end",
+      "path": "lesson_7/41/cue21_end.png",
+      "verdict": "pass",
+      "notes": ""
+    },
+    {
+      "cue": 22,
+      "kind": "start",
+      "path": "lesson_7/41/cue22_start.png",
+      "verdict": "pass",
+      "notes": "start frame (+0.15s): reveal in progress, expected sparse"
+    },
+    {
+      "cue": 22,
+      "kind": "mid",
+      "path": "lesson_7/41/cue22_mid.png",
+      "verdict": "pass",
+      "notes": "D (6 blue cells) -> 4D wider (14 green cells) [minimap: MLP]"
+    },
+    {
+      "cue": 22,
+      "kind": "end",
+      "path": "lesson_7/41/cue22_end.png",
+      "verdict": "pass",
+      "notes": ""
+    },
+    {
+      "cue": 23,
+      "kind": "start",
+      "path": "lesson_7/41/cue23_start.png",
+      "verdict": "pass",
+      "notes": "start frame (+0.15s): reveal in progress, expected sparse"
+    },
+    {
+      "cue": 23,
+      "kind": "mid",
+      "path": "lesson_7/41/cue23_mid.png",
+      "verdict": "pass",
+      "notes": "GELU activation curve on axes [minimap: MLP]"
+    },
+    {
+      "cue": 23,
+      "kind": "end",
+      "path": "lesson_7/41/cue23_end.png",
+      "verdict": "pass",
+      "notes": ""
+    },
+    {
+      "cue": 24,
+      "kind": "start",
+      "path": "lesson_7/41/cue24_start.png",
+      "verdict": "pass",
+      "notes": "start frame (+0.15s): reveal in progress, expected sparse"
+    },
+    {
+      "cue": 24,
+      "kind": "mid",
+      "path": "lesson_7/41/cue24_mid.png",
+      "verdict": "pass",
+      "notes": "4D (14 cells) -> D (6 cells) 'back to shape' [minimap: MLP]"
+    },
+    {
+      "cue": 24,
+      "kind": "end",
+      "path": "lesson_7/41/cue24_end.png",
+      "verdict": "pass",
+      "notes": ""
+    },
+    {
+      "cue": 25,
+      "kind": "start",
+      "path": "lesson_7/41/cue25_start.png",
+      "verdict": "pass",
+      "notes": "start frame (+0.15s): reveal in progress, expected sparse"
+    },
+    {
+      "cue": 25,
+      "kind": "mid",
+      "path": "lesson_7/41/cue25_mid.png",
+      "verdict": "pass",
+      "notes": "old row + MLP Delta (green) = new row [minimap: add2]"
+    },
+    {
+      "cue": 25,
+      "kind": "end",
+      "path": "lesson_7/41/cue25_end.png",
+      "verdict": "pass",
+      "notes": ""
+    },
+    {
+      "cue": 26,
+      "kind": "start",
+      "path": "lesson_7/41/cue26_start.png",
+      "verdict": "pass",
+      "notes": "start frame (+0.15s): reveal in progress, expected sparse"
+    },
+    {
+      "cue": 26,
+      "kind": "mid",
+      "path": "lesson_7/41/cue26_mid.png",
+      "verdict": "pass",
+      "notes": "row + LayerNorm(.) normalize again [minimap: add2]"
+    },
+    {
+      "cue": 26,
+      "kind": "end",
+      "path": "lesson_7/41/cue26_end.png",
+      "verdict": "pass",
+      "notes": ""
+    },
+    {
+      "cue": 27,
+      "kind": "start",
+      "path": "lesson_7/41/cue27_start.png",
+      "verdict": "pass",
+      "notes": "start frame (+0.15s): reveal in progress, expected sparse"
+    },
+    {
+      "cue": 27,
+      "kind": "mid",
+      "path": "lesson_7/41/cue27_mid.png",
+      "verdict": "pass",
+      "notes": "L x D output matrix, shape label pulses green [minimap: Output H]"
+    },
+    {
+      "cue": 27,
+      "kind": "end",
+      "path": "lesson_7/41/cue27_end.png",
+      "verdict": "pass",
+      "notes": ""
+    },
+    {
+      "cue": 28,
+      "kind": "start",
+      "path": "lesson_7/41/cue28_start.png",
+      "verdict": "pass",
+      "notes": "start frame (+0.15s): reveal in progress, expected sparse"
+    },
+    {
+      "cue": 28,
+      "kind": "mid",
+      "path": "lesson_7/41/cue28_mid.png",
+      "verdict": "pass",
+      "notes": "input matrix -> richer green output matrix [minimap: Output H]"
+    },
+    {
+      "cue": 28,
+      "kind": "end",
+      "path": "lesson_7/41/cue28_end.png",
+      "verdict": "pass",
+      "notes": ""
+    },
+    {
+      "cue": 29,
+      "kind": "start",
+      "path": "lesson_7/41/cue29_start.png",
+      "verdict": "pass",
+      "notes": "start frame (+0.15s): reveal in progress, expected sparse"
+    },
+    {
+      "cue": 29,
+      "kind": "mid",
+      "path": "lesson_7/41/cue29_mid.png",
+      "verdict": "pass",
+      "notes": "3 stacked blocks arrowed, L x D preserved [minimap: Output H]"
+    },
+    {
+      "cue": 29,
+      "kind": "end",
+      "path": "lesson_7/41/cue29_end.png",
+      "verdict": "pass",
+      "notes": ""
+    },
+    {
+      "cue": 30,
+      "kind": "start",
+      "path": "lesson_7/41/cue30_start.png",
+      "verdict": "pass",
+      "notes": "start frame (+0.15s): reveal in progress, expected sparse"
+    },
+    {
+      "cue": 30,
+      "kind": "mid",
+      "path": "lesson_7/41/cue30_mid.png",
+      "verdict": "pass",
+      "notes": "final row highlighted -> output head [minimap: Output H]"
+    },
+    {
+      "cue": 30,
+      "kind": "end",
+      "path": "lesson_7/41/cue30_end.png",
+      "verdict": "pass",
+      "notes": ""
+    },
+    {
+      "cue": 31,
+      "kind": "start",
+      "path": "lesson_7/41/cue31_start.png",
+      "verdict": "pass",
+      "notes": "start frame (+0.15s): reveal in progress, expected sparse"
+    },
+    {
+      "cue": 31,
+      "kind": "mid",
+      "path": "lesson_7/41/cue31_mid.png",
+      "verdict": "pass",
+      "notes": "output head -> next-token logits bars (cat wins) [minimap: Output H]"
+    },
+    {
+      "cue": 31,
+      "kind": "end",
+      "path": "lesson_7/41/cue31_end.png",
+      "verdict": "pass",
+      "notes": ""
+    },
+    {
+      "cue": 32,
+      "kind": "start",
+      "path": "lesson_7/41/cue32_start.png",
+      "verdict": "pass",
+      "notes": "start frame (+0.15s): reveal in progress, expected sparse"
+    },
+    {
+      "cue": 32,
+      "kind": "mid",
+      "path": "lesson_7/41/cue32_mid.png",
+      "verdict": "pass",
+      "notes": "logits bars + target 'cat' for training [minimap: Output H]"
+    },
+    {
+      "cue": 32,
+      "kind": "end",
+      "path": "lesson_7/41/cue32_end.png",
+      "verdict": "pass",
+      "notes": ""
+    }
+  ]
+}

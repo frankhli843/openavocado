@@ -1,0 +1,137 @@
+{
+  "lesson_id": 7,
+  "activity_id": 40,
+  "reviewed_at": "2026-07-08T03:25:00Z",
+  "iterations": 2,
+  "frames_reviewed": 18,
+  "quality": "ql",
+  "notes": "Lesson 7 Part 40 (154.61s, 6 cues): from the token-ID list to the L x D hidden-state matrix (fetch rows, same-ID-same-row, position divergence, the table, then what refines it). Running example [12,44,91,44]. One review iteration fixed four layout issues: Cue01/Cue02 fetch arrows landed on the 'id NN' row labels (redesigned to vertical ID columns with small-tip arrows aimed left of the labels); Cue04's 'rows = token positions' left label overflowed the safe area (narrower matrix, label moved below); Cue05's output head overlapped the logit bars (respaced the H -> block -> head -> logits pipeline). Per-cue checklist all pass. Final 155.0s vs audio 154.61s (\u03940.32s<0.5).",
+  "frames": [
+    {
+      "cue": 0,
+      "kind": "start",
+      "path": "lesson_7/40/cue00_start.png",
+      "verdict": "pass",
+      "notes": "start frame (+0.15s): reveal in progress, expected sparse"
+    },
+    {
+      "cue": 0,
+      "kind": "mid",
+      "path": "lesson_7/40/cue00_mid.png",
+      "verdict": "pass",
+      "notes": "token IDs -> 'handoff -> numeric state' -> hidden matrix H. Matches 'handoff into model-owned numeric state'."
+    },
+    {
+      "cue": 0,
+      "kind": "end",
+      "path": "lesson_7/40/cue00_end.png",
+      "verdict": "pass",
+      "notes": ""
+    },
+    {
+      "cue": 1,
+      "kind": "start",
+      "path": "lesson_7/40/cue01_start.png",
+      "verdict": "pass",
+      "notes": "start frame (+0.15s): reveal in progress, expected sparse"
+    },
+    {
+      "cue": 1,
+      "kind": "mid",
+      "path": "lesson_7/40/cue01_mid.png",
+      "verdict": "pass",
+      "notes": "vertical ID column [12,44,91,44] -> amber fetch arrows -> highlighted embedding-table rows. Matches 'the ID list selects which rows to fetch'. (fixed arrows)"
+    },
+    {
+      "cue": 1,
+      "kind": "end",
+      "path": "lesson_7/40/cue01_end.png",
+      "verdict": "pass",
+      "notes": "all four fetch arrows drawn, matched rows dimmed-highlighted"
+    },
+    {
+      "cue": 2,
+      "kind": "start",
+      "path": "lesson_7/40/cue02_start.png",
+      "verdict": "pass",
+      "notes": "start frame (+0.15s): reveal in progress, expected sparse"
+    },
+    {
+      "cue": 2,
+      "kind": "mid",
+      "path": "lesson_7/40/cue02_mid.png",
+      "verdict": "pass",
+      "notes": "both 44 IDs -> same 'id 44' row (highlighted) + 'trained as a matched pair' note. Matches 'same ID fetches the same row every time'. (fixed arrows)"
+    },
+    {
+      "cue": 2,
+      "kind": "end",
+      "path": "lesson_7/40/cue02_end.png",
+      "verdict": "pass",
+      "notes": ""
+    },
+    {
+      "cue": 3,
+      "kind": "start",
+      "path": "lesson_7/40/cue03_start.png",
+      "verdict": "pass",
+      "notes": "start frame (+0.15s): reveal in progress, expected sparse"
+    },
+    {
+      "cue": 3,
+      "kind": "mid",
+      "path": "lesson_7/40/cue03_mid.png",
+      "verdict": "pass",
+      "notes": "same learned row -> +position 1 / +position 3 -> two divergent vectors + 'different slots -> different vectors'. Matches 'identical tokens diverge via position information'."
+    },
+    {
+      "cue": 3,
+      "kind": "end",
+      "path": "lesson_7/40/cue03_end.png",
+      "verdict": "pass",
+      "notes": ""
+    },
+    {
+      "cue": 4,
+      "kind": "start",
+      "path": "lesson_7/40/cue04_start.png",
+      "verdict": "pass",
+      "notes": "start frame (+0.15s): reveal in progress, expected sparse"
+    },
+    {
+      "cue": 4,
+      "kind": "mid",
+      "path": "lesson_7/40/cue04_mid.png",
+      "verdict": "pass",
+      "notes": "L x D matrix with pos-labels, 'columns = hidden features', 'rows = token positions', H in R^{LxD}. Matches 'one row per position, one column per feature'. (fixed label overflow)"
+    },
+    {
+      "cue": 4,
+      "kind": "end",
+      "path": "lesson_7/40/cue04_end.png",
+      "verdict": "pass",
+      "notes": ""
+    },
+    {
+      "cue": 5,
+      "kind": "start",
+      "path": "lesson_7/40/cue05_start.png",
+      "verdict": "pass",
+      "notes": "start frame (+0.15s): reveal in progress, expected sparse"
+    },
+    {
+      "cue": 5,
+      "kind": "mid",
+      "path": "lesson_7/40/cue05_mid.png",
+      "verdict": "pass",
+      "notes": "hidden H -> [Attention, MLP] -> output head -> next-token logits (cat winning, bright green). Matches 'attention and MLP refine before the output head scores logits'. (fixed spacing)"
+    },
+    {
+      "cue": 5,
+      "kind": "end",
+      "path": "lesson_7/40/cue05_end.png",
+      "verdict": "pass",
+      "notes": ""
+    }
+  ]
+}

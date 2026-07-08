@@ -1,0 +1,314 @@
+{
+  "lesson_id": 7,
+  "activity_id": 41,
+  "activity_type": "lesson_part",
+  "title": "Part 3: What a Transformer Block Does",
+  "audio": {
+    "file_path": "runtime_artifacts/audio/lesson_7_activity_41_audio.mp3",
+    "duration_sec": 161.71
+  },
+  "audio_source": "artifact",
+  "cue_source": "audio.synced_visual.cues",
+  "cues": [
+    {
+      "index": 0,
+      "start": 0,
+      "end": 5,
+      "duration": 5,
+      "label": "Input 000s",
+      "headline": "Hidden-state rows enter the block: Name L by D",
+      "narration": "At 0 seconds, focus on this moving part of the transformer block: Name L by D. The scene should show the actual matrix, row, score, or layer object changing, not just repeat the transcript."
+    },
+    {
+      "index": 1,
+      "start": 5,
+      "end": 10,
+      "duration": 5,
+      "label": "Input 005s",
+      "headline": "Hidden-state rows enter the block: Rows are token positions",
+      "narration": "At 5 seconds, focus on this moving part of the transformer block: Rows are token positions. The scene should show the actual matrix, row, score, or layer object changing, not just repeat the transcript."
+    },
+    {
+      "index": 2,
+      "start": 10,
+      "end": 15,
+      "duration": 5,
+      "label": "Input 010s",
+      "headline": "Hidden-state rows enter the block: Columns are hidden features",
+      "narration": "At 10 seconds, focus on this moving part of the transformer block: Columns are hidden features. The scene should show the actual matrix, row, score, or layer object changing, not just repeat the transcript."
+    },
+    {
+      "index": 3,
+      "start": 15,
+      "end": 20,
+      "duration": 5,
+      "label": "Input 015s",
+      "headline": "Hidden-state rows enter the block: No context mixed yet",
+      "narration": "At 15 seconds, focus on this moving part of the transformer block: No context mixed yet. The scene should show the actual matrix, row, score, or layer object changing, not just repeat the transcript."
+    },
+    {
+      "index": 4,
+      "start": 20,
+      "end": 25,
+      "duration": 5,
+      "label": "Input 020s",
+      "headline": "Hidden-state rows enter the block: Block sees numbers, not text",
+      "narration": "At 20 seconds, focus on this moving part of the transformer block: Block sees numbers, not text. The scene should show the actual matrix, row, score, or layer object changing, not just repeat the transcript."
+    },
+    {
+      "index": 5,
+      "start": 25,
+      "end": 30,
+      "duration": 5,
+      "label": "Attention 025s",
+      "headline": "Rows read from other rows: The table shape stays L by D",
+      "narration": "At 25 seconds, focus on this moving part of the transformer block: The table shape stays L by D. The scene should show the actual matrix, row, score, or layer object changing, not just repeat the transcript."
+    },
+    {
+      "index": 6,
+      "start": 30,
+      "end": 35,
+      "duration": 5,
+      "label": "Attention 030s",
+      "headline": "Rows read from other rows: Context is now in the rows",
+      "narration": "At 30 seconds, focus on this moving part of the transformer block: Context is now in the rows. The scene should show the actual matrix, row, score, or layer object changing, not just repeat the transcript."
+    },
+    {
+      "index": 7,
+      "start": 35,
+      "end": 40,
+      "duration": 5,
+      "label": "Attention 035s",
+      "headline": "Rows read from other rows: Make query/key score grid",
+      "narration": "At 35 seconds, focus on this moving part of the transformer block: Make query/key score grid. The scene should show the actual matrix, row, score, or layer object changing, not just repeat the transcript."
+    },
+    {
+      "index": 8,
+      "start": 40,
+      "end": 45,
+      "duration": 5,
+      "label": "Attention 040s",
+      "headline": "Rows read from other rows: Bright cells show which tokens are read",
+      "narration": "At 40 seconds, focus on this moving part of the transformer block: Bright cells show which tokens are read. The scene should show the actual matrix, row, score, or layer object changing, not just repeat the transcript."
+    },
+    {
+      "index": 9,
+      "start": 45,
+      "end": 50,
+      "duration": 5,
+      "label": "Attention 045s",
+      "headline": "Rows read from other rows: Weighted mix pulls context",
+      "narration": "At 45 seconds, focus on this moving part of the transformer block: Weighted mix pulls context. The scene should show the actual matrix, row, score, or layer object changing, not just repeat the transcript."
+    },
+    {
+      "index": 10,
+      "start": 50,
+      "end": 55,
+      "duration": 5,
+      "label": "Attention 050s",
+      "headline": "Rows read from other rows: Each row gets a context update",
+      "narration": "At 50 seconds, focus on this moving part of the transformer block: Each row gets a context update. The scene should show the actual matrix, row, score, or layer object changing, not just repeat the transcript."
+    },
+    {
+      "index": 11,
+      "start": 55,
+      "end": 60,
+      "duration": 5,
+      "label": "Attention 055s",
+      "headline": "Rows read from other rows: Attention mixes positions",
+      "narration": "At 55 seconds, focus on this moving part of the transformer block: Attention mixes positions. The scene should show the actual matrix, row, score, or layer object changing, not just repeat the transcript."
+    },
+    {
+      "index": 12,
+      "start": 60,
+      "end": 65,
+      "duration": 5,
+      "label": "ResidualNorm 060s",
+      "headline": "Residual addition keeps the old signal available: Add update to old row",
+      "narration": "At 60 seconds, focus on this moving part of the transformer block: Add update to old row. The scene should show the actual matrix, row, score, or layer object changing, not just repeat the transcript."
+    },
+    {
+      "index": 13,
+      "start": 65,
+      "end": 70,
+      "duration": 5,
+      "label": "ResidualNorm 065s",
+      "headline": "Residual addition keeps the old signal available: Residual path preserves previous signal",
+      "narration": "At 65 seconds, focus on this moving part of the transformer block: Residual path preserves previous signal. The scene should show the actual matrix, row, score, or layer object changing, not just repeat the transcript."
+    },
+    {
+      "index": 14,
+      "start": 70,
+      "end": 75,
+      "duration": 5,
+      "label": "ResidualNorm 070s",
+      "headline": "Residual addition keeps the old signal available: Normalize scale",
+      "narration": "At 70 seconds, focus on this moving part of the transformer block: Normalize scale. The scene should show the actual matrix, row, score, or layer object changing, not just repeat the transcript."
+    },
+    {
+      "index": 15,
+      "start": 75,
+      "end": 80,
+      "duration": 5,
+      "label": "ResidualNorm 075s",
+      "headline": "Residual addition keeps the old signal available: Stabilize before the next sublayer",
+      "narration": "At 75 seconds, focus on this moving part of the transformer block: Stabilize before the next sublayer. The scene should show the actual matrix, row, score, or layer object changing, not just repeat the transcript."
+    },
+    {
+      "index": 16,
+      "start": 80,
+      "end": 85,
+      "duration": 5,
+      "label": "ResidualNorm 080s",
+      "headline": "Residual addition keeps the old signal available: Do not lose the highway",
+      "narration": "At 80 seconds, focus on this moving part of the transformer block: Do not lose the highway. The scene should show the actual matrix, row, score, or layer object changing, not just repeat the transcript."
+    },
+    {
+      "index": 17,
+      "start": 85,
+      "end": 90,
+      "duration": 5,
+      "label": "ResidualNorm 085s",
+      "headline": "Residual addition keeps the old signal available: Rows remain comparable",
+      "narration": "At 85 seconds, focus on this moving part of the transformer block: Rows remain comparable. The scene should show the actual matrix, row, score, or layer object changing, not just repeat the transcript."
+    },
+    {
+      "index": 18,
+      "start": 90,
+      "end": 95,
+      "duration": 5,
+      "label": "MLP 090s",
+      "headline": "The MLP edits each row independently: Create feature update",
+      "narration": "At 90 seconds, focus on this moving part of the transformer block: Create feature update. The scene should show the actual matrix, row, score, or layer object changing, not just repeat the transcript."
+    },
+    {
+      "index": 19,
+      "start": 95,
+      "end": 100,
+      "duration": 5,
+      "label": "MLP 095s",
+      "headline": "The MLP edits each row independently: MLP does not mix positions",
+      "narration": "At 95 seconds, focus on this moving part of the transformer block: MLP does not mix positions. The scene should show the actual matrix, row, score, or layer object changing, not just repeat the transcript."
+    },
+    {
+      "index": 20,
+      "start": 100,
+      "end": 105,
+      "duration": 5,
+      "label": "MLP 100s",
+      "headline": "The MLP edits each row independently: Attention already supplied context",
+      "narration": "At 100 seconds, focus on this moving part of the transformer block: Attention already supplied context. The scene should show the actual matrix, row, score, or layer object changing, not just repeat the transcript."
+    },
+    {
+      "index": 21,
+      "start": 105,
+      "end": 110,
+      "duration": 5,
+      "label": "MLP 105s",
+      "headline": "The MLP edits each row independently: Work on one row at a time",
+      "narration": "At 105 seconds, focus on this moving part of the transformer block: Work on one row at a time. The scene should show the actual matrix, row, score, or layer object changing, not just repeat the transcript."
+    },
+    {
+      "index": 22,
+      "start": 110,
+      "end": 115,
+      "duration": 5,
+      "label": "MLP 110s",
+      "headline": "The MLP edits each row independently: Expand hidden features",
+      "narration": "At 110 seconds, focus on this moving part of the transformer block: Expand hidden features. The scene should show the actual matrix, row, score, or layer object changing, not just repeat the transcript."
+    },
+    {
+      "index": 23,
+      "start": 115,
+      "end": 120,
+      "duration": 5,
+      "label": "MLP 115s",
+      "headline": "The MLP edits each row independently: Apply activation gate",
+      "narration": "At 115 seconds, focus on this moving part of the transformer block: Apply activation gate. The scene should show the actual matrix, row, score, or layer object changing, not just repeat the transcript."
+    },
+    {
+      "index": 24,
+      "start": 120,
+      "end": 125,
+      "duration": 5,
+      "label": "MLP 120s",
+      "headline": "The MLP edits each row independently: Compress back to D",
+      "narration": "At 120 seconds, focus on this moving part of the transformer block: Compress back to D. The scene should show the actual matrix, row, score, or layer object changing, not just repeat the transcript."
+    },
+    {
+      "index": 25,
+      "start": 125,
+      "end": 130,
+      "duration": 5,
+      "label": "Output 125s",
+      "headline": "The same shape leaves with richer values: Add MLP update back",
+      "narration": "At 125 seconds, focus on this moving part of the transformer block: Add MLP update back. The scene should show the actual matrix, row, score, or layer object changing, not just repeat the transcript."
+    },
+    {
+      "index": 26,
+      "start": 130,
+      "end": 135,
+      "duration": 5,
+      "label": "Output 130s",
+      "headline": "The same shape leaves with richer values: Normalize again",
+      "narration": "At 130 seconds, focus on this moving part of the transformer block: Normalize again. The scene should show the actual matrix, row, score, or layer object changing, not just repeat the transcript."
+    },
+    {
+      "index": 27,
+      "start": 135,
+      "end": 140,
+      "duration": 5,
+      "label": "Output 135s",
+      "headline": "The same shape leaves with richer values: Return same L by D shape",
+      "narration": "At 135 seconds, focus on this moving part of the transformer block: Return same L by D shape. The scene should show the actual matrix, row, score, or layer object changing, not just repeat the transcript."
+    },
+    {
+      "index": 28,
+      "start": 140,
+      "end": 145,
+      "duration": 5,
+      "label": "Output 140s",
+      "headline": "The same shape leaves with richer values: Values are richer than input",
+      "narration": "At 140 seconds, focus on this moving part of the transformer block: Values are richer than input. The scene should show the actual matrix, row, score, or layer object changing, not just repeat the transcript."
+    },
+    {
+      "index": 29,
+      "start": 145,
+      "end": 150,
+      "duration": 5,
+      "label": "Output 145s",
+      "headline": "The same shape leaves with richer values: Next block can repeat",
+      "narration": "At 145 seconds, focus on this moving part of the transformer block: Next block can repeat. The scene should show the actual matrix, row, score, or layer object changing, not just repeat the transcript."
+    },
+    {
+      "index": 30,
+      "start": 150,
+      "end": 155,
+      "duration": 5,
+      "label": "Logits next 150s",
+      "headline": "The output head will turn rows into logits later: Final row can feed output head",
+      "narration": "At 150 seconds, focus on this moving part of the transformer block: Final row can feed output head. The scene should show the actual matrix, row, score, or layer object changing, not just repeat the transcript."
+    },
+    {
+      "index": 31,
+      "start": 155,
+      "end": 160,
+      "duration": 5,
+      "label": "Logits next 155s",
+      "headline": "The output head will turn rows into logits later: Vocabulary scores come later",
+      "narration": "At 155 seconds, focus on this moving part of the transformer block: Vocabulary scores come later. The scene should show the actual matrix, row, score, or layer object changing, not just repeat the transcript."
+    },
+    {
+      "index": 32,
+      "start": 160,
+      "end": 162,
+      "duration": 2,
+      "label": "Logits next 160s",
+      "headline": "The output head will turn rows into logits later: Training will supervise logits",
+      "narration": "At 160 seconds, focus on this moving part of the transformer block: Training will supervise logits. The scene should show the actual matrix, row, score, or layer object changing, not just repeat the transcript."
+    }
+  ],
+  "cue_span_sec": 162,
+  "formulas": [],
+  "exported_at": "2026-07-08T02:52:42.604Z"
+}

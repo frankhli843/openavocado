@@ -1,0 +1,53 @@
+{
+  "lesson_id": 7,
+  "activity_id": 39,
+  "activity_type": "lesson_part",
+  "title": "Part 1: Review the Tokenizer-Model Contract",
+  "audio": {
+    "file_path": "runtime_artifacts/audio/lesson_7_activity_39_audio.mp3",
+    "duration_sec": 48.65
+  },
+  "audio_source": "artifact",
+  "cue_source": "audio.synced_visual.cues",
+  "cues": [
+    {
+      "index": 0,
+      "start": 0,
+      "end": 12,
+      "duration": 12,
+      "label": "Text enters",
+      "headline": "Raw text is still outside the model",
+      "narration": "The prompt starts as human-readable text, but the transformer cannot consume text directly."
+    },
+    {
+      "index": 1,
+      "start": 12,
+      "end": 25,
+      "duration": 13,
+      "label": "Tokenizer contract",
+      "headline": "The tokenizer is a fixed contract",
+      "narration": "The tokenizer vocabulary decides which text pieces map to which integer IDs."
+    },
+    {
+      "index": 2,
+      "start": 25,
+      "end": 38,
+      "duration": 13,
+      "label": "IDs handed off",
+      "headline": "Token IDs are addresses for model weights",
+      "narration": "The resulting integers are not meaning by themselves. They are addresses the embedding table can use."
+    },
+    {
+      "index": 3,
+      "start": 38,
+      "end": 49,
+      "duration": 11,
+      "label": "Model boundary",
+      "headline": "The transformer starts after this handoff",
+      "narration": "The transformer receives model-owned numeric state, not raw text. This explains how tokenizer and transformer relate."
+    }
+  ],
+  "cue_span_sec": 49,
+  "formulas": [],
+  "exported_at": "2026-07-08T02:52:42.603Z"
+}
