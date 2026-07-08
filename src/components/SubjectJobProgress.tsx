@@ -118,7 +118,7 @@ function JobRow({ job }: { job: NextLessonJob }) {
         </div>
       )}
 
-      {/* Dora-task ref link (for frankavo users who can check the Doramon dashboard) */}
+      {/* Task-runner ref link (shown when an external agent task runner reports a reference id) */}
       {job.adapter === "dora-task" && job.adapter_ref && job.status === "dispatched" && (
         <div className="mt-1 text-xs opacity-60">
           Task: {job.adapter_ref}

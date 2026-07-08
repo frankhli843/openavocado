@@ -1,0 +1,99 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Open Avocado — Adaptive Learning Platform</title>
+<meta name="description" content="Open-source adaptive learning platform and lesson-generation framework. Define goals, keep evidence of what a learner knows, and generate the next best lesson.">
+<meta property="og:title" content="Open Avocado — Adaptive Learning Platform">
+<meta property="og:description" content="Open-source adaptive learning platform and lesson-generation framework. Define goals, keep evidence of what a learner knows, and generate the next best lesson.">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://frankhli843.github.io/openavocado/">
+<meta name="twitter:card" content="summary">
+<link rel="icon" type="image/svg+xml" href="assets/favicon.svg">
+<link rel="stylesheet" href="assets/styles.css">
+</head>
+<body>
+<nav class="topnav"><div class="topnav-inner">
+<a class="brand" href="index.html"><svg viewBox="635 -20 445 445" role="img" aria-label="Open Avocado" width="22" height="22"><path fill="#399103" d="M1232.67-1000.76a125.34,125.34,0,0,1,1-13c3.4-33,13.92-86.75,57.37-160.78,33-56.25,49.52-84.38,70.72-85.09,26.54-.89,46.12,32.06,79.12,87.6,39.58,66.6,49.47,123.11,52.53,154.17.83,8.43,1.25,12.64,1.12,17.1-1.53,52.59-48.78,130.92-130.92,130.92A130.92,130.92,0,0,1,1232.67-1000.76Z" transform="translate(-506.6 1267.13)"/><path fill="#f8ee7b" d="M1275.87-1006.33a84,84,0,0,1,.65-8.7c2.28-22.12,9.33-58.12,38.44-107.73,22.12-37.69,33.18-56.53,47.38-57,17.78-.6,30.9,21.48,53,58.69,26.52,44.62,33.14,82.48,35.2,103.29a90.81,90.81,0,0,1,.75,11.45c-1,35.23-32.68,87.71-87.71,87.71A87.71,87.71,0,0,1,1275.87-1006.33Z" transform="translate(-506.6 1267.13)"/><circle fill="#fff" cx="856.99" cy="264.46" r="42.81"/></svg><span><span class="b-open">Open</span><span class="b-avo"> Avocado</span></span></a>
+<div class="nav-links"><a href="index.html" class="active">Home</a><a href="quickstart.html">Quick Start</a><a href="architecture.html">Architecture</a><a href="lesson-authoring.html">Lesson Authoring</a><a href="configuration.html">Configuration</a><a href="contributing.html">Contributing</a><a href="deployment.html">Deploy</a><a href="privacy.html">Privacy</a><a class="gh" href="https://github.com/frankhli843/openavocado" target="_blank" rel="noopener">GitHub</a></div>
+</div></nav>
+<main class="wrap wide">
+<section class="hero">
+  <div class="mark"><svg viewBox="635 -20 445 445" width="76" height="76" role="img" aria-label="Open Avocado"><path fill="#399103" d="M1232.67-1000.76a125.34,125.34,0,0,1,1-13c3.4-33,13.92-86.75,57.37-160.78,33-56.25,49.52-84.38,70.72-85.09,26.54-.89,46.12,32.06,79.12,87.6,39.58,66.6,49.47,123.11,52.53,154.17.83,8.43,1.25,12.64,1.12,17.1-1.53,52.59-48.78,130.92-130.92,130.92A130.92,130.92,0,0,1,1232.67-1000.76Z" transform="translate(-506.6 1267.13)"/><path fill="#f8ee7b" d="M1275.87-1006.33a84,84,0,0,1,.65-8.7c2.28-22.12,9.33-58.12,38.44-107.73,22.12-37.69,33.18-56.53,47.38-57,17.78-.6,30.9,21.48,53,58.69,26.52,44.62,33.14,82.48,35.2,103.29a90.81,90.81,0,0,1,.75,11.45c-1,35.23-32.68,87.71-87.71,87.71A87.71,87.71,0,0,1,1275.87-1006.33Z" transform="translate(-506.6 1267.13)"/><circle fill="#fff" cx="856.99" cy="264.46" r="42.81"/></svg></div>
+  <h1><span class="b-open">Open</span><span class="b-avo"> Avocado</span></h1>
+  <p class="tagline">An open-source adaptive learning platform and lesson-generation framework.
+  Define what you want to learn, let the system keep evidence of what you know, and generate the next best lesson.</p>
+  <div class="btn-row">
+    <a class="btn btn-primary" href="quickstart.html">Get started</a>
+    <a class="btn btn-secondary" href="architecture.html">How it works</a>
+    <a class="btn btn-secondary" href="https://github.com/frankhli843/openavocado" target="_blank" rel="noopener">View on GitHub</a>
+  </div>
+</section>
+
+<section>
+  <h2>The core idea</h2>
+  <p>Most courses are a fixed list of lessons for an average student. Open Avocado is different: it treats
+  learning as a loop driven by evidence. A learner defines goals and subjects; every answer, code submission,
+  quiz result, and diagnostic becomes a <strong>mastery signal</strong>; and a lesson generator uses that growing
+  evidence to author the single next lesson that closes the most important gap with the least effort.</p>
+  <p>The design goal is to move a learner from <strong>familiarity</strong> (orientation and vocabulary) to
+  <strong>competence</strong> (granular understanding and practice) to <strong>mastery</strong> (synthesis,
+  transfer, and independent creation).</p>
+</section>
+
+<section>
+  <h2>What a lesson contains</h2>
+  <div class="feature">
+    <div class="f"><h3><span class="svg-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 14v-2a8 8 0 0 1 16 0v2"/><rect x="2.5" y="14" width="4" height="6" rx="1.3"/><rect x="17.5" y="14" width="4" height="6" rx="1.3"/></svg></span> Narrated walkthrough</h3><p>A comprehensive audio session with a learner-visible transcript and a synced visual timeline that changes as the audio advances.</p></div>
+    <div class="f"><h3><span class="svg-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10 3h4v3.2a1.8 1.8 0 1 0 3.6 0V6H21v4.4h-.2a1.8 1.8 0 1 0 0 3.6h.2V21h-4.4v-.2a1.8 1.8 0 1 0-3.6 0v.2H10v-3.4a1.8 1.8 0 1 0-3.6 0v-.2H3V13h.2a1.8 1.8 0 1 0 0-3.6H3V3h4.4"/></svg></span> Bespoke interactives</h3><p>Purpose-built, sandboxed visual artifacts for each concept — not generic widgets — rendered from the database and mobile-verified.</p></div>
+    <div class="f"><h3><span class="svg-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 8l-4 4 4 4"/><path d="M15 8l4 4-4 4"/></svg></span> Scaffolded code</h3><p>Browser-run Python (Pyodide) with guided steps, progressive hints, worked examples, and public + hidden tests.</p></div>
+    <div class="f"><h3><span class="svg-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 20V10"/><path d="M10 20V4"/><path d="M16 20v-7"/><path d="M3 20h18"/></svg></span> Adaptive assessment</h3><p>One-question-at-a-time multiple choice plus freeform questions, immediate grading, and requeued misses.</p></div>
+    <div class="f"><h3><span class="svg-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 4 3.5 6v14L9 18l6 2 5.5-2V4L15 6 9 4z"/><path d="M9 4v14"/><path d="M15 6v14"/></svg></span> Knowledge-graph orientation</h3><p>Each lesson opens by showing where it sits in the subject so the learner keeps the end-to-end picture.</p></div>
+    <div class="f"><h3><span class="svg-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 17l6-6 4 4 7-8"/><path d="M17 7h4v4"/></svg></span> Mastery tracking</h3><p>Per-subject mastery scores, tags, difficulty, and progress graphs over time — visible and fed back into generation.</p></div>
+  </div>
+</section>
+
+<section>
+  <h2>Run it your way</h2>
+  <p>Open Avocado separates the <em>app</em> from the <em>lesson generator</em> behind a small adapter interface,
+  so you can plug in whatever produces lessons. Pick the local runtime that fits you:</p>
+  <div class="card-grid">
+    <a class="card" href="run-api-key.html"><div class="ico"><span class="svg-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="8" cy="8" r="4"/><path d="M11 11l8 8"/><path d="M16 16l2-2"/><path d="M18.5 18.5l1.5-1.5"/></svg></span></div><h3>Direct API key <span class="badge badge-ok">ready</span></h3><p>The simplest standalone path. Bring an OpenAI or Google AI Studio key and go.</p></a>
+    <a class="card" href="run-gemmaclaw.html"><div class="ico"><span class="svg-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="6" y="6" width="12" height="12" rx="2"/><path d="M9 2v3M15 2v3M9 19v3M15 19v3M2 9h3M2 15h3M19 9h3M19 15h3"/></svg></span></div><h3>Gemmaclaw <span class="badge badge-partial">partial</span></h3><p>Point at a local, OpenAI-compatible Gemma model gateway. No cloud key required.</p></a>
+    <a class="card" href="run-openclaw.html"><div class="ico"><span class="svg-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="8" width="16" height="11" rx="2.5"/><path d="M12 4v4"/><circle cx="12" cy="3" r="1.2"/><circle cx="9" cy="13" r="1.1"/><circle cx="15" cy="13" r="1.1"/></svg></span></div><h3>OpenClaw <span class="badge badge-ok">ready</span></h3><p>Hand lesson generation to an external agent/task runner via the task adapter.</p></a>
+    <a class="card" href="run-hermes.html"><div class="ico"><span class="svg-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 4h11a2 2 0 0 1 2 2v11a3 3 0 0 1-3 3H7a3 3 0 0 1-3-3V6"/><path d="M4 6a2 2 0 0 1 4 0v3H4z"/><path d="M9 9h7M9 13h7M9 17h4"/></svg></span></div><h3>Hermes <span class="badge badge-planned">planned</span></h3><p>Wire a local Hermes agent runtime through the agent-harness command adapter.</p></a>
+  </div>
+</section>
+
+<section>
+  <h2>Explore the docs</h2>
+  <div class="card-grid">
+    <a class="card" href="quickstart.html"><div class="ico"><span class="svg-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M13 2 4 14h6l-1 8 9-12h-6l1-8z"/></svg></span></div><h3>Quick Start</h3><p>Install, seed a database, and run the app locally in a few commands.</p></a>
+    <a class="card" href="architecture.html"><div class="ico"><span class="svg-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="10" width="8" height="11" rx="1"/><rect x="13" y="4" width="8" height="17" rx="1"/><path d="M6 14h2M6 17h2M16 8h2M16 12h2M16 16h2"/></svg></span></div><h3>Architecture</h3><p>Core entities, the evidence loop, and the generation/completion flow.</p></a>
+    <a class="card" href="lesson-authoring.html"><div class="ico"><span class="svg-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 5l4 4L8 20l-4 1 1-4L16 5z"/><path d="M13.5 6.5l4 4"/></svg></span></div><h3>Lesson Authoring</h3><p>The generic agent/skill model, quality bar, and separate-QA workflow.</p></a>
+    <a class="card" href="configuration.html"><div class="ico"><span class="svg-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="3.2"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3M4.9 4.9l2.1 2.1M17 17l2.1 2.1M19.1 4.9 17 7M7 17l-2.1 2.1"/></svg></span></div><h3>Configuration</h3><p>Environment variables, providers, adapters, and API-key handling.</p></a>
+    <a class="card" href="contributing.html"><div class="ico"><span class="svg-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 3v7"/><path d="M18 21v-7"/><circle cx="6" cy="12" r="2.5"/><circle cx="18" cy="12" r="2.5"/><path d="M8.3 11l7.4 2"/></svg></span></div><h3>Contributing</h3><p>How to set up, test, and propose changes.</p></a>
+    <a class="card" href="deployment.html"><div class="ico"><span class="svg-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3c3 1.5 5 4.5 5 8l-2.5 6h-5L7 11c0-3.5 2-6.5 5-8z"/><circle cx="12" cy="10" r="1.6"/><path d="M9 18l-2 3M15 18l2 3"/></svg></span></div><h3>Deployment</h3><p>Serving the app and publishing this site to GitHub Pages.</p></a>
+  </div>
+</section>
+
+<section>
+  <h2>A look at the product</h2>
+  <p class="subtle">Screenshots are captured from synthetic seed data only. Real, privacy-safe product screenshots
+  are added as the public demo matures.</p>
+  <div class="shot-grid">
+    <div class="shot">Subject dashboard — mastery &amp; progress</div>
+    <div class="shot">Lesson workspace — audio, interactives, code</div>
+    <div class="shot">Adaptive quiz — one question at a time</div>
+    <div class="shot">Mobile (390px) — responsive lesson view</div>
+  </div>
+</section>
+</main>
+<footer><div class="footer-inner">
+<p><strong>Open Avocado</strong> — open-source adaptive learning platform &amp; lesson-generation framework.</p>
+<p><a href="https://github.com/frankhli843/openavocado">GitHub repository</a> · <a href="https://frankhli843.github.io/openavocado/">Live site</a> · <a href="privacy.html">Privacy &amp; data boundaries</a></p>
+<p class="subtle">Built with Next.js, React, TypeScript, and SQLite. No personal data or credentials are stored in this repository.</p>
+</div></footer>
+</body>
+</html>

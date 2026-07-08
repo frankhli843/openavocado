@@ -54,7 +54,7 @@ export function generateInitialAssessment(
       `INSERT INTO lessons
          (subject_id, title, description, status, sequence_number, goals, tags,
           generated_by, generator_version)
-       VALUES (?, ?, ?, 'queued', 0, ?, ?, 'prodavo-local-queue/v1', '1.0.0')`
+       VALUES (?, ?, ?, 'queued', 0, ?, ?, 'openavocado-local-queue/v1', '1.0.0')`
     )
     .run(event.subject_id, title, description, goals, tags);
 

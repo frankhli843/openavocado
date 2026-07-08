@@ -1,5 +1,5 @@
 /**
- * Integration tests for the AvocadoCore database schema and business logic.
+ * Integration tests for the Open Avocado database schema and business logic.
  *
  * Uses better-sqlite3 with an in-memory database so tests run fast, stay
  * isolated, and never touch the real data/avocadocore.db file.

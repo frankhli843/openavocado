@@ -1,6 +1,6 @@
 # Lesson Authoring Guide (quality bar for generated lessons)
 
-This is the standard any agent or skill must meet when generating AvocadoCore
+This is the standard any agent or skill must meet when generating Open Avocado
 lessons. It describes the required content, the safety boundaries, and the
 pedagogical rules. The machine-checked version of these rules lives in
 `src/lib/lesson-generator/contract.ts` (`validateGeneratedContent`) and
@@ -29,7 +29,7 @@ A lesson must be enriched, not thin. These are the durable, non-negotiable rules
 every lesson-generation agent/skill must satisfy. The machine-checked subset is
 enforced by `validateGeneratedContent`; the rest is a hard authoring rule.
 
-- **Read the main lesson-authoring skill first.** Any Dora task that generates a
+- **Read the main lesson-authoring skill first.** Any tracked generation task that generates a
   first lesson for a new subject, a next lesson after `lesson.completed`, a
   replacement after `lesson.discarded`, or a manual backfill must start by
   reading `skills/avocadocore-lesson-authoring/SKILL.md`. That skill is the
@@ -53,7 +53,7 @@ enforced by `validateGeneratedContent`; the rest is a hard authoring rule.
   how it changes, and why that change improves the next prediction, decision,
   or action. A lesson that only lists operations is not ready.
 - **No undocumented assumptions.** Do not assume a domain fact, prerequisite,
-  learner weakness, or next-step need unless it is documented in AvocadoCore
+  learner weakness, or next-step need unless it is documented in Open Avocado
   context, visible in the local SQLite learner evidence, or verified and then
   recorded in task notes / lesson metadata.
 - **Planning stage before authoring.** Before writing lesson content, do a
@@ -180,7 +180,7 @@ enforced by `validateGeneratedContent`; the rest is a hard authoring rule.
   caption.** The first audio activity must be detailed enough for the learner
   to understand the high-level picture, the why, and concrete worked examples
   without looking at the screen. Normal lessons must target at least 15 minutes
-  of substantive Doraemon-voice audio, which means at least 2,700 words in the
+  of substantive narrated audio, which means at least 2,700 words in the
   source script. Do not use overview audio to enumerate lesson parts, exercises,
   practice, assessments, or page structure. The transcript must read like a
   conversational two-host podcast lesson with clear male/female speaker labels
@@ -235,11 +235,11 @@ enforced by `validateGeneratedContent`; the rest is a hard authoring rule.
   structural, references page sections/practice, or sounds like a lesson plan
   instead of people teaching, QA sends it back for revision and records the
   requested improvements.
-- **Local model boundary.** Local AvocadoCore may use a low-latency local model
+- **Local model boundary.** A local Open Avocado deployment may use a low-latency local model
   for instant learner-facing paths such as chat, short-answer grading,
   code-submission feedback, hints, and immediate formative feedback. Do not use
   that local feedback model as the lesson author. Lesson generation and repair
-  must go through the AvocadoCore / Dora lesson-authoring flow, an approved
+  must go through the Open Avocado lesson-authoring flow, an approved
   harness, or a controlled backfill script that validates and writes real lesson
   content.
 - **First-class written teaching text** (`reading`), not a transcript dump.
@@ -793,14 +793,14 @@ deployment configuration.
 
 ## Lesson generation workflow (every new lesson)
 
-Every generated lesson must be tracked as a Dora task and pass a manual QA
+Every generated lesson must be tracked as a tracked generation task and pass a manual QA
 review before the learner sees it. Machine validators catch structural problems;
 a human reviewer catches content quality problems (thin explanations, bad
 examples, wrong difficulty calibration, audio that sounds robotic or truncated).
 
 ### Required steps
 
-1. **Create a Dora task** before generation starts. Title: `Generate lesson N
+1. **Create a tracked generation task** before generation starts. Title: `Generate lesson N
    for <subject> — <learner>`. The task acceptance criteria must start with
    `Read skills/avocadocore-lesson-authoring/SKILL.md before doing any lesson
    work`, then reference this authoring guide and the `validateGeneratedContent`
@@ -813,7 +813,7 @@ examples, wrong difficulty calibration, audio that sounds robotic or truncated).
    `dora-task` adapter dispatched from `CompletionHookAdapter` on lesson
    completion). The generator receives the enriched `LessonCompletedEvent` and
    LESSON_QUALITY_BAR_PROMPT. For a new-subject first lesson, use equivalent
-   subject + learner-profile evidence and create the same style of Dora task;
+   subject + learner-profile evidence and create the same style of tracked generation task;
    do not invent a separate, weaker prompt.
 
 3. **Run the machine checks** before QA:
@@ -866,12 +866,12 @@ examples, wrong difficulty calibration, audio that sounds robotic or truncated).
    - Check the knowledge graph orientation. Does it accurately reflect what this
      lesson covers vs. previews vs. leaves for later?
 
-5. **Approve or iterate.** If QA passes, mark the Dora task complete with a
+5. **Approve or iterate.** If QA passes, mark the tracked generation task complete with a
    summary of what was reviewed. If QA fails, note the specific problems in the
    task and regenerate the affected sections.
 
 6. **Activate the lesson.** Set `lessons.status` to the appropriate state so the
-   learner can access it. The Dora task is the evidence trail; do not activate
+   learner can access it. The tracked generation task is the evidence trail; do not activate
    without a completed task.
 
 ### Adapters and deployment
@@ -879,7 +879,7 @@ examples, wrong difficulty calibration, audio that sounds robotic or truncated).
 The `LessonGeneratorAdapter` interface (`src/lib/lesson-generator/contract.ts`)
 decouples generation from the app. The `dora-task` adapter
 (`src/lib/adapters/dora-task.ts`) is the reference implementation for
-Doramon-backed deployments: it creates a todo task with full learner evidence
+external agent or task-runner deployments: it creates a todo task with full learner evidence
 as acceptance criteria and includes `LESSON_QUALITY_BAR_PROMPT` verbatim so
 the generator agent sees the requirements directly.
 
@@ -910,12 +910,12 @@ template-fill or autogeneration-only output passes QA. Specifically:
 - **Interactives must be designed, not defaulted.** Each interactive section must have a
   specific learning objective and a learner-controlled variable that reveals a consequence.
   An interactive that merely displays a static figure is not interactive.
-- **"I generated this" is not evidence.** The Dora task completion evidence must show what
+- **"I generated this" is not evidence.** The tracked generation task completion evidence must show what
   the agent verified, not just that it ran a generator. See the acceptance criteria template below.
 
-### New lesson Dora task — acceptance criteria template
+### New lesson tracked generation task — acceptance criteria template
 
-When creating a Dora task for a new lesson (whether the first lesson for a subject, a
+When creating a tracked generation task for a new lesson (whether the first lesson for a subject, a
 replacement, or an ad-hoc addition), the task acceptance criteria must include all of the
 following. Copy and fill in this template:
 
@@ -934,7 +934,7 @@ GENERATION:
 - Use the enriched LessonCompletedEvent / LessonDiscardedEvent context (or equivalent
   subject + learner state) as primary input.
 - Query the local SQLite evidence first. Do not assume learner weaknesses,
-  prerequisites, or domain facts unless they are documented in AvocadoCore,
+  prerequisites, or domain facts unless they are documented in Open Avocado,
   visible in SQLite evidence, or verified and recorded in task notes / metadata.
 - The AI author must manually decide the lesson scope, knowledge graph,
   metaphors, examples, interactives, written explanation, audio walkthrough,
@@ -999,7 +999,7 @@ COMPLETION EVIDENCE:
 - Confirmation that lessons.status was set to the appropriate active state.
 ```
 
-This template must be referenced (not paraphrased) in the Dora task acceptance criteria.
+This template must be referenced (not paraphrased) in the tracked generation task acceptance criteria.
 Reviewers should verify the template was followed, not just that output was produced.
 
 ### What "separate QA" means

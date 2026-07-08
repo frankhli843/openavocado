@@ -1,5 +1,5 @@
 /**
- * AvocadoCore interactive widget schema.
+ * Open Avocado interactive widget schema.
  *
  * A lesson "interactive" activity carries a structured, versioned WidgetSpec
  * instead of free-form code. The learner-facing app instantiates only one

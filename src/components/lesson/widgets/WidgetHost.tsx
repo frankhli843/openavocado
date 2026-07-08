@@ -3,7 +3,7 @@
 /**
  * Resolves a validated WidgetSpec to a concrete renderer.
  *
- * AvocadoCore interactive components are DB-backed bespoke artifacts only.
+ * Open Avocado interactive components are DB-backed bespoke artifacts only.
  * Registered widgets and declarative specs were removed from the runtime path
  * because they encourage reusable templates instead of lesson-specific code.
  *
@@ -70,7 +70,7 @@ function UnsupportedWidget({ errors, unsupported }: { errors: string[]; unsuppor
         {unsupported ? "Unsupported interactive widget" : "This interactive widget could not be loaded"}
       </div>
       <p className="text-amber-700 mb-2">
-        AvocadoCore only renders approved DB-backed bespoke visual artifacts. Regenerate or backfill this lesson
+        Open Avocado only renders approved DB-backed bespoke visual artifacts. Regenerate or backfill this lesson
         with an approved visual_artifacts slug.
       </p>
       <ul className="list-disc pl-5 space-y-0.5 text-xs text-amber-700">

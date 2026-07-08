@@ -6,6 +6,9 @@
 
 # Local learner data and generated artifacts
 data/
+# Local QA snapshots / scratch state (screenshots, DOM dumps, eval scratch).
+# May contain local host addresses or in-progress work — never commit.
+state/
 # Cloned source repos used only as import inputs (e.g. code/algorithms for the
 # algo-repo history import). Large working trees; never commit.
 /code/

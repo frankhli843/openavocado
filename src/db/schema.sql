@@ -1,4 +1,4 @@
--- AvocadoCore SQLite Schema
+-- Open Avocado SQLite Schema
 -- Multi-user adaptive learning platform
 -- Runtime DB lives in data/ (gitignored). Only schema/migrations are committed.
 

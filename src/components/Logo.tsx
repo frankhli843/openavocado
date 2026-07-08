@@ -1,12 +1,11 @@
 import type { CSSProperties } from "react";
 
 /**
- * AvocadoCore brand mark.
+ * Open Avocado brand mark.
  *
- * Vector avocado mark derived from the original AvocadoCore brand asset
- * (Avocado_logo.svg in Google Drive): exact teardrop geometry and palette
- * (skin #399103, flesh #f8ee7b, white pit). The same mark is used for the
- * favicon (src/app/icon.svg); the full square "AVO" badge is used for the
+ * Vector avocado mark: teardrop geometry and palette (skin #399103,
+ * flesh #f8ee7b, white pit). The same mark is used for the favicon
+ * (src/app/icon.svg); the full square badge is used for the
  * apple-touch and PWA manifest icons.
  */
 export function AvocadoMark({ size = 28, style }: { size?: number; style?: CSSProperties }) {
@@ -16,7 +15,7 @@ export function AvocadoMark({ size = 28, style }: { size?: number; style?: CSSPr
       height={size}
       viewBox="635 -20 445 445"
       role="img"
-      aria-label="AvocadoCore"
+      aria-label="Open Avocado"
       style={style}
     >
       <path
@@ -39,7 +38,7 @@ export function Logo({ size = 22 }: { size?: number }) {
     <span className="inline-flex items-center gap-2 select-none">
       <AvocadoMark size={size} />
       <span className="font-semibold text-gray-900 tracking-tight">
-        Avocado<span className="text-green-700">Core</span>
+        Open<span className="text-green-700"> Avocado</span>
       </span>
     </span>
   );

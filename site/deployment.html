@@ -1,0 +1,64 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Deployment — Open Avocado</title>
+<meta name="description" content="Serve the Next.js app and publish this documentation site to GitHub Pages.">
+<meta property="og:title" content="Deployment — Open Avocado">
+<meta property="og:description" content="Serve the Next.js app and publish this documentation site to GitHub Pages.">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://frankhli843.github.io/openavocado/">
+<meta name="twitter:card" content="summary">
+<link rel="icon" type="image/svg+xml" href="assets/favicon.svg">
+<link rel="stylesheet" href="assets/styles.css">
+</head>
+<body>
+<nav class="topnav"><div class="topnav-inner">
+<a class="brand" href="index.html"><svg viewBox="635 -20 445 445" role="img" aria-label="Open Avocado" width="22" height="22"><path fill="#399103" d="M1232.67-1000.76a125.34,125.34,0,0,1,1-13c3.4-33,13.92-86.75,57.37-160.78,33-56.25,49.52-84.38,70.72-85.09,26.54-.89,46.12,32.06,79.12,87.6,39.58,66.6,49.47,123.11,52.53,154.17.83,8.43,1.25,12.64,1.12,17.1-1.53,52.59-48.78,130.92-130.92,130.92A130.92,130.92,0,0,1,1232.67-1000.76Z" transform="translate(-506.6 1267.13)"/><path fill="#f8ee7b" d="M1275.87-1006.33a84,84,0,0,1,.65-8.7c2.28-22.12,9.33-58.12,38.44-107.73,22.12-37.69,33.18-56.53,47.38-57,17.78-.6,30.9,21.48,53,58.69,26.52,44.62,33.14,82.48,35.2,103.29a90.81,90.81,0,0,1,.75,11.45c-1,35.23-32.68,87.71-87.71,87.71A87.71,87.71,0,0,1,1275.87-1006.33Z" transform="translate(-506.6 1267.13)"/><circle fill="#fff" cx="856.99" cy="264.46" r="42.81"/></svg><span><span class="b-open">Open</span><span class="b-avo"> Avocado</span></span></a>
+<div class="nav-links"><a href="index.html">Home</a><a href="quickstart.html">Quick Start</a><a href="architecture.html">Architecture</a><a href="lesson-authoring.html">Lesson Authoring</a><a href="configuration.html">Configuration</a><a href="contributing.html">Contributing</a><a href="deployment.html" class="active">Deploy</a><a href="privacy.html">Privacy</a><a class="gh" href="https://github.com/frankhli843/openavocado" target="_blank" rel="noopener">GitHub</a></div>
+</div></nav>
+<main class="wrap">
+<h1>Deployment</h1>
+<p class="lead">Two independent things ship here: the <strong>app</strong> (a Next.js server with a SQLite database)
+and this <strong>documentation site</strong> (static files on GitHub Pages).</p>
+
+<h2>The app</h2>
+<p>The app needs a Node runtime and a writable data directory. A production run is a standard Next.js build + serve:</p>
+<pre><code>pnpm install --frozen-lockfile
+pnpm build
+AVOCADOCORE_AUTH_REQUIRED=true \
+AVOCADOCORE_SESSION_SECRET=&lt;64-hex&gt; \
+pnpm start        # serves on $PORT (default 3000)</code></pre>
+<ul>
+  <li>Run behind a supervisor (systemd, pm2, a container) that restarts on failure and rebuilds before restart.</li>
+  <li>Use a <strong>clean production database</strong>, separate from any local/dev DB. Persist <code>data/</code> and
+  <code>runtime_artifacts/</code> outside the image.</li>
+  <li>Keep all secrets in the environment, never in git. Put a reverse proxy in front for HTTPS.</li>
+</ul>
+<p>A generic, privacy-safe pattern for keeping a supervised local demo online (service + safe update + health check)
+is described in <code>docs/local-demo.md</code>.</p>
+
+<h2>This site → GitHub Pages</h2>
+<p>The site is plain static HTML/CSS under <code>site/</code> — no bundler. It is regenerated with a small script and
+published by a GitHub Actions workflow that uploads <code>site/</code> as a Pages artifact.</p>
+<pre><code># Regenerate the static site after editing content:
+python3 scripts/site/generate-site.py
+
+# Preview locally:
+python3 -m http.server -d site 8000   # http://localhost:8000
+</code></pre>
+<p>The workflow (<code>.github/workflows/deploy-site.yml</code>) runs on pushes to the default branch that touch
+<code>site/**</code> or the generator, and on manual dispatch. To turn the live site on, in the repository:
+<strong>Settings → Pages → Build and deployment → Source: GitHub Actions</strong>. The expected live URL is:</p>
+<pre><code>https://frankhli843.github.io/openavocado/</code></pre>
+<p>Because the site uses relative links, it works correctly under the <code>/openavocado/</code> Pages subpath with no
+extra configuration. Set the repository homepage to that URL once the first deploy succeeds.</p>
+</main>
+<footer><div class="footer-inner">
+<p><strong>Open Avocado</strong> — open-source adaptive learning platform &amp; lesson-generation framework.</p>
+<p><a href="https://github.com/frankhli843/openavocado">GitHub repository</a> · <a href="https://frankhli843.github.io/openavocado/">Live site</a> · <a href="privacy.html">Privacy &amp; data boundaries</a></p>
+<p class="subtle">Built with Next.js, React, TypeScript, and SQLite. No personal data or credentials are stored in this repository.</p>
+</div></footer>
+</body>
+</html>

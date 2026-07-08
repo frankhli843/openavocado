@@ -1,4 +1,4 @@
-// ─── Core domain types for AvocadoCore ───────────────────────────────────────
+// ─── Core domain types for Open Avocado ───────────────────────────────────────
 
 // Interactive widget schema types live in src/lib/widgets and are re-exported
 // here so the generator contract and consumers have a single import surface.
@@ -81,7 +81,7 @@ export type ProgressMetric =
 export type CompletionAdapter = "dora-task" | "webhook" | "local-queue" | "agent-harness" | "noop";
 
 /**
- * Richer job status for the AvocadoCore-native harness workflow.
+ * Richer job status for the Open Avocado-native harness workflow.
  * Stored in next_lesson_jobs.harness_status alongside the legacy status column.
  */
 export type HarnessJobStatus =
@@ -729,7 +729,7 @@ export interface LessonDiscardedEvent {
  * A regeneration hook adapter.
  * Receives a lesson.discarded event and triggers replacement lesson generation.
  * Generic adapters (noop, local-queue, webhook) are available; the dora-task
- * adapter creates a Doramon next-lesson task that explicitly considers criteria.
+ * adapter creates a next-lesson task that explicitly considers criteria.
  */
 export interface RegenerationHookAdapter {
   name: CompletionAdapter; // reuses same adapter name set

@@ -9,7 +9,7 @@
  *
  * Features:
  * - Python syntax highlighting (@codemirror/lang-python)
- * - Light editor theme, matching AvocadoCore's lesson surface
+ * - Light editor theme, matching the Open Avocado lesson surface
  * - Auto-indentation (built into CodeMirror's Python extension)
  * - Bracket/paren matching and closing
  * - Tab = 4 spaces (Python convention, via custom keymap)

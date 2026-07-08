@@ -465,7 +465,7 @@ export function buildPhaseEvidencePacket(
     .all(learnerId) as Array<Record<string, unknown>>;
 
   const packet = {
-    task: "Decide the learner phase and next lesson planning direction from all available AvocadoCore evidence.",
+    task: "Decide the learner phase and next lesson planning direction from all available Open Avocado evidence.",
     subject: {
       id: subjectId,
       title: subject.title,

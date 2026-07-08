@@ -1,7 +1,7 @@
 /**
  * Next.js middleware for authentication gating.
  * Activated only when AVOCADOCORE_AUTH_REQUIRED=true.
- * frankavo local runs are unaffected (env var unset or false).
+ * Local runs are unaffected (env var unset or false).
  *
  * NOTE: This middleware runs in the Next.js Edge Runtime which does NOT support
  * Node.js crypto. Session HMAC verification happens in Node.js API routes via

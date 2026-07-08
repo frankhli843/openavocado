@@ -5,8 +5,9 @@ import { Disclaimer } from "@/components/Disclaimer";
 import { GuestAccountBanner } from "@/components/GuestAccountBanner";
 
 export const metadata: Metadata = {
-  title: "AvocadoCore — Adaptive Learning",
-  description: "Adaptive learning platform. Multi-user, mastery-driven, locally-hosted.",
+  title: "Open Avocado — Adaptive Learning",
+  description:
+    "Open-source adaptive learning platform and lesson-generation framework. Multi-user, mastery-driven, locally-hosted.",
 };
 
 export default function RootLayout({

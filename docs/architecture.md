@@ -22,11 +22,11 @@ Do not commit:
 
 ## Application Stack
 
-AvocadoCore should use Next.js, React, and TypeScript.
+Open Avocado uses Next.js, React, and TypeScript.
 
 ## Multi-User Model
 
-AvocadoCore is multi-user from day one. The data model should separate account/user identity from learner profile and learning progress.
+Open Avocado is multi-user from day one. The data model should separate account/user identity from learner profile and learning progress.
 
 Core records should be scoped so multiple users can have their own subjects, goals, lessons, attempts, mastery signals, tags, generated artifacts, and progress history. Even if a deployment starts with one learner, the schema should not assume a single global learner.
 
@@ -169,7 +169,7 @@ Subjects support reversible archive/restore. Archiving sets `subjects.status = '
 
 ## Lesson Generator Skill
 
-Lesson generation should be a reusable skill that any agent can leverage to build lesson content for a particular page or lesson slot in the AvocadoCore framework.
+Lesson generation should be a reusable skill that any agent can leverage to build lesson content for a particular page or lesson slot in the Open Avocado framework.
 
 The app should provide a structured page/lesson contract. The skill should return structured lesson content, including audio script, interactive spec, Python/code exercise, tests, assessment, tags, mastery targets, and metadata.
 
@@ -181,7 +181,7 @@ The core app emits a `lesson.completed` event after manual completion. A deploym
 
 - `webhook`: POST the event to a configured endpoint.
 - `local-queue`: enqueue the event in local storage.
-- `dora-task`: create a Doramon next-lesson task through a configured endpoint or the local Dora todo CLI. This is the default in Frank's deployment.
+- `dora-task`: hand the event to an external agent task runner (for example an OpenClaw-style task hook) through a configured endpoint or a local task CLI. Used by deployments that generate lessons with a separate agent or task system.
 - `noop`: record completion without external automation.
 
 Adapters are responsible for transforming the event into their own task format. The shareable repo should contain only generic adapter interfaces and safe examples. Deployment-specific channels, user IDs, credentials, generated lesson data, and private learner configuration belong in gitignored local config.
@@ -200,10 +200,11 @@ Recommended event fields:
 - misunderstandings to repair
 - next curriculum targets
 
-The current `lesson.completed` payload is enriched so next-lesson generation can be **adaptive to evidence** rather than a generic course step. Beyond the basics it carries: subject goals + learner criteria, the subject AI workpad summary, the quiz result, **tag + difficulty performance**, the freeform next-lesson diagnostics, recent misconceptions, completed + discarded lesson history, the learner-profile `config`, and a cross-subject mastery snapshot. The `dora-task` adapter prompt is structured to use this in priority order: subject-specific evidence first; profile config and cross-subject history only when they help. Its stated pedagogical goal is to **find foundational weaknesses and bridge them with the least learner effort**, advancing the curriculum only where the foundation is solid.
+The current `lesson.completed` payload is enriched so next-lesson generation can be **adaptive to evidence** rather than a generic course step. Beyond the basics it carries: subject goals + learner criteria, the subject AI workpad summary, the quiz result, **tag + difficulty performance**, the freeform next-lesson diagnostics, recent misconceptions, completed + discarded lesson history, the learner-profile `config`, and a cross-subject mastery snapshot. The external task-runner adapter prompt is structured to use this in priority order: subject-specific evidence first; profile config and cross-subject history only when they help. Its stated pedagogical goal is to **find foundational weaknesses and bridge them with the least learner effort**, advancing the curriculum only where the foundation is solid.
 
-For Doramon deployments, any task that generates a lesson must begin by reading
-`skills/avocadocore-lesson-authoring/SKILL.md`. This applies to first lessons
+When an external agent or task runner generates lessons, every generation task
+must begin by reading the lesson-authoring skill
+(`skills/avocadocore-lesson-authoring/SKILL.md`). This applies to first lessons
 after a new subject is added, next lessons after `lesson.completed`,
 replacement lessons after `lesson.discarded`, and manual backfills. Do not add a
 new-subject generation trigger that uses a separate weaker prompt; it must point

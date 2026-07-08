@@ -1,0 +1,80 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Configuration — Open Avocado</title>
+<meta name="description" content="Environment variables, completion adapters, providers, and server-side API-key handling.">
+<meta property="og:title" content="Configuration — Open Avocado">
+<meta property="og:description" content="Environment variables, completion adapters, providers, and server-side API-key handling.">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://frankhli843.github.io/openavocado/">
+<meta name="twitter:card" content="summary">
+<link rel="icon" type="image/svg+xml" href="assets/favicon.svg">
+<link rel="stylesheet" href="assets/styles.css">
+</head>
+<body>
+<nav class="topnav"><div class="topnav-inner">
+<a class="brand" href="index.html"><svg viewBox="635 -20 445 445" role="img" aria-label="Open Avocado" width="22" height="22"><path fill="#399103" d="M1232.67-1000.76a125.34,125.34,0,0,1,1-13c3.4-33,13.92-86.75,57.37-160.78,33-56.25,49.52-84.38,70.72-85.09,26.54-.89,46.12,32.06,79.12,87.6,39.58,66.6,49.47,123.11,52.53,154.17.83,8.43,1.25,12.64,1.12,17.1-1.53,52.59-48.78,130.92-130.92,130.92A130.92,130.92,0,0,1,1232.67-1000.76Z" transform="translate(-506.6 1267.13)"/><path fill="#f8ee7b" d="M1275.87-1006.33a84,84,0,0,1,.65-8.7c2.28-22.12,9.33-58.12,38.44-107.73,22.12-37.69,33.18-56.53,47.38-57,17.78-.6,30.9,21.48,53,58.69,26.52,44.62,33.14,82.48,35.2,103.29a90.81,90.81,0,0,1,.75,11.45c-1,35.23-32.68,87.71-87.71,87.71A87.71,87.71,0,0,1,1275.87-1006.33Z" transform="translate(-506.6 1267.13)"/><circle fill="#fff" cx="856.99" cy="264.46" r="42.81"/></svg><span><span class="b-open">Open</span><span class="b-avo"> Avocado</span></span></a>
+<div class="nav-links"><a href="index.html">Home</a><a href="quickstart.html">Quick Start</a><a href="architecture.html">Architecture</a><a href="lesson-authoring.html">Lesson Authoring</a><a href="configuration.html" class="active">Configuration</a><a href="contributing.html">Contributing</a><a href="deployment.html">Deploy</a><a href="privacy.html">Privacy</a><a class="gh" href="https://github.com/frankhli843/openavocado" target="_blank" rel="noopener">GitHub</a></div>
+</div></nav>
+<main class="wrap">
+<h1>Configuration</h1>
+<p class="lead">Open Avocado is configured through environment variables (all prefixed <code>AVOCADOCORE_</code> for
+backward compatibility) and per-user provider settings in the app. Secrets stay server-side and out of git.</p>
+
+<div class="note"><p>The <code>AVOCADOCORE_</code> prefix is an internal compatibility name kept so existing
+deployments and service definitions keep working. The public product name is <strong>Open Avocado</strong>; the
+environment prefix is intentionally left unchanged to avoid breaking configured installs.</p></div>
+
+<h2>Core</h2>
+<div class="table-wrap"><table>
+<tr><th>Variable</th><th>Default</th><th>Purpose</th></tr>
+<tr><td><code>AVOCADOCORE_DB_PATH</code></td><td><code>data/avocadocore.db</code></td><td>SQLite file path (directory auto-created).</td></tr>
+<tr><td><code>AVOCADOCORE_RUNTIME_ROOT</code></td><td>repo <code>runtime_artifacts/</code></td><td>Where generated audio and artifacts are stored.</td></tr>
+<tr><td><code>PORT</code></td><td><code>3000</code></td><td>Port for <code>next start</code>.</td></tr>
+</table></div>
+
+<h2>Authentication</h2>
+<div class="table-wrap"><table>
+<tr><th>Variable</th><th>Purpose</th></tr>
+<tr><td><code>AVOCADOCORE_AUTH_REQUIRED</code></td><td><code>true</code> to require login for all pages/APIs. Leave <code>false</code> for a trusted local run.</td></tr>
+<tr><td><code>AVOCADOCORE_SESSION_SECRET</code></td><td>Secret used to sign session tokens. Required when auth is on. Generate a 64-char hex string.</td></tr>
+</table></div>
+<p>When auth is enabled, prefer passkeys/WebAuthn; username/password includes rate limiting and lockout. Never commit
+bootstrap credentials.</p>
+
+<h2>Lesson generation</h2>
+<div class="table-wrap"><table>
+<tr><th>Variable</th><th>Purpose</th></tr>
+<tr><td><code>AVOCADOCORE_COMPLETION_ADAPTER</code></td><td>How lessons are generated: <code>noop</code>, <code>local-queue</code>, <code>webhook</code>, <code>dora-task</code>, or <code>agent-harness</code>.</td></tr>
+<tr><td><code>AVOCADOCORE_WEBHOOK_URL</code></td><td>Endpoint for the <code>webhook</code> adapter.</td></tr>
+<tr><td><code>AVOCADOCORE_DORA_ENDPOINT</code> / <code>AVOCADOCORE_DORA_TODO_CLI</code> / <code>AVOCADOCORE_DORA_PROJECT</code></td><td>Delivery target for the external task-runner (<code>dora-task</code>) adapter.</td></tr>
+<tr><td><code>AVOCADOCORE_AGENT_HARNESS_COMMAND</code> / <code>AVOCADOCORE_AGENT_HARNESS_TIMEOUT_MS</code></td><td>Command + timeout for the <code>agent-harness</code> adapter.</td></tr>
+</table></div>
+
+<h2>Providers &amp; API keys</h2>
+<p>Two ways to supply model credentials — keys are always kept server-side:</p>
+<ul>
+  <li><strong>Per-user, in-app:</strong> Settings → Providers stores an encrypted key in <code>user_provider_configs</code>
+  (encrypted with <code>AVOCADOCORE_PROVIDER_KEY_SECRET</code>); the raw key is never returned by the API.</li>
+  <li><strong>Environment:</strong> <code>OPENAI_API_KEY</code>, <code>GOOGLE_AI_STUDIO_API_KEY</code>, and
+  <code>AVOCADOCORE_DEFAULT_PROVIDER</code> for a single-tenant install.</li>
+</ul>
+<div class="table-wrap"><table>
+<tr><th>Variable</th><th>Purpose</th></tr>
+<tr><td><code>AVOCADOCORE_DEFAULT_PROVIDER</code></td><td>Default model provider (e.g. <code>openai</code>, <code>google-ai-studio</code>).</td></tr>
+<tr><td><code>AVOCADOCORE_FEEDBACK_PROVIDER</code> / <code>_BASE_URL</code> / <code>_MODEL</code></td><td>Provider for instant learner feedback (grading, hints, code feedback) — point at a local OpenAI-compatible model for a fully local run.</td></tr>
+<tr><td><code>AVOCADOCORE_ACP_ENDPOINT</code> / <code>_MODEL</code> / <code>_TOKEN</code></td><td>OpenAI-compatible endpoint for question rephrasing and lightweight generation.</td></tr>
+<tr><td><code>OPENAI_API_KEY</code></td><td>Enables OpenAI TTS for narration; without it, an offline <code>espeak-ng</code> + <code>ffmpeg</code> voice is used.</td></tr>
+</table></div>
+<p>A copyable <code>.env.example</code> ships in the repository. Copy it to <code>.env.local</code> (gitignored) and
+fill in what your runtime needs. See the four <a href="quickstart.html#runtimes">runtime guides</a> for exact recipes.</p>
+</main>
+<footer><div class="footer-inner">
+<p><strong>Open Avocado</strong> — open-source adaptive learning platform &amp; lesson-generation framework.</p>
+<p><a href="https://github.com/frankhli843/openavocado">GitHub repository</a> · <a href="https://frankhli843.github.io/openavocado/">Live site</a> · <a href="privacy.html">Privacy &amp; data boundaries</a></p>
+<p class="subtle">Built with Next.js, React, TypeScript, and SQLite. No personal data or credentials are stored in this repository.</p>
+</div></footer>
+</body>
+</html>

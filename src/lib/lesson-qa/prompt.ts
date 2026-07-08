@@ -96,7 +96,7 @@ function renderFlags(flags: PreScreenFlag[]): string {
     .join("\n");
 }
 
-const REVIEWER_INSTRUCTIONS = `You are a rigorous semantic QA reviewer for AvocadoCore, an adaptive learning system. A lesson has just been generated. Your job is to decide whether its content is good enough to show a learner. You evaluate FOUR quality dimensions and back every judgement with a direct quote from the content below.
+const REVIEWER_INSTRUCTIONS = `You are a rigorous semantic QA reviewer for Open Avocado, an adaptive learning system. A lesson has just been generated. Your job is to decide whether its content is good enough to show a learner. You evaluate FOUR quality dimensions and back every judgement with a direct quote from the content below.
 
 Evaluate:
 

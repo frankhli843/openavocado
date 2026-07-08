@@ -162,7 +162,7 @@ export function seedDatabase(): void {
         1,
         JSON.stringify(["Understand P(A|B)", "Calculate conditional probabilities from frequency data", "Recognize common misconceptions"]),
         JSON.stringify(["conditional-probability", "foundations"]),
-        "doramon-lesson-generator/v1"
+        "openavocado-seed/v1"
       )
   ).lastInsertRowid as number;
   db.prepare("INSERT OR IGNORE INTO lesson_tags (lesson_id, tag_id) VALUES (?, ?)").run(lesson1Id, conceptTagId);
@@ -359,7 +359,7 @@ total = 1000
         2,
         JSON.stringify(["Derive Bayes' theorem from conditional probability", "See why rare-disease positives are usually false alarms", "Implement the posterior calculation in Python"]),
         JSON.stringify(["bayes-theorem", "classification"]),
-        "doramon-lesson-generator/v2"
+        "openavocado-seed/v2"
       )
   ).lastInsertRowid as number;
   db.prepare("INSERT OR IGNORE INTO lesson_tags (lesson_id, tag_id) VALUES (?, ?)").run(lesson2Id, bayesTagId);
@@ -516,7 +516,7 @@ result = None
         1,
         JSON.stringify(["Understand supply/demand mechanics", "Model equilibrium computationally", "See how a tax splits between buyers and sellers"]),
         JSON.stringify(["supply-demand", "market-equilibrium"]),
-        "doramon-lesson-generator/v2"
+        "openavocado-seed/v2"
       )
   ).lastInsertRowid as number;
   db.prepare("INSERT OR IGNORE INTO lesson_tags (lesson_id, tag_id) VALUES (?, ?)").run(econLesson1Id, supplyTagId);
@@ -673,7 +673,7 @@ q_star = None
         1,
         JSON.stringify(["Understand each preprocessing step and why it is needed", "Implement resize + normalize + channel permute from scratch in Python", "Map raw pixel values to float tensors in the correct range and shape"]),
         JSON.stringify(["image-preprocessing", "multimodal-ai"]),
-        "doramon-lesson-generator/v1"
+        "openavocado-seed/v1"
       )
   ).lastInsertRowid as number;
   db.prepare("INSERT OR IGNORE INTO lesson_tags (lesson_id, tag_id) VALUES (?, ?)").run(gdmLesson1Id, imgPreprocTagId);

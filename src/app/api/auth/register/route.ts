@@ -6,7 +6,7 @@ import { createSession, getSessionUser } from "@/lib/auth/session";
 import { checkRateLimit, rateLimitHeaders } from "@/lib/auth/rate-limit";
 import { ensureDemoLessonAudioForLearner, ensureDemoLessonsForLearner } from "@/lib/demo-lessons";
 
-/** POST /api/auth/register — self-registration for prodavo. */
+/** POST /api/auth/register — self-registration for hosted deployments. */
 export async function POST(request: NextRequest) {
   // Rate limit: 5 registrations per IP per 15 minutes
   const ip = request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ?? "unknown";

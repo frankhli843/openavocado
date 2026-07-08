@@ -1,5 +1,5 @@
 /**
- * Safe arithmetic expression evaluator for AvocadoCore declarative widgets.
+ * Safe arithmetic expression evaluator for Open Avocado declarative widgets.
  *
  * SECURITY BOUNDARY
  * -----------------

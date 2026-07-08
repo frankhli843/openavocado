@@ -10,7 +10,7 @@ describe("visual artifact sandbox access", () => {
     expect(canServeArtifactSandbox({
       buildStatus: "qa_approved",
       qaMode: null,
-      hostname: "avocadocore.89-167-21-6.nip.io",
+      hostname: "openavocado.203-0-113-10.nip.io",
     })).toBe(true);
   });
 
@@ -28,7 +28,7 @@ describe("visual artifact sandbox access", () => {
     expect(canServeArtifactSandbox({
       buildStatus: "pending_qa",
       qaMode: "pending",
-      hostname: "avocadocore.89-167-21-6.nip.io",
+      hostname: "openavocado.203-0-113-10.nip.io",
     })).toBe(false);
     expect(canServeArtifactSandbox({
       buildStatus: "pending_qa",
@@ -41,14 +41,14 @@ describe("visual artifact sandbox access", () => {
     expect(isLocalSandboxQaHost("127.0.0.1")).toBe(true);
     expect(isLocalSandboxQaHost("localhost")).toBe(true);
     expect(isLocalSandboxQaHost("[::1]")).toBe(true);
-    expect(isLocalSandboxQaHost("100.124.118.83")).toBe(false);
+    expect(isLocalSandboxQaHost("198.51.100.7")).toBe(false);
   });
 
   it("derives QA hostnames from real request Host headers", () => {
     expect(hostnameFromRequestHost("localhost:3742")).toBe("localhost");
     expect(hostnameFromRequestHost("127.0.0.1:3742")).toBe("127.0.0.1");
     expect(hostnameFromRequestHost("[::1]:3742")).toBe("::1");
-    expect(hostnameFromRequestHost("100.124.118.83:3742")).toBe("100.124.118.83");
-    expect(isLocalSandboxQaHost(hostnameFromRequestHost("100.124.118.83:3742"))).toBe(false);
+    expect(hostnameFromRequestHost("198.51.100.7:3742")).toBe("198.51.100.7");
+    expect(isLocalSandboxQaHost(hostnameFromRequestHost("198.51.100.7:3742"))).toBe(false);
   });
 });

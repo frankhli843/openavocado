@@ -56,8 +56,9 @@ export function getRegenerationAdapter(): RegenerationHookAdapter {
 /**
  * Returns the configured subject.created dispatcher.
  * The dispatcher is responsible for generating the first lesson (or initial
- * assessment) when a new subject is created. Defaults to dora-task for
- * frankavo; prodavo uses local-queue for synchronous initial assessment generation.
+ * assessment) when a new subject is created. Defaults to the external
+ * task-runner adapter; a local deployment can set local-queue for synchronous
+ * initial assessment generation.
  */
 export function getSubjectCreatedDispatcher(): SubjectCreatedDispatcher {
   const name = (process.env.AVOCADOCORE_COMPLETION_ADAPTER || "dora-task") as CompletionAdapter;

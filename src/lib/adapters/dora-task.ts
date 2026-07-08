@@ -26,19 +26,19 @@ const KNOWLEDGE_FILES_SECTION = [
 
 const SUBJECT_NOTES_AND_JOURNAL_REQUIREMENT = [
   "=== SUBJECT NOTES AND JOURNAL REQUIREMENT ===",
-  "Update the subject workpad as the mutable latest comprehensive plan, then append at least one subject journal entry as the durable audit log for this run. The journal entry must be readable by the learner in the AvocadoCore AI Work tab. It should summarize what evidence and research you consulted, what sequencing or master-plan decision you made, why this lesson is the right next move, which weaknesses are being deferred, and what you verified in validators or Chrome MCP. Use POST /api/subjects/:id/journal when the app server is available, or insert into subject_journal_entries directly in SQLite when working offline. Use entry_type 'research' for source-backed findings, 'planning' for sequencing decisions, or 'lesson_generation' for the final lesson creation/repair summary.",
+  "Update the subject workpad as the mutable latest comprehensive plan, then append at least one subject journal entry as the durable audit log for this run. The journal entry must be readable by the learner in the Open Avocado AI Work tab. It should summarize what evidence and research you consulted, what sequencing or master-plan decision you made, why this lesson is the right next move, which weaknesses are being deferred, and what you verified in validators or Chrome MCP. Use POST /api/subjects/:id/journal when the app server is available, or insert into subject_journal_entries directly in SQLite when working offline. Use entry_type 'research' for source-backed findings, 'planning' for sequencing decisions, or 'lesson_generation' for the final lesson creation/repair summary.",
   COMPREHENSIVE_LESSON_PLAN_TEMPLATE,
 ].join("\n");
 
 const PURPOSE_BUILT_VISUAL_REQUIREMENT = [
   "=== PURPOSE-BUILT VISUAL REQUIREMENT ===",
-  "Every visualization must be designed for the exact concept block it supports, not chosen from a reusable visual template catalog. Treat each dense block like a small custom learning app: identify the real data, artifact, process, or failure mode in the prose, then show its rows, columns, axes, stages, states, transitions, before/after values, or concrete artifacts. If code is needed, prefer bespoke React for that lesson part. The current safe path is to land it as reviewed source code wired through the AvocadoCore widget registry or equivalent visual-component manifest, then reference a stable component id/widget type from the lesson. Future DB-backed visuals may store source, compiled artifact refs, QA screenshots, and approval metadata in SQLite, but raw React/JS must not execute directly from lesson JSON. If a diagram is enough, author a bespoke Mermaid or static diagram tied to the exact paragraph. QA must reject generic bars, relabelable flow boxes, decorative colored blocks, and any visual whose labels could be swapped to fit an unrelated lesson, unless the lesson is genuinely about quantities, trends, or distributions.",
+  "Every visualization must be designed for the exact concept block it supports, not chosen from a reusable visual template catalog. Treat each dense block like a small custom learning app: identify the real data, artifact, process, or failure mode in the prose, then show its rows, columns, axes, stages, states, transitions, before/after values, or concrete artifacts. If code is needed, prefer bespoke React for that lesson part. The current safe path is to land it as reviewed source code wired through the Open Avocado widget registry or equivalent visual-component manifest, then reference a stable component id/widget type from the lesson. Future DB-backed visuals may store source, compiled artifact refs, QA screenshots, and approval metadata in SQLite, but raw React/JS must not execute directly from lesson JSON. If a diagram is enough, author a bespoke Mermaid or static diagram tied to the exact paragraph. QA must reject generic bars, relabelable flow boxes, decorative colored blocks, and any visual whose labels could be swapped to fit an unrelated lesson, unless the lesson is genuinely about quantities, trends, or distributions.",
   "Before showing operations on a technical object, ground the object itself. If the lesson says embedding lookup, first show what an embedding is, what the embedding matrix looks like in a tiny concrete form, where it comes from, and how tokenizer IDs address rows. Apply the same rule to tensors, matrices, vectors, logits, priors, gradients, caches, queues, losses, and other dense terms. The learner should never have to infer what the thing is while simultaneously learning an operation on it.",
 ].join("\n");
 
 const LOCAL_MODEL_BOUNDARY_REQUIREMENT = [
   "=== LOCAL MODEL BOUNDARY ===",
-  "Local AvocadoCore may use a low-latency local model for instant learner-facing paths such as chat, short-answer grading, code-submission feedback, hints, and immediate formative feedback. Do not use that local feedback model as the lesson author. Lesson generation and lesson repair must go through the AvocadoCore/Dora lesson-authoring flow, an approved harness, or a controlled backfill script that validates and writes real lesson content.",
+  "Local Open Avocado may use a low-latency local model for instant learner-facing paths such as chat, short-answer grading, code-submission feedback, hints, and immediate formative feedback. Do not use that local feedback model as the lesson author. Lesson generation and lesson repair must go through the Open Avocado/Dora lesson-authoring flow, an approved harness, or a controlled backfill script that validates and writes real lesson content.",
 ].join("\n");
 
 interface DoraCreateTaskInput {
@@ -201,7 +201,7 @@ function buildFirstLessonAcceptance(event: SubjectCreatedEvent, channel?: string
     `Read ${AVOCADOCORE_LESSON_AUTHORING_SKILL} before doing any lesson work.`,
     "",
     `Generate the FIRST lesson for new subject "${event.subject_title}" (subject ${event.subject_id}, learner ${event.learner_id}).`,
-    "This is the initial lesson, so the worker must not assume a pre-existing curriculum or hidden mastery state. Start by inspecting the local AvocadoCore SQLite database for this subject, learner profile, related subjects, prior cross-subject mastery, and any existing workpad. If the subject has no lessons yet, create lesson 1. If a lesson was already added while this task was waiting, verify it against the quality bar and either repair it or record that no new lesson is needed.",
+    "This is the initial lesson, so the worker must not assume a pre-existing curriculum or hidden mastery state. Start by inspecting the local Open Avocado SQLite database for this subject, learner profile, related subjects, prior cross-subject mastery, and any existing workpad. If the subject has no lessons yet, create lesson 1. If a lesson was already added while this task was waiting, verify it against the quality bar and either repair it or record that no new lesson is needed.",
     "",
     "=== SUBJECT SNAPSHOT ===",
     subjectSnapshot,
@@ -217,7 +217,7 @@ function buildFirstLessonAcceptance(event: SubjectCreatedEvent, channel?: string
     "",
     "=== REQUIRED LESSON STRUCTURE ===",
     "The top-level overview audio is mandatory and must be long-form: at least 15 minutes, at least 2,700 words, and written as a stand-alone two-host podcast lesson with clear male/female speaker labels such as Leo: and Maya: at the start of each turn. It must be a single coherent authored transcript, written all at once, not padded by looping repeated summary passes. Never put a second speaker label inside another speaker's paragraph. Use a calm, conversational long-form interview / NotebookLM-style back-and-forth without imitating any specific living person. Leo teaches the mechanism in plain language. Maya is a curious skeptical student who challenges vague terms, asks why the concept matters, asks how the actual object changes, asks how that change helps the next prediction/decision/action, and asks 3-4 layer follow-up chains until the causal chain is clear. After the high-level frame, go deeper into each major concept individually instead of restating the same overview. The audio must be useful away from the screen and must not mention lesson parts, exercises, practice, assessments, or page structure. Define every major noun before using it. Do not leak authoring instructions or meta-planning phrases like 'the learner should', 'the lesson should', 'the overview should', 'the audio should', or 'the transcript should'. Speak in 'you' and 'we'. When formulas are discussed in audio, say them in words, for example 'Q times K transpose divided by the square root of d sub k', then explain what that quantity means.",
-    "Break normal lessons into collapsed lesson parts. Each part needs first-class written teaching text, a per-part Doraemon voice audio script, an interactive or visual element that deepens understanding, and exactly 10 multiple-choice reinforcement questions requiring 4 correct answers in a row. The done/undone button is only a personal checklist marker and must never gate completion. Add a table of contents and stable deep links for each part and meaningful activity.",
+    "Break normal lessons into collapsed lesson parts. Each part needs first-class written teaching text, a per-part narrated voice audio script, an interactive or visual element that deepens understanding, and exactly 10 multiple-choice reinforcement questions requiring 4 correct answers in a row. The done/undone button is only a personal checklist marker and must never gate completion. Add a table of contents and stable deep links for each part and meaningful activity.",
     "",
     "Every major step should use a metaphor, at least three simple examples where useful, and a concrete explanation of why the step exists. Visualizations should not be decorative graphs. They should let the learner change something, see a consequence or failure mode, and understand what the step proves. Every visualization must have audio explanation or a per-part audio script explaining what to change, what to notice, and what the visual proves.",
     LOCAL_MODEL_BOUNDARY_REQUIREMENT,
@@ -231,7 +231,7 @@ function buildFirstLessonAcceptance(event: SubjectCreatedEvent, channel?: string
     LESSON_QUALITY_BAR_PROMPT,
     "",
     "=== COMPLETION REQUIREMENTS ===",
-    "Create or repair the lesson in the real local SQLite database, generate or verify Doraemon voice audio, validate generated content, verify runtime artifact links, and smoke-test the lesson page in the browser. Update the subject workpad with concise long-term planning notes: what this first lesson taught, what remains uncertain, what lesson 2 should likely do, and what evidence should be collected from the learner.",
+    "Create or repair the lesson in the real local SQLite database, generate or verify narrated voice audio, validate generated content, verify runtime artifact links, and smoke-test the lesson page in the browser. Update the subject workpad with concise long-term planning notes: what this first lesson taught, what remains uncertain, what lesson 2 should likely do, and what evidence should be collected from the learner.",
     SUBJECT_NOTES_AND_JOURNAL_REQUIREMENT,
     "",
     fmtChannelInstruction(channel),
@@ -239,7 +239,7 @@ function buildFirstLessonAcceptance(event: SubjectCreatedEvent, channel?: string
 }
 
 /**
- * Dora-task adapter - creates a Doramon todo-loop task for next-lesson generation.
+ * Task-runner adapter - creates a next-lesson generation task for an external agent/task runner.
  */
 export const doraTaskAdapter: CompletionHookAdapter = {
   name: "dora-task",
@@ -266,7 +266,7 @@ export const doraTaskAdapter: CompletionHookAdapter = {
       "Be adaptive to the evidence below. Do not produce a generic next chapter.",
       "",
       "=== PEDAGOGICAL GOAL ===",
-      "Find foundational weaknesses and bridge them as fast as possible with the least learner effort. Advance the curriculum only where the foundation is already solid. Prioritise subject-specific evidence first. Use profile config and cross-subject history only if they speed up mastery. Do not assume domain facts unless they are documented in AvocadoCore, present in SQLite evidence, or verified and recorded in the lesson/task notes.",
+      "Find foundational weaknesses and bridge them as fast as possible with the least learner effort. Advance the curriculum only where the foundation is already solid. Prioritise subject-specific evidence first. Use profile config and cross-subject history only if they speed up mastery. Do not assume domain facts unless they are documented in Open Avocado, present in SQLite evidence, or verified and recorded in the lesson/task notes.",
       "",
       "=== SUBJECT CONTEXT (use first) ===",
       `Goals: ${event.subject_goals || "(none set)"}`,
@@ -336,7 +336,7 @@ export const doraTaskAdapter: CompletionHookAdapter = {
 };
 
 /**
- * Dora-task regeneration adapter - creates a Doramon todo-loop task for a
+ * Task-runner regeneration adapter - creates a next-lesson generation task for a
  * replacement lesson after a learner discards an incomplete lesson.
  */
 export const doraTaskRegenerationAdapter: RegenerationHookAdapter = {
@@ -417,7 +417,7 @@ export const doraTaskRegenerationAdapter: RegenerationHookAdapter = {
 };
 
 /**
- * Dora-task subject.created dispatcher — creates a Doramon todo-loop task so
+ * Task-runner subject.created dispatcher — creates a first-lesson generation task so
  * an ACP worker generates the first lesson for the new subject.
  * Returns ok=true with a task ref but no lesson_id (lesson is created async by the worker).
  */

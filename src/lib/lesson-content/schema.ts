@@ -1,5 +1,5 @@
 /**
- * AvocadoCore lesson content schemas (non-interactive activities).
+ * Open Avocado lesson content schemas (non-interactive activities).
  *
  * These typed contracts cover the lesson content blocks that are NOT the
  * interactive widget system (which lives in src/lib/widgets). They define the

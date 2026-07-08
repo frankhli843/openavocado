@@ -144,7 +144,7 @@ describe("generateNextLesson", () => {
     expect(lesson.title).toContain("Transformer attention");
     expect(lesson.status).toBe("queued");
     expect(lesson.sequence_number).toBe(1);
-    expect(lesson.generated_by).toBe("prodavo-local-queue/v1");
+    expect(lesson.generated_by).toBe("openavocado-local-queue/v1");
     expect(JSON.parse(lesson.next_lesson_diagnostics ?? "[]")).toHaveLength(2);
 
     const activities = db

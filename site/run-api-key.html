@@ -1,0 +1,98 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Run with a direct API key — Open Avocado</title>
+<meta name="description" content="The simplest standalone runtime: bring one OpenAI or Google AI Studio key.">
+<meta property="og:title" content="Run with a direct API key — Open Avocado">
+<meta property="og:description" content="The simplest standalone runtime: bring one OpenAI or Google AI Studio key.">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://frankhli843.github.io/openavocado/">
+<meta name="twitter:card" content="summary">
+<link rel="icon" type="image/svg+xml" href="assets/favicon.svg">
+<link rel="stylesheet" href="assets/styles.css">
+</head>
+<body>
+<nav class="topnav"><div class="topnav-inner">
+<a class="brand" href="index.html"><svg viewBox="635 -20 445 445" role="img" aria-label="Open Avocado" width="22" height="22"><path fill="#399103" d="M1232.67-1000.76a125.34,125.34,0,0,1,1-13c3.4-33,13.92-86.75,57.37-160.78,33-56.25,49.52-84.38,70.72-85.09,26.54-.89,46.12,32.06,79.12,87.6,39.58,66.6,49.47,123.11,52.53,154.17.83,8.43,1.25,12.64,1.12,17.1-1.53,52.59-48.78,130.92-130.92,130.92A130.92,130.92,0,0,1,1232.67-1000.76Z" transform="translate(-506.6 1267.13)"/><path fill="#f8ee7b" d="M1275.87-1006.33a84,84,0,0,1,.65-8.7c2.28-22.12,9.33-58.12,38.44-107.73,22.12-37.69,33.18-56.53,47.38-57,17.78-.6,30.9,21.48,53,58.69,26.52,44.62,33.14,82.48,35.2,103.29a90.81,90.81,0,0,1,.75,11.45c-1,35.23-32.68,87.71-87.71,87.71A87.71,87.71,0,0,1,1275.87-1006.33Z" transform="translate(-506.6 1267.13)"/><circle fill="#fff" cx="856.99" cy="264.46" r="42.81"/></svg><span><span class="b-open">Open</span><span class="b-avo"> Avocado</span></span></a>
+<div class="nav-links"><a href="index.html">Home</a><a href="quickstart.html" class="active">Quick Start</a><a href="architecture.html">Architecture</a><a href="lesson-authoring.html">Lesson Authoring</a><a href="configuration.html">Configuration</a><a href="contributing.html">Contributing</a><a href="deployment.html">Deploy</a><a href="privacy.html">Privacy</a><a class="gh" href="https://github.com/frankhli843/openavocado" target="_blank" rel="noopener">GitHub</a></div>
+</div></nav>
+<main class="wrap">
+<p class="breadcrumb"><a href="quickstart.html">Quick Start</a> › Run locally</p>
+<h1><span class="svg-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="8" cy="8" r="4"/><path d="M11 11l8 8"/><path d="M16 16l2-2"/><path d="M18.5 18.5l1.5-1.5"/></svg></span> Run with a direct API key <span class="badge badge-ok">ready</span></h1>
+<p class="lead">The simplest, fully standalone way to run Open Avocado. You bring a single LLM API key; the app calls the provider directly. Best for a solo learner or a developer evaluating the product with no extra infrastructure.</p>
+
+<h2>Who this is for</h2>
+<ul>
+  <li>You want the shortest path from clone to a working adaptive lesson.</li>
+  <li>You have (or can create) an <strong>OpenAI</strong> or <strong>Google AI Studio</strong> API key.</li>
+  <li>You do not want to run a local model or an external agent system.</li>
+</ul>
+
+<h2>Prerequisites</h2>
+<ul>
+  <li>Node.js 20–22 and <code>pnpm</code> (see <a href="quickstart.html">Quick Start</a> for the Node caveat).</li>
+  <li>One LLM API key. Keys stay <strong>server-side</strong> — they are never shipped to the browser.</li>
+</ul>
+
+<h2>Configuration</h2>
+<p>There are two ways to supply the key, and you can use either or both:</p>
+<h3>1. In-app provider settings (per user, encrypted at rest)</h3>
+<p>Open the app, go to <strong>Settings → Providers</strong>, and paste your key. It is encrypted with
+<code>AVOCADOCORE_PROVIDER_KEY_SECRET</code> and stored in the <code>user_provider_configs</code> table — the raw key
+is never returned by the API. This is the recommended path for multi-user installs.</p>
+<h3>2. Environment variables (single-tenant / local)</h3>
+<pre><code># Pick ONE provider key:
+export OPENAI_API_KEY=sk-...            # OpenAI
+# or
+export GOOGLE_AI_STUDIO_API_KEY=...     # Google AI Studio (Gemini)
+export AVOCADOCORE_DEFAULT_PROVIDER=google-ai-studio   # or openai
+
+# Generate lessons synchronously in-process on subject creation / completion:
+export AVOCADOCORE_COMPLETION_ADAPTER=local-queue
+</code></pre>
+<p>The same key powers immediate learner feedback (short-answer grading, code feedback, question rephrasing) and,
+via the completion adapter, next-lesson generation. Audio narration works with no key at all: if
+<code>OPENAI_API_KEY</code> is set it uses OpenAI TTS, otherwise it falls back to an offline
+<code>espeak-ng</code> + <code>ffmpeg</code> voice so a lesson always has playable audio.</p>
+
+<h2>Run it</h2>
+<pre><code>pnpm install
+mkdir -p data
+pnpm db:migrate --seed          # first run only: creates + seeds a local SQLite DB
+pnpm dev                        # http://localhost:3000
+</code></pre>
+
+<h2>Smoke test</h2>
+<pre><code># App is up and the DB answers:
+curl -s http://localhost:3000/api/health | head -c 300
+
+# Provider is configured (per-user config, no raw key returned):
+curl -s "http://localhost:3000/api/provider/config?user_id=1"
+</code></pre>
+<p>Then, in the browser: create a subject, wait for the initial assessment lesson to appear, complete it, and
+confirm a follow-on lesson is generated.</p>
+
+<h2>Common failure modes</h2>
+<div class="table-wrap"><table>
+<tr><th>Symptom</th><th>Cause &amp; fix</th></tr>
+<tr><td>Lesson generation never starts</td><td><code>AVOCADOCORE_COMPLETION_ADAPTER</code> unset or <code>noop</code>. Set it to <code>local-queue</code> (or <code>agent-harness</code>).</td></tr>
+<tr><td>Provider health shows <code>missing</code></td><td>No key configured for the default provider. Add it in Settings → Providers or via env.</td></tr>
+<tr><td>429 / quota errors</td><td>Your API key is rate-limited or out of quota. Audio still works via the offline fallback; lesson generation waits for quota.</td></tr>
+<tr><td>Rich lesson content is thin</td><td>Direct API-key mode uses a single model call rather than a full agent loop. For bespoke interactives and deep multi-step lessons, see the <a href="run-openclaw.html">OpenClaw</a> or <a href="run-hermes.html">Hermes</a> runtimes.</td></tr>
+</table></div>
+
+<h2>How it connects to lesson generation</h2>
+<p>Open Avocado emits a <code>lesson.completed</code> (and <code>subject.created</code>) event with full learner
+evidence. In this runtime the <code>local-queue</code> / <code>agent-harness</code> adapter turns that event into a
+direct model call that returns validated lesson content, which is written back to the database. See
+<a href="configuration.html">Configuration</a> and <a href="architecture.html">Architecture</a> for the adapter contract.</p>
+</main>
+<footer><div class="footer-inner">
+<p><strong>Open Avocado</strong> — open-source adaptive learning platform &amp; lesson-generation framework.</p>
+<p><a href="https://github.com/frankhli843/openavocado">GitHub repository</a> · <a href="https://frankhli843.github.io/openavocado/">Live site</a> · <a href="privacy.html">Privacy &amp; data boundaries</a></p>
+<p class="subtle">Built with Next.js, React, TypeScript, and SQLite. No personal data or credentials are stored in this repository.</p>
+</div></footer>
+</body>
+</html>

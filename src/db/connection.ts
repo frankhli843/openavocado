@@ -361,7 +361,7 @@ function applyAdditiveMigrations(db: Database.Database): void {
     "CREATE INDEX IF NOT EXISTS idx_user_provider_configs_user_id ON user_provider_configs(user_id)"
   );
 
-  // ── Auth: password hashing + sessions (prodavo only, safe no-op on frankavo) ──
+  // ── Auth: password hashing + sessions (active in auth/hosted mode; no-op when auth disabled) ──
 
   // Password hash column on users (scrypt format, nullable for legacy seed users)
   if (!hasColumn("users", "password_hash")) {

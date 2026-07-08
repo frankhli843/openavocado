@@ -62,7 +62,7 @@ export const localQueueRegenerationAdapter: RegenerationHookAdapter = {
  * Local-queue subject.created dispatcher — synchronously generates an initial
  * assessment lesson so the learner has something to do immediately.
  *
- * This is the AvocadoCore-native path for prodavo and other self-hosted
+ * This is the Open Avocado-native path for self-hosted
  * deployments that do not have a Dora endpoint or external task runner.
  *
  * The initial assessment:

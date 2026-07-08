@@ -1,5 +1,5 @@
 /**
- * Session management for AvocadoCore auth.
+ * Session management for Open Avocado auth.
  * Uses SQLite-backed sessions with HTTP-only cookie tokens.
  * Activated only when AVOCADOCORE_AUTH_REQUIRED=true.
  */

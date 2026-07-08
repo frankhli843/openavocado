@@ -3,8 +3,8 @@ import { generateLessonAudio } from "@/lib/audio/generate-lesson-audio";
 import type { TtsProvider } from "@/lib/audio/tts";
 import { DEMO_SUBJECT_TITLE } from "@/lib/demo-subject";
 
-export const DEMO_GENERATOR = "prodavo-demo-seed/v1";
-export const CANONICAL_DEMO_GENERATOR = "prodavo-demo-canonical-clone/v1";
+export const DEMO_GENERATOR = "openavocado-demo-seed/v1";
+export const CANONICAL_DEMO_GENERATOR = "openavocado-demo-canonical-clone/v1";
 
 interface LessonSeed {
   title: string;
@@ -42,7 +42,7 @@ export function ensureDemoLessonsForLearner(db: Database.Database, learnerId: nu
       .run(
         learnerId,
         DEMO_SUBJECT_TITLE,
-        "An enriched built-in demo track that shows how AvocadoCore teaches AI model building with long-form audio, DB-backed bespoke visuals, code practice, and assessment.",
+        "An enriched built-in demo track that shows how Open Avocado teaches AI model building with long-form audio, DB-backed bespoke visuals, code practice, and assessment.",
         "Understand the core path from text to tokens, transformer predictions, and efficient LLM serving.",
         "Keep the demo hands-on and visual. Each lesson must work without external credentials and should show core AI concepts through generated bespoke visual artifacts, audio-synced visuals, coding walkthroughs, and varied assessments."
       ).lastInsertRowid as number);
