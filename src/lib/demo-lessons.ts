@@ -481,7 +481,34 @@ function ensureLesson(db: Database.Database, subjectId: number, lesson: LessonSe
         ? findActivityAtOrder.get(lessonId, activityType, sequenceOrder)
         : findActivity.get(lessonId, activityType)
     ) as { id: number } | undefined;
-    const payload = JSON.stringify(content);
+    // Preserve registered Manim segment videos across demo re-materialization.
+    // ensureDemoLessonsForLearner re-runs on every session, so overwriting the
+    // activity content here would clobber a video registered by register-video.ts
+    // (content.orientation_video for the audio activity, content.audio.video for a
+    // lesson_part). Carry those fields forward from the existing row.
+    let nextContent = content;
+    if (row) {
+      const existing = db
+        .prepare("SELECT content FROM lesson_activities WHERE id = ?")
+        .get(row.id) as { content: string | null } | undefined;
+      if (existing?.content) {
+        try {
+          const prev = JSON.parse(existing.content) as Record<string, unknown>;
+          const merged = { ...(content as Record<string, unknown>) };
+          if (prev.orientation_video) merged.orientation_video = prev.orientation_video;
+          const prevAudio = prev.audio as { video?: unknown } | undefined;
+          if (prevAudio?.video) {
+            const nextAudio = { ...((merged.audio as Record<string, unknown>) ?? {}) };
+            nextAudio.video = prevAudio.video;
+            merged.audio = nextAudio;
+          }
+          nextContent = merged;
+        } catch {
+          // fall back to the freshly materialized content on parse failure
+        }
+      }
+    }
+    const payload = JSON.stringify(nextContent);
     if (row) updateActivity.run(activityType, sequenceOrder, title, payload, row.id);
     else insertActivity.run(lessonId, activityType, 1, sequenceOrder, title, payload);
   };
