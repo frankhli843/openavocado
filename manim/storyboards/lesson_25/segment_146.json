@@ -1,0 +1,89 @@
+{
+  "lesson_id": 25,
+  "activity_id": 146,
+  "activity_type": "audio",
+  "title": "Audio: system design — the algorithmic toolbox and the recognition habit",
+  "audio": {
+    "file_path": "runtime_artifacts/audio/lesson_25_audio.mp3",
+    "duration_sec": 829.87
+  },
+  "audio_source": "artifact",
+  "cue_source": "orientation_visual.cues",
+  "cues": [
+    {
+      "index": 0,
+      "start": 0,
+      "end": 103.7,
+      "duration": 103.7,
+      "label": "Recognition game",
+      "headline": "A small toolbox hides in system design",
+      "narration": "The system-design round is mostly recognition: hear the signal, reach for the tool, defend the trade-off."
+    },
+    {
+      "index": 1,
+      "start": 103.7,
+      "end": 207.5,
+      "duration": 103.8,
+      "label": "Modulo fails",
+      "headline": "Change N and everything reshuffles",
+      "narration": "Server equals hash modulo N reshuffles almost every key when N changes — a cache-miss storm."
+    },
+    {
+      "index": 2,
+      "start": 207.5,
+      "end": 311.2,
+      "duration": 103.7,
+      "label": "The ring",
+      "headline": "Ownership is local to an arc",
+      "narration": "Place servers and keys on a ring; a new server only steals one arc, so adding one of N moves about one-Nth of the keys."
+    },
+    {
+      "index": 3,
+      "start": 311.2,
+      "end": 414.9,
+      "duration": 103.7,
+      "label": "Token bucket",
+      "headline": "Lazy refill, bounded burst",
+      "narration": "Store a count and a timestamp; refill on demand. Bursts up to capacity are allowed, then throttled to the drip rate."
+    },
+    {
+      "index": 4,
+      "start": 414.9,
+      "end": 518.7,
+      "duration": 103.8,
+      "label": "Sliding window",
+      "headline": "Strict rolling count",
+      "narration": "A sliding-window counter forbids bursts: it counts recent timestamps and allows only if the count is under the limit."
+    },
+    {
+      "index": 5,
+      "start": 518.7,
+      "end": 642.2,
+      "duration": 123.5,
+      "label": "Quorum",
+      "headline": "R + W > N forces overlap",
+      "narration": "Make read and write sets overlap so a read always sees the latest write; majorities always intersect."
+    },
+    {
+      "index": 6,
+      "start": 642.2,
+      "end": 741,
+      "duration": 98.8,
+      "label": "Consensus",
+      "headline": "Majority prevents split brain",
+      "narration": "Only the side with a strict majority may make progress, so two leaders can never both commit."
+    },
+    {
+      "index": 7,
+      "start": 741,
+      "end": 829.9,
+      "duration": 88.9,
+      "label": "LRU cache",
+      "headline": "Map + list = O(1) evict",
+      "narration": "A hash map plus a doubly linked list gives constant-time lookup, move-to-front, and evict-from-back."
+    }
+  ],
+  "cue_span_sec": 829.9,
+  "formulas": [],
+  "exported_at": "2026-07-08T23:01:12.820Z"
+}

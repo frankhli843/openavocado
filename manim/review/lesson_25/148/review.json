@@ -1,0 +1,137 @@
+{
+  "lesson_id": 25,
+  "activity_id": 148,
+  "reviewed_at": "2026-07-08T23:18:05Z",
+  "iterations": 2,
+  "frames_reviewed": 18,
+  "quality": "ql",
+  "notes": "Lesson 25 Part 2 (act 148) 'Rate Limiting \u2014 the token bucket and the burst trade-off', 132.2s, 6 cues. Uses sysdesign.py token_bucket/request_mark/timeline/tick. Verified: capacity+refill state, spend-3-tokens, burst-drain-then-reject, lazy min(cap,tok+\u0394t\u00b7rate)=4 refill (no timer), sliding-window rolling count (3 ticks enclosed = count 3), tool-pick token-bucket-vs-sliding-window with O(1) bound. 2 -ql review iterations (round-1 caught sliding-window tick/count mismatch \u2014 window now encloses exactly the counted ticks); READ start/mid/end each cue from muxed mp4, all pass.",
+  "frames": [
+    {
+      "cue": 0,
+      "kind": "start",
+      "path": "lesson_25/148/cue00_start.png",
+      "verdict": "pass",
+      "notes": "[start] token bucket capacity 5 (5 emerald tokens stacked), chips capacity=5 / refill=1 token per sec / each request spends 1; note 'the bucket is the only state: a count of tokens plus a timestamp'. Bucket idiom + rate correct."
+    },
+    {
+      "cue": 0,
+      "kind": "mid",
+      "path": "lesson_25/148/cue00_mid.png",
+      "verdict": "pass",
+      "notes": "[mid] token bucket capacity 5 (5 emerald tokens stacked), chips capacity=5 / refill=1 token per sec / each request spends 1; note 'the bucket is the only state: a count of tokens plus a timestamp'. Bucket idiom + rate correct."
+    },
+    {
+      "cue": 0,
+      "kind": "end",
+      "path": "lesson_25/148/cue00_end.png",
+      "verdict": "pass",
+      "notes": "[end] token bucket capacity 5 (5 emerald tokens stacked), chips capacity=5 / refill=1 token per sec / each request spends 1; note 'the bucket is the only state: a count of tokens plus a timestamp'. Bucket idiom + rate correct."
+    },
+    {
+      "cue": 1,
+      "kind": "start",
+      "path": "lesson_25/148/cue01_start.png",
+      "verdict": "pass",
+      "notes": "[start] three requests spend three tokens: bucket drains 5->2 as req1\u2713/req2\u2713/req3\u2713 fade in green, 'tokens = N' chip transforms down; note 'all three allowed \u2014 bucket still had tokens'. Spend-while-available correct."
+    },
+    {
+      "cue": 1,
+      "kind": "mid",
+      "path": "lesson_25/148/cue01_mid.png",
+      "verdict": "pass",
+      "notes": "[mid] three requests spend three tokens: bucket drains 5->2 as req1\u2713/req2\u2713/req3\u2713 fade in green, 'tokens = N' chip transforms down; note 'all three allowed \u2014 bucket still had tokens'. Spend-while-available correct."
+    },
+    {
+      "cue": 1,
+      "kind": "end",
+      "path": "lesson_25/148/cue01_end.png",
+      "verdict": "pass",
+      "notes": "[end] three requests spend three tokens: bucket drains 5->2 as req1\u2713/req2\u2713/req3\u2713 fade in green, 'tokens = N' chip transforms down; note 'all three allowed \u2014 bucket still had tokens'. Spend-while-available correct."
+    },
+    {
+      "cue": 2,
+      "kind": "start",
+      "path": "lesson_25/148/cue02_start.png",
+      "verdict": "pass",
+      "notes": "[start] a burst of 5 drains the bucket to zero (tokens=0 rose, empty! label, empty outline), then req6\u2717/req7\u2717 rejected; note 'once empty, requests rejected until it refills'. Burst-then-reject correct."
+    },
+    {
+      "cue": 2,
+      "kind": "mid",
+      "path": "lesson_25/148/cue02_mid.png",
+      "verdict": "pass",
+      "notes": "[mid] a burst of 5 drains the bucket to zero (tokens=0 rose, empty! label, empty outline), then req6\u2717/req7\u2717 rejected; note 'once empty, requests rejected until it refills'. Burst-then-reject correct."
+    },
+    {
+      "cue": 2,
+      "kind": "end",
+      "path": "lesson_25/148/cue02_end.png",
+      "verdict": "pass",
+      "notes": "[end] a burst of 5 drains the bucket to zero (tokens=0 rose, empty! label, empty outline), then req6\u2717/req7\u2717 rejected; note 'once empty, requests rejected until it refills'. Burst-then-reject correct."
+    },
+    {
+      "cue": 3,
+      "kind": "start",
+      "path": "lesson_25/148/cue03_start.png",
+      "verdict": "pass",
+      "notes": "[start] lazy refill: rule tokens=min(cap, tokens+\u0394t\u00d7rate); '3 sec elapsed, no request'; calc 1+3\u00d71=4 refills bottom-4 tokens (top slot stays empty, capped); 'no background timer \u2014 computed on read' note. Lazy min-cap refill math correct."
+    },
+    {
+      "cue": 3,
+      "kind": "mid",
+      "path": "lesson_25/148/cue03_mid.png",
+      "verdict": "pass",
+      "notes": "[mid] lazy refill: rule tokens=min(cap, tokens+\u0394t\u00d7rate); '3 sec elapsed, no request'; calc 1+3\u00d71=4 refills bottom-4 tokens (top slot stays empty, capped); 'no background timer \u2014 computed on read' note. Lazy min-cap refill math correct."
+    },
+    {
+      "cue": 3,
+      "kind": "end",
+      "path": "lesson_25/148/cue03_end.png",
+      "verdict": "pass",
+      "notes": "[end] lazy refill: rule tokens=min(cap, tokens+\u0394t\u00d7rate); '3 sec elapsed, no request'; calc 1+3\u00d71=4 refills bottom-4 tokens (top slot stays empty, capped); 'no background timer \u2014 computed on read' note. Lazy min-cap refill math correct."
+    },
+    {
+      "cue": 4,
+      "kind": "start",
+      "path": "lesson_25/148/cue04_start.png",
+      "verdict": "pass",
+      "notes": "[start] sliding-window counter: time axis with 5 ticks, blue window 'last 60s' enclosing exactly 3 ticks; 'count = 3 \u2264 limit 4 \u2192 allow' emerald; note 'no bursts: counts timestamps in window and blocks over the limit'. Window count matches enclosed ticks \u2014 correct."
+    },
+    {
+      "cue": 4,
+      "kind": "mid",
+      "path": "lesson_25/148/cue04_mid.png",
+      "verdict": "pass",
+      "notes": "[mid] sliding-window counter: time axis with 5 ticks, blue window 'last 60s' enclosing exactly 3 ticks; 'count = 3 \u2264 limit 4 \u2192 allow' emerald; note 'no bursts: counts timestamps in window and blocks over the limit'. Window count matches enclosed ticks \u2014 correct."
+    },
+    {
+      "cue": 4,
+      "kind": "end",
+      "path": "lesson_25/148/cue04_end.png",
+      "verdict": "pass",
+      "notes": "[end] sliding-window counter: time axis with 5 ticks, blue window 'last 60s' enclosing exactly 3 ticks; 'count = 3 \u2264 limit 4 \u2192 allow' emerald; note 'no bursts: counts timestamps in window and blocks over the limit'. Window count matches enclosed ticks \u2014 correct."
+    },
+    {
+      "cue": 5,
+      "kind": "start",
+      "path": "lesson_25/148/cue05_start.png",
+      "verdict": "pass",
+      "notes": "[start] pick the tool: token bucket (emerald, friendly bursts to capacity + average rate) vs sliding window (blue, strict no-burst rolling count) split by a divider; O(1) time, O(1) state per client bound. Trade-off + complexity correct."
+    },
+    {
+      "cue": 5,
+      "kind": "mid",
+      "path": "lesson_25/148/cue05_mid.png",
+      "verdict": "pass",
+      "notes": "[mid] pick the tool: token bucket (emerald, friendly bursts to capacity + average rate) vs sliding window (blue, strict no-burst rolling count) split by a divider; O(1) time, O(1) state per client bound. Trade-off + complexity correct."
+    },
+    {
+      "cue": 5,
+      "kind": "end",
+      "path": "lesson_25/148/cue05_end.png",
+      "verdict": "pass",
+      "notes": "[end] pick the tool: token bucket (emerald, friendly bursts to capacity + average rate) vs sliding window (blue, strict no-burst rolling count) split by a divider; O(1) time, O(1) state per client bound. Trade-off + complexity correct."
+    }
+  ]
+}

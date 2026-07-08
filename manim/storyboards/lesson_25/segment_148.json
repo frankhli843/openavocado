@@ -1,0 +1,73 @@
+{
+  "lesson_id": 25,
+  "activity_id": 148,
+  "activity_type": "lesson_part",
+  "title": "Part 2: Rate Limiting — the token bucket and the burst trade-off",
+  "audio": {
+    "file_path": "runtime_artifacts/audio/lesson_25_activity_148_audio.mp3",
+    "duration_sec": 132.24
+  },
+  "audio_source": "artifact",
+  "cue_source": "audio.synced_visual.cues",
+  "cues": [
+    {
+      "index": 0,
+      "start": 0,
+      "end": 24,
+      "duration": 24,
+      "label": "Full bucket",
+      "headline": "Capacity 5, refill 1/sec",
+      "narration": "The bucket holds up to a capacity of tokens and refills at a steady rate; each request spends one."
+    },
+    {
+      "index": 1,
+      "start": 24,
+      "end": 49.7,
+      "duration": 25.7,
+      "label": "Spend tokens",
+      "headline": "Three requests, three tokens",
+      "narration": "Three requests at once spend three tokens; all are allowed while the bucket has tokens."
+    },
+    {
+      "index": 2,
+      "start": 49.7,
+      "end": 76.1,
+      "duration": 26.4,
+      "label": "Burst empties it",
+      "headline": "Extra requests rejected",
+      "narration": "A burst drains the bucket to zero; once empty, further requests are rejected until it refills."
+    },
+    {
+      "index": 3,
+      "start": 76.1,
+      "end": 102.6,
+      "duration": 26.5,
+      "label": "Lazy refill",
+      "headline": "Elapsed × rate, capped",
+      "narration": "On the next request, elapsed time times the rate refills the tokens, capped at capacity — no timer."
+    },
+    {
+      "index": 4,
+      "start": 102.6,
+      "end": 120.2,
+      "duration": 17.6,
+      "label": "Sliding window",
+      "headline": "Strict rolling count",
+      "narration": "The sliding-window counter forbids bursts: it counts recent timestamps and allows only under the limit."
+    },
+    {
+      "index": 5,
+      "start": 120.2,
+      "end": 132.2,
+      "duration": 12,
+      "label": "Pick the tool",
+      "headline": "Burst vs smoothness",
+      "narration": "Token bucket for friendly bursts and an average; sliding window when bursts are forbidden."
+    }
+  ],
+  "cue_span_sec": 132.2,
+  "formulas": [
+    "\\text{token bucket } O(1) \\text{ time, } O(1) \\text{ state per client}"
+  ],
+  "exported_at": "2026-07-08T23:01:12.822Z"
+}

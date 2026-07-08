@@ -1,0 +1,172 @@
+{
+  "lesson_id": 25,
+  "activity_id": 146,
+  "reviewed_at": "2026-07-08T23:21:19Z",
+  "iterations": 2,
+  "frames_reviewed": 23,
+  "quality": "ql",
+  "notes": "Lesson 25 Orientation (act 146) 'System Design \u2014 the algorithmic toolbox and the recognition habit', 829.9s, 8 long cues. Uses sysdesign.py (hash_ring/ring_marker/ring_arc/token_bucket/timeline/tick) + inline modulo table / quorum overlap / consensus majority / LRU map+list. Each long ~104s cue uses timed reveals so beats land across the window (verified via muxed start/mid/end frames: cards/table/ticks/nodes build progressively, not bunched). Covers all six tools the parts + later lessons go deep on. 2 -ql review iterations (round-1 caught orientation mutual-overlap defects: Cue05 R+W ineq vs N-label collision, Cue06 majority/minority chips overlapping center \u2014 both repositioned); READ start/mid/end each cue, all pass. Math verified: modulo 5/6 reshuffle, ring \u22481/N, R+W>N=3+3>5, 3-of-5 majority.",
+  "frames": [
+    {
+      "cue": 0,
+      "kind": "start",
+      "path": "lesson_25/146/cue00_start.png",
+      "verdict": "pass",
+      "notes": "[start] recognition toolbox: spine 'hear the signal, reach for the tool, defend the trade-off' + 6 signal\u2192tool cards revealed on a timed schedule (Consistent hashing/keys reshuffle, Token bucket/cap rate, Sliding window/no bursts, Quorum/read sees latest write, Consensus/one leader, LRU/O(1) get+evict); closing 'name the tool from the signal'. Cards reveal progressively across the 104s window."
+    },
+    {
+      "cue": 0,
+      "kind": "mid",
+      "path": "lesson_25/146/cue00_mid.png",
+      "verdict": "pass",
+      "notes": "[mid] recognition toolbox: spine 'hear the signal, reach for the tool, defend the trade-off' + 6 signal\u2192tool cards revealed on a timed schedule (Consistent hashing/keys reshuffle, Token bucket/cap rate, Sliding window/no bursts, Quorum/read sees latest write, Consensus/one leader, LRU/O(1) get+evict); closing 'name the tool from the signal'. Cards reveal progressively across the 104s window."
+    },
+    {
+      "cue": 0,
+      "kind": "end",
+      "path": "lesson_25/146/cue00_end.png",
+      "verdict": "pass",
+      "notes": "[end] recognition toolbox: spine 'hear the signal, reach for the tool, defend the trade-off' + 6 signal\u2192tool cards revealed on a timed schedule (Consistent hashing/keys reshuffle, Token bucket/cap rate, Sliding window/no bursts, Quorum/read sees latest write, Consensus/one leader, LRU/O(1) get+evict); closing 'name the tool from the signal'. Cards reveal progressively across the 104s window."
+    },
+    {
+      "cue": 1,
+      "kind": "start",
+      "path": "lesson_25/146/cue01_start.png",
+      "verdict": "pass",
+      "notes": "[start] server=hash(key) mod N table: keys k1..k6, N=4 (1,2,3,0,3,0) then N=5 (2,2,4,4,1,3) revealed cell-by-cell; 5 of 6 keys jump servers, 'cache-miss storm' note. Modulo math correct."
+    },
+    {
+      "cue": 1,
+      "kind": "mid",
+      "path": "lesson_25/146/cue01_mid.png",
+      "verdict": "pass",
+      "notes": "[mid] server=hash(key) mod N table: keys k1..k6, N=4 (1,2,3,0,3,0) then N=5 (2,2,4,4,1,3) revealed cell-by-cell; 5 of 6 keys jump servers, 'cache-miss storm' note. Modulo math correct."
+    },
+    {
+      "cue": 1,
+      "kind": "end",
+      "path": "lesson_25/146/cue01_end.png",
+      "verdict": "pass",
+      "notes": "[end] server=hash(key) mod N table: keys k1..k6, N=4 (1,2,3,0,3,0) then N=5 (2,2,4,4,1,3) revealed cell-by-cell; 5 of 6 keys jump servers, 'cache-miss storm' note. Modulo math correct."
+    },
+    {
+      "cue": 2,
+      "kind": "start",
+      "path": "lesson_25/146/cue02_start.png",
+      "verdict": "pass",
+      "notes": "[start] hash ring: servers A@40(blue)/B@160(violet)/C@280(amber) + keys k1@90/k2@210/k3@330 revealed, ownership arcs first-clockwise (k1->B, k2->C, k3->A), then new server D@230(emerald) steals arc 160-230 (k2 recolored emerald), 'add 1 of N -> \u22481/N keys move'. Ownership + steal correct."
+    },
+    {
+      "cue": 2,
+      "kind": "mid",
+      "path": "lesson_25/146/cue02_mid.png",
+      "verdict": "pass",
+      "notes": "[mid] hash ring: servers A@40(blue)/B@160(violet)/C@280(amber) + keys k1@90/k2@210/k3@330 revealed, ownership arcs first-clockwise (k1->B, k2->C, k3->A), then new server D@230(emerald) steals arc 160-230 (k2 recolored emerald), 'add 1 of N -> \u22481/N keys move'. Ownership + steal correct."
+    },
+    {
+      "cue": 2,
+      "kind": "end",
+      "path": "lesson_25/146/cue02_end.png",
+      "verdict": "pass",
+      "notes": "[end] hash ring: servers A@40(blue)/B@160(violet)/C@280(amber) + keys k1@90/k2@210/k3@330 revealed, ownership arcs first-clockwise (k1->B, k2->C, k3->A), then new server D@230(emerald) steals arc 160-230 (k2 recolored emerald), 'add 1 of N -> \u22481/N keys move'. Ownership + steal correct."
+    },
+    {
+      "cue": 3,
+      "kind": "start",
+      "path": "lesson_25/146/cue03_start.png",
+      "verdict": "pass",
+      "notes": "[start] token bucket capacity 5: state=(count,timestamp); burst of 5 allowed drains to empty; empty->throttled to drip rate; lazy refill tokens<-min(cap,tokens+\u0394t\u00d7rate) refills 3; 'bursts up to capacity friendly, long-run rate is drip rate'. Bucket mechanics correct."
+    },
+    {
+      "cue": 3,
+      "kind": "mid",
+      "path": "lesson_25/146/cue03_mid.png",
+      "verdict": "pass",
+      "notes": "[mid] token bucket capacity 5: state=(count,timestamp); burst of 5 allowed drains to empty; empty->throttled to drip rate; lazy refill tokens<-min(cap,tokens+\u0394t\u00d7rate) refills 3; 'bursts up to capacity friendly, long-run rate is drip rate'. Bucket mechanics correct."
+    },
+    {
+      "cue": 3,
+      "kind": "end",
+      "path": "lesson_25/146/cue03_end.png",
+      "verdict": "pass",
+      "notes": "[end] token bucket capacity 5: state=(count,timestamp); burst of 5 allowed drains to empty; empty->throttled to drip rate; lazy refill tokens<-min(cap,tokens+\u0394t\u00d7rate) refills 3; 'bursts up to capacity friendly, long-run rate is drip rate'. Bucket mechanics correct."
+    },
+    {
+      "cue": 4,
+      "kind": "start",
+      "path": "lesson_25/146/cue04_start.png",
+      "verdict": "pass",
+      "notes": "[start] sliding-window counter: time axis, 6 ticks revealed one at a time, blue window 'last 60s' encloses exactly 3; 'count = 3 \u2264 limit 4 -> allow'; 'no bursts: a 6-in-1s spike would exceed count and be blocked'. Window count matches enclosed ticks."
+    },
+    {
+      "cue": 4,
+      "kind": "mid",
+      "path": "lesson_25/146/cue04_mid.png",
+      "verdict": "pass",
+      "notes": "[mid] sliding-window counter: time axis, 6 ticks revealed one at a time, blue window 'last 60s' encloses exactly 3; 'count = 3 \u2264 limit 4 -> allow'; 'no bursts: a 6-in-1s spike would exceed count and be blocked'. Window count matches enclosed ticks."
+    },
+    {
+      "cue": 4,
+      "kind": "end",
+      "path": "lesson_25/146/cue04_end.png",
+      "verdict": "pass",
+      "notes": "[end] sliding-window counter: time axis, 6 ticks revealed one at a time, blue window 'last 60s' encloses exactly 3; 'count = 3 \u2264 limit 4 -> allow'; 'no bursts: a 6-in-1s spike would exceed count and be blocked'. Window count matches enclosed ticks."
+    },
+    {
+      "cue": 5,
+      "kind": "start",
+      "path": "lesson_25/146/cue05_start.png",
+      "verdict": "pass",
+      "notes": "[start] quorum: 5 replicas r1..r5, N=5; write set W={r1,r2,r3} emerald, read set R={r3,r4,r5} blue rings; r3 in both -> overlap; R+W>N : 3+3>5; 'a read always touches a replica that saw the newest write'. Overlap logic correct."
+    },
+    {
+      "cue": 5,
+      "kind": "mid",
+      "path": "lesson_25/146/cue05_mid.png",
+      "verdict": "pass",
+      "notes": "[mid] quorum: 5 replicas r1..r5, N=5; write set W={r1,r2,r3} emerald, read set R={r3,r4,r5} blue rings; r3 in both -> overlap; R+W>N : 3+3>5; 'a read always touches a replica that saw the newest write'. Overlap logic correct."
+    },
+    {
+      "cue": 5,
+      "kind": "end",
+      "path": "lesson_25/146/cue05_end.png",
+      "verdict": "pass",
+      "notes": "[end] quorum: 5 replicas r1..r5, N=5; write set W={r1,r2,r3} emerald, read set R={r3,r4,r5} blue rings; r3 in both -> overlap; R+W>N : 3+3>5; 'a read always touches a replica that saw the newest write'. Overlap logic correct."
+    },
+    {
+      "cue": 6,
+      "kind": "start",
+      "path": "lesson_25/146/cue06_start.png",
+      "verdict": "pass",
+      "notes": "[start] consensus: 5 nodes n1..n5 split by a rose network-partition wall into {n1,n2,n3} majority (emerald, can commit) and {n4,n5} minority (rose, stalls); 'two leaders can never both hold a majority so never both commit'. Majority/split-brain correct."
+    },
+    {
+      "cue": 6,
+      "kind": "mid",
+      "path": "lesson_25/146/cue06_mid.png",
+      "verdict": "pass",
+      "notes": "[mid] consensus: 5 nodes n1..n5 split by a rose network-partition wall into {n1,n2,n3} majority (emerald, can commit) and {n4,n5} minority (rose, stalls); 'two leaders can never both hold a majority so never both commit'. Majority/split-brain correct."
+    },
+    {
+      "cue": 6,
+      "kind": "end",
+      "path": "lesson_25/146/cue06_end.png",
+      "verdict": "pass",
+      "notes": "[end] consensus: 5 nodes n1..n5 split by a rose network-partition wall into {n1,n2,n3} majority (emerald, can commit) and {n4,n5} minority (rose, stalls); 'two leaders can never both hold a majority so never both commit'. Majority/split-brain correct."
+    },
+    {
+      "cue": 7,
+      "kind": "start",
+      "path": "lesson_25/146/cue07_start.png",
+      "verdict": "pass",
+      "notes": "[start] LRU cache: hash map (key->node A/B/C violet) above a doubly linked list (A<->B<->C blue, bidirectional arrows) with MRU-front/LRU-back labels; get(k) move-to-front + put(k) add-front-evict-back ops; O(1) get, put, and evict bound. Map+list O(1) design correct."
+    },
+    {
+      "cue": 7,
+      "kind": "mid",
+      "path": "lesson_25/146/cue07_mid.png",
+      "verdict": "pass",
+      "notes": "[mid] LRU cache: hash map (key->node A/B/C violet) above a doubly linked list (A<->B<->C blue, bidirectional arrows) with MRU-front/LRU-back labels; get(k) move-to-front + put(k) add-front-evict-back ops; O(1) get, put, and evict bound. Map+list O(1) design correct."
+    }
+  ]
+}
