@@ -1,0 +1,71 @@
+{
+  "lesson_id": 18,
+  "activity_id": 105,
+  "activity_type": "lesson_part",
+  "title": "Part 2: Same-direction read/write",
+  "audio": {
+    "file_path": "runtime_artifacts/audio/lesson_18_activity_105_audio.mp3",
+    "duration_sec": 89.3
+  },
+  "audio_source": "artifact",
+  "cue_source": "audio.synced_visual.cues",
+  "cues": [
+    {
+      "index": 0,
+      "start": 0,
+      "end": 16.2,
+      "duration": 16.2,
+      "label": "Seed the boundary",
+      "headline": "First element is always kept",
+      "narration": "write starts at 1 because the first element is trivially unique."
+    },
+    {
+      "index": 1,
+      "start": 16.2,
+      "end": 35.7,
+      "duration": 19.5,
+      "label": "Skip a duplicate",
+      "headline": "read equals the last kept",
+      "narration": "The second 1 matches the last kept value, so read walks on and write stays put."
+    },
+    {
+      "index": 2,
+      "start": 35.7,
+      "end": 54.1,
+      "duration": 18.4,
+      "label": "Keep a new value",
+      "headline": "read finds a fresh 2",
+      "narration": "The 2 is new, so copy it to the write slot and advance write."
+    },
+    {
+      "index": 3,
+      "start": 54.1,
+      "end": 71.4,
+      "duration": 17.3,
+      "label": "Why still linear",
+      "headline": "Both pointers move forward",
+      "narration": "read advances n times, write at most n times, and neither backs up — total travel 2n."
+    },
+    {
+      "index": 4,
+      "start": 71.4,
+      "end": 81.2,
+      "duration": 9.8,
+      "label": "The bug to avoid",
+      "headline": "Do not advance write blindly",
+      "narration": "Advancing write on every step copies duplicates back in and corrupts the prefix."
+    },
+    {
+      "index": 5,
+      "start": 81.2,
+      "end": 89.3,
+      "duration": 8.1,
+      "label": "Read the answer",
+      "headline": "Prefix before write is done",
+      "narration": "When read reaches the end, everything before write is the compacted answer."
+    }
+  ],
+  "cue_span_sec": 89.3,
+  "formulas": [],
+  "exported_at": "2026-07-08T09:53:09.990Z"
+}

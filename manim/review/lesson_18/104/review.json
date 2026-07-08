@@ -1,0 +1,29 @@
+{
+  "lesson_id": 18,
+  "activity_id": 104,
+  "reviewed_at": "2026-07-08T10:40:00Z",
+  "iterations": 2,
+  "frames_reviewed": 18,
+  "quality": "ql",
+  "notes": "Lesson 18 Part 1 (act 104), 'Converging pointers', 94.9s, 6 short cues. Concrete converging-pointer walkthrough over the sorted array [1,3,4,6,8,11], target 10: L starts on the smallest, R on the largest; each sum-vs-target comparison advances exactly one pointer inward, collapsing the O(n^2) all-pairs search to a single O(n) sweep. Sum trace: 1+11=12 (over, drop right) -> 1+8=9 (under, push left) -> 3+8=11 (over, drop right) -> 3+6=9 (under, push left) -> 4+6=10 (found at indices 2,3). Uses arrays.py idioms (value_row, recolor_cell, pointer, value_badge, complexity); MathTex reserved for the O(n^2)->O(n) bound. Two review iterations: authored + manim -s smoke every cue, then full -ql render (6 chunks 854x480x15, niced/serial) + READ start/mid/end for all 6 cues. Iteration 2 fixed the target chip overlapping the wide value row's last cell (moved it to the upper-right, clear of the row) and re-rendered + re-verified. Per-cue checklist (label legibility + math correctness, highlighted element matches the beat, contrast, nothing off-frame/overlapping via theme.guard, chunk timing within pinning tolerance): all pass. Final -ql 94.801s vs audio 94.896s (delta 0.095s, within tolerance).",
+  "frames": [
+    { "cue": 0, "kind": "start", "path": "lesson_18/104/cue00_start.png", "verdict": "pass", "notes": "reveal in progress (title 'Widest pair first: L on 1, R on 11', array fading in), expected sparse" },
+    { "cue": 0, "kind": "mid", "path": "lesson_18/104/cue00_mid.png", "verdict": "pass", "notes": "[1,3,4,6,8,11] indexed, L on 1 (amber) / R on 11 (blue), target 10 chip upper-right clear of row; legible" },
+    { "cue": 0, "kind": "end", "path": "lesson_18/104/cue00_end.png", "verdict": "pass", "notes": "'1 + 11 = 12', 'sorted low -> high lets one comparison decide'; math correct, no collision" },
+    { "cue": 1, "kind": "start", "path": "lesson_18/104/cue01_start.png", "verdict": "pass", "notes": "reveal in progress (title '12 > 10: the largest is hopeless'), expected sparse" },
+    { "cue": 1, "kind": "mid", "path": "lesson_18/104/cue01_mid.png", "verdict": "pass", "notes": "11 indicated rose, '1 + 11 = 12' rose, '11 with the smallest still overshoots'; legible" },
+    { "cue": 1, "kind": "end", "path": "lesson_18/104/cue01_end.png", "verdict": "pass", "notes": "R retreats 11->8, '1 + 8 = 9', 'drop the right'; math correct" },
+    { "cue": 2, "kind": "start", "path": "lesson_18/104/cue02_start.png", "verdict": "pass", "notes": "reveal in progress (title '9 < 10: reach for a bigger value'), expected sparse" },
+    { "cue": 2, "kind": "mid", "path": "lesson_18/104/cue02_mid.png", "verdict": "pass", "notes": "L on 1 indicated, sum under target, 'the left value is too small to reach 10'; legible" },
+    { "cue": 2, "kind": "end", "path": "lesson_18/104/cue02_end.png", "verdict": "pass", "notes": "L advances 1->3, '3 + 8 = 11', 'push the left' (sets up next drop-right); math correct" },
+    { "cue": 3, "kind": "start", "path": "lesson_18/104/cue03_start.png", "verdict": "pass", "notes": "reveal in progress (title 'Each step kills a column'), expected sparse" },
+    { "cue": 3, "kind": "mid", "path": "lesson_18/104/cue03_mid.png", "verdict": "pass", "notes": "R retreated 8->6, '3 + 6 = 9', '11 over -> drop right'; math correct" },
+    { "cue": 3, "kind": "end", "path": "lesson_18/104/cue03_end.png", "verdict": "pass", "notes": "L advanced 3->4, '4 + 6 = 10', '9 under -> push left', 'pointers converge — never rescan a killed column'; math correct" },
+    { "cue": 4, "kind": "start", "path": "lesson_18/104/cue04_start.png", "verdict": "pass", "notes": "reveal in progress (title 'Found it: 4 + 6 = 10'), expected sparse" },
+    { "cue": 4, "kind": "mid", "path": "lesson_18/104/cue04_mid.png", "verdict": "pass", "notes": "cells 4 and 6 emerald, L/R pointers, '4 + 6 = 10' (10 emerald); math correct" },
+    { "cue": 4, "kind": "end", "path": "lesson_18/104/cue04_end.png", "verdict": "pass", "notes": "'indices 2 and 3 — the pair meets the target'; correct" },
+    { "cue": 5, "kind": "start", "path": "lesson_18/104/cue05_start.png", "verdict": "pass", "notes": "reveal in progress (title 'Pointers only move inward -> O(n)'), expected sparse" },
+    { "cue": 5, "kind": "mid", "path": "lesson_18/104/cue05_mid.png", "verdict": "pass", "notes": "'each pointer takes at most n steps and they never rescan', 'O(n^2) all pairs -> O(n)' (O(n) emerald); math correct" },
+    { "cue": 5, "kind": "end", "path": "lesson_18/104/cue05_end.png", "verdict": "pass", "notes": "O(n) circumscribed emerald; near-EOF, settled state; math correct" }
+  ]
+}

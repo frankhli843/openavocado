@@ -1,0 +1,80 @@
+{
+  "lesson_id": 18,
+  "activity_id": 103,
+  "activity_type": "audio",
+  "title": "Audio: Two Pointer — the family map",
+  "audio": {
+    "file_path": "runtime_artifacts/audio/lesson_18_audio.mp3",
+    "duration_sec": 903.91
+  },
+  "audio_source": "artifact",
+  "cue_source": "orientation_visual.cues",
+  "cues": [
+    {
+      "index": 0,
+      "start": 0,
+      "end": 107.6,
+      "duration": 107.6,
+      "label": "The O(n²) pair search",
+      "headline": "A nested loop over every pair",
+      "narration": "Finding a pair that sums to a target by checking all pairs is quadratic work."
+    },
+    {
+      "index": 1,
+      "start": 107.6,
+      "end": 243.9,
+      "duration": 136.3,
+      "label": "Sorted makes a comparison decisive",
+      "headline": "One comparison kills a side",
+      "narration": "On a sorted row, a too-big sum means the largest value is hopeless — drop the whole right side."
+    },
+    {
+      "index": 2,
+      "start": 243.9,
+      "end": 387.4,
+      "duration": 143.5,
+      "label": "Converging branch",
+      "headline": "Fingers walk toward each other",
+      "narration": "Left starts low, right starts high; each comparison advances one of them inward."
+    },
+    {
+      "index": 3,
+      "start": 387.4,
+      "end": 545.2,
+      "duration": 157.8,
+      "label": "Read / write branch",
+      "headline": "Same direction, two jobs",
+      "narration": "Read scans every element; write marks the boundary of the compacted answer built in place."
+    },
+    {
+      "index": 4,
+      "start": 545.2,
+      "end": 688.7,
+      "duration": 143.5,
+      "label": "Fast / slow branch",
+      "headline": "One path, two speeds",
+      "narration": "A speed gap that shrinks by one each tick forces a collision, exposing cycles and midpoints."
+    },
+    {
+      "index": 5,
+      "start": 688.7,
+      "end": 803.5,
+      "duration": 114.8,
+      "label": "When it fails",
+      "headline": "No structure, no license",
+      "narration": "Unsorted data breaks converging pointers; force the pattern and you get a fast wrong answer."
+    },
+    {
+      "index": 6,
+      "start": 803.5,
+      "end": 903.9,
+      "duration": 100.4,
+      "label": "Recognition & window kinship",
+      "headline": "Fingerprints and cousins",
+      "narration": "A sliding window is a same-direction two-pointer; recognize on structure, not surface words."
+    }
+  ],
+  "cue_span_sec": 903.9,
+  "formulas": [],
+  "exported_at": "2026-07-08T09:53:09.989Z"
+}

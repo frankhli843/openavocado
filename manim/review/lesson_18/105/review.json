@@ -1,0 +1,29 @@
+{
+  "lesson_id": 18,
+  "activity_id": 105,
+  "reviewed_at": "2026-07-08T10:40:00Z",
+  "iterations": 2,
+  "frames_reviewed": 18,
+  "quality": "ql",
+  "notes": "Lesson 18 Part 2 (act 105), 'Same-direction read/write', 89.3s, 6 cues. In-place compaction (remove duplicates from a sorted array [1,1,2,3,3]): both pointers move the same direction — read scans every element, write marks the boundary of the compacted prefix. write only advances (and copies) when read finds a value different from the last kept one, so the unique prefix [1,2,3] is built in place with O(n) work and O(1) space. Trace: write=1 seeded (first element trivially kept) -> read's second 1 is a duplicate, skip (write stays) -> read's 2 is fresh, copy to the write slot, advance write -> read n + write<=n, neither backs up -> 2n=O(n); the bug: advancing write blindly copies duplicates back in (corrupted prefix [1,1,2]); answer = prefix [1,2,3] before write. read sits ABOVE the row (side UP), write BELOW (side DOWN) so the two same-direction pointers never collide. arrays.py idioms; MathTex reserved for the 2n=O(n) bound. Two review iterations: authored + manim -s smoke, then full -ql render + READ start/mid/end for all 6 cues. Iteration 2 fixed cue01 and cue02, where an above-row caption collided with the read pointer's label (side UP owns the space above the row) — moved both captions below the row and re-rendered + re-verified clean. Per-cue checklist (legibility + correctness, highlight matches beat, contrast, nothing off-frame/overlapping, timing tolerance): all pass. Final -ql 89.201s vs audio 89.304s (delta 0.103s, within tolerance).",
+  "frames": [
+    { "cue": 0, "kind": "start", "path": "lesson_18/105/cue00_start.png", "verdict": "pass", "notes": "reveal in progress (title 'First element is always kept', array fading in), expected sparse" },
+    { "cue": 0, "kind": "mid", "path": "lesson_18/105/cue00_mid.png", "verdict": "pass", "notes": "[1,1,2,3,3] indexed, index 0 emerald (kept), 'index 0 is trivially unique'; legible" },
+    { "cue": 0, "kind": "end", "path": "lesson_18/105/cue00_end.png", "verdict": "pass", "notes": "write pointer seeded at index 1, 'write starts at 1 — the boundary of the kept prefix'; correct" },
+    { "cue": 1, "kind": "start", "path": "lesson_18/105/cue01_start.png", "verdict": "pass", "notes": "reveal in progress (title 'read equals the last kept -> skip'), expected sparse" },
+    { "cue": 1, "kind": "mid", "path": "lesson_18/105/cue01_mid.png", "verdict": "pass", "notes": "read at index 1, index 0+1 indicated rose, 'read's 1 equals the last kept value (index 0)'; legible" },
+    { "cue": 1, "kind": "end", "path": "lesson_18/105/cue01_end.png", "verdict": "pass", "notes": "read walked on to index 2, write stays at 1, 'read walks on — write stays put' (caption below row, no collision with read label); correct" },
+    { "cue": 2, "kind": "start", "path": "lesson_18/105/cue02_start.png", "verdict": "pass", "notes": "reveal in progress (title 'read finds a fresh 2 -> copy, advance write'), expected sparse" },
+    { "cue": 2, "kind": "mid", "path": "lesson_18/105/cue02_mid.png", "verdict": "pass", "notes": "read on index 2 indicated blue, '2 differs from the last kept value — it's new'; legible" },
+    { "cue": 2, "kind": "end", "path": "lesson_18/105/cue02_end.png", "verdict": "pass", "notes": "index 1 becomes 2 (emerald copy), write advanced to 2, 'copy 2 into the write slot' (below row) + 'then advance write'; no collision with read label; correct" },
+    { "cue": 3, "kind": "start", "path": "lesson_18/105/cue03_start.png", "verdict": "pass", "notes": "reveal in progress (title 'Both pointers move forward — total 2n'), expected sparse" },
+    { "cue": 3, "kind": "mid", "path": "lesson_18/105/cue03_mid.png", "verdict": "pass", "notes": "mid-run state [1,2,2,3,3] prefix [1,2] emerald, read/write pointers, 'read advances n times' / 'write advances at most n times'; legible" },
+    { "cue": 3, "kind": "end", "path": "lesson_18/105/cue03_end.png", "verdict": "pass", "notes": "'neither ever backs up', '2n = O(n)' emerald; math correct, no overlap" },
+    { "cue": 4, "kind": "start", "path": "lesson_18/105/cue04_start.png", "verdict": "pass", "notes": "reveal in progress (title 'Do not advance write blindly'), expected sparse" },
+    { "cue": 4, "kind": "mid", "path": "lesson_18/105/cue04_mid.png", "verdict": "pass", "notes": "'advancing write on every step copies duplicates back in', corrupted prefix [1,1,2] with duplicate 1s rose; correct" },
+    { "cue": 4, "kind": "end", "path": "lesson_18/105/cue04_end.png", "verdict": "pass", "notes": "bug + corrupted prefix settled; correct" },
+    { "cue": 5, "kind": "start", "path": "lesson_18/105/cue05_start.png", "verdict": "pass", "notes": "reveal in progress (title 'Prefix before write is the answer'), expected sparse" },
+    { "cue": 5, "kind": "mid", "path": "lesson_18/105/cue05_mid.png", "verdict": "pass", "notes": "final state [1,2,3,3,3], [1,2,3] boxed emerald, write at index 3, '[1,2,3] — the compacted answer'; correct" },
+    { "cue": 5, "kind": "end", "path": "lesson_18/105/cue05_end.png", "verdict": "pass", "notes": "answer prefix boxed; near-EOF settled state; correct" }
+  ]
+}

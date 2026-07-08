@@ -1,0 +1,73 @@
+{
+  "lesson_id": 18,
+  "activity_id": 104,
+  "activity_type": "lesson_part",
+  "title": "Part 1: Converging pointers",
+  "audio": {
+    "file_path": "runtime_artifacts/audio/lesson_18_activity_104_audio.mp3",
+    "duration_sec": 94.9
+  },
+  "audio_source": "artifact",
+  "cue_source": "audio.synced_visual.cues",
+  "cues": [
+    {
+      "index": 0,
+      "start": 0,
+      "end": 17.3,
+      "duration": 17.3,
+      "label": "Start at the ends",
+      "headline": "Widest pair first",
+      "narration": "Left on the smallest, right on the largest: 1 and 11."
+    },
+    {
+      "index": 1,
+      "start": 17.3,
+      "end": 35.7,
+      "duration": 18.4,
+      "label": "Too big, drop right",
+      "headline": "12 > 10",
+      "narration": "The sum overshoots, so the largest value is hopeless — retreat the right pointer."
+    },
+    {
+      "index": 2,
+      "start": 35.7,
+      "end": 54.6,
+      "duration": 18.9,
+      "label": "Too small, push left",
+      "headline": "9 < 10",
+      "narration": "Now the sum is under, so advance the left pointer for a bigger value."
+    },
+    {
+      "index": 3,
+      "start": 54.6,
+      "end": 73.6,
+      "duration": 19,
+      "label": "Zig-zag inward",
+      "headline": "Each step kills a column",
+      "narration": "11 over, retreat right; 9 under, advance left — the pointers converge."
+    },
+    {
+      "index": 4,
+      "start": 73.6,
+      "end": 86.3,
+      "duration": 12.7,
+      "label": "Found it",
+      "headline": "4 + 6 = 10",
+      "narration": "The pair meets the target at indices 2 and 3."
+    },
+    {
+      "index": 5,
+      "start": 86.3,
+      "end": 94.9,
+      "duration": 8.6,
+      "label": "Why linear",
+      "headline": "Pointers only move inward",
+      "narration": "Each pointer takes at most n steps and they never rescan, so the search is O(n)."
+    }
+  ],
+  "cue_span_sec": 94.9,
+  "formulas": [
+    "O(n^2) \\;\\longrightarrow\\; O(n)"
+  ],
+  "exported_at": "2026-07-08T09:53:09.990Z"
+}
