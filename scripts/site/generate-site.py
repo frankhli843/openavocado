@@ -159,6 +159,15 @@ h1 .svg-ico, h2 .svg-ico, h3 .svg-ico { margin-right: .35rem; }
 .card h3 { margin: .5rem 0 .3rem; color: var(--fg); }
 .card p { margin: 0; font-size: .92rem; }
 
+/* mission band */
+.mission { background: linear-gradient(180deg, var(--accent-soft), #fbfdf8); border: 1px solid var(--border);
+  border-radius: 16px; padding: 2rem 2.2rem; margin: 2.4rem 0; text-align: center; }
+.mission .eyebrow { text-transform: uppercase; letter-spacing: .08em; font-size: .78rem; font-weight: 700;
+  color: var(--accent-strong); margin: 0 0 .3rem; }
+.mission-title { font-size: 1.7rem; margin: .2rem 0 1rem; color: var(--fg); border: 0; padding: 0; }
+.mission p { max-width: 720px; margin: .7rem auto; }
+.mission em { color: var(--fg-soft); }
+
 /* feature rows */
 .feature { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 260px), 1fr)); gap: 1.2rem 2rem; margin: 1.2rem 0; }
 .feature .f h3 { margin-top: 0; }
