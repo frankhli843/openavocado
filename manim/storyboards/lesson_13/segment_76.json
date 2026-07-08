@@ -1,0 +1,80 @@
+{
+  "lesson_id": 13,
+  "activity_id": 76,
+  "activity_type": "audio",
+  "title": "Audio: From Context to Prediction",
+  "audio": {
+    "file_path": "runtime_artifacts/audio/lesson_13_audio.mp3",
+    "duration_sec": 1039.87
+  },
+  "audio_source": "artifact",
+  "cue_source": "orientation_visual.cues",
+  "cues": [
+    {
+      "index": 0,
+      "start": 0,
+      "end": 148.553,
+      "duration": 148.553,
+      "label": "High-level map",
+      "headline": "Hidden state becomes a next-token guess",
+      "narration": "A transformer mixes information across the prompt. The output head turns the final hidden state into logits — one score per possible next token. Softmax makes them probabilities, generation picks one, appends it, and repeats."
+    },
+    {
+      "index": 1,
+      "start": 148.553,
+      "end": 297.106,
+      "duration": 148.553,
+      "label": "Analogy",
+      "headline": "The output head is a scoring station",
+      "narration": "Picture the pipeline as a workshop line. The transformer mixes context, the output-head station scores every word in the vocabulary, softmax stamps a receipt of probabilities, and generation picks one token to send forward."
+    },
+    {
+      "index": 2,
+      "start": 297.106,
+      "end": 445.659,
+      "duration": 148.553,
+      "label": "Tiny example",
+      "headline": "Follow one concrete prompt",
+      "narration": "Take one small prompt and follow it. In 'The cat', the final position's hidden state summarizes everything read so far. That single vector is what the model turns into a guess about the very next word."
+    },
+    {
+      "index": 3,
+      "start": 445.659,
+      "end": 594.211,
+      "duration": 148.552,
+      "label": "Mechanism",
+      "headline": "Logits are the hidden state scored per word",
+      "narration": "The output head is a matrix with one row per vocabulary word. Multiplying it by the hidden state gives a logit for each word — a raw, unbounded score. Here 'sat' scores highest, so it will win once we normalize."
+    },
+    {
+      "index": 4,
+      "start": 594.211,
+      "end": 742.764,
+      "duration": 148.553,
+      "label": "Implementation",
+      "headline": "Softmax turns scores into probabilities",
+      "narration": "Softmax exponentiates every logit and divides by their sum, so the scores become positive numbers that add to one. In code: take the logit vector, apply softmax, and read off P('sat'). Argmax picks the top token; sampling can pick others."
+    },
+    {
+      "index": 5,
+      "start": 742.764,
+      "end": 891.317,
+      "duration": 148.553,
+      "label": "Misconception",
+      "headline": "A score is not yet a probability",
+      "narration": "Separate nearby ideas: a logit is not a probability until softmax, a high probability is not certainty, argmax is not the only way to choose, and naming a phase like 'predict' is not the same as the matrix multiply inside it."
+    },
+    {
+      "index": 6,
+      "start": 891.317,
+      "end": 1039.87,
+      "duration": 148.553,
+      "label": "Synthesis",
+      "headline": "Sample, append, and predict again",
+      "narration": "Return to the route: hidden state, logits, softmax, choose a token. Then append it and run the whole loop again — that autoregressive loop is how context grows and how each new word changes the next prediction. The audio maps it, the visual shows it, the code proves it."
+    }
+  ],
+  "cue_span_sec": 1039.87,
+  "formulas": [],
+  "exported_at": "2026-07-08T06:25:22.035Z"
+}
