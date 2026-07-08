@@ -1,0 +1,32 @@
+{
+  "lesson_id": 21,
+  "activity_id": 122,
+  "reviewed_at": "2026-07-08T14:42:00Z",
+  "iterations": 2,
+  "frames_reviewed": 21,
+  "quality": "ql",
+  "notes": "Lesson 21 Orientation (act 122), 'Backtracking — walk the decision tree', 844.1s, 7 long cues (56-148s each). Big-picture what/why. Each long cue builds progressively across several beats (wait_until spacing) and settles on one comprehensive held final frame (3b1b style), so the 'mid' frame legitimately captures an intermediate beat and the settled composition is the 'end'/final frame. Cue0 variable-loop-count motivation (pairs/triples/subsets nested loops -> one recursive walk). Cue1 subsets decision tree, DFS visits every candidate, one root-to-leaf path = one answer. Cue2 three-beats template (Choose/Explore/Un-choose) on a shared path + small tree. Cue3 reference-BUG vs COPY two-panel (saved references all collapse to [] after pops, vs distinct snapshots). Cue4 prune: full {1,2,3} permutation tree, EARLY big red cut near root vs LATE amber leaf cut. Cue5 subsets start-index vs permutations used[] two-column. Cue6 O(2^n)/O(n!) + DP-folds-to-a-table. Uses backtracking.py idiom lib; MathTex only for complexity bounds. Two iterations: authored + manim -s smoke all 7 (fixed Cue03 right-panel label safe-area overshoot -> narrowed to 5.4 width; tightened Cue05 side notes), then full -ql render 844.001s vs audio 844.06s + READ start/mid/end all 7 cues. Per-cue checklist (message matches narration, tree/list correctness, highlight/prune semantics, safe-area via theme.guard, chunk timing pinned): all pass.",
+  "frames": [
+    {"cue": 0, "kind": "start", "path": "lesson_21/122/cue00_start.png", "verdict": "pass", "notes": "pairs 2-loops code building"},
+    {"cue": 0, "kind": "mid", "path": "lesson_21/122/cue00_mid.png", "verdict": "pass", "notes": "pairs + triples code + 'all SUBSETS -> n loops?' amber"},
+    {"cue": 0, "kind": "end", "path": "lesson_21/122/cue00_end.png", "verdict": "pass", "notes": "full: cannot write input-dependent loops + 'backtracking: ONE recursive walk enumerates every choice sequence'"},
+    {"cue": 1, "kind": "start", "path": "lesson_21/122/cue01_start.png", "verdict": "pass", "notes": "subsets tree edges creating"},
+    {"cue": 1, "kind": "mid", "path": "lesson_21/122/cue01_mid.png", "verdict": "pass", "notes": "DFS sweep: all nodes lightly accent, 'depth-first walk visits every candidate'"},
+    {"cue": 1, "kind": "end", "path": "lesson_21/122/cue01_end.png", "verdict": "pass", "notes": "root-to-leaf path ∅->1->1 2->1 2 3 emerald + snapshot [1,2,3]"},
+    {"cue": 2, "kind": "start", "path": "lesson_21/122/cue02_start.png", "verdict": "pass", "notes": "three-beats chips appearing"},
+    {"cue": 2, "kind": "mid", "path": "lesson_21/122/cue02_mid.png", "verdict": "pass", "notes": "beats + tree + path list mid-cycle (choose/explore built)"},
+    {"cue": 2, "kind": "end", "path": "lesson_21/122/cue02_end.png", "verdict": "pass", "notes": "beats Choose/Explore/Un-choose, tree node 1, path=[1] after pop, 'path is the only shared state'"},
+    {"cue": 3, "kind": "start", "path": "lesson_21/122/cue03_start.png", "verdict": "pass", "notes": "BUG panel title + live path"},
+    {"cue": 3, "kind": "mid", "path": "lesson_21/122/cue03_mid.png", "verdict": "pass", "notes": "BUG panel: 3 references all -> [] after pops (fix panel not yet, appears beat 3)"},
+    {"cue": 3, "kind": "end", "path": "lesson_21/122/cue03_end.png", "verdict": "pass", "notes": "two panels: reference-BUG (rose, all []) vs save-a-COPY (emerald [1],[1,2],[1,2,3])"},
+    {"cue": 4, "kind": "start", "path": "lesson_21/122/cue04_start.png", "verdict": "pass", "notes": "full permutation tree creating"},
+    {"cue": 4, "kind": "mid", "path": "lesson_21/122/cue04_mid.png", "verdict": "pass", "notes": "EARLY big red X over '1' subtree, 'an EARLY cut deletes a huge subtree at once'"},
+    {"cue": 4, "kind": "end", "path": "lesson_21/122/cue04_end.png", "verdict": "pass", "notes": "big red cut + small amber leaf cut, 'prune as HIGH as you can'"},
+    {"cue": 5, "kind": "start", "path": "lesson_21/122/cue05_start.png", "verdict": "pass", "notes": "divider + subsets column building"},
+    {"cue": 5, "kind": "mid", "path": "lesson_21/122/cue05_mid.png", "verdict": "pass", "notes": "left subsets start-index code + small tree (right column not yet)"},
+    {"cue": 5, "kind": "end", "path": "lesson_21/122/cue05_end.png", "verdict": "pass", "notes": "two columns: subsets start-index+tree vs permutations used[] code + used row"},
+    {"cue": 6, "kind": "start", "path": "lesson_21/122/cue06_start.png", "verdict": "pass", "notes": "O(2^n)/O(n!) formula writing"},
+    {"cue": 6, "kind": "mid", "path": "lesson_21/122/cue06_mid.png", "verdict": "pass", "notes": "complexity + 'tree often exponential or factorial in size'"},
+    {"cue": 6, "kind": "end", "path": "lesson_21/122/cue06_end.png", "verdict": "pass", "notes": "complexity + DP-fold arrow -> a table"}
+  ]
+}

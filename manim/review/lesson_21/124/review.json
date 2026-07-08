@@ -1,0 +1,29 @@
+{
+  "lesson_id": 21,
+  "activity_id": 124,
+  "reviewed_at": "2026-07-08T14:36:00Z",
+  "iterations": 2,
+  "frames_reviewed": 18,
+  "quality": "ql",
+  "notes": "Lesson 21 Part 2 (act 124), 'Permutations + pruning', 95.5s, 6 short cues. Permutations care about order + use every element once -> forward-only start index replaced by a boolean used[] array. Cue0 a tiny {1,2} perm tree (1-2 vs 2-1 distinct). Cues 1-4 build the used-flag mechanism on {1,2,3} (used_row + PathList + code). Cue5 prune: a small tree with the illegal '2' subtree crossed red. Uses backtracking.py idiom lib (perm_model/TreeMobject, used_row/set_used, snapshot_chip, tree.cross). No MathTex. Two iterations: authored + manim -s smoke (all 6 pass), then full -ql render + READ start/mid/end all 6 cues. Per-cue checklist (perm-tree/used-flag correctness, order-matters pedagogy, choose sets flag+push, record copy at full length, un-choose pop+clear flag, prune crosses whole subtree, safe-area guard, chunk timing): all pass. cue05_end frame beyond muxed dur (final 95.335s vs audio 95.47s) - settled verified via cue05_mid.",
+  "frames": [
+    {"cue": 0, "kind": "start", "path": "lesson_21/124/cue00_start.png", "verdict": "pass", "notes": "{1,2} perm tree creating"},
+    {"cue": 0, "kind": "mid", "path": "lesson_21/124/cue00_mid.png", "verdict": "pass", "notes": "leaves '1 2' and '2 1' emerald, 'both valid — order is the difference'"},
+    {"cue": 0, "kind": "end", "path": "lesson_21/124/cue00_end.png", "verdict": "pass", "notes": "both leaves + 'a forward-only start index will NOT work'"},
+    {"cue": 1, "kind": "start", "path": "lesson_21/124/cue01_start.png", "verdict": "pass", "notes": "used[] all F"},
+    {"cue": 1, "kind": "mid", "path": "lesson_21/124/cue01_mid.png", "verdict": "pass", "notes": "used[2]=T violet, 'the loop skips element 2'"},
+    {"cue": 1, "kind": "end", "path": "lesson_21/124/cue01_end.png", "verdict": "pass", "notes": "used[2]=T + code 'for e: if used[e]: continue'"},
+    {"cue": 2, "kind": "start", "path": "lesson_21/124/cue02_start.png", "verdict": "pass", "notes": "used[] all F + empty path + code"},
+    {"cue": 2, "kind": "mid", "path": "lesson_21/124/cue02_mid.png", "verdict": "pass", "notes": "chose 2: used[2]=T, path=[2]"},
+    {"cue": 2, "kind": "end", "path": "lesson_21/124/cue02_end.png", "verdict": "pass", "notes": "chose 2 then 1: used[1,2]=T, path=[2,1], 'each recursion fills one more position'"},
+    {"cue": 3, "kind": "start", "path": "lesson_21/124/cue03_start.png", "verdict": "pass", "notes": "used all T + path=[2,1,3]"},
+    {"cue": 3, "kind": "mid", "path": "lesson_21/124/cue03_mid.png", "verdict": "pass", "notes": "'len(path)==len(input) complete', path=[2,1,3], snapshot [2,1,3] emerald"},
+    {"cue": 3, "kind": "end", "path": "lesson_21/124/cue03_end.png", "verdict": "pass", "notes": "full permutation recorded as copy [2,1,3]"},
+    {"cue": 4, "kind": "start", "path": "lesson_21/124/cue04_start.png", "verdict": "pass", "notes": "used all T + path=[2,1,3] + pop/clear code"},
+    {"cue": 4, "kind": "mid", "path": "lesson_21/124/cue04_mid.png", "verdict": "pass", "notes": "popped 3: path=[2,1], used[3]=F cleared amber"},
+    {"cue": 4, "kind": "end", "path": "lesson_21/124/cue04_end.png", "verdict": "pass", "notes": "'element 3 free again for a different branch'"},
+    {"cue": 5, "kind": "start", "path": "lesson_21/124/cue05_start.png", "verdict": "pass", "notes": "small tree, legal '1' accent, illegal '2' subtree rose"},
+    {"cue": 5, "kind": "mid", "path": "lesson_21/124/cue05_mid.png", "verdict": "pass", "notes": "'2' subtree crossed red, '1' branch legal accent"},
+    {"cue": 5, "kind": "end", "path": "lesson_21/124/cue05_mid.png", "verdict": "pass", "notes": "boundary (settled verified via mid): crossed subtree + 'constraint fails at [2] skip entire subtree'"}
+  ]
+}

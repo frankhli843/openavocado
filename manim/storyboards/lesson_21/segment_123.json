@@ -1,0 +1,73 @@
+{
+  "lesson_id": 21,
+  "activity_id": 123,
+  "activity_type": "lesson_part",
+  "title": "Part 1: The template via subsets",
+  "audio": {
+    "file_path": "runtime_artifacts/audio/lesson_21_activity_123_audio.mp3",
+    "duration_sec": 99.62
+  },
+  "audio_source": "artifact",
+  "cue_source": "audio.synced_visual.cues",
+  "cues": [
+    {
+      "index": 0,
+      "start": 0,
+      "end": 18.1,
+      "duration": 18.1,
+      "label": "The path",
+      "headline": "One shared list of choices",
+      "narration": "You carry a single path list holding the choices made so far; every node is a subset."
+    },
+    {
+      "index": 1,
+      "start": 18.1,
+      "end": 37.4,
+      "duration": 19.3,
+      "label": "Choose",
+      "headline": "Append an element",
+      "narration": "Choose pushes the current element onto the path, then recurses one level deeper."
+    },
+    {
+      "index": 2,
+      "start": 37.4,
+      "end": 57.4,
+      "duration": 20,
+      "label": "Record a copy",
+      "headline": "Snapshot at every node",
+      "narration": "Every node is a valid subset, so record a copy of the path — never the live list."
+    },
+    {
+      "index": 3,
+      "start": 57.4,
+      "end": 77.3,
+      "duration": 19.9,
+      "label": "Un-choose",
+      "headline": "Pop it back off",
+      "narration": "When the branch is done, pop the element so the path is restored for the next branch."
+    },
+    {
+      "index": 4,
+      "start": 77.3,
+      "end": 90.6,
+      "duration": 13.3,
+      "label": "Start index",
+      "headline": "Only look forward",
+      "narration": "Looping from a start index forward is why each subset appears once, in increasing order."
+    },
+    {
+      "index": 5,
+      "start": 90.6,
+      "end": 99.6,
+      "duration": 9,
+      "label": "Balanced",
+      "headline": "Every push had a pop",
+      "narration": "At the end the path is empty again — a matching pop for every push means no state leaked."
+    }
+  ],
+  "cue_span_sec": 99.6,
+  "formulas": [
+    "\\text{subsets } O(2^{n}) \\qquad \\text{permutations } O(n!)"
+  ],
+  "exported_at": "2026-07-08T13:56:05.278Z"
+}

@@ -1,0 +1,71 @@
+{
+  "lesson_id": 21,
+  "activity_id": 124,
+  "activity_type": "lesson_part",
+  "title": "Part 2: Permutations + pruning",
+  "audio": {
+    "file_path": "runtime_artifacts/audio/lesson_21_activity_124_audio.mp3",
+    "duration_sec": 95.47
+  },
+  "audio_source": "artifact",
+  "cue_source": "audio.synced_visual.cues",
+  "cues": [
+    {
+      "index": 0,
+      "start": 0,
+      "end": 17.4,
+      "duration": 17.4,
+      "label": "Order matters",
+      "headline": "1-2 and 2-1 are different",
+      "narration": "Permutations use every element once and care about order, so you cannot use a forward-only start index."
+    },
+    {
+      "index": 1,
+      "start": 17.4,
+      "end": 35.9,
+      "duration": 18.5,
+      "label": "Used-array",
+      "headline": "One flag per element",
+      "narration": "A boolean used-array tracks which elements are already in the path; the loop skips any that are used."
+    },
+    {
+      "index": 2,
+      "start": 35.9,
+      "end": 55,
+      "duration": 19.1,
+      "label": "Choose",
+      "headline": "Set the flag, push",
+      "narration": "To choose an element, set its used flag and append it, then recurse to fill the next position."
+    },
+    {
+      "index": 3,
+      "start": 55,
+      "end": 74.1,
+      "duration": 19.1,
+      "label": "Record",
+      "headline": "Full length is an answer",
+      "narration": "When the path length equals the input length, you have a full permutation, so record a copy."
+    },
+    {
+      "index": 4,
+      "start": 74.1,
+      "end": 86.8,
+      "duration": 12.7,
+      "label": "Un-choose",
+      "headline": "Pop and clear the flag",
+      "narration": "Un-choose pops the element and clears its flag, freeing it for a different branch."
+    },
+    {
+      "index": 5,
+      "start": 86.8,
+      "end": 95.5,
+      "duration": 8.7,
+      "label": "Prune",
+      "headline": "Skip illegal branches early",
+      "narration": "With constraints like N-Queens, test the partial state before recursing and skip doomed branches — deleting whole subtrees."
+    }
+  ],
+  "cue_span_sec": 95.5,
+  "formulas": [],
+  "exported_at": "2026-07-08T13:56:05.278Z"
+}

@@ -1,0 +1,80 @@
+{
+  "lesson_id": 21,
+  "activity_id": 122,
+  "activity_type": "audio",
+  "title": "Audio: Backtracking — walk the decision tree",
+  "audio": {
+    "file_path": "runtime_artifacts/audio/lesson_21_audio.mp3",
+    "duration_sec": 844.06
+  },
+  "audio_source": "artifact",
+  "cue_source": "orientation_visual.cues",
+  "cues": [
+    {
+      "index": 0,
+      "start": 0,
+      "end": 119.6,
+      "duration": 119.6,
+      "label": "The trigger",
+      "headline": "\"Find all the ways\" needs a variable loop count",
+      "narration": "When the number of nested loops depends on the input, you cannot write them out; backtracking enumerates every choice sequence instead."
+    },
+    {
+      "index": 1,
+      "start": 119.6,
+      "end": 246.2,
+      "duration": 126.6,
+      "label": "A tree of choices",
+      "headline": "Every root-to-leaf path is one answer",
+      "narration": "Picture a tree where each branch is a choice; a depth-first walk visits every candidate answer."
+    },
+    {
+      "index": 2,
+      "start": 246.2,
+      "end": 393.9,
+      "duration": 147.7,
+      "label": "Three beats",
+      "headline": "Choose, explore, un-choose",
+      "narration": "Push a choice onto a shared path, recurse to explore, then pop it back off so the next branch starts clean."
+    },
+    {
+      "index": 3,
+      "start": 393.9,
+      "end": 534.6,
+      "duration": 140.7,
+      "label": "Record a copy",
+      "headline": "Snapshot at a complete state",
+      "narration": "At a complete answer, save a copy of the path, never the live list, or later pops corrupt every saved answer."
+    },
+    {
+      "index": 4,
+      "start": 534.6,
+      "end": 675.2,
+      "duration": 140.6,
+      "label": "Prune early",
+      "headline": "Delete doomed subtrees",
+      "narration": "Reject a partial state the instant you can prove it is hopeless; an early rejection erases the largest subtrees."
+    },
+    {
+      "index": 5,
+      "start": 675.2,
+      "end": 787.8,
+      "duration": 112.6,
+      "label": "Index or marker",
+      "headline": "Start index vs used-array",
+      "narration": "A start index prevents duplicate subsets; a used-array lets permutations place any free element in any order."
+    },
+    {
+      "index": 6,
+      "start": 787.8,
+      "end": 844.1,
+      "duration": 56.3,
+      "label": "When it fails",
+      "headline": "Exponential; DP may fold it",
+      "narration": "The tree is often exponential or factorial; if you need one optimum or a count, dynamic programming can fold it to a table."
+    }
+  ],
+  "cue_span_sec": 844.1,
+  "formulas": [],
+  "exported_at": "2026-07-08T13:56:05.277Z"
+}

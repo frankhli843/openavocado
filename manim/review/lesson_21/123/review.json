@@ -1,0 +1,29 @@
+{
+  "lesson_id": 21,
+  "activity_id": 123,
+  "reviewed_at": "2026-07-08T14:35:00Z",
+  "iterations": 2,
+  "frames_reviewed": 18,
+  "quality": "ql",
+  "notes": "Lesson 21 Part 1 (act 123), 'The template via subsets', 99.6s, 6 short cues. One running subsets decision tree of {1,2,3} (forward-only start-index tree: every node is a subset), shared path list + code skeleton in the lower band. Cues walk Choose/Record/Un-choose/Start-index/Balanced on the SAME tree. Uses backtracking.py idiom lib (TreeMobject tidy layout, PathList push/pop, snapshot_chip, complexity MathTex only for O(2^n)/O(n!)). Two iterations: authored + manim -s smoke (all 6 pass, fixed PathList closing-bracket reflow + Mobject.dim name collision -> fade_ids), then full -ql render + READ start/mid/end all 6 cues. Per-cue checklist (tree/subset correctness, edge choice labels, path push/pop matches beat, highlight matches narration, safe-area via theme.guard, chunk timing pinned): all pass. cue05_end frame beyond muxed dur (final 99.468s vs audio 99.62s) - settled state verified via cue05_mid.",
+  "frames": [
+    {"cue": 0, "kind": "start", "path": "lesson_21/123/cue00_start.png", "verdict": "pass", "notes": "subsets tree edges creating"},
+    {"cue": 0, "kind": "mid", "path": "lesson_21/123/cue00_mid.png", "verdict": "pass", "notes": "tree + root ∅ highlighted, 'root = ∅ empty subset'"},
+    {"cue": 0, "kind": "end", "path": "lesson_21/123/cue00_end.png", "verdict": "pass", "notes": "full tree + path=[] + 'one path list carried down every branch'"},
+    {"cue": 1, "kind": "start", "path": "lesson_21/123/cue01_start.png", "verdict": "pass", "notes": "tree + code skeleton push/backtrack"},
+    {"cue": 1, "kind": "mid", "path": "lesson_21/123/cue01_mid.png", "verdict": "pass", "notes": "choose +1: path=[1], node 1 accent, recurse arrow ∅->1"},
+    {"cue": 1, "kind": "end", "path": "lesson_21/123/cue01_end.png", "verdict": "pass", "notes": "path=[1], +1 edge lit, 'recurse one level deeper'"},
+    {"cue": 2, "kind": "start", "path": "lesson_21/123/cue02_start.png", "verdict": "pass", "notes": "path=[1] branch accent + results shelf title"},
+    {"cue": 2, "kind": "mid", "path": "lesson_21/123/cue02_mid.png", "verdict": "pass", "notes": "results [] and [1] saved as copies (emerald)"},
+    {"cue": 2, "kind": "end", "path": "lesson_21/123/cue02_end.png", "verdict": "pass", "notes": "results []/[1], 'save a COPY never the live list', 'later pops would corrupt a saved reference'"},
+    {"cue": 3, "kind": "start", "path": "lesson_21/123/cue03_start.png", "verdict": "pass", "notes": "path=[1] branch accent + path.pop() code"},
+    {"cue": 3, "kind": "mid", "path": "lesson_21/123/cue03_mid.png", "verdict": "pass", "notes": "popped: node 1 dimmed to rest, ∅ amber, path=[] restored"},
+    {"cue": 3, "kind": "end", "path": "lesson_21/123/cue03_end.png", "verdict": "pass", "notes": "next branch: +2 chosen, node 2 accent, path=[2]"},
+    {"cue": 4, "kind": "start", "path": "lesson_21/123/cue04_start.png", "verdict": "pass", "notes": "tree + 'for i in range(start,n)' code"},
+    {"cue": 4, "kind": "mid", "path": "lesson_21/123/cue04_mid.png", "verdict": "pass", "notes": "node 1 accent, forward children 1 2 / 1 3 emerald"},
+    {"cue": 4, "kind": "end", "path": "lesson_21/123/cue04_end.png", "verdict": "pass", "notes": "forward-only branches emerald + 'no duplicate subsets'"},
+    {"cue": 5, "kind": "start", "path": "lesson_21/123/cue05_start.png", "verdict": "pass", "notes": "dimmed tree + ∅ accent + path=[]"},
+    {"cue": 5, "kind": "mid", "path": "lesson_21/123/cue05_mid.png", "verdict": "pass", "notes": "path=[] 'no state leaked' + complexity subsets O(2^n) permutations O(n!)"},
+    {"cue": 5, "kind": "end", "path": "lesson_21/123/cue05_mid.png", "verdict": "pass", "notes": "boundary (settled verified via mid): balanced empty path + complexity bounds"}
+  ]
+}
