@@ -6,6 +6,12 @@
 
 # Local learner data and generated artifacts
 data/
+# Local QA snapshots / scratch state (screenshots, DOM dumps, eval scratch).
+# May contain local host addresses or in-progress work — never commit.
+state/
+# Cloned source repos used only as import inputs (e.g. code/algorithms for the
+# algo-repo history import). Large working trees; never commit.
+/code/
 local_data/
 instance/
 artifacts/
@@ -50,6 +56,9 @@ next-env.d.ts
 out/
 .pnpm-store/
 
-# Runtime audio/artifacts
+# Runtime audio/artifacts (generated MP3s live under runtime_artifacts/audio/).
+# Anchor the bare audio/ pattern to the repo root so it does NOT also ignore
+# source directories like src/lib/audio/. Generated audio is still covered by
+# runtime_artifacts/ above and *.mp3 elsewhere in this file.
 runtime_artifacts/
-audio/
+/audio/

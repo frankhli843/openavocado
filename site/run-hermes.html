@@ -1,0 +1,74 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Run with a Hermes agent runtime (planned) — Open Avocado</title>
+<meta name="description" content="Wire a local Hermes agent as the lesson generator through the agent-harness command adapter.">
+<meta property="og:title" content="Run with a Hermes agent runtime (planned) — Open Avocado">
+<meta property="og:description" content="Wire a local Hermes agent as the lesson generator through the agent-harness command adapter.">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://frankhli843.github.io/openavocado/">
+<meta name="twitter:card" content="summary">
+<link rel="icon" type="image/svg+xml" href="assets/favicon.svg">
+<link rel="stylesheet" href="assets/styles.css">
+</head>
+<body>
+<nav class="topnav"><div class="topnav-inner">
+<a class="brand" href="index.html"><svg viewBox="635 -20 445 445" role="img" aria-label="Open Avocado" width="22" height="22"><path fill="#399103" d="M1232.67-1000.76a125.34,125.34,0,0,1,1-13c3.4-33,13.92-86.75,57.37-160.78,33-56.25,49.52-84.38,70.72-85.09,26.54-.89,46.12,32.06,79.12,87.6,39.58,66.6,49.47,123.11,52.53,154.17.83,8.43,1.25,12.64,1.12,17.1-1.53,52.59-48.78,130.92-130.92,130.92A130.92,130.92,0,0,1,1232.67-1000.76Z" transform="translate(-506.6 1267.13)"/><path fill="#f8ee7b" d="M1275.87-1006.33a84,84,0,0,1,.65-8.7c2.28-22.12,9.33-58.12,38.44-107.73,22.12-37.69,33.18-56.53,47.38-57,17.78-.6,30.9,21.48,53,58.69,26.52,44.62,33.14,82.48,35.2,103.29a90.81,90.81,0,0,1,.75,11.45c-1,35.23-32.68,87.71-87.71,87.71A87.71,87.71,0,0,1,1275.87-1006.33Z" transform="translate(-506.6 1267.13)"/><circle fill="#fff" cx="856.99" cy="264.46" r="42.81"/></svg><span><span class="b-open">Open</span><span class="b-avo"> Avocado</span></span></a>
+<div class="nav-links"><a href="index.html">Home</a><a href="quickstart.html" class="active">Quick Start</a><a href="architecture.html">Architecture</a><a href="lesson-authoring.html">Lesson Authoring</a><a href="configuration.html">Configuration</a><a href="contributing.html">Contributing</a><a href="deployment.html">Deploy</a><a href="privacy.html">Privacy</a><a class="gh" href="https://github.com/frankhli843/openavocado" target="_blank" rel="noopener">GitHub</a></div>
+</div></nav>
+<main class="wrap">
+<p class="breadcrumb"><a href="quickstart.html">Quick Start</a> › Run locally</p>
+<h1><span class="svg-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 4h11a2 2 0 0 1 2 2v11a3 3 0 0 1-3 3H7a3 3 0 0 1-3-3V6"/><path d="M4 6a2 2 0 0 1 4 0v3H4z"/><path d="M9 9h7M9 13h7M9 17h4"/></svg></span> Run with a Hermes agent runtime <span class="badge badge-planned">planned</span></h1>
+<p class="lead">Wire a local Hermes agent (Nous Research) — or any local agentic runtime that can run tools and code — as the lesson generator through Open Avocado's agent-harness command adapter.</p>
+
+<div class="planned"><p><strong>Status: planned / not yet wired end-to-end.</strong> Open Avocado already exposes the
+generic <em>command adapter</em> this runtime would use, but a turnkey Hermes integration is not shipped. This page
+documents the intended interface and the current blocker honestly, so you can wire it yourself or track progress.</p></div>
+
+<h2>Who this is for</h2>
+<ul>
+  <li>You run a local agentic runtime (Hermes Agent, or similar) that can take a prompt, use tools, execute code, and return a result.</li>
+  <li>You want a fully local agent loop authoring lessons, without a hosted task platform.</li>
+</ul>
+
+<h2>The intended interface</h2>
+<p>The <code>agent-harness</code> completion adapter shells out to a command you configure and hands it the generation
+task on stdin (learner evidence + the lesson quality bar). The command is expected to author a validated lesson and
+write it back, then exit non-zero on failure. Hermes would be wrapped by such a command.</p>
+<pre><code># Planned configuration:
+export AVOCADOCORE_COMPLETION_ADAPTER=agent-harness
+export AVOCADOCORE_AGENT_HARNESS_COMMAND=/path/to/hermes-lesson-runner
+export AVOCADOCORE_AGENT_HARNESS_TIMEOUT_MS=1800000
+</code></pre>
+<p>Your <code>hermes-lesson-runner</code> wrapper is the missing piece: it must translate the task payload into a Hermes
+session, run the agent, and persist the resulting lesson through the database or app API.</p>
+
+<h2>What already exists vs. what's missing</h2>
+<div class="table-wrap"><table>
+<tr><th>Piece</th><th>Status</th></tr>
+<tr><td><code>agent-harness</code> command adapter + timeout</td><td><span class="badge badge-ok">ready</span> — the app can invoke an arbitrary command per event.</td></tr>
+<tr><td>Task payload with full learner evidence + quality bar</td><td><span class="badge badge-ok">ready</span> — same payload every adapter receives.</td></tr>
+<tr><td>Hermes wrapper (<code>hermes-lesson-runner</code>)</td><td><span class="badge badge-planned">planned</span> — you supply this; a reference wrapper is not yet shipped.</td></tr>
+<tr><td>Validated write-back + QA loop for Hermes output</td><td><span class="badge badge-planned">planned</span> — reuse the generator contract and a separate reviewer.</td></tr>
+</table></div>
+
+<h2>Current blocker</h2>
+<p>There is no shipped, tested Hermes wrapper, and small local agent models vary widely in their ability to satisfy the
+full lesson contract (bespoke interactives, synced visuals, hidden tests, separate QA). Until a reference wrapper lands,
+treat Hermes as a build-it-yourself integration on top of the ready <code>agent-harness</code> adapter. Contributions of
+a reference wrapper are welcome — see <a href="contributing.html">Contributing</a>.</p>
+
+<h2>How it will connect to lesson generation</h2>
+<p>Identical contract to every other runtime: consume the task payload, meet the
+<a href="lesson-authoring.html">lesson-authoring standard</a>, and write validated lesson content back. Only the
+execution engine (a local Hermes agent) differs.</p>
+</main>
+<footer><div class="footer-inner">
+<p><strong>Open Avocado</strong> — open-source adaptive learning platform &amp; lesson-generation framework.</p>
+<p><a href="https://github.com/frankhli843/openavocado">GitHub repository</a> · <a href="https://frankhli843.github.io/openavocado/">Live site</a> · <a href="privacy.html">Privacy &amp; data boundaries</a></p>
+<p class="subtle">Built with Next.js, React, TypeScript, and SQLite. No personal data or credentials are stored in this repository.</p>
+</div></footer>
+</body>
+</html>

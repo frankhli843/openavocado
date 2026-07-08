@@ -5,7 +5,7 @@ import { hashPassword, validatePassword } from "@/lib/auth/password";
 import { createSession } from "@/lib/auth/session";
 import { checkRateLimit, rateLimitHeaders } from "@/lib/auth/rate-limit";
 
-/** POST /api/auth/register — self-registration for prodavo. */
+/** POST /api/auth/register — self-registration. */
 export async function POST(request: NextRequest) {
   // Rate limit: 5 registrations per IP per 15 minutes
   const ip = request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ?? "unknown";

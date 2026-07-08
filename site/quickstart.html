@@ -1,0 +1,84 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Quick Start — Open Avocado</title>
+<meta name="description" content="Install Open Avocado, seed a local SQLite database, run the app, and choose a lesson-generation runtime.">
+<meta property="og:title" content="Quick Start — Open Avocado">
+<meta property="og:description" content="Install Open Avocado, seed a local SQLite database, run the app, and choose a lesson-generation runtime.">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://frankhli843.github.io/openavocado/">
+<meta name="twitter:card" content="summary">
+<link rel="icon" type="image/svg+xml" href="assets/favicon.svg">
+<link rel="stylesheet" href="assets/styles.css">
+</head>
+<body>
+<nav class="topnav"><div class="topnav-inner">
+<a class="brand" href="index.html"><svg viewBox="635 -20 445 445" role="img" aria-label="Open Avocado" width="22" height="22"><path fill="#399103" d="M1232.67-1000.76a125.34,125.34,0,0,1,1-13c3.4-33,13.92-86.75,57.37-160.78,33-56.25,49.52-84.38,70.72-85.09,26.54-.89,46.12,32.06,79.12,87.6,39.58,66.6,49.47,123.11,52.53,154.17.83,8.43,1.25,12.64,1.12,17.1-1.53,52.59-48.78,130.92-130.92,130.92A130.92,130.92,0,0,1,1232.67-1000.76Z" transform="translate(-506.6 1267.13)"/><path fill="#f8ee7b" d="M1275.87-1006.33a84,84,0,0,1,.65-8.7c2.28-22.12,9.33-58.12,38.44-107.73,22.12-37.69,33.18-56.53,47.38-57,17.78-.6,30.9,21.48,53,58.69,26.52,44.62,33.14,82.48,35.2,103.29a90.81,90.81,0,0,1,.75,11.45c-1,35.23-32.68,87.71-87.71,87.71A87.71,87.71,0,0,1,1275.87-1006.33Z" transform="translate(-506.6 1267.13)"/><circle fill="#fff" cx="856.99" cy="264.46" r="42.81"/></svg><span><span class="b-open">Open</span><span class="b-avo"> Avocado</span></span></a>
+<div class="nav-links"><a href="index.html">Home</a><a href="quickstart.html" class="active">Quick Start</a><a href="architecture.html">Architecture</a><a href="lesson-authoring.html">Lesson Authoring</a><a href="configuration.html">Configuration</a><a href="contributing.html">Contributing</a><a href="deployment.html">Deploy</a><a href="privacy.html">Privacy</a><a class="gh" href="https://github.com/frankhli843/openavocado" target="_blank" rel="noopener">GitHub</a></div>
+</div></nav>
+<main class="wrap">
+<h1>Quick Start</h1>
+<p class="lead">Clone, seed a local database, and run Open Avocado in a few commands. Then choose how lessons are
+generated on the <a href="#runtimes">local runtime</a> that fits you.</p>
+
+<h2>Prerequisites</h2>
+<ul>
+  <li><strong>Node.js 20–22</strong> and <a href="https://pnpm.io" target="_blank" rel="noopener">pnpm</a>.</li>
+  <li>A C toolchain for the native SQLite module (<code>better-sqlite3</code>) — usually already present.</li>
+</ul>
+<div class="warn"><p><strong>Node version caveat.</strong> The native SQLite addon is built for the Node version you
+install with. Node 20–22 works out of the box. On <strong>Node 25+</strong>, Next.js server-side rendering collides with
+a built-in <code>localStorage</code> global; start the app with
+<code>NODE_OPTIONS="--localstorage-file=/tmp/oa-ls.json"</code> to supply a backing store. If you switch Node major
+versions, reinstall so the native module is rebuilt.</p></div>
+
+<h2>Install &amp; run</h2>
+<pre><code>git clone https://github.com/frankhli843/openavocado.git
+cd openavocado
+pnpm install
+
+mkdir -p data
+pnpm db:migrate --seed     # first run only — creates + seeds a local SQLite DB with synthetic data
+pnpm dev                   # http://localhost:3000
+</code></pre>
+<p>Open <code>http://localhost:3000</code>. The seed data includes a synthetic learner and sample subjects so the UI
+is populated immediately. Runtime data (the SQLite file, generated audio, learner answers) lives in gitignored folders
+and is never committed.</p>
+
+<h2>Everyday commands</h2>
+<div class="table-wrap"><table>
+<tr><th>Command</th><th>What it does</th></tr>
+<tr><td><code>pnpm dev</code></td><td>Start the dev server (lazy compile, good for local work).</td></tr>
+<tr><td><code>pnpm build</code> then <code>pnpm start</code></td><td>Production build + serve. Rebuild before restart.</td></tr>
+<tr><td><code>pnpm db:migrate</code></td><td>Apply schema migrations (non-destructive — preserves existing data).</td></tr>
+<tr><td><code>pnpm db:migrate --seed</code></td><td>Migrate <em>and</em> seed synthetic demo data (resets a throwaway DB).</td></tr>
+<tr><td><code>pnpm test</code></td><td>Run the Vitest unit suite.</td></tr>
+<tr><td><code>pnpm lint</code></td><td>Run ESLint.</td></tr>
+<tr><td><code>pnpm exec tsc --noEmit</code></td><td>Type-check without emitting.</td></tr>
+</table></div>
+
+<h2>Verify it's healthy</h2>
+<pre><code>curl -sf http://localhost:3000/ -o /dev/null &amp;&amp; echo "home OK"
+curl -s  http://localhost:3000/api/health | head -c 300</code></pre>
+
+<h2 id="runtimes">Choose a lesson-generation runtime</h2>
+<p>The app runs the same regardless of how lessons are produced. Pick one:</p>
+<div class="card-grid">
+  <a class="card" href="run-api-key.html"><div class="ico"><span class="svg-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="8" cy="8" r="4"/><path d="M11 11l8 8"/><path d="M16 16l2-2"/><path d="M18.5 18.5l1.5-1.5"/></svg></span></div><h3>Direct API key <span class="badge badge-ok">ready</span></h3><p>Simplest standalone path — bring one LLM key.</p></a>
+  <a class="card" href="run-gemmaclaw.html"><div class="ico"><span class="svg-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="6" y="6" width="12" height="12" rx="2"/><path d="M9 2v3M15 2v3M9 19v3M15 19v3M2 9h3M2 15h3M19 9h3M19 15h3"/></svg></span></div><h3>Gemmaclaw <span class="badge badge-partial">partial</span></h3><p>Local, OpenAI-compatible model gateway.</p></a>
+  <a class="card" href="run-openclaw.html"><div class="ico"><span class="svg-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="8" width="16" height="11" rx="2.5"/><path d="M12 4v4"/><circle cx="12" cy="3" r="1.2"/><circle cx="9" cy="13" r="1.1"/><circle cx="15" cy="13" r="1.1"/></svg></span></div><h3>OpenClaw <span class="badge badge-ok">ready</span></h3><p>External agent/task runner for full-quality lessons.</p></a>
+  <a class="card" href="run-hermes.html"><div class="ico"><span class="svg-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 4h11a2 2 0 0 1 2 2v11a3 3 0 0 1-3 3H7a3 3 0 0 1-3-3V6"/><path d="M4 6a2 2 0 0 1 4 0v3H4z"/><path d="M9 9h7M9 13h7M9 17h4"/></svg></span></div><h3>Hermes <span class="badge badge-planned">planned</span></h3><p>Local Hermes agent via the command adapter.</p></a>
+</div>
+
+<p>Next: <a href="configuration.html">Configuration</a> for every environment variable, or
+<a href="architecture.html">Architecture</a> for how the pieces fit together.</p>
+</main>
+<footer><div class="footer-inner">
+<p><strong>Open Avocado</strong> — open-source adaptive learning platform &amp; lesson-generation framework.</p>
+<p><a href="https://github.com/frankhli843/openavocado">GitHub repository</a> · <a href="https://frankhli843.github.io/openavocado/">Live site</a> · <a href="privacy.html">Privacy &amp; data boundaries</a></p>
+<p class="subtle">Built with Next.js, React, TypeScript, and SQLite. No personal data or credentials are stored in this repository.</p>
+</div></footer>
+</body>
+</html>

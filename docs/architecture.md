@@ -22,13 +22,15 @@ Do not commit:
 
 ## Application Stack
 
-AvocadoCore should use Next.js, React, and TypeScript.
+Open Avocado uses Next.js, React, and TypeScript.
 
 ## Multi-User Model
 
-AvocadoCore is multi-user from day one. The data model should separate account/user identity from learner profile and learning progress.
+Open Avocado is multi-user from day one. The data model should separate account/user identity from learner profile and learning progress.
 
 Core records should be scoped so multiple users can have their own subjects, goals, lessons, attempts, mastery signals, tags, generated artifacts, and progress history. Even if a deployment starts with one learner, the schema should not assume a single global learner.
+
+A user account can hold several **learner profiles**. Each profile has a display name, bio, preferred language, and a free-form privacy-safe `config` JSON (learner notes/preferences/context that guide lesson generation). `users.active_learner_id` records which profile is active; the app falls back to the account's first profile when unset. Profiles are managed from the UI (`ProfileSwitcher`) via `/api/profiles` (list/create), `/api/profiles/[id]` (rename/edit config), and `/api/profiles/active` (switch). Every subject, mastery, autosave, assessment, and completion query is scoped by `learner_id`, so one profile's history never leaks into another.
 
 ## First Data Model Sketch
 
@@ -44,6 +46,19 @@ Core records should be scoped so multiple users can have their own subjects, goa
 - `progress_points`: time-series data for mastery, confidence, assessment results, code/test results, and review cadence.
 - `generated_artifacts`: durable generated assets, including audio metadata.
 - `next_lesson_jobs`: next-lesson generation links, adapter metadata, and generation state.
+- `assessment_results`: per-question evidence (question type, `concept`, `difficulty`, `outcome`) for every graded MC attempt and freeform/diagnostic answer.
+- `assessment_result_tags`: tags attached to each assessment result by the assessor.
+
+## Adaptive Assessment Pipeline
+
+Answer assessment is a first-class part of the learning loop, not a static display. When a learner answers (an MC attempt graded live, or freeform/diagnostic answers at completion), the answer goes through an `AssessmentAdapter` (`src/lib/assessment.ts`). The default is a **deterministic, no-LLM assessor** behind a clean boundary so a future ACP/LLM adapter can replace it without touching callers. The assessor:
+
+- matches the question's `concept` against the subject's existing tag vocabulary (`subject_tags`), or **creates a normalized tag automatically** when the concept is new (a `misconception` tag for wrong/IDK answers, a `concept` tag for correct ones);
+- emits a single mastery signal (type + concept + confidence + `difficulty`).
+
+`src/lib/assessment-store.ts` persists the decision in one transaction: an `assessment_results` row, the matched/created tags linked to both the subject and the result, and a `mastery_signals` row carrying `difficulty` and the resolved `tag_id`. The `/api/assess` route surfaces persistence/tagging failures as errors rather than swallowing them. Because `difficulty` is stored on every attempt and signal, performance is queryable by tag **and** difficulty (e.g. "how did this learner do on hard `base-rate-fallacy` questions"), which feeds both the subject-page evidence panel and next-lesson generation.
+
+Every multiple-choice question carries a **required** `difficulty` and renders a virtual **"I don't know"** option (index `=== choices.length`, never the correct answer, no schema change). IDK grades incorrect (the concept requeues) but is recorded as a distinct low-confidence `review_needed` signal. Each lesson also ends with freeform **next-lesson diagnostics** (`lessons.next_lesson_diagnostics`) whose answers autosave, are assessed for tags/signals, and enrich the `lesson.completed` payload — none of which complete the lesson.
 
 ## Completion Semantics
 
@@ -64,11 +79,9 @@ The lesson generator may add optional sections, such as reading, flashcards, wor
 
 ## Interactive Widget System
 
-Interactive activities use a typed `WidgetSpec` contract stored as JSON in `lesson_activities.content`. Two widget kinds are supported:
+Interactive activities use a typed `WidgetSpec` contract stored as JSON in `lesson_activities.content`. The learner-facing runtime supports only `widget_type: "bespoke-artifact"` specs that reference an approved `visual_artifacts.slug`. The generated React source is stored in the database, compiled by the artifact pipeline, QA-approved, and rendered inside the sandboxed iframe route.
 
-**Declarative widgets** (`widget_type: "declarative"`) are fully data-driven. The lesson generator emits controls (sliders, toggles, segmented selectors), derived outputs (computed via a sandboxed expression evaluator), explanatory panels with template interpolation, and one or more charts. A widget may carry a single `chart` and/or a `charts: []` array so the **same controls can drive several visual perspectives at once**. Chart types: `bar`, `curve`, `table` (a frequency/contingency grid of live-computed cells), and `tree` (a population-split / flow diagram with live counts). No executable code is embedded — the spec is a declarative description only. Key files: `src/lib/widgets/schema.ts`, `compute.ts`, `expression.ts`, `src/components/lesson/widgets/Charts.tsx`.
-
-**Registered widgets** are hand-written React components with known, safe behaviour. The lesson generator emits a typed `widget_type` string and a `params` object; the component registry dispatches to the correct renderer. Key file: `src/lib/widgets/registry.ts`. Current registered types: `supply-demand` (market equilibrium simulator with SVG curve chart).
+Declarative widgets and registered widgets are legacy parser families kept only so old records can be inspected and backfilled. `WidgetHost` no longer dispatches them to learner-facing UI.
 
 Widget state (control values) is autosaved per activity to `lesson_autosave.widget_state` on a 1-second debounce and restored on page load. Autosave never triggers lesson completion — that path is manual-only.
 
@@ -76,7 +89,7 @@ The expression evaluator (`src/lib/widgets/expression.ts`) is a no-eval recursiv
 
 Widget rendering is gated by `validateWidgetSpec` which checks schema version, required fields, control references in formulas (including `table` cell and `tree` node formulas), and known types. Invalid or unrecognised specs display a clear amber error state rather than a blank section.
 
-Multiple visualizations per lesson are supported two ways, which compose: (1) several `interactive` activities in one lesson — each restores its own widget state independently, keyed by activity id in `lesson_autosave`; (2) several charts in one declarative widget via `charts: []`. The seeded Bayes lesson demonstrates both.
+Multiple visualizations per lesson are supported by several `interactive` activities and by coordinated views inside one approved `bespoke-artifact`. Generated lessons and backfills must reference approved DB-backed bespoke artifacts rather than registered, declarative, or local panel-template specs.
 
 ## Written Text, Media, and Scaffolded Code
 
@@ -86,7 +99,7 @@ Non-interactive lesson content has its own typed schemas and validators in `src/
 
 **Media (`media`)** is rendered by `MediaSection`. Its `content` is `{ embeds[] }` where each embed has `provider: "youtube"`, a `video_id` or `url`, plus `title`, `reason`, `fallback_text`, and optional `start`. Security boundary: the iframe is **always** built from a validated 11-character video id via the privacy-enhanced `youtube-nocookie.com` domain (`buildYouTubeEmbedUrl`). A raw, generator-supplied URL is never injected into an iframe; `extractYouTubeId` whitelists YouTube hosts and rejects other domains and non-http(s) schemes. If a video cannot resolve or fails to load, the section degrades to the fallback text plus a "Watch on YouTube" link — it never breaks the page.
 
-**Scaffolded code (`practice_code`)** is a real submission exercise rendered by `PythonSection`. Its `content` carries `prompt`, `starter_code`, `constraints[]`, `guided_steps[]`, progressive `hints[]` (level 1 conceptual, 2 structural, 3 syntax — revealed one at a time), public `tests[]`, and `hidden_tests[]` (run on submit; assertions never shown, only a pass/fail count). Pedagogical boundary: `validatePracticeCodeContent` **rejects** any exposed-answer field (`solution`, `answer`, `solution_code`, `reference_solution`, `completed_code`). The learner must write and submit code; the completed answer is never shown inline. Run checks public tests; Submit runs public + hidden tests, and a passing submission posts to `/api/code-submission`, which records an immutable attempt and a `ready_to_advance` mastery signal — but never completes the lesson.
+**Scaffolded code (`practice_code`)** is a real submission exercise rendered by `PythonSection`. Its `content` carries `prompt`, `walkthrough`, `io_examples[]`, `visualization`, `starter_code`, `worked_examples[]`, `constraints[]`, `guided_steps[]`, progressive `hints[]` (revealed one at a time from conceptual nudge through the full answer explanation), public `tests[]`, and `hidden_tests[]` (run on submit; assertions never shown, only a pass/fail count). The walkthrough, input/output examples, and behavior map teach expected input shape, transformation, and output behavior before the learner edits code. `worked_examples` must include complete `basic` and `concise` full-code implementations. Desktop mode is the active coding surface; phone mode is a read-only answer/study surface that hides the editor, Run/Submit controls, and runtime badge while showing the optional-coding notice, walkthrough, expected I/O, behavior map, and reference answers. If an exercise uses an external Python library, the starter-code comments or teaching text must document the relevant calls, keyword arguments, and parameters. Pedagogical boundary: `validatePracticeCodeContent` **rejects** any top-level exposed-answer field (`solution`, `answer`, `solution_code`, `reference_solution`, `completed_code`). The learner must write and submit code in desktop mode; answer support is progressively revealed through hints and controlled worked examples rather than hidden in a separate solution field. Run checks public tests; Submit runs public + hidden tests, posts every attempt to `/api/code-submission`, and calls `/api/code-feedback` with learner code, interpreter output, visible test results, and hidden pass count. Passing records a `ready_to_advance` mastery signal, but code submission never completes the lesson.
 
 The generator contract (`validateGeneratedContent` in `src/lib/lesson-generator/contract.ts`) ties these together: it requires the core sections including `reading`, and validates every reading, media, and practice_code activity. A bad generated lesson fails loudly with specific errors rather than producing a polished-looking but pedagogically useless page. See `docs/lesson-authoring-guide.md` for the full quality bar.
 
@@ -111,6 +124,35 @@ Generated audio is a permanent runtime artifact, not a disposable cache. The tra
 
 Audio files must not be committed to git. Store them in runtime storage and keep database metadata such as provider, voice, duration, content hash, file path or object key, generated timestamp, and source lesson/script version.
 
+### Generation and serving (implementation)
+
+- **TTS adapter** — `src/lib/audio/tts.ts` is the single boundary for turning an
+  audio script into a real MP3. It tries providers in order: OpenAI TTS when
+  `OPENAI_API_KEY` is set and has quota, then an offline `espeak-ng` + `ffmpeg`
+  fallback (apt: `espeak-ng`) so a deployment always ends up with a real,
+  playable file even with no network/quota. It returns the real provider, voice,
+  duration (via `ffprobe`), and SHA-256 content hash.
+- **Recording** — `src/lib/audio/generate-lesson-audio.ts` reads a lesson's audio
+  activity script, synthesizes the file under `runtime_artifacts/audio/lesson_<id>_audio.mp3`,
+  and upserts the `generated_artifacts` row with the **real** hash/duration
+  (replacing any placeholder row). It is idempotent via `script_version`.
+- **Serving** — `src/app/runtime/[...path]/route.ts` serves files from
+  `runtime_artifacts/` with correct content types and HTTP **Range** support (so
+  the `<audio>` player can seek). It refuses any path that escapes the runtime
+  root. If a referenced audio file is missing it **self-heals**: it reads the
+  lesson's audio script and synthesizes the file on first request, so a freshly
+  deployed/seeded DB never serves a 404 for audio that has metadata.
+- **Durable creation paths** — `pnpm audio:generate [lessonId] [--force]`
+  generates audio for one/all lessons; `pnpm backfill:lessons` upgrades an
+  already-seeded (live) database in place — it seeds a throwaway reference DB
+  from the real seed (single source of truth, no content duplication), copies the
+  enriched lesson content into the live DB, backfills `next_lesson_diagnostics`,
+  and generates real audio. Run `audio:generate` after a fresh seed and
+  `backfill:lessons` to repair an existing demo DB.
+- The seed records audio metadata with `content_hash = NULL` (honest "not yet
+  generated") rather than a fake hash; the real hash is filled when the file is
+  generated.
+
 ## Mastery, Tags, and Progress Graphs
 
 Subjects should expose mastery tracking, tagging, and graphs over time.
@@ -127,7 +169,7 @@ Subjects support reversible archive/restore. Archiving sets `subjects.status = '
 
 ## Lesson Generator Skill
 
-Lesson generation should be a reusable skill that any agent can leverage to build lesson content for a particular page or lesson slot in the AvocadoCore framework.
+Lesson generation should be a reusable skill that any agent can leverage to build lesson content for a particular page or lesson slot in the Open Avocado framework.
 
 The app should provide a structured page/lesson contract. The skill should return structured lesson content, including audio script, interactive spec, Python/code exercise, tests, assessment, tags, mastery targets, and metadata.
 
@@ -139,7 +181,7 @@ The core app emits a `lesson.completed` event after manual completion. A deploym
 
 - `webhook`: POST the event to a configured endpoint.
 - `local-queue`: enqueue the event in local storage.
-- `task-runner`: call a locally configured task system.
+- `dora-task`: hand the event to an external agent task runner (for example an OpenClaw-style task hook) through a configured endpoint or a local task CLI. Used by deployments that generate lessons with a separate agent or task system.
 - `noop`: record completion without external automation.
 
 Adapters are responsible for transforming the event into their own task format. The shareable repo should contain only generic adapter interfaces and safe examples. Deployment-specific channels, user IDs, credentials, generated lesson data, and private learner configuration belong in gitignored local config.
@@ -157,3 +199,13 @@ Recommended event fields:
 - concepts to review
 - misunderstandings to repair
 - next curriculum targets
+
+The current `lesson.completed` payload is enriched so next-lesson generation can be **adaptive to evidence** rather than a generic course step. Beyond the basics it carries: subject goals + learner criteria, the subject AI workpad summary, the quiz result, **tag + difficulty performance**, the freeform next-lesson diagnostics, recent misconceptions, completed + discarded lesson history, the learner-profile `config`, and a cross-subject mastery snapshot. The external task-runner adapter prompt is structured to use this in priority order: subject-specific evidence first; profile config and cross-subject history only when they help. Its stated pedagogical goal is to **find foundational weaknesses and bridge them with the least learner effort**, advancing the curriculum only where the foundation is solid.
+
+When an external agent or task runner generates lessons, every generation task
+must begin by reading the lesson-authoring skill
+(`skills/avocadocore-lesson-authoring/SKILL.md`). This applies to first lessons
+after a new subject is added, next lessons after `lesson.completed`,
+replacement lessons after `lesson.discarded`, and manual backfills. Do not add a
+new-subject generation trigger that uses a separate weaker prompt; it must point
+to the same main skill and use the same SQLite mastery evidence model.

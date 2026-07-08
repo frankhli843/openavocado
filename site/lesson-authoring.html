@@ -1,0 +1,78 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Lesson Authoring — Open Avocado</title>
+<meta name="description" content="The generic agent/skill model for authoring lessons: evidence-first planning, quality bar, and separate QA.">
+<meta property="og:title" content="Lesson Authoring — Open Avocado">
+<meta property="og:description" content="The generic agent/skill model for authoring lessons: evidence-first planning, quality bar, and separate QA.">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://frankhli843.github.io/openavocado/">
+<meta name="twitter:card" content="summary">
+<link rel="icon" type="image/svg+xml" href="assets/favicon.svg">
+<link rel="stylesheet" href="assets/styles.css">
+</head>
+<body>
+<nav class="topnav"><div class="topnav-inner">
+<a class="brand" href="index.html"><svg viewBox="635 -20 445 445" role="img" aria-label="Open Avocado" width="22" height="22"><path fill="#399103" d="M1232.67-1000.76a125.34,125.34,0,0,1,1-13c3.4-33,13.92-86.75,57.37-160.78,33-56.25,49.52-84.38,70.72-85.09,26.54-.89,46.12,32.06,79.12,87.6,39.58,66.6,49.47,123.11,52.53,154.17.83,8.43,1.25,12.64,1.12,17.1-1.53,52.59-48.78,130.92-130.92,130.92A130.92,130.92,0,0,1,1232.67-1000.76Z" transform="translate(-506.6 1267.13)"/><path fill="#f8ee7b" d="M1275.87-1006.33a84,84,0,0,1,.65-8.7c2.28-22.12,9.33-58.12,38.44-107.73,22.12-37.69,33.18-56.53,47.38-57,17.78-.6,30.9,21.48,53,58.69,26.52,44.62,33.14,82.48,35.2,103.29a90.81,90.81,0,0,1,.75,11.45c-1,35.23-32.68,87.71-87.71,87.71A87.71,87.71,0,0,1,1275.87-1006.33Z" transform="translate(-506.6 1267.13)"/><circle fill="#fff" cx="856.99" cy="264.46" r="42.81"/></svg><span><span class="b-open">Open</span><span class="b-avo"> Avocado</span></span></a>
+<div class="nav-links"><a href="index.html">Home</a><a href="quickstart.html">Quick Start</a><a href="architecture.html">Architecture</a><a href="lesson-authoring.html" class="active">Lesson Authoring</a><a href="configuration.html">Configuration</a><a href="contributing.html">Contributing</a><a href="deployment.html">Deploy</a><a href="privacy.html">Privacy</a><a class="gh" href="https://github.com/frankhli843/openavocado" target="_blank" rel="noopener">GitHub</a></div>
+</div></nav>
+<main class="wrap">
+<h1>Lesson Authoring</h1>
+<p class="lead">Any agent, skill, or runtime can author lessons for Open Avocado — as long as it meets the same
+evidence-first quality bar and passes independent QA. This is the generic model; nothing here assumes a particular
+task system.</p>
+
+<h2>Evidence-first planning</h2>
+<p>A good lesson is not a topic dump — it is the next move that closes the most important gap. Before authoring, the
+generator reviews the learner's evidence: subject goals and criteria, prior mastery signals, tag + difficulty
+performance, recent misconceptions, diagnostics, and completed/discarded history. It plans a lesson that mixes three
+streams:</p>
+<ul>
+  <li><strong>Review</strong> — retrieve earlier material by mastery/weak-spot signals (spaced repetition).</li>
+  <li><strong>Repair</strong> — target specific misconceptions surfaced by past answers.</li>
+  <li><strong>Advance</strong> — move the curriculum forward only where the foundation is solid.</li>
+</ul>
+<p>Forward-looking probe questions stay in diagnostics and are never graded as if taught.</p>
+
+<h2>The quality bar</h2>
+<p>Every normal lesson keeps the same core sections, and each is validated:</p>
+<ul>
+  <li><strong>Audio</strong> — a substantial narrated walkthrough with a learner-visible transcript and a synced visual timeline whose cues cover the real audio duration.</li>
+  <li><strong>Reading</strong> — first-class written teaching text (headings, definitions, worked examples, callouts), not a transcript dump.</li>
+  <li><strong>Interactive</strong> — purpose-built, sandboxed visual artifacts designed for the exact concept, mobile-verified. Generic reskinnable widgets fail QA.</li>
+  <li><strong>Code</strong> — scaffolded Python with guided steps, progressive hints, worked examples, and public + hidden tests. No exposed answer fields.</li>
+  <li><strong>Assessment</strong> — adaptive multiple choice (one at a time, immediate grading, requeued misses) plus freeform questions with rubrics for LLM feedback.</li>
+  <li><strong>Orientation</strong> — a knowledge-graph view placing the lesson in the subject.</li>
+</ul>
+<p>The machine-checked gate is <code>validateGeneratedContent</code>. A lesson that fails validation must be fixed,
+not shipped. The full written standard lives in <code>docs/lesson-authoring-guide.md</code> in the repository.</p>
+
+<h2>Multimedia &amp; interactivity expectations</h2>
+<ul>
+  <li>Visuals move: roughly one meaningful visual beat per few seconds of audio, refocusing a real lesson object (a matrix row, a pointer, a before/after state) — not static transcript cards.</li>
+  <li>Every interactive is bespoke source stored in the database, built, QA-screenshotted at desktop and 390px mobile, approved, and rendered by slug. Precreated/registered widgets are not valid learner-facing visuals.</li>
+  <li>Code exercises decompose into small helpers with visible checkpoints, then compose into the full solution.</li>
+</ul>
+
+<h2>Separate QA</h2>
+<p>Generation and QA are <strong>different roles</strong> and must not collapse into one "generated" state. After a
+lesson is authored, a <em>separate reviewer</em> opens it in a real browser, interacts with every activity, checks
+desktop and 390px mobile, verifies audio actually plays and cue timing matches the real duration, and only then marks
+it ready. "I generated this" is not evidence — a real lesson id, a 200-OK audio route, and desktop + mobile screenshots
+are.</p>
+
+<h2>Make it reusable</h2>
+<p>The generator is exposed as a stable adapter interface (<code>LessonGeneratorAdapter</code>) that returns structured
+lesson content: audio script, interactive specs, code exercise + tests, assessment, tags, and mastery targets. Any
+runtime — a direct model call, a local model, or an external agent — implements the same contract, so lessons are
+portable across backends.</p>
+</main>
+<footer><div class="footer-inner">
+<p><strong>Open Avocado</strong> — open-source adaptive learning platform &amp; lesson-generation framework.</p>
+<p><a href="https://github.com/frankhli843/openavocado">GitHub repository</a> · <a href="https://frankhli843.github.io/openavocado/">Live site</a> · <a href="privacy.html">Privacy &amp; data boundaries</a></p>
+<p class="subtle">Built with Next.js, React, TypeScript, and SQLite. No personal data or credentials are stored in this repository.</p>
+</div></footer>
+</body>
+</html>

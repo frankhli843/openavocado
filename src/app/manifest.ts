@@ -2,10 +2,10 @@ import type { MetadataRoute } from "next";
 
 export default function manifest(): MetadataRoute.Manifest {
   return {
-    name: "AvocadoCore — Adaptive Learning",
-    short_name: "AvocadoCore",
+    name: "Open Avocado — Adaptive Learning",
+    short_name: "Open Avocado",
     description:
-      "Adaptive learning platform. Multi-user, mastery-driven, locally-hosted.",
+      "Open-source adaptive learning platform. Multi-user, mastery-driven, locally-hosted.",
     start_url: "/",
     display: "standalone",
     background_color: "#ffffff",

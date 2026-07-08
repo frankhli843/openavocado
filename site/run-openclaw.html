@@ -1,0 +1,84 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Run with an external agent task runner — Open Avocado</title>
+<meta name="description" content="Hand lesson generation to an external agent/task runner such as OpenClaw via the task adapter.">
+<meta property="og:title" content="Run with an external agent task runner — Open Avocado">
+<meta property="og:description" content="Hand lesson generation to an external agent/task runner such as OpenClaw via the task adapter.">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://frankhli843.github.io/openavocado/">
+<meta name="twitter:card" content="summary">
+<link rel="icon" type="image/svg+xml" href="assets/favicon.svg">
+<link rel="stylesheet" href="assets/styles.css">
+</head>
+<body>
+<nav class="topnav"><div class="topnav-inner">
+<a class="brand" href="index.html"><svg viewBox="635 -20 445 445" role="img" aria-label="Open Avocado" width="22" height="22"><path fill="#399103" d="M1232.67-1000.76a125.34,125.34,0,0,1,1-13c3.4-33,13.92-86.75,57.37-160.78,33-56.25,49.52-84.38,70.72-85.09,26.54-.89,46.12,32.06,79.12,87.6,39.58,66.6,49.47,123.11,52.53,154.17.83,8.43,1.25,12.64,1.12,17.1-1.53,52.59-48.78,130.92-130.92,130.92A130.92,130.92,0,0,1,1232.67-1000.76Z" transform="translate(-506.6 1267.13)"/><path fill="#f8ee7b" d="M1275.87-1006.33a84,84,0,0,1,.65-8.7c2.28-22.12,9.33-58.12,38.44-107.73,22.12-37.69,33.18-56.53,47.38-57,17.78-.6,30.9,21.48,53,58.69,26.52,44.62,33.14,82.48,35.2,103.29a90.81,90.81,0,0,1,.75,11.45c-1,35.23-32.68,87.71-87.71,87.71A87.71,87.71,0,0,1,1275.87-1006.33Z" transform="translate(-506.6 1267.13)"/><circle fill="#fff" cx="856.99" cy="264.46" r="42.81"/></svg><span><span class="b-open">Open</span><span class="b-avo"> Avocado</span></span></a>
+<div class="nav-links"><a href="index.html">Home</a><a href="quickstart.html" class="active">Quick Start</a><a href="architecture.html">Architecture</a><a href="lesson-authoring.html">Lesson Authoring</a><a href="configuration.html">Configuration</a><a href="contributing.html">Contributing</a><a href="deployment.html">Deploy</a><a href="privacy.html">Privacy</a><a class="gh" href="https://github.com/frankhli843/openavocado" target="_blank" rel="noopener">GitHub</a></div>
+</div></nav>
+<main class="wrap">
+<p class="breadcrumb"><a href="quickstart.html">Quick Start</a> › Run locally</p>
+<h1><span class="svg-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="8" width="16" height="11" rx="2.5"/><path d="M12 4v4"/><circle cx="12" cy="3" r="1.2"/><circle cx="9" cy="13" r="1.1"/><circle cx="15" cy="13" r="1.1"/></svg></span> Run with an external agent task runner (OpenClaw-style) <span class="badge badge-ok">ready</span></h1>
+<p class="lead">Hand lesson generation to a separate agent or task system instead of generating in-process. Open Avocado ships a task-runner completion adapter (<code>dora-task</code>) that turns each learning event into a fully-specified generation task for an external runner such as OpenClaw. Best when you want a full agent loop — research, code execution, bespoke artifact building, and separate QA — behind each lesson.</p>
+
+<h2>Who this is for</h2>
+<ul>
+  <li>You run an agent/task platform (for example OpenClaw) that can pick up a task, author a lesson, and report back.</li>
+  <li>You want the highest-quality lessons: multi-step authoring, real interactives, and independent QA.</li>
+</ul>
+
+<h2>How it works</h2>
+<p>On <code>subject.created</code>, <code>lesson.completed</code>, and <code>lesson.discarded</code>, the app builds a
+generation task containing the full learner evidence (goals, mastery signals, tag/difficulty performance, diagnostics,
+misconceptions, and history) plus the verbatim lesson quality bar. The task adapter dispatches that task to your
+runner. Your runner authors and QAs the lesson, then writes the validated lesson content back into the database
+(directly or through the app API). The app shows generation progress on the subject page while the task runs.</p>
+
+<h2>Configuration</h2>
+<pre><code>export AVOCADOCORE_COMPLETION_ADAPTER=dora-task
+
+# EITHER post tasks to an HTTP endpoint your runner exposes:
+export AVOCADOCORE_DORA_ENDPOINT=https://your-runner.example/tasks
+# OR run a local task CLI the adapter can shell out to:
+export AVOCADOCORE_DORA_TODO_CLI=/path/to/your-task-cli
+export AVOCADOCORE_DORA_PROJECT=openavocado
+</code></pre>
+<p>The endpoint, CLI path, project, and any channel are yours to define — the adapter only needs a way to deliver the
+task payload. Keep credentials for your runner in your own environment, never in this repository.</p>
+
+<h2>Prerequisites</h2>
+<ul>
+  <li>An agent/task runner that can accept a task with a large acceptance-criteria payload and act on it.</li>
+  <li>A way for the runner to write lesson content back (DB access or an authenticated app API call).</li>
+  <li>The runner should read the lesson-authoring skill and meet the <a href="lesson-authoring.html">quality bar</a>.</li>
+</ul>
+
+<h2>Smoke test</h2>
+<pre><code># Complete a lesson (or create a subject) in the UI, then confirm a job was dispatched:
+curl -s "http://localhost:3000/api/subjects/1/jobs"    # shows pending/dispatched generation jobs
+</code></pre>
+<p>A healthy run shows a job move from <code>queued</code> → <code>dispatched</code>, your runner picking it up, and a
+new lesson appearing when it reports back.</p>
+
+<h2>Common failure modes</h2>
+<div class="table-wrap"><table>
+<tr><th>Symptom</th><th>Cause &amp; fix</th></tr>
+<tr><td>Jobs stay <code>queued</code></td><td>Endpoint/CLI not reachable. Verify <code>AVOCADOCORE_DORA_ENDPOINT</code> or <code>AVOCADOCORE_DORA_TODO_CLI</code>.</td></tr>
+<tr><td>Task dispatched but no lesson appears</td><td>Your runner hasn't written the lesson back or it failed validation. Check your runner's logs and the generator contract.</td></tr>
+<tr><td>Lessons skip QA</td><td>QA is your runner's responsibility in this mode — enforce a separate reviewer before writing lessons back.</td></tr>
+</table></div>
+
+<h2>How it connects to lesson generation</h2>
+<p>This runtime keeps the app thin and moves all authoring intelligence into your agent system. The contract between
+them is the task payload plus the <a href="lesson-authoring.html">lesson-authoring standard</a>. Any runner that honours
+that contract — OpenClaw or otherwise — is a valid backend.</p>
+</main>
+<footer><div class="footer-inner">
+<p><strong>Open Avocado</strong> — open-source adaptive learning platform &amp; lesson-generation framework.</p>
+<p><a href="https://github.com/frankhli843/openavocado">GitHub repository</a> · <a href="https://frankhli843.github.io/openavocado/">Live site</a> · <a href="privacy.html">Privacy &amp; data boundaries</a></p>
+<p class="subtle">Built with Next.js, React, TypeScript, and SQLite. No personal data or credentials are stored in this repository.</p>
+</div></footer>
+</body>
+</html>

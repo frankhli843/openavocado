@@ -1,0 +1,64 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Contributing — Open Avocado</title>
+<meta name="description" content="How to set up, test, and propose changes to Open Avocado.">
+<meta property="og:title" content="Contributing — Open Avocado">
+<meta property="og:description" content="How to set up, test, and propose changes to Open Avocado.">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://frankhli843.github.io/openavocado/">
+<meta name="twitter:card" content="summary">
+<link rel="icon" type="image/svg+xml" href="assets/favicon.svg">
+<link rel="stylesheet" href="assets/styles.css">
+</head>
+<body>
+<nav class="topnav"><div class="topnav-inner">
+<a class="brand" href="index.html"><svg viewBox="635 -20 445 445" role="img" aria-label="Open Avocado" width="22" height="22"><path fill="#399103" d="M1232.67-1000.76a125.34,125.34,0,0,1,1-13c3.4-33,13.92-86.75,57.37-160.78,33-56.25,49.52-84.38,70.72-85.09,26.54-.89,46.12,32.06,79.12,87.6,39.58,66.6,49.47,123.11,52.53,154.17.83,8.43,1.25,12.64,1.12,17.1-1.53,52.59-48.78,130.92-130.92,130.92A130.92,130.92,0,0,1,1232.67-1000.76Z" transform="translate(-506.6 1267.13)"/><path fill="#f8ee7b" d="M1275.87-1006.33a84,84,0,0,1,.65-8.7c2.28-22.12,9.33-58.12,38.44-107.73,22.12-37.69,33.18-56.53,47.38-57,17.78-.6,30.9,21.48,53,58.69,26.52,44.62,33.14,82.48,35.2,103.29a90.81,90.81,0,0,1,.75,11.45c-1,35.23-32.68,87.71-87.71,87.71A87.71,87.71,0,0,1,1275.87-1006.33Z" transform="translate(-506.6 1267.13)"/><circle fill="#fff" cx="856.99" cy="264.46" r="42.81"/></svg><span><span class="b-open">Open</span><span class="b-avo"> Avocado</span></span></a>
+<div class="nav-links"><a href="index.html">Home</a><a href="quickstart.html">Quick Start</a><a href="architecture.html">Architecture</a><a href="lesson-authoring.html">Lesson Authoring</a><a href="configuration.html">Configuration</a><a href="contributing.html" class="active">Contributing</a><a href="deployment.html">Deploy</a><a href="privacy.html">Privacy</a><a class="gh" href="https://github.com/frankhli843/openavocado" target="_blank" rel="noopener">GitHub</a></div>
+</div></nav>
+<main class="wrap">
+<h1>Contributing</h1>
+<p class="lead">Open Avocado is open source and welcomes contributions — from bug fixes to new lesson-generation
+runtimes (a reference <a href="run-hermes.html">Hermes</a> wrapper is a great first big project).</p>
+
+<h2>Set up</h2>
+<pre><code>git clone https://github.com/frankhli843/openavocado.git
+cd openavocado
+pnpm install
+mkdir -p data
+pnpm db:migrate --seed
+pnpm dev</code></pre>
+<p>See <a href="quickstart.html">Quick Start</a> for the Node version caveat.</p>
+
+<h2>Before you open a PR</h2>
+<ol class="steps">
+  <li>Run the checks: <code>pnpm test</code>, <code>pnpm lint</code>, and <code>pnpm exec tsc --noEmit</code>.</li>
+  <li>For UI changes, verify in a real browser at desktop and 390px mobile widths.</li>
+  <li>Keep runtime data out of git — SQLite files, generated audio, learner answers, <code>.env*</code>, and local config are all gitignored. Never commit secrets.</li>
+  <li>Match the existing code style; add or update tests for behaviour you change.</li>
+</ol>
+
+<h2>Ground rules</h2>
+<ul>
+  <li><strong>Privacy first.</strong> No personal data, credentials, private hostnames, or client/family data in the repo — in code, tests, docs, or fixtures. Use clearly synthetic sample data.</li>
+  <li><strong>Fail loudly.</strong> Validators reject bad lesson content rather than shipping a broken page — keep it that way.</li>
+  <li><strong>Portability.</strong> New features should work in the default portable flow, not only in one private deployment.</li>
+</ul>
+
+<h2>Good first contributions</h2>
+<ul>
+  <li>A reference wrapper for the <a href="run-hermes.html">Hermes</a> / <code>agent-harness</code> runtime.</li>
+  <li>Additional lesson-generator adapters (new providers or task systems).</li>
+  <li>Docs and example improvements on this site.</li>
+</ul>
+<p>Open an issue to discuss larger changes first: <a href="https://github.com/frankhli843/openavocado/issues">https://github.com/frankhli843/openavocado/issues</a>.</p>
+</main>
+<footer><div class="footer-inner">
+<p><strong>Open Avocado</strong> — open-source adaptive learning platform &amp; lesson-generation framework.</p>
+<p><a href="https://github.com/frankhli843/openavocado">GitHub repository</a> · <a href="https://frankhli843.github.io/openavocado/">Live site</a> · <a href="privacy.html">Privacy &amp; data boundaries</a></p>
+<p class="subtle">Built with Next.js, React, TypeScript, and SQLite. No personal data or credentials are stored in this repository.</p>
+</div></footer>
+</body>
+</html>

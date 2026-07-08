@@ -1,7 +1,7 @@
 # Running the Local Demo Durably
 
 This document describes a generic, privacy-safe pattern for keeping a local
-AvocadoCore instance online and current. It contains no personal data,
+Open Avocado instance online and current. It contains no personal data,
 credentials, or host-specific deployment identifiers — those belong in local
 ops notes, not in this repo.
 

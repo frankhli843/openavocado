@@ -1,38 +1,53 @@
-# AvocadoCore
+<div align="center">
 
-Reusable adaptive learning dashboard and skill design.
+<img src="site/assets/logo.svg" alt="Open Avocado" width="88" />
 
-AvocadoCore is intended to help a learner move from familiarity to competence to mastery across technical and non-technical subjects. It will use structured lesson history, assessments, code exercises, and review signals to generate the next lesson.
+# Open Avocado
 
-## Principles
+**Open-source adaptive learning platform and lesson-generation framework.**
 
-- General platform first, private deployment second.
-- SQLite-backed local source of truth.
-- Autosave every meaningful interaction.
-- Multi-user from day one.
-- Generated lessons adapt from review needs, misunderstandings, and forward curriculum progress.
-- Personal data, credentials, generated media, SQLite databases, and local configuration stay out of git.
-- Generated audio is stored permanently in runtime storage.
+[**Website &amp; Docs →**](https://frankhli843.github.io/openavocado/)
 
-## Planned Building Blocks
+</div>
 
-- Subject goals and editable learning objectives.
-- Diagnostic intake before a new subject starts.
-- Lesson queue, completed lesson history, and assessments.
-- Audio walkthroughs.
-- Interactive concept visualizations.
-- Sandboxed Python exercises with syntax highlighting and tests.
-- Mastery tracking, tags, and progress graphs over time.
-- Next-lesson task generation.
+Open Avocado turns learning into an evidence-driven loop. A learner defines goals and subjects; every answer, code
+submission, and quiz result becomes a mastery signal; and a pluggable lesson generator authors the single next lesson
+that closes the most important gap — with narrated audio, bespoke interactives, scaffolded code, and adaptive
+assessment. The goal is to move a learner from familiarity to competence to mastery.
 
-## Stack
+## Quick start
 
-Next.js, React, and TypeScript.
+```bash
+pnpm install
+mkdir -p data
+pnpm db:migrate --seed     # first run only — seeds a local SQLite DB with synthetic data
+pnpm dev                   # http://localhost:3000
+```
 
-## Local Data
+Node 20–22 recommended. See the docs for the Node 25 caveat and how to choose a lesson-generation runtime.
 
-Runtime data belongs in gitignored folders such as `data/`, `local_data/`, or `instance/`. Only synthetic fixtures should be committed.
+## Documentation
 
-## Project Notes
+Everything lives on the website — **<https://frankhli843.github.io/openavocado/>**:
 
-Deployment-specific planning notes should live outside this repo unless they are generic and safe to share.
+- [Quick Start](https://frankhli843.github.io/openavocado/quickstart.html) — install, seed, run
+- Run locally with: [a direct API key](https://frankhli843.github.io/openavocado/run-api-key.html) ·
+  [Gemmaclaw](https://frankhli843.github.io/openavocado/run-gemmaclaw.html) ·
+  [OpenClaw](https://frankhli843.github.io/openavocado/run-openclaw.html) ·
+  [Hermes](https://frankhli843.github.io/openavocado/run-hermes.html)
+- [Architecture](https://frankhli843.github.io/openavocado/architecture.html)
+- [Lesson Authoring](https://frankhli843.github.io/openavocado/lesson-authoring.html)
+- [Configuration](https://frankhli843.github.io/openavocado/configuration.html)
+- [Contributing](https://frankhli843.github.io/openavocado/contributing.html)
+- [Deployment](https://frankhli843.github.io/openavocado/deployment.html)
+- [Privacy &amp; data boundaries](https://frankhli843.github.io/openavocado/privacy.html)
+
+## Privacy
+
+Personal data, credentials, generated media, SQLite databases, and local configuration stay out of git. Only
+application code, schemas, generic prompts, tests, and clearly synthetic sample data are committed. See the
+[privacy page](https://frankhli843.github.io/openavocado/privacy.html).
+
+## License
+
+See [`LICENSE`](LICENSE) once added. Until a license file is present, all rights are reserved by the repository owner.
