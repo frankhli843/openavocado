@@ -1,0 +1,91 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Architecture — Open Avocado</title>
+<meta name="description" content="Core entities, the evidence-driven learning loop, and the generation/completion adapter flow.">
+<meta property="og:title" content="Architecture — Open Avocado">
+<meta property="og:description" content="Core entities, the evidence-driven learning loop, and the generation/completion adapter flow.">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://frankhli843.github.io/openavocado/">
+<meta name="twitter:card" content="summary">
+<link rel="icon" type="image/svg+xml" href="assets/favicon.svg">
+<link rel="stylesheet" href="assets/styles.css">
+</head>
+<body>
+<nav class="topnav"><div class="topnav-inner">
+<a class="brand" href="index.html"><svg viewBox="635 -20 445 445" role="img" aria-label="Open Avocado" width="22" height="22"><path fill="#399103" d="M1232.67-1000.76a125.34,125.34,0,0,1,1-13c3.4-33,13.92-86.75,57.37-160.78,33-56.25,49.52-84.38,70.72-85.09,26.54-.89,46.12,32.06,79.12,87.6,39.58,66.6,49.47,123.11,52.53,154.17.83,8.43,1.25,12.64,1.12,17.1-1.53,52.59-48.78,130.92-130.92,130.92A130.92,130.92,0,0,1,1232.67-1000.76Z" transform="translate(-506.6 1267.13)"/><path fill="#f8ee7b" d="M1275.87-1006.33a84,84,0,0,1,.65-8.7c2.28-22.12,9.33-58.12,38.44-107.73,22.12-37.69,33.18-56.53,47.38-57,17.78-.6,30.9,21.48,53,58.69,26.52,44.62,33.14,82.48,35.2,103.29a90.81,90.81,0,0,1,.75,11.45c-1,35.23-32.68,87.71-87.71,87.71A87.71,87.71,0,0,1,1275.87-1006.33Z" transform="translate(-506.6 1267.13)"/><circle fill="#fff" cx="856.99" cy="264.46" r="42.81"/></svg><span><span class="b-open">Open</span><span class="b-avo"> Avocado</span></span></a>
+<div class="nav-links"><a href="index.html">Home</a><a href="quickstart.html">Quick Start</a><a href="architecture.html" class="active">Architecture</a><a href="lesson-authoring.html">Lesson Authoring</a><a href="configuration.html">Configuration</a><a href="contributing.html">Contributing</a><a href="deployment.html">Deploy</a><a href="privacy.html">Privacy</a><a class="gh" href="https://github.com/frankhli843/openavocado" target="_blank" rel="noopener">GitHub</a></div>
+</div></nav>
+<main class="wrap">
+<h1>Architecture</h1>
+<p class="lead">Open Avocado is an evidence-driven learning loop. The app owns learners, subjects, lessons, and
+mastery evidence; a pluggable generator produces the next lesson from that evidence.</p>
+
+<h2>Stack</h2>
+<ul>
+  <li><strong>Next.js 15</strong> (App Router) + <strong>React 19</strong> + <strong>TypeScript</strong>.</li>
+  <li><strong>SQLite</strong> via <code>better-sqlite3</code> — a multi-user schema is the source of truth for local data.</li>
+  <li><strong>Tailwind CSS</strong> for styling; <strong>Pyodide</strong> (WASM) for in-browser Python.</li>
+  <li><strong>Vitest</strong> for tests.</li>
+</ul>
+
+<h2>Core entities</h2>
+<p>The data model is multi-user from day one and separates account identity from learner profile and progress:</p>
+<div class="table-wrap"><table>
+<tr><th>Entity</th><th>Role</th></tr>
+<tr><td><code>users</code> → <code>learner_profiles</code></td><td>Account identity, then one or more learner profiles per account.</td></tr>
+<tr><td><code>subjects</code></td><td>A thing to learn: title, description, editable goals, learner criteria, status.</td></tr>
+<tr><td><code>diagnostics</code></td><td>Initial, teaching-free assessment that measures existing knowledge before lessons start.</td></tr>
+<tr><td><code>lessons</code> → <code>lesson_activities</code></td><td>A generated lesson and its ordered sections (audio, interactive, reading, code, assessment).</td></tr>
+<tr><td><code>attempts</code>, <code>assessment_results</code></td><td>Every learner interaction and per-question evidence (concept, difficulty, outcome).</td></tr>
+<tr><td><code>mastery_signals</code>, <code>tags</code></td><td>Strengths, weak spots, misconceptions, review needs — tagged by concept and difficulty.</td></tr>
+<tr><td><code>progress_points</code></td><td>Time-series for mastery, assessment scores, and trends.</td></tr>
+<tr><td><code>generated_artifacts</code></td><td>Durable metadata for generated assets (e.g. audio: provider, voice, duration, hash, path).</td></tr>
+<tr><td><code>next_lesson_jobs</code></td><td>Generation job queue + adapter metadata + state.</td></tr>
+</table></div>
+
+<h2>The learning loop</h2>
+<ol class="steps">
+  <li><strong>Define.</strong> A learner creates a subject with goals and criteria.</li>
+  <li><strong>Diagnose.</strong> An initial assessment (no teaching) probes what they already know, recorded as mastery signals.</li>
+  <li><strong>Generate.</strong> A lesson generator reads the evidence and authors the next lesson — audio, bespoke interactives, scaffolded code, and assessment.</li>
+  <li><strong>Learn.</strong> The learner works through the lesson; every answer, submission, and quiz result becomes new evidence.</li>
+  <li><strong>Complete.</strong> Completion is manual only — autosave never marks a lesson done. Completion emits an event.</li>
+  <li><strong>Adapt.</strong> The event triggers the next lesson, mixing review (spaced repetition), repair (misconceptions), and forward progress.</li>
+</ol>
+
+<h2>Generation &amp; completion flow</h2>
+<p>The app is decoupled from lesson authoring by a small adapter interface. On <code>subject.created</code>,
+<code>lesson.completed</code>, and <code>lesson.discarded</code> it emits an event carrying full learner evidence
+(goals, mastery/tag/difficulty performance, diagnostics, misconceptions, history). A configured
+<strong>completion adapter</strong> handles that event:</p>
+<div class="table-wrap"><table>
+<tr><th>Adapter</th><th>Behaviour</th></tr>
+<tr><td><code>noop</code></td><td>Record completion, no external action.</td></tr>
+<tr><td><code>local-queue</code></td><td>Generate in-process / enqueue locally (used by the direct-key and local-model runtimes).</td></tr>
+<tr><td><code>webhook</code></td><td>POST the event JSON to a configured endpoint.</td></tr>
+<tr><td><code>dora-task</code></td><td>Dispatch a fully-specified generation task to an external agent/task runner.</td></tr>
+<tr><td><code>agent-harness</code></td><td>Shell out to a configured command (used by the planned Hermes runtime).</td></tr>
+</table></div>
+<p>Whatever authors the lesson must satisfy the <strong>generator contract</strong>
+(<code>validateGeneratedContent</code>): the required core sections are present and each activity validates, or the
+lesson fails loudly rather than shipping a polished-but-empty page. See <a href="lesson-authoring.html">Lesson
+Authoring</a> for the full standard and <a href="configuration.html">Configuration</a> for adapter env vars.</p>
+
+<h2>Safety boundaries</h2>
+<ul>
+  <li><strong>Interactives are sandboxed.</strong> Learner-facing visuals are approved, DB-backed bespoke artifacts rendered in a sandboxed iframe; the widget expression evaluator is a no-eval parser with a math whitelist.</li>
+  <li><strong>Media is locked down.</strong> Embeds are built only from a validated video id via a privacy-enhanced host, and degrade to a link.</li>
+  <li><strong>Code answers aren't leaked.</strong> The generator rejects top-level answer fields; help comes through progressive hints and worked examples.</li>
+  <li><strong>Completion is intentional.</strong> Only an explicit action completes a lesson; autosave never does.</li>
+</ul>
+</main>
+<footer><div class="footer-inner">
+<p><strong>Open Avocado</strong> — open-source adaptive learning platform &amp; lesson-generation framework.</p>
+<p><a href="https://github.com/frankhli843/openavocado">GitHub repository</a> · <a href="https://frankhli843.github.io/openavocado/">Live site</a> · <a href="privacy.html">Privacy &amp; data boundaries</a></p>
+<p class="subtle">Built with Next.js, React, TypeScript, and SQLite. No personal data or credentials are stored in this repository.</p>
+</div></footer>
+</body>
+</html>

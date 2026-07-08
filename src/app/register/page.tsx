@@ -53,7 +53,7 @@ export default function RegisterPage() {
     <div className="min-h-screen bg-gray-50 flex items-center justify-center px-4">
       <div className="w-full max-w-sm">
         <div className="mb-8 text-center">
-          <h1 className="text-2xl font-semibold text-gray-900">AvocadoCore</h1>
+          <h1 className="text-2xl font-semibold text-gray-900">Open Avocado</h1>
           <p className="text-sm text-gray-500 mt-1">Adaptive learning platform</p>
         </div>
 
