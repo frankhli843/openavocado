@@ -1,0 +1,80 @@
+{
+  "lesson_id": 19,
+  "activity_id": 108,
+  "activity_type": "audio",
+  "title": "Audio: Heap — the family map",
+  "audio": {
+    "file_path": "runtime_artifacts/audio/lesson_19_audio.mp3",
+    "duration_sec": 818.5
+  },
+  "audio_source": "artifact",
+  "cue_source": "orientation_visual.cues",
+  "cues": [
+    {
+      "index": 0,
+      "start": 0,
+      "end": 95.9,
+      "duration": 95.9,
+      "label": "The recurring-extreme cost",
+      "headline": "Re-scanning is O(n) each time",
+      "narration": "When you need the smallest again and again as data changes, scanning every time is wasteful."
+    },
+    {
+      "index": 1,
+      "start": 95.9,
+      "end": 217.4,
+      "duration": 121.5,
+      "label": "The heap invariant",
+      "headline": "Parent ≤ children, root is the min",
+      "narration": "A local promise forces the minimum to the root while leaving the rest loosely ordered."
+    },
+    {
+      "index": 2,
+      "start": 217.4,
+      "end": 345.3,
+      "duration": 127.9,
+      "label": "Array with index math",
+      "headline": "Children at 2i+1 and 2i+2",
+      "narration": "The tree is stored as a flat array; children and parents are pure index arithmetic — no pointers."
+    },
+    {
+      "index": 3,
+      "start": 345.3,
+      "end": 473.2,
+      "duration": 127.9,
+      "label": "Push sifts up, pop sifts down",
+      "headline": "Repair one root-to-leaf path",
+      "narration": "Insert drops at the end and sifts up; remove moves the last element to the root and sifts down."
+    },
+    {
+      "index": 4,
+      "start": 473.2,
+      "end": 601.1,
+      "duration": 127.9,
+      "label": "The four jobs",
+      "headline": "Top-k, merge, schedule, running-extreme",
+      "narration": "Size-k top-k, k-way merge, priority scheduling, and streaming median with two heaps."
+    },
+    {
+      "index": 5,
+      "start": 601.1,
+      "end": 729,
+      "duration": 127.9,
+      "label": "heapq is min-only",
+      "headline": "Negate for a max-heap",
+      "narration": "Python's heapq has no max flag; push negated values and negate on the way out."
+    },
+    {
+      "index": 6,
+      "start": 729,
+      "end": 818.5,
+      "duration": 89.5,
+      "label": "When it fails",
+      "headline": "One-shot extreme, full sort, arbitrary search",
+      "narration": "A single scan beats a heap for a one-shot extreme; heaps do not give full order or middle lookups."
+    }
+  ],
+  "cue_span_sec": 818.5,
+  "formulas": [],
+  "exported_at": "2026-07-08T11:03:07.783Z"
+}

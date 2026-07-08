@@ -1,0 +1,158 @@
+{
+  "lesson_id": 19,
+  "activity_id": 108,
+  "reviewed_at": "2026-07-08T11:26:00Z",
+  "iterations": 2,
+  "frames_reviewed": 21,
+  "quality": "ql",
+  "notes": "Lesson 19 Orientation (act 108), 'Heap \u2014 the family map', 818.5s / ~13.6min, 7 designed cues spread over the real overview duration. Cue00 the problem (repeated min under change -> O(qn) full-scan waste). Cue01 the invariant (local parent<=children promise forces the global min to the root, but only loosely ordered). Cue02 stored as a flat array (parent(i)=(i-1)//2, left 2i+1, right 2i+2 \u2014 index arithmetic, no pointers). Cue03 the two operations (insert drop-at-end + sift up; remove pop-root + move-last-leaf + sift down; each = one root-to-leaf path = O(log n)). Cue04 applications family map (size-k top-k, k-way merge, priority scheduling, streaming median with two heaps). Cue05 Python heapq min-only + negation trick. Cue06 when NOT to use (one-shot extreme -> a scan wins; no full order; no middle lookups). Uses heap.py + arrays.py idiom libs; MathTex for the bounds. Each long cue stages reveals via wait_until so the frame keeps changing; pace_to pins the tail. Two review iterations: authored + manim -s smoke every cue (fixed safe-area: bottom captions need buff>=0.55; fixed cue02 index-formula/tree collision by shifting the tree+array LEFT when formulas reveal), then full -ql render (7 chunks 854x480x15 niced/serial) + READ start/mid/end for all 7 cues. Iteration 2 fixed cue03 upnote/downnote colliding with tree nodes (repositioned to fixed clear spots [2.7,-2.15]/[-2.7,-2.15]); re-rendered cue03 + re-verified both insert (extract @393s) and remove (@442s) beats clean. cue04/05-type _end boundary frames can show the next cue's opening title (documented keyframe-seek artifact); settled states verified via mid frames. Per-cue checklist (legibility, math/algorithm correctness, highlight matches the beat, contrast, safe area via theme.guard, chunk timing): all pass. Final -ql 818.269s vs audio 818.5s (delta 0.231s).",
+  "frames": [
+    {
+      "cue": 0,
+      "kind": "start",
+      "path": "lesson_19/108/cue00_start.png",
+      "verdict": "pass",
+      "notes": "reveal in progress (title 'You need the smallest \u2014 again and again \u2014 as data changes'), expected sparse"
+    },
+    {
+      "cue": 0,
+      "kind": "mid",
+      "path": "lesson_19/108/cue00_mid.png",
+      "verdict": "pass",
+      "notes": "array [5,2,8,6,9,3] (data changed, the 1 replaced), 'now the data changes \u2014 remove the 1, a new value arrives'; correct progression"
+    },
+    {
+      "cue": 0,
+      "kind": "end",
+      "path": "lesson_19/108/cue00_end.png",
+      "verdict": "pass",
+      "notes": "'q queries x O(n) each = O(q n)' (O(qn) rose) + 'wasteful \u2014 what if the structure kept the smallest ready?'; math correct"
+    },
+    {
+      "cue": 1,
+      "kind": "start",
+      "path": "lesson_19/108/cue01_start.png",
+      "verdict": "pass",
+      "notes": "reveal in progress (title 'A local promise forces the minimum to the root'), expected sparse"
+    },
+    {
+      "cue": 1,
+      "kind": "mid",
+      "path": "lesson_19/108/cue01_mid.png",
+      "verdict": "pass",
+      "notes": "tree [1,3,5,7,4,9,8] root 1 emerald 'the minimum lives here', 'every parent <= its children, so no value can beat the root \u2014 the global minimum is forced to the top'; correct"
+    },
+    {
+      "cue": 1,
+      "kind": "end",
+      "path": "lesson_19/108/cue01_end.png",
+      "verdict": "pass",
+      "notes": "loose-order beat: 'but only loosely ordered \u2014 7 (left) and 5 (right) are never compared' / final sorted-array contrast; correct"
+    },
+    {
+      "cue": 2,
+      "kind": "start",
+      "path": "lesson_19/108/cue02_start.png",
+      "verdict": "pass",
+      "notes": "reveal in progress (title 'Stored as a flat array \u2014 indexes, not pointers'), expected sparse"
+    },
+    {
+      "cue": 2,
+      "kind": "mid",
+      "path": "lesson_19/108/cue02_mid.png",
+      "verdict": "pass",
+      "notes": "tree shifted left + array below + parent(i)=floor((i-1)/2) written, 'node i in the tree = cell i in the array \u2014 same value, same index'; clean, no collision (restructured to shift tree left when formulas reveal)"
+    },
+    {
+      "cue": 2,
+      "kind": "end",
+      "path": "lesson_19/108/cue02_end.png",
+      "verdict": "pass",
+      "notes": "all 3 index formulas (parent/left/right) on the right, tree+array on left, trace index 3->parent 1 / 'the array IS the tree'; correct, no overlap"
+    },
+    {
+      "cue": 3,
+      "kind": "start",
+      "path": "lesson_19/108/cue03_start.png",
+      "verdict": "pass",
+      "notes": "reveal in progress (title 'Two operations: insert sifts up, remove sifts down'), expected sparse"
+    },
+    {
+      "cue": 3,
+      "kind": "mid",
+      "path": "lesson_19/108/cue03_mid.png",
+      "verdict": "pass",
+      "notes": "REMOVE beat: rose down-arrow root->idx6, 'swap down with the smaller child' note moved to lower-left clear of nodes (fix), 'REMOVE: pop the root...sift DOWN'; INSERT beat (verified via extract @393s): blue '2' leaf + up-arrow to root, 'swap up...' note lower-right clear; correct"
+    },
+    {
+      "cue": 3,
+      "kind": "end",
+      "path": "lesson_19/108/cue03_end.png",
+      "verdict": "pass",
+      "notes": "'each fix = one root-to-leaf path = O(log n)' (O(log n) emerald circumscribed); math correct"
+    },
+    {
+      "cue": 4,
+      "kind": "start",
+      "path": "lesson_19/108/cue04_start.png",
+      "verdict": "pass",
+      "notes": "reveal in progress (title 'Where heaps earn their keep'), expected sparse"
+    },
+    {
+      "cue": 4,
+      "kind": "mid",
+      "path": "lesson_19/108/cue04_mid.png",
+      "verdict": "pass",
+      "notes": "2 of 4 application cards revealed (Size-k top-k blue, K-way merge amber) \u2014 progressive; correct"
+    },
+    {
+      "cue": 4,
+      "kind": "end",
+      "path": "lesson_19/108/cue04_end.png",
+      "verdict": "pass",
+      "notes": "all 4 cards (Size-k top-k, K-way merge, Priority scheduling, Streaming median two heaps) + 'all the same shape: repeatedly serve an extreme as data streams in'; correct"
+    },
+    {
+      "cue": 5,
+      "kind": "start",
+      "path": "lesson_19/108/cue05_start.png",
+      "verdict": "pass",
+      "notes": "reveal in progress (title 'Python's heapq is a min-heap only'), expected sparse"
+    },
+    {
+      "cue": 5,
+      "kind": "mid",
+      "path": "lesson_19/108/cue05_mid.png",
+      "verdict": "pass",
+      "notes": "'heapq gives you a MIN-heap \u2014 no max flag' + 2 code lines (heappush -x, heappop) \u2014 progressive; correct"
+    },
+    {
+      "cue": 5,
+      "kind": "end",
+      "path": "lesson_19/108/cue05_end.png",
+      "verdict": "pass",
+      "notes": "3-line negation-trick code (push -x / heappop / largest=-smallest_neg emerald) + 'negating flips the order: -(-x) = x'; correct"
+    },
+    {
+      "cue": 6,
+      "kind": "start",
+      "path": "lesson_19/108/cue06_start.png",
+      "verdict": "pass",
+      "notes": "reveal in progress (title 'When a heap is the wrong tool'), expected sparse"
+    },
+    {
+      "cue": 6,
+      "kind": "mid",
+      "path": "lesson_19/108/cue06_mid.png",
+      "verdict": "pass",
+      "notes": "2 of 3 reasons: 'one-shot extreme? a single O(n) scan beats building a heap' (array with min 1 emerald) + 'need everything in order?...' \u2014 progressive; correct"
+    },
+    {
+      "cue": 6,
+      "kind": "end",
+      "path": "lesson_19/108/cue06_end.png",
+      "verdict": "pass",
+      "notes": "all 3 reasons (one-shot extreme / no full order / no middle lookups), each indicated by color; correct"
+    }
+  ]
+}

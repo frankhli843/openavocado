@@ -1,0 +1,137 @@
+{
+  "lesson_id": 19,
+  "activity_id": 109,
+  "reviewed_at": "2026-07-08T11:26:00Z",
+  "iterations": 2,
+  "frames_reviewed": 18,
+  "quality": "ql",
+  "notes": "Lesson 19 Part 1 (act 109), 'Heap mechanics', 88.0s, 6 short cues. One running min-heap the whole way: start [1,3,5,7,4,9,8]; insert 2 (append at idx7, sift up 7->3->1, stop 2>1) -> [1,2,5,3,4,9,8,7]; remove min (pop 1, move last leaf 7 to root, sift down: swap 2, swap 3) -> [2,3,5,7,4,9,8]. Uses heap.py idiom lib (heap_tree binary-tree view, heap_array flat-array, recolor_node, root_marker); MathTex reserved for the O(log n) bound. Two review iterations: authored + manim -s smoke every cue (fixed 2 label-tracking swap bugs: the sifting node's LABEL mobject must be tracked across swaps, not labels[i] which is a fixed home slot), then full -ql render (6 chunks 854x480x15 niced/serial) + READ start/mid/end for all 6 cues. Iteration 2 fixed cue03 dangling edge to the removed leaf (FadeOut edges[6] with circles[7]) and lowered the 'popped 1' chip from y=2.15 to y=1.55 to clear the headline; re-rendered cue03 + re-verified clean. Per-cue checklist (label legibility, math correctness incl heap-property/swap direction, highlighted node matches the beat, contrast, nothing off-frame via theme.guard, chunk timing within pinning tolerance): all pass. Final -ql 87.934s vs audio 88.01s (delta 0.076s).",
+  "frames": [
+    {
+      "cue": 0,
+      "kind": "start",
+      "path": "lesson_19/109/cue00_start.png",
+      "verdict": "pass",
+      "notes": "reveal in progress (title 'Every parent <= its children', tree fading in), expected sparse"
+    },
+    {
+      "cue": 0,
+      "kind": "mid",
+      "path": "lesson_19/109/cue00_mid.png",
+      "verdict": "pass",
+      "notes": "min-heap [1,3,5,7,4,9,8] tree, root 1 emerald 'root = min'; legible"
+    },
+    {
+      "cue": 0,
+      "kind": "end",
+      "path": "lesson_19/109/cue00_end.png",
+      "verdict": "pass",
+      "notes": "tree + '1<=3 and 1<=5 . 3<=7 and 3<=4 . a local promise at every node'; math correct, no collision"
+    },
+    {
+      "cue": 1,
+      "kind": "start",
+      "path": "lesson_19/109/cue01_start.png",
+      "verdict": "pass",
+      "notes": "reveal in progress (title 'Insert 2: drop it at the end, gap-free'), expected sparse"
+    },
+    {
+      "cue": 1,
+      "kind": "mid",
+      "path": "lesson_19/109/cue01_mid.png",
+      "verdict": "pass",
+      "notes": "compact 7-node tree above, array [1,3,5,7,4,9,8,2] with idx7 blue '2' appended + 'end' label; clean"
+    },
+    {
+      "cue": 1,
+      "kind": "end",
+      "path": "lesson_19/109/cue01_end.png",
+      "verdict": "pass",
+      "notes": "new blue '2' leaf attached under node 3 (idx3), array idx7=2, 'append at index 7 \u2014 no gap, the tree stays complete'; correct"
+    },
+    {
+      "cue": 2,
+      "kind": "start",
+      "path": "lesson_19/109/cue02_start.png",
+      "verdict": "pass",
+      "notes": "reveal in progress (title 'Sift up: swap with the parent until it fits'), expected sparse"
+    },
+    {
+      "cue": 2,
+      "kind": "mid",
+      "path": "lesson_19/109/cue02_mid.png",
+      "verdict": "pass",
+      "notes": "2 swapped up to idx3 (amber), 7 pushed to idx7, 3 at idx1 amber (next compare), '2 < 3 -> swap up'; correct swap tracking"
+    },
+    {
+      "cue": 2,
+      "kind": "end",
+      "path": "lesson_19/109/cue02_end.png",
+      "verdict": "pass",
+      "notes": "settled [1,2,5,3,4,9,8,7]: root 1 emerald, 2 at idx1 (accent), 7 leaf at idx7, '2 > 1 -> stop: the min stays at the root'; math correct"
+    },
+    {
+      "cue": 3,
+      "kind": "start",
+      "path": "lesson_19/109/cue03_start.png",
+      "verdict": "pass",
+      "notes": "reveal in progress (title 'Remove: take the root, move the last leaf up'), expected sparse"
+    },
+    {
+      "cue": 3,
+      "kind": "mid",
+      "path": "lesson_19/109/cue03_mid.png",
+      "verdict": "pass",
+      "notes": "root 1 popped to emerald chip 'popped' upper-left, root node empty, last leaf 7 rose at idx7, 'root 1 is the answer \u2014 pop it'; correct"
+    },
+    {
+      "cue": 3,
+      "kind": "end",
+      "path": "lesson_19/109/cue03_end.png",
+      "verdict": "pass",
+      "notes": "7 moved to root (amber, out of place), dangling edge to removed leaf FADED (fix), chip clears headline, '7 at the root breaks the promise \u2014 it must sift down'; correct"
+    },
+    {
+      "cue": 4,
+      "kind": "start",
+      "path": "lesson_19/109/cue04_start.png",
+      "verdict": "pass",
+      "notes": "reveal in progress (title 'Sift down: swap with the smaller child'), expected sparse"
+    },
+    {
+      "cue": 4,
+      "kind": "mid",
+      "path": "lesson_19/109/cue04_mid.png",
+      "verdict": "pass",
+      "notes": "first swap done: 2 risen to root emerald/min, 7 at idx1 amber sifting, 'children 2 and 5 -> smaller is 2 -> swap'; correct"
+    },
+    {
+      "cue": 4,
+      "kind": "end",
+      "path": "lesson_19/109/cue04_end.png",
+      "verdict": "pass",
+      "notes": "settled [2,3,5,7,4,9,8]: root 2 emerald, 3 at idx1, 7 emerald leaf at idx3, 'children 3 and 4 -> smaller is 3 -> swap, then it settles'; math correct"
+    },
+    {
+      "cue": 5,
+      "kind": "start",
+      "path": "lesson_19/109/cue05_start.png",
+      "verdict": "pass",
+      "notes": "reveal in progress (title 'One root-to-leaf path -> about log n work'), expected sparse"
+    },
+    {
+      "cue": 5,
+      "kind": "mid",
+      "path": "lesson_19/109/cue05_mid.png",
+      "verdict": "pass",
+      "notes": "violet spine 0-1-3 (nodes 2,3,7) lighting up; correct path"
+    },
+    {
+      "cue": 5,
+      "kind": "end",
+      "path": "lesson_19/109/cue05_end.png",
+      "verdict": "pass",
+      "notes": "spine lit, 'height ~ log2 n => O(log n)' (O(log n) emerald circumscribed); math correct"
+    }
+  ]
+}

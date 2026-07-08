@@ -1,0 +1,73 @@
+{
+  "lesson_id": 19,
+  "activity_id": 109,
+  "activity_type": "lesson_part",
+  "title": "Part 1: Heap mechanics",
+  "audio": {
+    "file_path": "runtime_artifacts/audio/lesson_19_activity_109_audio.mp3",
+    "duration_sec": 88.01
+  },
+  "audio_source": "artifact",
+  "cue_source": "audio.synced_visual.cues",
+  "cues": [
+    {
+      "index": 0,
+      "start": 0,
+      "end": 16,
+      "duration": 16,
+      "label": "A valid heap",
+      "headline": "Parent ≤ children",
+      "narration": "Every parent is at most its children, so the minimum sits at the root."
+    },
+    {
+      "index": 1,
+      "start": 16,
+      "end": 33.1,
+      "duration": 17.1,
+      "label": "Push at the end",
+      "headline": "New value at the next leaf",
+      "narration": "Insert drops the new value at the end of the array to keep the shape gap-free."
+    },
+    {
+      "index": 2,
+      "start": 33.1,
+      "end": 50.7,
+      "duration": 17.6,
+      "label": "Sift up",
+      "headline": "Swap while smaller than parent",
+      "narration": "Compare with the parent and swap upward until it fits or reaches the root."
+    },
+    {
+      "index": 3,
+      "start": 50.7,
+      "end": 68.3,
+      "duration": 17.6,
+      "label": "Pop the root",
+      "headline": "Last element takes the throne",
+      "narration": "Remove the root as the answer, move the last value to the root, and sift it down."
+    },
+    {
+      "index": 4,
+      "start": 68.3,
+      "end": 80,
+      "duration": 11.7,
+      "label": "Sift down",
+      "headline": "Swap with the smaller child",
+      "narration": "Swap with the smaller child until the parent-≤-children promise holds again."
+    },
+    {
+      "index": 5,
+      "start": 80,
+      "end": 88,
+      "duration": 8,
+      "label": "Why log n",
+      "headline": "One path, not the whole tree",
+      "narration": "Each repair walks a single root-to-leaf path of length about log n."
+    }
+  ],
+  "cue_span_sec": 88,
+  "formulas": [
+    "\\text{scan } O(n) \\;\\longrightarrow\\; \\text{heap } O(\\log n)"
+  ],
+  "exported_at": "2026-07-08T11:03:07.784Z"
+}

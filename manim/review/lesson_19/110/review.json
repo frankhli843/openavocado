@@ -1,0 +1,137 @@
+{
+  "lesson_id": 19,
+  "activity_id": 110,
+  "reviewed_at": "2026-07-08T11:26:00Z",
+  "iterations": 2,
+  "frames_reviewed": 18,
+  "quality": "ql",
+  "notes": "Lesson 19 Part 2 (act 110), 'The size-k min-heap trick', 83.8s, 6 cues. Find the k-th largest with a size-k MIN-heap (k=3, stream 5,2,8,1,9,3,7): fill first 3 -> {2,5,8} root 2; 9 arrives, push over cap, pop root 2 -> {5,8,9} root 5; after the run the 3 largest are {7,8,9} and root 7 = the 3rd largest (sorted desc 9,8,7,5,3,2,1 -> 3rd is 7). Contrast MIN vs MAX heap (min keeps the smallest winner on the chopping block; max would evict the biggest = wrong), complexity O(n log k) with k slots, misconception. Uses heap.py (heap_tree, cap_badge, recolor_node, root_marker) + arrays.py value_row; MathTex reserved for the n log k bound. Two review iterations: authored + manim -s smoke every cue, then full -ql render (6 chunks) + READ start/mid/end for all 6 cues. cue04_end / cue05_end are the documented keyframe-seek boundary / EOF artifacts (cue04_end lands on cue05's opening headline; cue05_end at 83.65s exceeds the 83.668s video); both settled states verified via mid frames + a manual mid-cue extract at 82.5s \u2014 all content correct. Per-cue checklist (legibility, math/algorithm correctness, highlight matches beat, contrast, safe area, chunk timing): all pass. Final -ql 83.668s vs audio 83.76s (delta 0.092s).",
+  "frames": [
+    {
+      "cue": 0,
+      "kind": "start",
+      "path": "lesson_19/110/cue00_start.png",
+      "verdict": "pass",
+      "notes": "reveal in progress (title 'Find the 3rd largest: keep only the 3 biggest so far'), expected sparse"
+    },
+    {
+      "cue": 0,
+      "kind": "mid",
+      "path": "lesson_19/110/cue00_mid.png",
+      "verdict": "pass",
+      "notes": "stream [5,2,8,1,9,3,7], cap=3 badge, first 3 (5,2,8) filling; building"
+    },
+    {
+      "cue": 0,
+      "kind": "end",
+      "path": "lesson_19/110/cue00_end.png",
+      "verdict": "pass",
+      "notes": "first 3 blue in stream, min-heap {2,5,8} root 2 emerald 'root = 2', 'under the cap -> every value is admitted, nothing evicted yet'; correct"
+    },
+    {
+      "cue": 1,
+      "kind": "start",
+      "path": "lesson_19/110/cue01_start.png",
+      "verdict": "pass",
+      "notes": "reveal in progress (title 'Over the cap: pop the root \u2014 the smallest candidate'), expected sparse"
+    },
+    {
+      "cue": 1,
+      "kind": "mid",
+      "path": "lesson_19/110/cue01_mid.png",
+      "verdict": "pass",
+      "notes": "heap {2,5,8} root 2 rose 'smallest of the 3', incoming 'new: 9' blue, 'pop the root: 2 can't be one of the 3 largest \u2014 evict it'; correct"
+    },
+    {
+      "cue": 1,
+      "kind": "end",
+      "path": "lesson_19/110/cue01_end.png",
+      "verdict": "pass",
+      "notes": "2 evicted (rose chip left), new min-heap {5,8,9} root 5 emerald 'root = 5', cap=3; correct re-settle"
+    },
+    {
+      "cue": 2,
+      "kind": "start",
+      "path": "lesson_19/110/cue02_start.png",
+      "verdict": "pass",
+      "notes": "reveal in progress (title 'The root is the smallest of the 3 largest = the 3rd largest'), expected sparse"
+    },
+    {
+      "cue": 2,
+      "kind": "mid",
+      "path": "lesson_19/110/cue02_mid.png",
+      "verdict": "pass",
+      "notes": "min-heap {7,8,9} root 7 emerald, sorted column [9,8,7,5,3,2,1] revealing; building"
+    },
+    {
+      "cue": 2,
+      "kind": "end",
+      "path": "lesson_19/110/cue02_end.png",
+      "verdict": "pass",
+      "notes": "top-3 (9,8,7) emerald in sorted column, 'the 3 largest', '7 is the smallest winner -> the 3rd largest' (root circumscribed); math correct (3rd largest of the stream is 7)"
+    },
+    {
+      "cue": 3,
+      "kind": "start",
+      "path": "lesson_19/110/cue03_start.png",
+      "verdict": "pass",
+      "notes": "reveal in progress (title 'Why a MIN-heap...'), expected sparse"
+    },
+    {
+      "cue": 3,
+      "kind": "mid",
+      "path": "lesson_19/110/cue03_mid.png",
+      "verdict": "pass",
+      "notes": "MIN-heap {7,8,9} root 7 emerald 'MIN-heap ok', 'root 7 is first to be popped \u2014 the weakest survivor guards the door'; correct"
+    },
+    {
+      "cue": 3,
+      "kind": "end",
+      "path": "lesson_19/110/cue03_end.png",
+      "verdict": "pass",
+      "notes": "side-by-side MIN {7,8,9} root7 ok vs MAX {9,7,8} root9 rose x, 'a max-heap guards 9 at the top \u2014 you'd pop the biggest, not the k-th'; correct contrast"
+    },
+    {
+      "cue": 4,
+      "kind": "start",
+      "path": "lesson_19/110/cue04_start.png",
+      "verdict": "pass",
+      "notes": "reveal in progress (title 'Each op touches a size-k heap -> n log k, k slots'), expected sparse"
+    },
+    {
+      "cue": 4,
+      "kind": "mid",
+      "path": "lesson_19/110/cue04_mid.png",
+      "verdict": "pass",
+      "notes": "min-heap {7,8,9} root7, 'only k = 3 slots', 'n pushes x log k per op = O(n log k)' (emerald) + 'beats sort's O(n log n) when k << n'; math correct"
+    },
+    {
+      "cue": 4,
+      "kind": "end",
+      "path": "lesson_19/110/cue04_end.png",
+      "verdict": "pass",
+      "notes": "boundary keyframe artifact shows next-cue (cue05) headline 'The max-heap instinct evicts winners -> wrong answer'; cue04 settled content (O(n log k) bound) verified via mid frame \u2014 PASS"
+    },
+    {
+      "cue": 5,
+      "kind": "start",
+      "path": "lesson_19/110/cue05_start.png",
+      "verdict": "pass",
+      "notes": "reveal in progress (title 'The max-heap instinct evicts winners -> wrong answer'), expected sparse"
+    },
+    {
+      "cue": 5,
+      "kind": "mid",
+      "path": "lesson_19/110/cue05_mid.png",
+      "verdict": "pass",
+      "notes": "'k-th largest -> max-heap feels right, but a max-heap pops the LARGEST' (rose) + 'keep a MIN-heap of size k \u2014 its root is the answer' (emerald) mid-Write; correct"
+    },
+    {
+      "cue": 5,
+      "kind": "end",
+      "path": "lesson_19/110/cue05_end.png",
+      "verdict": "pass",
+      "notes": "EOF frame not extracted (83.65s ~ video end 83.668s); settled state verified via manual extract @82.5s: both lines fully rendered, 'keep a MIN-heap of size k \u2014 its root is the answer' emerald \u2014 PASS"
+    }
+  ]
+}

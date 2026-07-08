@@ -1,0 +1,71 @@
+{
+  "lesson_id": 19,
+  "activity_id": 110,
+  "activity_type": "lesson_part",
+  "title": "Part 2: The size-k min-heap trick",
+  "audio": {
+    "file_path": "runtime_artifacts/audio/lesson_19_activity_110_audio.mp3",
+    "duration_sec": 83.76
+  },
+  "audio_source": "artifact",
+  "cue_source": "audio.synced_visual.cues",
+  "cues": [
+    {
+      "index": 0,
+      "start": 0,
+      "end": 15.2,
+      "duration": 15.2,
+      "label": "Fill to k",
+      "headline": "Heap not full yet",
+      "narration": "The first k values just go in; nothing is evicted until the cap is reached."
+    },
+    {
+      "index": 1,
+      "start": 15.2,
+      "end": 33.5,
+      "duration": 18.3,
+      "label": "Overflow evicts the smallest",
+      "headline": "Pop the weakest survivor",
+      "narration": "When a new value pushes the heap past k, pop the root — the smallest candidate."
+    },
+    {
+      "index": 2,
+      "start": 33.5,
+      "end": 50.8,
+      "duration": 17.3,
+      "label": "Root is the k-th largest",
+      "headline": "Smallest of the winners",
+      "narration": "The min-heap's root is the smallest of the k largest — exactly the k-th largest."
+    },
+    {
+      "index": 3,
+      "start": 50.8,
+      "end": 67,
+      "duration": 16.2,
+      "label": "Why min not max",
+      "headline": "Evict the weakest, not the strongest",
+      "narration": "A max-heap would guard the biggest; you want the smallest winner on the chopping block."
+    },
+    {
+      "index": 4,
+      "start": 67,
+      "end": 76.1,
+      "duration": 9.1,
+      "label": "Cost and memory",
+      "headline": "n log k, O(k) space",
+      "narration": "Each operation touches a size-k heap, so the pass is n log k using only k slots."
+    },
+    {
+      "index": 5,
+      "start": 76.1,
+      "end": 83.8,
+      "duration": 7.7,
+      "label": "The trap",
+      "headline": "Do not grab a max-heap",
+      "narration": "Reaching for a max-heap on instinct evicts winners and returns a wrong answer."
+    }
+  ],
+  "cue_span_sec": 83.8,
+  "formulas": [],
+  "exported_at": "2026-07-08T11:03:07.784Z"
+}
