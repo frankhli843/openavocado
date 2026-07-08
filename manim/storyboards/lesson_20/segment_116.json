@@ -1,0 +1,80 @@
+{
+  "lesson_id": 20,
+  "activity_id": 116,
+  "activity_type": "audio",
+  "title": "Audio: Trie — the family map",
+  "audio": {
+    "file_path": "runtime_artifacts/audio/lesson_20_audio.mp3",
+    "duration_sec": 840.07
+  },
+  "audio_source": "artifact",
+  "cue_source": "orientation_visual.cues",
+  "cues": [
+    {
+      "index": 0,
+      "start": 0,
+      "end": 98.4,
+      "duration": 98.4,
+      "label": "The prefix cost",
+      "headline": "Scanning every word is O(N·len)",
+      "narration": "A hash set answers exact membership but is useless for prefixes; scanning every word is wasteful."
+    },
+    {
+      "index": 1,
+      "start": 98.4,
+      "end": 223.1,
+      "duration": 124.7,
+      "label": "Store by shared prefix",
+      "headline": "Words that start alike share a path",
+      "narration": "A trie stores strings along character-labeled paths; car, card, cart share c-a-r and split only where they differ."
+    },
+    {
+      "index": 2,
+      "start": 223.1,
+      "end": 354.4,
+      "duration": 131.3,
+      "label": "What a node is",
+      "headline": "Child map + end-of-word flag",
+      "narration": "Each node holds a map from a character to a child and a boolean marking that a real word ends here."
+    },
+    {
+      "index": 3,
+      "start": 354.4,
+      "end": 485.7,
+      "duration": 131.3,
+      "label": "Three walks",
+      "headline": "Insert, search, startsWith",
+      "narration": "All three walk the string; insert creates missing children and flags the end, search checks the flag, startsWith ignores it."
+    },
+    {
+      "index": 4,
+      "start": 485.7,
+      "end": 616.9,
+      "duration": 131.2,
+      "label": "The flag matters",
+      "headline": "card stored, car not stored",
+      "narration": "If only card was inserted the c-a-r path exists, so search must check the end-of-word flag, not just the path."
+    },
+    {
+      "index": 5,
+      "start": 616.9,
+      "end": 748.2,
+      "duration": 131.3,
+      "label": "The four fingerprints",
+      "headline": "Prefix, autocomplete, dictionary, grid",
+      "narration": "Prefix queries, type-ahead suggestions, many lookups on a fixed word list, and pruning dead paths in a grid word-search."
+    },
+    {
+      "index": 6,
+      "start": 748.2,
+      "end": 840.1,
+      "duration": 91.9,
+      "label": "When it fails",
+      "headline": "Exact-only, huge alphabet, memory",
+      "narration": "For exact membership with no prefixes a hash set is simpler; tries trade memory for speed and can be heavy on sparse data."
+    }
+  ],
+  "cue_span_sec": 840.1,
+  "formulas": [],
+  "exported_at": "2026-07-08T12:26:34.406Z"
+}

@@ -1,0 +1,158 @@
+{
+  "lesson_id": 20,
+  "activity_id": 116,
+  "reviewed_at": "2026-07-08T13:15:00Z",
+  "iterations": 2,
+  "frames_reviewed": 21,
+  "quality": "ql",
+  "notes": "Lesson 20 Orientation (act 116), 'Trie / Prefix Tree', 840.1s, 7 long cues. Running word set {car,card,cart,cat}. Uses trie.py idiom (TrieModel n-ary layout, TrieMobject char-labeled edges + amber end-of-word rings). Two review iterations: authored + manim -s smoke every cue (fixed layout: Cue00 chip-row scaled, Cue01 note below leaves, Cue02 edge-note relocated+legend clears d-node, Cue04 tree shrunk+card chip repositioned+all text guarded), then full -ql render + READ start/mid/end all 7 cues. Iteration 2 fixed a real Manim ring-hiding bug in Cue01 (wrapping live edge mobjects in a new VGroup for the SurroundingRectangle reparents them and hides the r/car end-ring) by building the spine box from node copies; that changed timing so combined the incremental edge+node reveals into single plays to keep cue01 on its 124.7s budget (partial-movie concat frames scale with animation count). Per-cue checklist (char-label legibility, trie-structure correctness incl shared prefix + end-of-word flags, highlighted element matches the beat, contrast, nothing off-frame via theme.guard, chunk timing within pinning tolerance): all pass. Final -ql 840.002s vs audio 840.07s (\u03940.068).",
+  "frames": [
+    {
+      "cue": 0,
+      "kind": "start",
+      "path": "lesson_20/116/cue00_start.png",
+      "verdict": "pass",
+      "notes": "reveal in progress (stored-word chips fading in)"
+    },
+    {
+      "cue": 0,
+      "kind": "mid",
+      "path": "lesson_20/116/cue00_mid.png",
+      "verdict": "pass",
+      "notes": "word chips cat/car/card/cart/dog + hash-set panel contains('card')=yes O(1)"
+    },
+    {
+      "cue": 0,
+      "kind": "end",
+      "path": "lesson_20/116/cue00_end.png",
+      "verdict": "pass",
+      "notes": "hash-set O(1) exact vs prefix-query 'starts with car?' hash-keys-no-help + fallback scan every word O(n\u00b7L)"
+    },
+    {
+      "cue": 1,
+      "kind": "start",
+      "path": "lesson_20/116/cue01_start.png",
+      "verdict": "pass",
+      "notes": "root dot + 'root (empty string)' label"
+    },
+    {
+      "cue": 1,
+      "kind": "mid",
+      "path": "lesson_20/116/cue01_mid.png",
+      "verdict": "pass",
+      "notes": "building trie: car+card chips, c-a-r-d path, mid-build (cart not yet added)"
+    },
+    {
+      "cue": 1,
+      "kind": "end",
+      "path": "lesson_20/116/cue01_end.png",
+      "verdict": "pass",
+      "notes": "full trie car/card/cart, shared c-a-r spine box (built from node copies), r/d/t all show amber end-rings; note 'shared prefix c-a-r stored ONCE, split at d vs t'"
+    },
+    {
+      "cue": 2,
+      "kind": "start",
+      "path": "lesson_20/116/cue02_start.png",
+      "verdict": "pass",
+      "notes": "trie fading in"
+    },
+    {
+      "cue": 2,
+      "kind": "mid",
+      "path": "lesson_20/116/cue02_mid.png",
+      "verdict": "pass",
+      "notes": "node 'car' anatomy: r focus box + amber ring, children map d\u2192card/t\u2192cart, isEndOfWord true; d/t rings present"
+    },
+    {
+      "cue": 2,
+      "kind": "end",
+      "path": "lesson_20/116/cue02_end.png",
+      "verdict": "pass",
+      "notes": "full anatomy panel + end-ring legend + 'character rides the EDGE into the node'"
+    },
+    {
+      "cue": 3,
+      "kind": "start",
+      "path": "lesson_20/116/cue03_start.png",
+      "verdict": "pass",
+      "notes": "intro subtitle fading"
+    },
+    {
+      "cue": 3,
+      "kind": "mid",
+      "path": "lesson_20/116/cue03_mid.png",
+      "verdict": "pass",
+      "notes": "insert/search cards revealed (walk chars; insert CREATE+SET flag, search RETURN flag)"
+    },
+    {
+      "cue": 3,
+      "kind": "end",
+      "path": "lesson_20/116/cue03_end.png",
+      "verdict": "pass",
+      "notes": "3 op cards insert/search/startsWith + punchline 'insert SETS / search RETURNS / startsWith IGNORES the flag'"
+    },
+    {
+      "cue": 4,
+      "kind": "start",
+      "path": "lesson_20/116/cue04_start.png",
+      "verdict": "pass",
+      "notes": "card-only trie fading in"
+    },
+    {
+      "cue": 4,
+      "kind": "mid",
+      "path": "lesson_20/116/cue04_mid.png",
+      "verdict": "pass",
+      "notes": "search(car): c-a-r path blue exists, d node amber ring (card), r node NO ring"
+    },
+    {
+      "cue": 4,
+      "kind": "end",
+      "path": "lesson_20/116/cue04_end.png",
+      "verdict": "pass",
+      "notes": "boundary keyframe artifact (settled state verified via mid): r flag OFF \u2192 search(car)=false, 'path existing \u2260 word existing'"
+    },
+    {
+      "cue": 5,
+      "kind": "start",
+      "path": "lesson_20/116/cue05_start.png",
+      "verdict": "pass",
+      "notes": "headline only"
+    },
+    {
+      "cue": 5,
+      "kind": "mid",
+      "path": "lesson_20/116/cue05_mid.png",
+      "verdict": "pass",
+      "notes": "3 of 4 application cards (prefix queries / type-ahead / fixed-list-many-lookups)"
+    },
+    {
+      "cue": 5,
+      "kind": "end",
+      "path": "lesson_20/116/cue05_end.png",
+      "verdict": "pass",
+      "notes": "4 cards incl grid-word-search pruning"
+    },
+    {
+      "cue": 6,
+      "kind": "start",
+      "path": "lesson_20/116/cue06_start.png",
+      "verdict": "pass",
+      "notes": "intro 'a trie is not free'"
+    },
+    {
+      "cue": 6,
+      "kind": "mid",
+      "path": "lesson_20/116/cue06_mid.png",
+      "verdict": "pass",
+      "notes": "2 of 3 points (exact-membership-hash-set / memory-for-speed)"
+    },
+    {
+      "cue": 6,
+      "kind": "end",
+      "path": "lesson_20/116/cue06_end.png",
+      "verdict": "pass",
+      "notes": "3 points incl sparse-data + closing 'trade memory for prefix speed'"
+    }
+  ]
+}

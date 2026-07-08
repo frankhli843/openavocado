@@ -1,0 +1,137 @@
+{
+  "lesson_id": 20,
+  "activity_id": 118,
+  "reviewed_at": "2026-07-08T13:15:00Z",
+  "iterations": 2,
+  "frames_reviewed": 18,
+  "quality": "ql",
+  "notes": "Lesson 20 Part 2 (act 118), 'Autocomplete', 106.5s, 6 short cues. Trie {cat,car,card,cart}; prefix 'car' \u2192 completions car/card/cart; 'cat' is the pruned branch (under ca not car). Uses trie.py idiom (subtree recolor, end rings). Two review iterations: authored + manim -s smoke (fixed Cue02 bottom-note overflow), then full -ql render + READ start/mid/end all 6 cues. Iteration 2 fixed the SurroundingRectangle-over-VGroup-of-edges ring-hiding bug in Cue02 (subtree box built from node copies) and Cue04 (dim cat pieces individually instead of wrapping the live edge). Per-cue checklist (char-labels, subtree/prefix correctness, end-flag-only recording, highlight matches beat, contrast, safe-area, timing): all pass. cue04_end boundary artifact; settled verified via mid. Final -ql 106.401s vs audio 106.51s (\u03940.109).",
+  "frames": [
+    {
+      "cue": 0,
+      "kind": "start",
+      "path": "lesson_20/118/cue00_start.png",
+      "verdict": "pass",
+      "notes": "full trie fading"
+    },
+    {
+      "cue": 0,
+      "kind": "mid",
+      "path": "lesson_20/118/cue00_mid.png",
+      "verdict": "pass",
+      "notes": "trie {cat,car,card,cart} + prefix 'car' chip"
+    },
+    {
+      "cue": 0,
+      "kind": "end",
+      "path": "lesson_20/118/cue00_end.png",
+      "verdict": "pass",
+      "notes": "prefix car \u2192 completions car/card/cart (emerald chips), all end-rings shown"
+    },
+    {
+      "cue": 1,
+      "kind": "start",
+      "path": "lesson_20/118/cue01_start.png",
+      "verdict": "pass",
+      "notes": "trie + prefix=car"
+    },
+    {
+      "cue": 1,
+      "kind": "mid",
+      "path": "lesson_20/118/cue01_mid.png",
+      "verdict": "pass",
+      "notes": "walk c-a-r blue to car node"
+    },
+    {
+      "cue": 1,
+      "kind": "end",
+      "path": "lesson_20/118/cue01_end.png",
+      "verdict": "pass",
+      "notes": "landed on car node; 'if char missing \u2192 return empty'"
+    },
+    {
+      "cue": 2,
+      "kind": "start",
+      "path": "lesson_20/118/cue02_start.png",
+      "verdict": "pass",
+      "notes": "trie fading"
+    },
+    {
+      "cue": 2,
+      "kind": "mid",
+      "path": "lesson_20/118/cue02_mid.png",
+      "verdict": "pass",
+      "notes": "prefix path blue + subtree highlight beginning"
+    },
+    {
+      "cue": 2,
+      "kind": "end",
+      "path": "lesson_20/118/cue02_end.png",
+      "verdict": "pass",
+      "notes": "violet subtree box car/card/cart (built from node copies, all 3 amber rings show), cat's t outside, 'subtree of car = {car,card,cart}'"
+    },
+    {
+      "cue": 3,
+      "kind": "start",
+      "path": "lesson_20/118/cue03_start.png",
+      "verdict": "pass",
+      "notes": "trie fading"
+    },
+    {
+      "cue": 3,
+      "kind": "mid",
+      "path": "lesson_20/118/cue03_mid.png",
+      "verdict": "pass",
+      "notes": "DFS collecting: car/card/cart end-nodes \u2192 collected list"
+    },
+    {
+      "cue": 3,
+      "kind": "end",
+      "path": "lesson_20/118/cue03_end.png",
+      "verdict": "pass",
+      "notes": "3 end-of-word nodes \u2192 3 completions car/card/cart"
+    },
+    {
+      "cue": 4,
+      "kind": "start",
+      "path": "lesson_20/118/cue04_start.png",
+      "verdict": "pass",
+      "notes": "trie + car subtree violet"
+    },
+    {
+      "cue": 4,
+      "kind": "mid",
+      "path": "lesson_20/118/cue04_mid.png",
+      "verdict": "pass",
+      "notes": "cat branch dimmed + rose cross box (pruned), car/card/cart rings intact"
+    },
+    {
+      "cue": 4,
+      "kind": "end",
+      "path": "lesson_20/118/cue04_end.png",
+      "verdict": "pass",
+      "notes": "boundary artifact (settled via mid): a\u2192t branch skipped, no wasted work on cat"
+    },
+    {
+      "cue": 5,
+      "kind": "start",
+      "path": "lesson_20/118/cue05_start.png",
+      "verdict": "pass",
+      "notes": "trie fading"
+    },
+    {
+      "cue": 5,
+      "kind": "mid",
+      "path": "lesson_20/118/cue05_mid.png",
+      "verdict": "pass",
+      "notes": "ca node rose box (not a word), 'only amber-ring nodes count: car,card,cart'"
+    },
+    {
+      "cue": 5,
+      "kind": "end",
+      "path": "lesson_20/118/cue05_end.png",
+      "verdict": "pass",
+      "notes": "record only end-of-word nodes, bare prefix ca is not a word"
+    }
+  ]
+}

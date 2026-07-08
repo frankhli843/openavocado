@@ -1,0 +1,137 @@
+{
+  "lesson_id": 20,
+  "activity_id": 117,
+  "reviewed_at": "2026-07-08T13:15:00Z",
+  "iterations": 2,
+  "frames_reviewed": 18,
+  "quality": "ql",
+  "notes": "Lesson 20 Part 1 (act 117), 'Trie mechanics', 102.4s, 6 short cues. Running trie {car,card}. insert/search/startsWith all walk the string, differ only in the end-of-word flag. Uses trie.py idiom. Two review iterations: authored + manim -s smoke (all 6 pass), then full -ql render + READ start/mid/end all 6 cues. Per-cue checklist (char-label legibility, trie correctness incl end-flag semantics, highlight matches beat, contrast, safe-area via theme.guard, chunk timing): all pass. cue04_end shows documented keyframe-seek boundary artifact (next cue title); settled state verified via cue04_mid (search(ca)=false). Final -ql 102.268s vs audio 102.36s (\u03940.092).",
+  "frames": [
+    {
+      "cue": 0,
+      "kind": "start",
+      "path": "lesson_20/117/cue00_start.png",
+      "verdict": "pass",
+      "notes": "node reveal"
+    },
+    {
+      "cue": 0,
+      "kind": "mid",
+      "path": "lesson_20/117/cue00_mid.png",
+      "verdict": "pass",
+      "notes": "node + children map {char\u2192node} + isEndOfWord true/false fading"
+    },
+    {
+      "cue": 0,
+      "kind": "end",
+      "path": "lesson_20/117/cue00_end.png",
+      "verdict": "pass",
+      "notes": "node with amber ring + children map + isEndOfWord + 'amber ring = word ends here'"
+    },
+    {
+      "cue": 1,
+      "kind": "start",
+      "path": "lesson_20/117/cue01_start.png",
+      "verdict": "pass",
+      "notes": "root + car chip"
+    },
+    {
+      "cue": 1,
+      "kind": "mid",
+      "path": "lesson_20/117/cue01_mid.png",
+      "verdict": "pass",
+      "notes": "c-a-r path building emerald (new nodes)"
+    },
+    {
+      "cue": 1,
+      "kind": "end",
+      "path": "lesson_20/117/cue01_end.png",
+      "verdict": "pass",
+      "notes": "insert(car): c-a-r emerald, r amber ring, 'r.isEndOfWord=true'"
+    },
+    {
+      "cue": 2,
+      "kind": "start",
+      "path": "lesson_20/117/cue02_start.png",
+      "verdict": "pass",
+      "notes": "car trie + card chip"
+    },
+    {
+      "cue": 2,
+      "kind": "mid",
+      "path": "lesson_20/117/cue02_mid.png",
+      "verdict": "pass",
+      "notes": "c-a-r reuse emerald edges"
+    },
+    {
+      "cue": 2,
+      "kind": "end",
+      "path": "lesson_20/117/cue02_end.png",
+      "verdict": "pass",
+      "notes": "insert(card): c-a-r reused, only d new emerald + amber ring, r ring retained"
+    },
+    {
+      "cue": 3,
+      "kind": "start",
+      "path": "lesson_20/117/cue03_start.png",
+      "verdict": "pass",
+      "notes": "trie {car,card} fading"
+    },
+    {
+      "cue": 3,
+      "kind": "mid",
+      "path": "lesson_20/117/cue03_mid.png",
+      "verdict": "pass",
+      "notes": "search(car): c-a-r path blue exists"
+    },
+    {
+      "cue": 3,
+      "kind": "end",
+      "path": "lesson_20/117/cue03_end.png",
+      "verdict": "pass",
+      "notes": "search(car): r amber flag set \u2192 true (emerald)"
+    },
+    {
+      "cue": 4,
+      "kind": "start",
+      "path": "lesson_20/117/cue04_start.png",
+      "verdict": "pass",
+      "notes": "trie + ca query"
+    },
+    {
+      "cue": 4,
+      "kind": "mid",
+      "path": "lesson_20/117/cue04_mid.png",
+      "verdict": "pass",
+      "notes": "search(ca)=false: c-a walked, a node rose box (no ring), r/d rings intact \u2192 false"
+    },
+    {
+      "cue": 4,
+      "kind": "end",
+      "path": "lesson_20/117/cue04_end.png",
+      "verdict": "pass",
+      "notes": "boundary artifact (settled verified via mid): search(ca)=false"
+    },
+    {
+      "cue": 5,
+      "kind": "start",
+      "path": "lesson_20/117/cue05_start.png",
+      "verdict": "pass",
+      "notes": "trie + ca query violet"
+    },
+    {
+      "cue": 5,
+      "kind": "mid",
+      "path": "lesson_20/117/cue05_mid.png",
+      "verdict": "pass",
+      "notes": "startsWith(ca)=true: c-a violet consumed, r/d rings intact, 'no flag check' \u2192 true"
+    },
+    {
+      "cue": 5,
+      "kind": "end",
+      "path": "lesson_20/117/cue05_end.png",
+      "verdict": "pass",
+      "notes": "startsWith(ca)=true (ignore flag)"
+    }
+  ]
+}
