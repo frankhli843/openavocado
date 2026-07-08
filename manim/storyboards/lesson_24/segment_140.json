@@ -1,0 +1,98 @@
+{
+  "lesson_id": 24,
+  "activity_id": 140,
+  "activity_type": "audio",
+  "title": "Audio: graph reactivation — one loop, swap the container",
+  "audio": {
+    "file_path": "runtime_artifacts/audio/lesson_24_audio.mp3",
+    "duration_sec": 877.44
+  },
+  "audio_source": "artifact",
+  "cue_source": "orientation_visual.cues",
+  "cues": [
+    {
+      "index": 0,
+      "start": 0,
+      "end": 88.8,
+      "duration": 88.8,
+      "label": "Reactivation",
+      "headline": "You know graphs; rebuild the speed",
+      "narration": "This is a strong-but-stale pattern, so the goal is recall speed: pick the right traversal and code it calmly."
+    },
+    {
+      "index": 1,
+      "start": 88.8,
+      "end": 188,
+      "duration": 99.2,
+      "label": "One machine",
+      "headline": "The container sets the behavior",
+      "narration": "Graph traversal is one loop; a queue gives BFS, a stack gives DFS, a priority queue gives Dijkstra."
+    },
+    {
+      "index": 2,
+      "start": 188,
+      "end": 292.5,
+      "duration": 104.5,
+      "label": "Why BFS is shortest",
+      "headline": "FIFO ⇒ shortest unweighted",
+      "narration": "First-in-first-out forces nondecreasing distance, so the first time BFS reaches a node is along a shortest path."
+    },
+    {
+      "index": 3,
+      "start": 292.5,
+      "end": 396.9,
+      "duration": 104.4,
+      "label": "Mark on enqueue",
+      "headline": "Discovered equals visited",
+      "narration": "Mark a node visited the instant you push it, so each node enters the frontier exactly once."
+    },
+    {
+      "index": 4,
+      "start": 396.9,
+      "end": 511.8,
+      "duration": 114.9,
+      "label": "Multi-source",
+      "headline": "Seed every source at distance 0",
+      "narration": "Multi-source BFS seeds all sources together and counts layers, turning simultaneous spread into one queue loop."
+    },
+    {
+      "index": 5,
+      "start": 511.8,
+      "end": 616.3,
+      "duration": 104.5,
+      "label": "Union Find",
+      "headline": "Incremental connectivity",
+      "narration": "Union Find answers 'same group?' incrementally with path compression and union by rank in near-constant time."
+    },
+    {
+      "index": 6,
+      "start": 616.3,
+      "end": 720.8,
+      "duration": 104.5,
+      "label": "Dijkstra",
+      "headline": "Expand the cheapest first",
+      "narration": "A priority queue always expands the cheapest node, so its first pop is final — for non-negative weights only."
+    },
+    {
+      "index": 7,
+      "start": 720.8,
+      "end": 814.8,
+      "duration": 94,
+      "label": "Topo sort",
+      "headline": "Kahn's in-degree BFS",
+      "narration": "Topological sort is in-degree BFS; it returns fewer nodes exactly when a cycle exists."
+    },
+    {
+      "index": 8,
+      "start": 814.8,
+      "end": 877.4,
+      "duration": 62.6,
+      "label": "Traps",
+      "headline": "Visited timing · container · negatives",
+      "narration": "The bugs are visited timing, container mismatch, Dijkstra on negatives, and bare Union Find — not the ideas."
+    }
+  ],
+  "cue_span_sec": 877.4,
+  "formulas": [],
+  "exported_at": "2026-07-08T21:18:39.607Z"
+}

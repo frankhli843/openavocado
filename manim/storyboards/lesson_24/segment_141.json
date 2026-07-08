@@ -1,0 +1,73 @@
+{
+  "lesson_id": 24,
+  "activity_id": 141,
+  "activity_type": "lesson_part",
+  "title": "Part 1: Multi-source BFS — layers are distances",
+  "audio": {
+    "file_path": "runtime_artifacts/audio/lesson_24_activity_141_audio.mp3",
+    "duration_sec": 75.82
+  },
+  "audio_source": "artifact",
+  "cue_source": "audio.synced_visual.cues",
+  "cues": [
+    {
+      "index": 0,
+      "start": 0,
+      "end": 13.8,
+      "duration": 13.8,
+      "label": "Seed the sources",
+      "headline": "Enqueue every rotten cell at 0",
+      "narration": "Before the loop, enqueue every already-rotten cell at minute zero and count the fresh cells."
+    },
+    {
+      "index": 1,
+      "start": 13.8,
+      "end": 28.5,
+      "duration": 14.7,
+      "label": "One layer per minute",
+      "headline": "Process the whole frontier",
+      "narration": "Each minute pops the entire current frontier; every fresh neighbor flips to rotten and joins the next layer."
+    },
+    {
+      "index": 2,
+      "start": 28.5,
+      "end": 43.7,
+      "duration": 15.2,
+      "label": "Layer = distance",
+      "headline": "Rot minute is nearest-source distance",
+      "narration": "Because all sources started together, the minute a cell flips is its distance to the nearest rotten cell."
+    },
+    {
+      "index": 3,
+      "start": 43.7,
+      "end": 58.8,
+      "duration": 15.1,
+      "label": "Mark on enqueue",
+      "headline": "Each cell enters once",
+      "narration": "Flipping a cell rotten the moment it is enqueued stops two neighbors from processing it twice."
+    },
+    {
+      "index": 4,
+      "start": 58.8,
+      "end": 68.9,
+      "duration": 10.1,
+      "label": "The answer",
+      "headline": "fresh == 0 at minute 4",
+      "narration": "Here fresh reaches zero at minute four, the deepest layer, so the answer is four minutes."
+    },
+    {
+      "index": 5,
+      "start": 68.9,
+      "end": 75.8,
+      "duration": 6.9,
+      "label": "Unreachable",
+      "headline": "Leftover fresh ⇒ -1",
+      "narration": "If any cell is still fresh when the queue empties, it can never rot, so the answer is negative one."
+    }
+  ],
+  "cue_span_sec": 75.8,
+  "formulas": [
+    "\\text{time } O(V + E) \\qquad \\text{space } O(V)"
+  ],
+  "exported_at": "2026-07-08T21:18:39.608Z"
+}

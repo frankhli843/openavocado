@@ -1,0 +1,130 @@
+{
+  "lesson_id": 24,
+  "activity_id": 141,
+  "reviewed_at": "2026-07-08T21:41:00Z",
+  "iterations": 1,
+  "frames_reviewed": 17,
+  "quality": "ql",
+  "notes": "Lesson 24 Part 1 (act 141) 'Rotting Oranges \u2014 multi-source grid BFS', 75.8s, 6 cues. Verified example grid RFFFR/FFFFF/FFFFF, 2 rotten sources (0,0)+(0,4), deepest fresh cell (2,2) rots at minute 4 -> answer 4; unreachable fresh -> -1. Uses graph.py grid_board/set_cell/minute_tag/container. Single -ql pass clean; READ start/mid/end each cue.",
+  "frames": [
+    {
+      "cue": 0,
+      "kind": "start",
+      "path": "lesson_24/141/cue00_start.png",
+      "verdict": "pass",
+      "notes": "[start] grid at minute 0: 2 orange rotten sources ringed, 13 green fresh, frontier queue [(0,0),(0,4)] with 'front' marker, 'fresh 13' badge, note '2 sources start together'"
+    },
+    {
+      "cue": 0,
+      "kind": "mid",
+      "path": "lesson_24/141/cue00_mid.png",
+      "verdict": "pass",
+      "notes": "[mid] grid at minute 0: 2 orange rotten sources ringed, 13 green fresh, frontier queue [(0,0),(0,4)] with 'front' marker, 'fresh 13' badge, note '2 sources start together'"
+    },
+    {
+      "cue": 0,
+      "kind": "end",
+      "path": "lesson_24/141/cue00_end.png",
+      "verdict": "pass",
+      "notes": "[end] grid at minute 0: 2 orange rotten sources ringed, 13 green fresh, frontier queue [(0,0),(0,4)] with 'front' marker, 'fresh 13' badge, note '2 sources start together'"
+    },
+    {
+      "cue": 1,
+      "kind": "start",
+      "path": "lesson_24/141/cue01_start.png",
+      "verdict": "pass",
+      "notes": "[start] one minute: sources popped (blue current), 4 minute-1 neighbours flip orange and join next frontier, 'minute 1' badge, note 'all 4 neighbours flip at once'"
+    },
+    {
+      "cue": 1,
+      "kind": "mid",
+      "path": "lesson_24/141/cue01_mid.png",
+      "verdict": "pass",
+      "notes": "[mid] one minute: sources popped (blue current), 4 minute-1 neighbours flip orange and join next frontier, 'minute 1' badge, note 'all 4 neighbours flip at once'"
+    },
+    {
+      "cue": 1,
+      "kind": "end",
+      "path": "lesson_24/141/cue01_end.png",
+      "verdict": "pass",
+      "notes": "[end] one minute: sources popped (blue current), 4 minute-1 neighbours flip orange and join next frontier, 'minute 1' badge, note 'all 4 neighbours flip at once'"
+    },
+    {
+      "cue": 2,
+      "kind": "start",
+      "path": "lesson_24/141/cue02_start.png",
+      "verdict": "pass",
+      "notes": "[start] every cell stamped with the minute it flips = BFS layer (0/1/2/1/0 / 1/2/3/2/1 / 2/3/4/3/2), sources ringed rose, 'deepest 4' badge; note 'each number = minutes to nearest source'"
+    },
+    {
+      "cue": 2,
+      "kind": "mid",
+      "path": "lesson_24/141/cue02_mid.png",
+      "verdict": "pass",
+      "notes": "[mid] every cell stamped with the minute it flips = BFS layer (0/1/2/1/0 / 1/2/3/2/1 / 2/3/4/3/2), sources ringed rose, 'deepest 4' badge; note 'each number = minutes to nearest source'"
+    },
+    {
+      "cue": 2,
+      "kind": "end",
+      "path": "lesson_24/141/cue02_end.png",
+      "verdict": "pass",
+      "notes": "[end] every cell stamped with the minute it flips = BFS layer (0/1/2/1/0 / 1/2/3/2/1 / 2/3/4/3/2), sources ringed rose, 'deepest 4' badge; note 'each number = minutes to nearest source'"
+    },
+    {
+      "cue": 3,
+      "kind": "start",
+      "path": "lesson_24/141/cue03_start.png",
+      "verdict": "pass",
+      "notes": "[start] flip-on-enqueue rule: two rotten neighbours reach one fresh cell; first flips+marks it 'rotten checkmark', second sees 'already rotten \u2014 skip'; note 'each cell in the queue exactly once'"
+    },
+    {
+      "cue": 3,
+      "kind": "mid",
+      "path": "lesson_24/141/cue03_mid.png",
+      "verdict": "pass",
+      "notes": "[mid] flip-on-enqueue rule: two rotten neighbours reach one fresh cell; first flips+marks it 'rotten checkmark', second sees 'already rotten \u2014 skip'; note 'each cell in the queue exactly once'"
+    },
+    {
+      "cue": 3,
+      "kind": "end",
+      "path": "lesson_24/141/cue03_end.png",
+      "verdict": "pass",
+      "notes": "[end] flip-on-enqueue rule: two rotten neighbours reach one fresh cell; first flips+marks it 'rotten checkmark', second sees 'already rotten \u2014 skip'; note 'each cell in the queue exactly once'"
+    },
+    {
+      "cue": 4,
+      "kind": "start",
+      "path": "lesson_24/141/cue04_start.png",
+      "verdict": "pass",
+      "notes": "[start] fresh reaches 0 at minute 4, deepest cell (2,2) green with '4', 'fresh 0' badge, 'answer = 4 minutes' chip; note 'queue empties with no fresh left'"
+    },
+    {
+      "cue": 4,
+      "kind": "mid",
+      "path": "lesson_24/141/cue04_mid.png",
+      "verdict": "pass",
+      "notes": "[mid] fresh reaches 0 at minute 4, deepest cell (2,2) green with '4', 'fresh 0' badge, 'answer = 4 minutes' chip; note 'queue empties with no fresh left'"
+    },
+    {
+      "cue": 4,
+      "kind": "end",
+      "path": "lesson_24/141/cue04_end.png",
+      "verdict": "pass",
+      "notes": "[end] fresh reaches 0 at minute 4, deepest cell (2,2) green with '4', 'fresh 0' badge, 'answer = 4 minutes' chip; note 'queue empties with no fresh left'"
+    },
+    {
+      "cue": 5,
+      "kind": "start",
+      "path": "lesson_24/141/cue05_start.png",
+      "verdict": "pass",
+      "notes": "[start] unreachable case: a fresh cell fenced from the source by empty walls stays fresh; 'stuck fresh 1', 'answer = -1' chip"
+    },
+    {
+      "cue": 5,
+      "kind": "mid",
+      "path": "lesson_24/141/cue05_mid.png",
+      "verdict": "pass",
+      "notes": "[mid] unreachable case: a fresh cell fenced from the source by empty walls stays fresh; 'stuck fresh 1', 'answer = -1' chip"
+    }
+  ]
+}

@@ -1,0 +1,130 @@
+{
+  "lesson_id": 24,
+  "activity_id": 142,
+  "reviewed_at": "2026-07-08T21:41:00Z",
+  "iterations": 1,
+  "frames_reviewed": 17,
+  "quality": "ql",
+  "notes": "Lesson 24 Part 2 (act 142) 'Union Find \u2014 Number of Provinces', 73.3s, 6 cues. Nodes 0..4; edges build groups {0,1,2}(root 0) and {3,4}(root 3) -> 2 provinces; redundant cycle edge (1,2) changes nothing. Uses graph.py forest_nodes/parent_arrow/root_ring/node_circle. Single -ql pass clean; READ start/mid/end each cue.",
+  "frames": [
+    {
+      "cue": 0,
+      "kind": "start",
+      "path": "lesson_24/142/cue00_start.png",
+      "verdict": "pass",
+      "notes": "[start] two trees 1,2->0 (blue root ring) and 4->3 (green root ring), 'root' labels; note 'find(1)=find(2)=0 -> same root -> same group'"
+    },
+    {
+      "cue": 0,
+      "kind": "mid",
+      "path": "lesson_24/142/cue00_mid.png",
+      "verdict": "pass",
+      "notes": "[mid] two trees 1,2->0 (blue root ring) and 4->3 (green root ring), 'root' labels; note 'find(1)=find(2)=0 -> same root -> same group'"
+    },
+    {
+      "cue": 0,
+      "kind": "end",
+      "path": "lesson_24/142/cue00_end.png",
+      "verdict": "pass",
+      "notes": "[end] two trees 1,2->0 (blue root ring) and 4->3 (green root ring), 'root' labels; note 'find(1)=find(2)=0 -> same root -> same group'"
+    },
+    {
+      "cue": 1,
+      "kind": "start",
+      "path": "lesson_24/142/cue01_start.png",
+      "verdict": "pass",
+      "notes": "[start] singletons 0,1,2; edge (0,1) roots differ -> 1 attaches under 0 count 3->2; edge (1,2) find(1)=0,find(2)=2 differ -> 2 attaches under 0 count 2->1; 'each union merges two trees -> one fewer group'"
+    },
+    {
+      "cue": 1,
+      "kind": "mid",
+      "path": "lesson_24/142/cue01_mid.png",
+      "verdict": "pass",
+      "notes": "[mid] singletons 0,1,2; edge (0,1) roots differ -> 1 attaches under 0 count 3->2; edge (1,2) find(1)=0,find(2)=2 differ -> 2 attaches under 0 count 2->1; 'each union merges two trees -> one fewer group'"
+    },
+    {
+      "cue": 1,
+      "kind": "end",
+      "path": "lesson_24/142/cue01_end.png",
+      "verdict": "pass",
+      "notes": "[end] singletons 0,1,2; edge (0,1) roots differ -> 1 attaches under 0 count 3->2; edge (1,2) find(1)=0,find(2)=2 differ -> 2 attaches under 0 count 2->1; 'each union merges two trees -> one fewer group'"
+    },
+    {
+      "cue": 2,
+      "kind": "start",
+      "path": "lesson_24/142/cue02_start.png",
+      "verdict": "pass",
+      "notes": "[start] group {0,1,2} formed (1->0,2->0, root ring 0); redundant edge (1,2) both root at 0 -> rose, 'find(1)=find(2)=0 -> a cycle, skip', count unchanged (1)"
+    },
+    {
+      "cue": 2,
+      "kind": "mid",
+      "path": "lesson_24/142/cue02_mid.png",
+      "verdict": "pass",
+      "notes": "[mid] group {0,1,2} formed (1->0,2->0, root ring 0); redundant edge (1,2) both root at 0 -> rose, 'find(1)=find(2)=0 -> a cycle, skip', count unchanged (1)"
+    },
+    {
+      "cue": 2,
+      "kind": "end",
+      "path": "lesson_24/142/cue02_end.png",
+      "verdict": "pass",
+      "notes": "[end] group {0,1,2} formed (1->0,2->0, root ring 0); redundant edge (1,2) both root at 0 -> rose, 'find(1)=find(2)=0 -> a cycle, skip', count unchanged (1)"
+    },
+    {
+      "cue": 3,
+      "kind": "start",
+      "path": "lesson_24/142/cue03_start.png",
+      "verdict": "pass",
+      "notes": "[start] path compression: chain 2->1->0 flattens so 2 and 1 point straight at root 0; union by rank: shorter tree B hangs under taller A; bound O(alpha(V)) ~ O(1)"
+    },
+    {
+      "cue": 3,
+      "kind": "mid",
+      "path": "lesson_24/142/cue03_mid.png",
+      "verdict": "pass",
+      "notes": "[mid] path compression: chain 2->1->0 flattens so 2 and 1 point straight at root 0; union by rank: shorter tree B hangs under taller A; bound O(alpha(V)) ~ O(1)"
+    },
+    {
+      "cue": 3,
+      "kind": "end",
+      "path": "lesson_24/142/cue03_end.png",
+      "verdict": "pass",
+      "notes": "[end] path compression: chain 2->1->0 flattens so 2 and 1 point straight at root 0; union by rank: shorter tree B hangs under taller A; bound O(alpha(V)) ~ O(1)"
+    },
+    {
+      "cue": 4,
+      "kind": "start",
+      "path": "lesson_24/142/cue04_start.png",
+      "verdict": "pass",
+      "notes": "[start] final forest, root rings on 0 and 3, group chips {0,1,2} and {3,4}, 'provinces 2' badge"
+    },
+    {
+      "cue": 4,
+      "kind": "mid",
+      "path": "lesson_24/142/cue04_mid.png",
+      "verdict": "pass",
+      "notes": "[mid] final forest, root rings on 0 and 3, group chips {0,1,2} and {3,4}, 'provinces 2' badge"
+    },
+    {
+      "cue": 4,
+      "kind": "end",
+      "path": "lesson_24/142/cue04_end.png",
+      "verdict": "pass",
+      "notes": "[end] final forest, root rings on 0 and 3, group chips {0,1,2} and {3,4}, 'provinces 2' badge"
+    },
+    {
+      "cue": 5,
+      "kind": "start",
+      "path": "lesson_24/142/cue05_start.png",
+      "verdict": "pass",
+      "notes": "[start] connectivity vs path: 'connected(0,2)? YES' but 'the actual path 0->2?' -> 'use BFS/DFS for that'"
+    },
+    {
+      "cue": 5,
+      "kind": "mid",
+      "path": "lesson_24/142/cue05_mid.png",
+      "verdict": "pass",
+      "notes": "[mid] connectivity vs path: 'connected(0,2)? YES' but 'the actual path 0->2?' -> 'use BFS/DFS for that'"
+    }
+  ]
+}

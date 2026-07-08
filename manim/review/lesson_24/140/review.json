@@ -1,0 +1,193 @@
+{
+  "lesson_id": 24,
+  "activity_id": 140,
+  "reviewed_at": "2026-07-08T21:41:00Z",
+  "iterations": 1,
+  "frames_reviewed": 26,
+  "quality": "ql",
+  "notes": "Lesson 24 orientation (act 140) 'Graph Reactivation: One Loop, Swap the Container', 877.4s, 9 long family-map cues. New graph.py idiom lib (graph_group/container/grid_board/forest_nodes/parent_arrow/dist_badge) + arrays.code_line. Single -ql pass, clean (all 21 cues across L24 passed manim -s smoke first, then -ql muxed READ). Per-cue: all math/pedagogy correct, highlight matches narration, legible, safe-area guard passed, chunk timing within pin tolerance (<=0.066s auto-pad).",
+  "frames": [
+    {
+      "cue": 0,
+      "kind": "start",
+      "path": "lesson_24/140/cue00_start.png",
+      "verdict": "pass",
+      "notes": "[start] family map: 6 colour-coded cards (BFS queue/shortest, DFS stack/deep, Dijkstra pq/weighted, Multi-source BFS seeds/layers, Union Find same-group, Topological sort order-DAG) + 'strong but stale \u2014 recall speed' subtitle"
+    },
+    {
+      "cue": 0,
+      "kind": "mid",
+      "path": "lesson_24/140/cue00_mid.png",
+      "verdict": "pass",
+      "notes": "[mid] family map: 6 colour-coded cards (BFS queue/shortest, DFS stack/deep, Dijkstra pq/weighted, Multi-source BFS seeds/layers, Union Find same-group, Topological sort order-DAG) + 'strong but stale \u2014 recall speed' subtitle"
+    },
+    {
+      "cue": 0,
+      "kind": "end",
+      "path": "lesson_24/140/cue00_end.png",
+      "verdict": "pass",
+      "notes": "[end] family map: 6 colour-coded cards (BFS queue/shortest, DFS stack/deep, Dijkstra pq/weighted, Multi-source BFS seeds/layers, Union Find same-group, Topological sort order-DAG) + 'strong but stale \u2014 recall speed' subtitle"
+    },
+    {
+      "cue": 1,
+      "kind": "start",
+      "path": "lesson_24/140/cue01_start.png",
+      "verdict": "pass",
+      "notes": "[start] the single traversal loop skeleton (seen/frontier/while pop/for nbr/push); CONTAINER circumscribed; queue->BFS, stack->DFS, priority queue->Dijkstra variants revealed; 'swap CONTAINER -> swap the algorithm'"
+    },
+    {
+      "cue": 1,
+      "kind": "mid",
+      "path": "lesson_24/140/cue01_mid.png",
+      "verdict": "pass",
+      "notes": "[mid] the single traversal loop skeleton (seen/frontier/while pop/for nbr/push); CONTAINER circumscribed; queue->BFS, stack->DFS, priority queue->Dijkstra variants revealed; 'swap CONTAINER -> swap the algorithm'"
+    },
+    {
+      "cue": 1,
+      "kind": "end",
+      "path": "lesson_24/140/cue01_end.png",
+      "verdict": "pass",
+      "notes": "[end] the single traversal loop skeleton (seen/frontier/while pop/for nbr/push); CONTAINER circumscribed; queue->BFS, stack->DFS, priority queue->Dijkstra variants revealed; 'swap CONTAINER -> swap the algorithm'"
+    },
+    {
+      "cue": 2,
+      "kind": "start",
+      "path": "lesson_24/140/cue02_start.png",
+      "verdict": "pass",
+      "notes": "[start] BFS graph S,A,B,C,D,E; distances stamped 0/1/1/2/2/3 nondecreasing, layer edges greened; note 'first time BFS reaches a node it's a shortest path' \u2014 math correct"
+    },
+    {
+      "cue": 2,
+      "kind": "mid",
+      "path": "lesson_24/140/cue02_mid.png",
+      "verdict": "pass",
+      "notes": "[mid] BFS graph S,A,B,C,D,E; distances stamped 0/1/1/2/2/3 nondecreasing, layer edges greened; note 'first time BFS reaches a node it's a shortest path' \u2014 math correct"
+    },
+    {
+      "cue": 2,
+      "kind": "end",
+      "path": "lesson_24/140/cue02_end.png",
+      "verdict": "pass",
+      "notes": "[end] BFS graph S,A,B,C,D,E; distances stamped 0/1/1/2/2/3 nondecreasing, layer edges greened; note 'first time BFS reaches a node it's a shortest path' \u2014 math correct"
+    },
+    {
+      "cue": 3,
+      "kind": "start",
+      "path": "lesson_24/140/cue03_start.png",
+      "verdict": "pass",
+      "notes": "[start] A(current)->C pushes C, seen={A,B,C}; B reaches C but C in seen -> rose skip; note 'mark at POP instead and C enters frontier twice \u2014 the classic bug'"
+    },
+    {
+      "cue": 3,
+      "kind": "mid",
+      "path": "lesson_24/140/cue03_mid.png",
+      "verdict": "pass",
+      "notes": "[mid] A(current)->C pushes C, seen={A,B,C}; B reaches C but C in seen -> rose skip; note 'mark at POP instead and C enters frontier twice \u2014 the classic bug'"
+    },
+    {
+      "cue": 3,
+      "kind": "end",
+      "path": "lesson_24/140/cue03_end.png",
+      "verdict": "pass",
+      "notes": "[end] A(current)->C pushes C, seen={A,B,C}; B reaches C but C in seen -> rose skip; note 'mark at POP instead and C enters frontier twice \u2014 the classic bug'"
+    },
+    {
+      "cue": 4,
+      "kind": "start",
+      "path": "lesson_24/140/cue04_start.png",
+      "verdict": "pass",
+      "notes": "[start] multi-source grid BFS: 2 sources at layer 0 (RFFFR/FFFFF/FFFFF), spread minute-by-minute to layer 4 badge; note 'simultaneous spread = one queue loop, deepest layer = answer'"
+    },
+    {
+      "cue": 4,
+      "kind": "mid",
+      "path": "lesson_24/140/cue04_mid.png",
+      "verdict": "pass",
+      "notes": "[mid] multi-source grid BFS: 2 sources at layer 0 (RFFFR/FFFFF/FFFFF), spread minute-by-minute to layer 4 badge; note 'simultaneous spread = one queue loop, deepest layer = answer'"
+    },
+    {
+      "cue": 4,
+      "kind": "end",
+      "path": "lesson_24/140/cue04_end.png",
+      "verdict": "pass",
+      "notes": "[end] multi-source grid BFS: 2 sources at layer 0 (RFFFR/FFFFF/FFFFF), spread minute-by-minute to layer 4 badge; note 'simultaneous spread = one queue loop, deepest layer = answer'"
+    },
+    {
+      "cue": 5,
+      "kind": "start",
+      "path": "lesson_24/140/cue05_start.png",
+      "verdict": "pass",
+      "notes": "[start] union-find forest 1,2->0 and 4->3, groups count 5->2 as unions attach, root rings on 0 and 3; note 'find follows parents to a root; path compression + union by rank -> O(alpha) ~ O(1)'"
+    },
+    {
+      "cue": 5,
+      "kind": "mid",
+      "path": "lesson_24/140/cue05_mid.png",
+      "verdict": "pass",
+      "notes": "[mid] union-find forest 1,2->0 and 4->3, groups count 5->2 as unions attach, root rings on 0 and 3; note 'find follows parents to a root; path compression + union by rank -> O(alpha) ~ O(1)'"
+    },
+    {
+      "cue": 5,
+      "kind": "end",
+      "path": "lesson_24/140/cue05_end.png",
+      "verdict": "pass",
+      "notes": "[end] union-find forest 1,2->0 and 4->3, groups count 5->2 as unions attach, root rings on 0 and 3; note 'find follows parents to a root; path compression + union by rank -> O(alpha) ~ O(1)'"
+    },
+    {
+      "cue": 6,
+      "kind": "start",
+      "path": "lesson_24/140/cue06_start.png",
+      "verdict": "pass",
+      "notes": "[start] Dijkstra weighted graph S(0)/A(1)/B(3)/C(4) settled greedily (weights 1,4,2,5,1; dist S->C=4 via S-A-B-C verified); warn 'first pop of a node is its final distance \u2014 non-negative weights only'"
+    },
+    {
+      "cue": 6,
+      "kind": "mid",
+      "path": "lesson_24/140/cue06_mid.png",
+      "verdict": "pass",
+      "notes": "[mid] Dijkstra weighted graph S(0)/A(1)/B(3)/C(4) settled greedily (weights 1,4,2,5,1; dist S->C=4 via S-A-B-C verified); warn 'first pop of a node is its final distance \u2014 non-negative weights only'"
+    },
+    {
+      "cue": 6,
+      "kind": "end",
+      "path": "lesson_24/140/cue06_end.png",
+      "verdict": "pass",
+      "notes": "[end] Dijkstra weighted graph S(0)/A(1)/B(3)/C(4) settled greedily (weights 1,4,2,5,1; dist S->C=4 via S-A-B-C verified); warn 'first pop of a node is its final distance \u2014 non-negative weights only'"
+    },
+    {
+      "cue": 7,
+      "kind": "start",
+      "path": "lesson_24/140/cue07_start.png",
+      "verdict": "pass",
+      "notes": "[start] topological sort DAG A->B,A->C,B->D,C->D; in-degrees driven to 0, order 'A B C D'; note 'a cycle never reaches in-degree 0 -> fewer than V nodes come out'"
+    },
+    {
+      "cue": 7,
+      "kind": "mid",
+      "path": "lesson_24/140/cue07_mid.png",
+      "verdict": "pass",
+      "notes": "[mid] topological sort DAG A->B,A->C,B->D,C->D; in-degrees driven to 0, order 'A B C D'; note 'a cycle never reaches in-degree 0 -> fewer than V nodes come out'"
+    },
+    {
+      "cue": 7,
+      "kind": "end",
+      "path": "lesson_24/140/cue07_end.png",
+      "verdict": "pass",
+      "notes": "[end] topological sort DAG A->B,A->C,B->D,C->D; in-degrees driven to 0, order 'A B C D'; note 'a cycle never reaches in-degree 0 -> fewer than V nodes come out'"
+    },
+    {
+      "cue": 8,
+      "kind": "start",
+      "path": "lesson_24/140/cue08_start.png",
+      "verdict": "pass",
+      "notes": "[start] four bug cards: visited timing (push not pop), container mismatch (queue vs stack vs PQ), Dijkstra on negatives (use Bellman-Ford), bare Union Find (compress + rank); 'ideas simple, points earned on mechanics'"
+    },
+    {
+      "cue": 8,
+      "kind": "mid",
+      "path": "lesson_24/140/cue08_mid.png",
+      "verdict": "pass",
+      "notes": "[mid] four bug cards: visited timing (push not pop), container mismatch (queue vs stack vs PQ), Dijkstra on negatives (use Bellman-Ford), bare Union Find (compress + rank); 'ideas simple, points earned on mechanics'"
+    }
+  ]
+}

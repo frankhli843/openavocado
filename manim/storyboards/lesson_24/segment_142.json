@@ -1,0 +1,73 @@
+{
+  "lesson_id": 24,
+  "activity_id": 142,
+  "activity_type": "lesson_part",
+  "title": "Part 2: Union Find — incremental connectivity",
+  "audio": {
+    "file_path": "runtime_artifacts/audio/lesson_24_activity_142_audio.mp3",
+    "duration_sec": 73.32
+  },
+  "audio_source": "artifact",
+  "cue_source": "audio.synced_visual.cues",
+  "cues": [
+    {
+      "index": 0,
+      "start": 0,
+      "end": 13.3,
+      "duration": 13.3,
+      "label": "The structure",
+      "headline": "A parent forest",
+      "narration": "Every node points toward a root; two nodes share a group exactly when they share a root."
+    },
+    {
+      "index": 1,
+      "start": 13.3,
+      "end": 27.6,
+      "duration": 14.3,
+      "label": "Real union",
+      "headline": "Different roots merge",
+      "narration": "When an edge's endpoints have different roots, attach one under the other and drop the count by one."
+    },
+    {
+      "index": 2,
+      "start": 27.6,
+      "end": 42.2,
+      "duration": 14.6,
+      "label": "Redundant edge",
+      "headline": "Same root is a cycle",
+      "narration": "If both endpoints already share a root, the edge joins nothing new — a redundant edge, a cycle — so nothing changes."
+    },
+    {
+      "index": 3,
+      "start": 42.2,
+      "end": 56.9,
+      "duration": 14.7,
+      "label": "Optimizations",
+      "headline": "Compression + rank",
+      "narration": "Path compression flattens the chain during find and union by rank keeps trees shallow — near-constant per op."
+    },
+    {
+      "index": 4,
+      "start": 56.9,
+      "end": 66.7,
+      "duration": 9.8,
+      "label": "The answer",
+      "headline": "2 provinces survive",
+      "narration": "After all edges, two roots remain — the groups {0,1,2} and {3,4} — so the answer is two provinces."
+    },
+    {
+      "index": 5,
+      "start": 66.7,
+      "end": 73.3,
+      "duration": 6.6,
+      "label": "Not a path",
+      "headline": "Connectivity, not routes",
+      "narration": "Union Find answers whether two nodes are connected, not the actual path between them — reach for BFS/DFS for that."
+    }
+  ],
+  "cue_span_sec": 73.3,
+  "formulas": [
+    "\\text{time } O(E \\cdot \\alpha(V)) \\qquad \\text{space } O(V)"
+  ],
+  "exported_at": "2026-07-08T21:18:39.609Z"
+}
