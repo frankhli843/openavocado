@@ -1,0 +1,73 @@
+{
+  "lesson_id": 23,
+  "activity_id": 136,
+  "activity_type": "lesson_part",
+  "title": "Part 2: 0/1 Knapsack — a rolling row swept descending",
+  "audio": {
+    "file_path": "runtime_artifacts/audio/lesson_23_activity_136_audio.mp3",
+    "duration_sec": 79.54
+  },
+  "audio_source": "artifact",
+  "cue_source": "audio.synced_visual.cues",
+  "cues": [
+    {
+      "index": 0,
+      "start": 0,
+      "end": 14.5,
+      "duration": 14.5,
+      "label": "The state",
+      "headline": "dp[w] = best within capacity w",
+      "narration": "Each cell of the rolling array is the best total value achievable within a weight budget of w."
+    },
+    {
+      "index": 1,
+      "start": 14.5,
+      "end": 29.9,
+      "duration": 15.4,
+      "label": "Skip or take",
+      "headline": "The either-or transition",
+      "narration": "For each item, dp[w] is the max of skipping it or taking it: dp[w-weight] plus its value."
+    },
+    {
+      "index": 2,
+      "start": 29.9,
+      "end": 45.8,
+      "duration": 15.9,
+      "label": "Roll the row",
+      "headline": "2D collapses to one array",
+      "narration": "The transition only reads the previous item's row, so one array reused in place is enough."
+    },
+    {
+      "index": 3,
+      "start": 45.8,
+      "end": 61.7,
+      "duration": 15.9,
+      "label": "Sweep descending",
+      "headline": "High to low keeps it use-once",
+      "narration": "Sweeping capacity high to low, dp[w-weight] still holds the pre-item value, so the item lands at most once."
+    },
+    {
+      "index": 4,
+      "start": 61.7,
+      "end": 72.3,
+      "duration": 10.6,
+      "label": "The answer",
+      "headline": "dp[7] = 9",
+      "narration": "Here dp[7] reaches 9 by taking the weight-3 and weight-4 items — value 4 plus 5."
+    },
+    {
+      "index": 5,
+      "start": 72.3,
+      "end": 79.5,
+      "duration": 7.2,
+      "label": "The flip",
+      "headline": "Ascending allows reuse",
+      "narration": "Flip the sweep to ascending and the same code becomes unbounded knapsack, where a single item repeats."
+    }
+  ],
+  "cue_span_sec": 79.5,
+  "formulas": [
+    "\\text{time } O(n \\cdot W) \\qquad \\text{space } O(W)"
+  ],
+  "exported_at": "2026-07-08T19:18:02.689Z"
+}

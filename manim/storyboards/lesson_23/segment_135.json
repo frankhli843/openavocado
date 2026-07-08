@@ -1,0 +1,73 @@
+{
+  "lesson_id": 23,
+  "activity_id": 135,
+  "activity_type": "lesson_part",
+  "title": "Part 1: Kadane — a 1D running scalar",
+  "audio": {
+    "file_path": "runtime_artifacts/audio/lesson_23_activity_135_audio.mp3",
+    "duration_sec": 73.34
+  },
+  "audio_source": "artifact",
+  "cue_source": "audio.synced_visual.cues",
+  "cues": [
+    {
+      "index": 0,
+      "start": 0,
+      "end": 13.3,
+      "duration": 13.3,
+      "label": "The state",
+      "headline": "Best run ending at i",
+      "narration": "best_here is the largest sum of a contiguous run that ends exactly at the current index."
+    },
+    {
+      "index": 1,
+      "start": 13.3,
+      "end": 27.6,
+      "duration": 14.3,
+      "label": "Extend or restart",
+      "headline": "Max of two choices",
+      "narration": "best_here is the max of the element alone or the previous best_here plus it — start fresh or extend."
+    },
+    {
+      "index": 2,
+      "start": 27.6,
+      "end": 42.2,
+      "duration": 14.6,
+      "label": "Negatives reset",
+      "headline": "A negative run is abandoned",
+      "narration": "Extending wins only when the previous run was positive, so a negative running sum resets automatically."
+    },
+    {
+      "index": 3,
+      "start": 42.2,
+      "end": 56.9,
+      "duration": 14.7,
+      "label": "Track the best",
+      "headline": "Global max of best_here",
+      "narration": "The answer is the largest best_here ever seen, because the optimal subarray ends somewhere."
+    },
+    {
+      "index": 4,
+      "start": 56.9,
+      "end": 66.7,
+      "duration": 9.8,
+      "label": "The winner",
+      "headline": "The run [4,-1,2,1] = 6",
+      "narration": "Here the best run is 4, -1, 2, 1 summing to 6, found the moment best_here reaches 6."
+    },
+    {
+      "index": 5,
+      "start": 66.7,
+      "end": 73.3,
+      "duration": 6.6,
+      "label": "Constant space",
+      "headline": "Two scalars, one pass",
+      "narration": "Because each step needs only the previous best_here, you carry two scalars — O(n) time, O(1) space."
+    }
+  ],
+  "cue_span_sec": 73.3,
+  "formulas": [
+    "\\text{time } O(n) \\qquad \\text{space } O(1)"
+  ],
+  "exported_at": "2026-07-08T19:18:02.689Z"
+}

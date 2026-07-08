@@ -1,0 +1,29 @@
+{
+  "lesson_id": 23,
+  "activity_id": 136,
+  "reviewed_at": "2026-07-08T19:35:00Z",
+  "iterations": 1,
+  "frames_reviewed": 18,
+  "quality": "ql",
+  "notes": "Lesson 23 Part 2 (act 136), '0/1 Knapsack — a rolling row swept descending', 79.54s, 6 cues. Capacity W=7, items X(w3,v4) Y(w4,v5). dp init [0]*8 -> after X (descending w7..3) [0,0,0,4,4,4,4,4] -> after Y (descending w7..4) [0,0,0,4,5,5,5,9]; dp[7]=9 = X(4)+Y(5), weight 3+4=7. Uses arrays.py (value_row/recolor_cell/complexity) + new dp.py (item_card, sweep_arrow, choice_pair). One iteration: authored + manim -s smoke all 6 cues READ (clean, no layout defects) + full -ql render + READ start/mid/end of every cue from muxed mp4. Per-cue checklist (dp[w]=best value within budget w, skip/take recurrence dp[w]=max(dp[w], dp[w-wt]+val) correct, 2D->1D rolling-array collapse, descending sweep keeps dp[w-3] as pre-item value so X lands once + ascending-double-count warning, dp[7]=9 answer with both item cards emerald, ascending flip -> unbounded + O(nW)/O(W) bound, safe-area guard, chunk timing pinned): ALL PASS. Note: cue04_end frame shows cue05's title 'Flip to ascending' — the documented keyframe-seek boundary artifact (extraction at cue-end lands in the next chunk); the cue04 content (dp[7]=9) is confirmed by cue04_mid + the -s smoke last-frame.",
+  "frames": [
+    {"cue": 0, "kind": "start", "path": "lesson_23/136/cue00_start.png", "verdict": "pass", "notes": "item cards X/Y fading in"},
+    {"cue": 0, "kind": "mid", "path": "lesson_23/136/cue00_mid.png", "verdict": "pass", "notes": "dp row all zeros, capacity index 0..7, item X(w3,v4) Y(w4,v5)"},
+    {"cue": 0, "kind": "end", "path": "lesson_23/136/cue00_end.png", "verdict": "pass", "notes": "cell5 highlighted, note 'each cell = best total value you can pack within that budget'"},
+    {"cue": 1, "kind": "start", "path": "lesson_23/136/cue01_start.png", "verdict": "pass", "notes": "dp after X shown [0,0,0,4,4,4,4,4], item Y active blue"},
+    {"cue": 1, "kind": "mid", "path": "lesson_23/136/cue01_mid.png", "verdict": "pass", "notes": "recurrence dp[w]=max(dp[w] [amber skip], dp[w-wt]+val [emerald take]); dp row + item cards"},
+    {"cue": 1, "kind": "end", "path": "lesson_23/136/cue01_end.png", "verdict": "pass", "notes": "choice_pair skip:keep dp[w] (amber) | max | take:dp[w-4]+5 (emerald)"},
+    {"cue": 2, "kind": "start", "path": "lesson_23/136/cue02_start.png", "verdict": "pass", "notes": "two stacked rows row i-1 / row i"},
+    {"cue": 2, "kind": "mid", "path": "lesson_23/136/cue02_mid.png", "verdict": "pass", "notes": "note 'the transition only reads the previous row — dp[w] and dp[w-wt]'"},
+    {"cue": 2, "kind": "end", "path": "lesson_23/136/cue02_end.png", "verdict": "pass", "notes": "folded to one rolling array [0,0,0,4,4,4,4,4], 'so one array, reused in place, is enough'"},
+    {"cue": 3, "kind": "start", "path": "lesson_23/136/cue03_start.png", "verdict": "pass", "notes": "item X active, dp init, descending sweep arrow w=7->3"},
+    {"cue": 3, "kind": "mid", "path": "lesson_23/136/cue03_mid.png", "verdict": "pass", "notes": "after X dp[3..7]=4 (emerald), 'dp[w-3] still holds value from BEFORE item X — so X lands once'"},
+    {"cue": 3, "kind": "end", "path": "lesson_23/136/cue03_end.png", "verdict": "pass", "notes": "warning 'sweep ascending instead and dp[6]=dp[3]+4 would pack X twice' (rose)"},
+    {"cue": 4, "kind": "start", "path": "lesson_23/136/cue04_start.png", "verdict": "pass", "notes": "final dp + both item cards"},
+    {"cue": 4, "kind": "mid", "path": "lesson_23/136/cue04_mid.png", "verdict": "pass", "notes": "dp[7]=9 emerald, both items X/Y emerald (chosen), '4 + 5 = 9', 'weight 3+4=7 fits budget exactly'. Math correct."},
+    {"cue": 4, "kind": "end", "path": "lesson_23/136/cue04_end.png", "verdict": "pass", "notes": "boundary-seek artifact shows cue05 title; cue04 content (dp[7]=9) confirmed via cue04_mid + smoke last-frame"},
+    {"cue": 5, "kind": "start", "path": "lesson_23/136/cue05_start.png", "verdict": "pass", "notes": "final dp row, ascending sweep arrow appearing"},
+    {"cue": 5, "kind": "mid", "path": "lesson_23/136/cue05_mid.png", "verdict": "pass", "notes": "ascending arrow 'low->high (coin can repeat)', 'same code, opposite direction — now a single item can repeat'"},
+    {"cue": 5, "kind": "end", "path": "lesson_23/136/cue05_end.png", "verdict": "pass", "notes": "time O(n·W) space O(W) bound (emerald)"}
+  ]
+}

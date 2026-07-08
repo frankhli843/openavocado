@@ -1,0 +1,89 @@
+{
+  "lesson_id": 23,
+  "activity_id": 134,
+  "activity_type": "audio",
+  "title": "Audio: DP reactivation — the four decisions at speed",
+  "audio": {
+    "file_path": "runtime_artifacts/audio/lesson_23_audio.mp3",
+    "duration_sec": 850.32
+  },
+  "audio_source": "artifact",
+  "cue_source": "orientation_visual.cues",
+  "cues": [
+    {
+      "index": 0,
+      "start": 0,
+      "end": 103.3,
+      "duration": 103.3,
+      "label": "Reactivation",
+      "headline": "You know DP; rebuild the speed",
+      "narration": "This is a strong-but-stale pattern, so the goal is recall speed: write the right recurrence from memory in under two minutes."
+    },
+    {
+      "index": 1,
+      "start": 103.3,
+      "end": 212.6,
+      "duration": 109.3,
+      "label": "The four decisions",
+      "headline": "State, recurrence, order, base",
+      "narration": "Every DP is four decisions in the same order: name the state, write the recurrence, pick the fill order, set the base case."
+    },
+    {
+      "index": 2,
+      "start": 212.6,
+      "end": 340.1,
+      "duration": 127.5,
+      "label": "Precise state",
+      "headline": "The state sentence is exact",
+      "narration": "A vague state makes the recurrence ambiguous; sharpen it to 'ending exactly at i' and the transition is forced."
+    },
+    {
+      "index": 3,
+      "start": 340.1,
+      "end": 461.6,
+      "duration": 121.5,
+      "label": "Kadane",
+      "headline": "A running scalar, extend or restart",
+      "narration": "Maximum subarray is best-here equals the max of x alone or best-here plus x; restart wins exactly when the run went negative."
+    },
+    {
+      "index": 4,
+      "start": 461.6,
+      "end": 583.1,
+      "duration": 121.5,
+      "label": "Knapsack",
+      "headline": "Rolling array, sweep descending",
+      "narration": "The 2D table collapses to one row; sweeping capacity high to low keeps each item used at most once."
+    },
+    {
+      "index": 5,
+      "start": 583.1,
+      "end": 680.3,
+      "duration": 97.2,
+      "label": "Direction flip",
+      "headline": "Ascending allows reuse",
+      "narration": "Coin change is the same table swept ascending so a coin can repeat — one machine, opposite loop direction."
+    },
+    {
+      "index": 6,
+      "start": 680.3,
+      "end": 789.6,
+      "duration": 109.3,
+      "label": "LIS",
+      "headline": "dp-ends-at-i, or patience tails",
+      "narration": "Longest increasing subsequence is dp ending at i in n squared, or a patience tails array with binary search in n log n."
+    },
+    {
+      "index": 7,
+      "start": 789.6,
+      "end": 850.3,
+      "duration": 60.7,
+      "label": "Traps",
+      "headline": "Order, base, vague state, sentinel",
+      "narration": "The bugs are fill order, base cases, a vague state, and an unreachable sentinel — not the idea itself."
+    }
+  ],
+  "cue_span_sec": 850.3,
+  "formulas": [],
+  "exported_at": "2026-07-08T19:18:02.688Z"
+}
