@@ -1,0 +1,158 @@
+{
+  "lesson_id": 2,
+  "activity_id": 7,
+  "reviewed_at": "2026-07-07T23:30:00Z",
+  "iterations": 1,
+  "frames_reviewed": 21,
+  "quality": "ql",
+  "notes": "Lesson 2 Orientation (act 7, 'Bayes' Theorem in Practice - the route', 1014.67s/16.9min, 7 cues rescaled to the real MP3). Long-form spiral lesson-map route (Leo/Maya dialogue) authored from the full 16988-char DB script + per-cue headline/receive/transform/pass. Reuses bayes.py idioms (prior_tree, PopGrid, bayes_spine, bayes_formula, confusion_matrix, positive_pile) so the orientation shares the visual vocabulary of the three lesson_part segments (acts 10/11/52). Review method: FAST last-frame precheck (manim -s) for all 7 cues BEFORE any full render caught 6 layout issues (obj/headline collision, stat-row crowding, stage-tag collision -> redesigned Before/During/After panel with amber focus box, positive-results label vs col-headers, safe-area overflows, takeaway/badge touch), all fixed. Then full -ql render clean first pass: every cue within pinning tolerance (delta ~-0.04s), final 1014.40s vs audio 1014.67s (delta 0.27s<0.5). READ per-cue mid frames (cue center) AND drift-free late frames extracted directly from each pinned chunk (~t=139s) to review each cue's final composed state (the render's cueNN_end.png sample lands ~0.24s into the next cue due to cumulative chunk-pinning drift, so cueNN_end.png here were replaced with the accurate chunk-late frames). Per-cue checklist (formula legibility+correctness, highlighted element matches narration, contrast, nothing off-frame/overlapping via self.guard, chunk timing): all pass; iterations=1 (all fixes made at precheck). Shared concrete model with Parts 1/2/3: 100 people, prior 1%, sensitivity 99%, specificity 95%, TP1/FP5/FN0/TN94, posterior 1/6~=17%. Registers as content.orientation_video.",
+  "frames": [
+    {
+      "cue": 0,
+      "kind": "start",
+      "path": "lesson_2/7/cue00_start.png",
+      "verdict": "pass",
+      "notes": "start frame: reveal in progress (expected sparse)"
+    },
+    {
+      "cue": 0,
+      "kind": "mid",
+      "path": "lesson_2/7/cue00_mid.png",
+      "verdict": "pass",
+      "notes": "mid-cue content legible, correct, in-frame. Big map: Subject(Applied Prob & Stats) -> Lesson(Bayes' Theorem in Practice) -> Next(practice-ready object); four study angles (base-rate simulator/frequency table/population tree/scaffolded exercise); purpose line 'disciplined way to change your mind = base rate x evidence-fit'. Matches narration."
+    },
+    {
+      "cue": 0,
+      "kind": "end",
+      "path": "lesson_2/7/cue00_end.png",
+      "verdict": "pass",
+      "notes": "end-of-cue final composed state (extracted from pinned chunk, drift-free). Big map: Subject(Applied Prob & Stats) -> Lesson(Bayes' Theorem in Practice) -> Next(practice-ready object); four study angles (base-rate simulator/frequency table/population tree/scaffolded exercise); purpose line 'disciplined way to change your mind = base rate x evidence-fit'. Matches narration."
+    },
+    {
+      "cue": 1,
+      "kind": "start",
+      "path": "lesson_2/7/cue01_start.png",
+      "verdict": "pass",
+      "notes": "start frame: reveal in progress (expected sparse)"
+    },
+    {
+      "cue": 1,
+      "kind": "mid",
+      "path": "lesson_2/7/cue01_mid.png",
+      "verdict": "pass",
+      "notes": "mid-cue content legible, correct, in-frame. Workshop metaphor: the object 'a prior belief updated by evidence' + bench Receive->Transform->Pass + the Prior x Likelihood -> Posterior spine (detective-board mapping). Matches narration."
+    },
+    {
+      "cue": 1,
+      "kind": "end",
+      "path": "lesson_2/7/cue01_end.png",
+      "verdict": "pass",
+      "notes": "end-of-cue final composed state (extracted from pinned chunk, drift-free). Workshop metaphor: the object 'a prior belief updated by evidence' + bench Receive->Transform->Pass + the Prior x Likelihood -> Posterior spine (detective-board mapping). Matches narration."
+    },
+    {
+      "cue": 2,
+      "kind": "start",
+      "path": "lesson_2/7/cue02_start.png",
+      "verdict": "pass",
+      "notes": "start frame: reveal in progress (expected sparse)"
+    },
+    {
+      "cue": 2,
+      "kind": "mid",
+      "path": "lesson_2/7/cue02_mid.png",
+      "verdict": "pass",
+      "notes": "mid-cue content legible, correct, in-frame. Tiny concrete object: 100-person grid (1 amber sick), prior tree 1 Sick/99 Healthy, base rate 1 in 100 = 1%, test usually right, 'a positive test matters but does not erase the base rate'. Matches narration."
+    },
+    {
+      "cue": 2,
+      "kind": "end",
+      "path": "lesson_2/7/cue02_end.png",
+      "verdict": "pass",
+      "notes": "end-of-cue final composed state (extracted from pinned chunk, drift-free). Tiny concrete object: 100-person grid (1 amber sick), prior tree 1 Sick/99 Healthy, base rate 1 in 100 = 1%, test usually right, 'a positive test matters but does not erase the base rate'. Matches narration."
+    },
+    {
+      "cue": 3,
+      "kind": "start",
+      "path": "lesson_2/7/cue03_start.png",
+      "verdict": "pass",
+      "notes": "start frame: reveal in progress (expected sparse)"
+    },
+    {
+      "cue": 3,
+      "kind": "mid",
+      "path": "lesson_2/7/cue03_mid.png",
+      "verdict": "pass",
+      "notes": "mid-cue content legible, correct, in-frame. Mechanism: 6-step ledger (prior -> likelihood-if-true -> likelihood-if-false -> reweight -> normalize -> posterior) with Before/During/After stage panel (amber focus box) + population-split/select/compose caption. Matches narration."
+    },
+    {
+      "cue": 3,
+      "kind": "end",
+      "path": "lesson_2/7/cue03_end.png",
+      "verdict": "pass",
+      "notes": "end-of-cue final composed state (extracted from pinned chunk, drift-free). Mechanism: 6-step ledger (prior -> likelihood-if-true -> likelihood-if-false -> reweight -> normalize -> posterior) with Before/During/After stage panel (amber focus box) + population-split/select/compose caption. Matches narration."
+    },
+    {
+      "cue": 4,
+      "kind": "start",
+      "path": "lesson_2/7/cue04_start.png",
+      "verdict": "pass",
+      "notes": "start frame: reveal in progress (expected sparse)"
+    },
+    {
+      "cue": 4,
+      "kind": "mid",
+      "path": "lesson_2/7/cue04_mid.png",
+      "verdict": "pass",
+      "notes": "mid-cue content legible, correct, in-frame. Connect to code/tests: correct Bayes formula P(H|E)=P(E|H)P(H)/P(E) read aloud, term->meaning mapping, confusion matrix (TP1/FP5/FN0/TN94) with positive-row TP+FP boxed, 'TP and FP counted out of the right populations'. Matches narration; math correct."
+    },
+    {
+      "cue": 4,
+      "kind": "end",
+      "path": "lesson_2/7/cue04_end.png",
+      "verdict": "pass",
+      "notes": "end-of-cue final composed state (extracted from pinned chunk, drift-free). Connect to code/tests: correct Bayes formula P(H|E)=P(E|H)P(H)/P(E) read aloud, term->meaning mapping, confusion matrix (TP1/FP5/FN0/TN94) with positive-row TP+FP boxed, 'TP and FP counted out of the right populations'. Matches narration; math correct."
+    },
+    {
+      "cue": 5,
+      "kind": "start",
+      "path": "lesson_2/7/cue05_start.png",
+      "verdict": "pass",
+      "notes": "start frame: reveal in progress (expected sparse)"
+    },
+    {
+      "cue": 5,
+      "kind": "mid",
+      "path": "lesson_2/7/cue05_mid.png",
+      "verdict": "pass",
+      "notes": "mid-cue content legible, correct, in-frame. Separate nearby ideas (base-rate trap): P(+|sick) crossed out != P(sick|+); positive pile 'everyone who tested positive' 1 emerald TP + 5 rose FP; posterior P(sick|+)=1/(1+5)=1/6~=17%. Matches narration; math correct."
+    },
+    {
+      "cue": 5,
+      "kind": "end",
+      "path": "lesson_2/7/cue05_end.png",
+      "verdict": "pass",
+      "notes": "end-of-cue final composed state (extracted from pinned chunk, drift-free). Separate nearby ideas (base-rate trap): P(+|sick) crossed out != P(sick|+); positive pile 'everyone who tested positive' 1 emerald TP + 5 rose FP; posterior P(sick|+)=1/(1+5)=1/6~=17%. Matches narration; math correct."
+    },
+    {
+      "cue": 6,
+      "kind": "start",
+      "path": "lesson_2/7/cue06_start.png",
+      "verdict": "pass",
+      "notes": "start frame: reveal in progress (expected sparse)"
+    },
+    {
+      "cue": 6,
+      "kind": "mid",
+      "path": "lesson_2/7/cue06_mid.png",
+      "verdict": "pass",
+      "notes": "mid-cue content legible, correct, in-frame. Synthesis: 4-stop route recap (Object/Mechanism/Formula/Mistake), takeaway 'evidence updates belief by comparing explanations - not by floating alone', practice-ready mental model badge. Matches narration."
+    },
+    {
+      "cue": 6,
+      "kind": "end",
+      "path": "lesson_2/7/cue06_end.png",
+      "verdict": "pass",
+      "notes": "end-of-cue final composed state (extracted from pinned chunk, drift-free). Synthesis: 4-stop route recap (Object/Mechanism/Formula/Mistake), takeaway 'evidence updates belief by comparing explanations - not by floating alone', practice-ready mental model badge. Matches narration."
+    }
+  ]
+}
