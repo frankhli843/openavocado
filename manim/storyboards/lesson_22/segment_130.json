@@ -1,0 +1,73 @@
+{
+  "lesson_id": 22,
+  "activity_id": 130,
+  "activity_type": "lesson_part",
+  "title": "Part 2: Largest Rectangle in a Histogram",
+  "audio": {
+    "file_path": "runtime_artifacts/audio/lesson_22_activity_130_audio.mp3",
+    "duration_sec": 77.66
+  },
+  "audio_source": "artifact",
+  "cue_source": "audio.synced_visual.cues",
+  "cues": [
+    {
+      "index": 0,
+      "start": 0,
+      "end": 14.1,
+      "duration": 14.1,
+      "label": "Increasing stack",
+      "headline": "Bars kept short→tall",
+      "narration": "Keep a stack of bar indices with increasing heights; each still might extend right."
+    },
+    {
+      "index": 1,
+      "start": 14.1,
+      "end": 29.2,
+      "duration": 15.1,
+      "label": "A wall arrives",
+      "headline": "Shorter bar triggers a pop",
+      "narration": "When a new bar is shorter than the top, the top can extend no further right, so measure it now."
+    },
+    {
+      "index": 2,
+      "start": 29.2,
+      "end": 44.7,
+      "duration": 15.5,
+      "label": "Height",
+      "headline": "The popped bar's height",
+      "narration": "The rectangle's height is the popped bar's own height."
+    },
+    {
+      "index": 3,
+      "start": 44.7,
+      "end": 60.2,
+      "duration": 15.5,
+      "label": "Width off the stack",
+      "headline": "Left neighbor + current index",
+      "narration": "The exposed neighbor is the nearest shorter bar left; the current index is the wall right; width = i - newTop - 1."
+    },
+    {
+      "index": 4,
+      "start": 60.2,
+      "end": 70.6,
+      "duration": 10.4,
+      "label": "Track the max",
+      "headline": "Height × width",
+      "narration": "Multiply height by width and keep the running maximum; here 5×2 = 10 wins."
+    },
+    {
+      "index": 5,
+      "start": 70.6,
+      "end": 77.7,
+      "duration": 7.1,
+      "label": "Sentinel",
+      "headline": "Flush the leftovers",
+      "narration": "A trailing zero-height bar pops everything remaining through the same loop — no cleanup pass."
+    }
+  ],
+  "cue_span_sec": 77.7,
+  "formulas": [
+    "\\text{time } O(n) \\qquad \\text{space } O(n)"
+  ],
+  "exported_at": "2026-07-08T17:53:04.919Z"
+}

@@ -1,0 +1,73 @@
+{
+  "lesson_id": 22,
+  "activity_id": 129,
+  "activity_type": "lesson_part",
+  "title": "Part 1: The machine via Next Greater Element",
+  "audio": {
+    "file_path": "runtime_artifacts/audio/lesson_22_activity_129_audio.mp3",
+    "duration_sec": 75.19
+  },
+  "audio_source": "artifact",
+  "cue_source": "audio.synced_visual.cues",
+  "cues": [
+    {
+      "index": 0,
+      "start": 0,
+      "end": 13.7,
+      "duration": 13.7,
+      "label": "The stack",
+      "headline": "Only unresolved indices",
+      "narration": "The stack holds only indices whose next-greater is still open, kept decreasing in value."
+    },
+    {
+      "index": 1,
+      "start": 13.7,
+      "end": 28.3,
+      "duration": 14.6,
+      "label": "Push a waiter",
+      "headline": "Smaller arrival just waits",
+      "narration": "An element that does not beat the top resolves nothing, so you just push its index."
+    },
+    {
+      "index": 2,
+      "start": 28.3,
+      "end": 43.3,
+      "duration": 15,
+      "label": "Pop resolves",
+      "headline": "Bigger arrival settles up",
+      "narration": "When the arrival beats the top value, it is that element's next greater, so pop and record it."
+    },
+    {
+      "index": 3,
+      "start": 43.3,
+      "end": 58.3,
+      "duration": 15,
+      "label": "Cascade",
+      "headline": "One arrival, many resolved",
+      "narration": "Keep popping while the arrival beats the new top — one newcomer can resolve several waiters at once."
+    },
+    {
+      "index": 4,
+      "start": 58.3,
+      "end": 68.4,
+      "duration": 10.1,
+      "label": "Leftovers",
+      "headline": "No greater → default -1",
+      "narration": "Indices still on the stack at the end were never beaten, so their answer stays negative one."
+    },
+    {
+      "index": 5,
+      "start": 68.4,
+      "end": 75.2,
+      "duration": 6.8,
+      "label": "Linear",
+      "headline": "Push once, pop once",
+      "narration": "Every index was pushed once and popped at most once, so the whole scan is linear."
+    }
+  ],
+  "cue_span_sec": 75.2,
+  "formulas": [
+    "\\text{time } O(n) \\qquad \\text{space } O(n)"
+  ],
+  "exported_at": "2026-07-08T17:53:04.918Z"
+}

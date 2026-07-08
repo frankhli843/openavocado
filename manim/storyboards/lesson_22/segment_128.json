@@ -1,0 +1,80 @@
+{
+  "lesson_id": 22,
+  "activity_id": 128,
+  "activity_type": "audio",
+  "title": "Audio: Monotonic Stack — keep the unresolved in order",
+  "audio": {
+    "file_path": "runtime_artifacts/audio/lesson_22_audio.mp3",
+    "duration_sec": 827.71
+  },
+  "audio_source": "artifact",
+  "cue_source": "orientation_visual.cues",
+  "cues": [
+    {
+      "index": 0,
+      "start": 0,
+      "end": 117.3,
+      "duration": 117.3,
+      "label": "The trigger",
+      "headline": "\"Nearest bigger/smaller\" looks quadratic",
+      "narration": "When each element needs the nearest larger or smaller neighbor, the brute force is a scan inside a scan; a monotonic stack makes it one pass."
+    },
+    {
+      "index": 1,
+      "start": 117.3,
+      "end": 241.4,
+      "duration": 124.1,
+      "label": "Unresolved in order",
+      "headline": "The stack holds only open answers",
+      "narration": "You keep on the stack only the elements whose answer is still open, always sorted increasing or decreasing."
+    },
+    {
+      "index": 2,
+      "start": 241.4,
+      "end": 386.3,
+      "duration": 144.9,
+      "label": "Pop resolves",
+      "headline": "A newcomer settles the accounts",
+      "narration": "When a new element breaks the order you pop, and each pop is the moment the popped element's answer becomes known."
+    },
+    {
+      "index": 3,
+      "start": 386.3,
+      "end": 524.2,
+      "duration": 137.9,
+      "label": "Amortized linear",
+      "headline": "Push once, pop at most once",
+      "narration": "Every element is pushed once and popped at most once, so the inner while loop is amortized constant and the scan is linear."
+    },
+    {
+      "index": 4,
+      "start": 524.2,
+      "end": 662.2,
+      "duration": 138,
+      "label": "Direction & indices",
+      "headline": "Increasing vs decreasing; store indices",
+      "narration": "Pick the direction from what arrival resolves a waiter; store indices so a pop yields both a value and a width."
+    },
+    {
+      "index": 5,
+      "start": 662.2,
+      "end": 772.5,
+      "duration": 110.3,
+      "label": "Leftovers",
+      "headline": "Default or flushing sentinel",
+      "narration": "Elements never popped keep a default answer, or you append a sentinel that forces every one to be measured in the same loop."
+    },
+    {
+      "index": 6,
+      "start": 772.5,
+      "end": 827.7,
+      "duration": 55.2,
+      "label": "When it fails",
+      "headline": "Only for nearest-monotonic-neighbor",
+      "narration": "If there is no waiting element resolved by a later arrival, the stack has nothing to do — reach for a heap or a sort instead."
+    }
+  ],
+  "cue_span_sec": 827.7,
+  "formulas": [],
+  "exported_at": "2026-07-08T17:53:04.917Z"
+}

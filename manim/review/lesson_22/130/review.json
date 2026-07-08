@@ -1,0 +1,29 @@
+{
+  "lesson_id": 22,
+  "activity_id": 130,
+  "reviewed_at": "2026-07-08T18:20:00Z",
+  "iterations": 3,
+  "frames_reviewed": 18,
+  "quality": "ql",
+  "notes": "Lesson 22 Part 2 (act 130), 'Largest Rectangle in a Histogram', 77.66s, 6 cues. heights=[2,1,5,6,2,3], largest = 5x2 = 10 (bars index 2,3, min height 5, width 2). New arrays.py histogram/recolor_bar + rect_overlay idiom + the monotonic-stack column (increasing heights). Three iterations: (1) authored + manim -s smoke all 6 cues READ -> caught a REAL geometry bug: histogram().shift() moved the bars but not the stored hist.xs, so every overlay rectangle/brace was 1.4u right of its bars (cue04 winning 5x2 rect was off the h5/h6 bars) -> baked the offset into hist.xs; (2) re-smoke -> fixed cue03 left/right label collision (shortened to 'left = bar 1'/'right = i4' + subtitles) and cue01/cue02 formula overlaps (moved 6x1=6 inside the tall bar, moved height=5 to clear space); (3) full -ql render + READ start/mid/end of every cue from the muxed mp4 confirming overlay alignment. Per-cue checklist (increasing-stack invariant, shorter-wall triggers pop, height=popped bar's own height, width=nearest-shorter-left..current-index=4-1-1=2, area 5x2=10 beats 6x1=6, sentinel flush, safe-area guard, chunk timing all pinned): all pass. All rectangles now align to their bars; all formulas correct + legible.",
+  "frames": [
+    {"cue": 0, "kind": "start", "path": "lesson_22/130/cue00_start.png", "verdict": "pass", "notes": "histogram fading in"},
+    {"cue": 0, "kind": "mid", "path": "lesson_22/130/cue00_mid.png", "verdict": "pass", "notes": "building the increasing index-stack 1,5,6"},
+    {"cue": 0, "kind": "end", "path": "lesson_22/130/cue00_end.png", "verdict": "pass", "notes": "stack [i1=1,i2=5,i3=6] increasing, bars 1/2/3 violet, 'heights increase up the stack'"},
+    {"cue": 1, "kind": "start", "path": "lesson_22/130/cue01_start.png", "verdict": "pass", "notes": "stack [1,5,6], wall bar4 arriving"},
+    {"cue": 1, "kind": "mid", "path": "lesson_22/130/cue01_mid.png", "verdict": "pass", "notes": "'2 < 6 pop bar 3' — bar3 emerald, wall dashed at bar4"},
+    {"cue": 1, "kind": "end", "path": "lesson_22/130/cue01_end.png", "verdict": "pass", "notes": "bar3 popped, 6x1=6 rect inside the bar, stack [1,5]"},
+    {"cue": 2, "kind": "start", "path": "lesson_22/130/cue02_start.png", "verdict": "pass", "notes": "stack [1,5], wall still present"},
+    {"cue": 2, "kind": "mid", "path": "lesson_22/130/cue02_mid.png", "verdict": "pass", "notes": "'2 < 5 so bar 2 measured next' — bar2 emerald"},
+    {"cue": 2, "kind": "end", "path": "lesson_22/130/cue02_end.png", "verdict": "pass", "notes": "amber height=5 brace at bar2 left edge, clear of bar labels"},
+    {"cue": 3, "kind": "start", "path": "lesson_22/130/cue03_start.png", "verdict": "pass", "notes": "stack [1], boundaries about to be marked"},
+    {"cue": 3, "kind": "mid", "path": "lesson_22/130/cue03_mid.png", "verdict": "pass", "notes": "'left = bar 1 (nearest shorter)' amber, 'right = i4 (wall)' blue, no collision"},
+    {"cue": 3, "kind": "end", "path": "lesson_22/130/cue03_end.png", "verdict": "pass", "notes": "width bracket under bars 2,3, 'width = 4 - 1 - 1 = 2'"},
+    {"cue": 4, "kind": "start", "path": "lesson_22/130/cue04_start.png", "verdict": "pass", "notes": "bar1 violet, bar4 blue, about to draw winning rect"},
+    {"cue": 4, "kind": "mid", "path": "lesson_22/130/cue04_mid.png", "verdict": "pass", "notes": "emerald 5x2=10 rect correctly spans bars 2,3 at height 5 (aligned)"},
+    {"cue": 4, "kind": "end", "path": "lesson_22/130/cue04_end.png", "verdict": "pass", "notes": "max area badge=10, 'beats the earlier 6x1=6'"},
+    {"cue": 5, "kind": "start", "path": "lesson_22/130/cue05_start.png", "verdict": "pass", "notes": "histogram at rest"},
+    {"cue": 5, "kind": "mid", "path": "lesson_22/130/cue05_mid.png", "verdict": "pass", "notes": "'sentinel h = 0' rose label at far right, bars indicated"},
+    {"cue": 5, "kind": "end", "path": "lesson_22/130/cue05_end.png", "verdict": "pass", "notes": "'a 0-height wall pops everything left — no cleanup pass'"}
+  ]
+}

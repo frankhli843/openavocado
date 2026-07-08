@@ -35,6 +35,7 @@ from manim import (
     Text,
     MathTex,
     Arrow,
+    Line,
     SurroundingRectangle,
     RIGHT,
     LEFT,
@@ -66,6 +67,16 @@ C_LEAVE = ROSE
 C_RIGHT = ACCENT
 C_LEFT = AMBER
 C_RESULT = EMERALD
+
+# Semantic role colors for the MONOTONIC-STACK story (Lesson 22, acts 128/129/130).
+# The stack is a vertical column of "unresolved" indices; a newcomer arriving
+# from the array either just waits (push) or settles accounts (pop = answer
+# known). The eye learns: violet = still waiting on the stack, blue = the
+# newcomer we are processing, emerald = an answer just resolved, rose = evicted.
+C_STACK = VIOLET     # an index sitting on the stack, answer still open
+C_ARRIVE = ACCENT    # the current newcomer being processed
+C_RESOLVE = EMERALD  # a pop — the popped element's answer just became known
+C_EVICT = ROSE       # a bar/element leaving without ever being the answer
 
 
 # ─── the indexed value row ───────────────────────────────────────────────────
@@ -207,3 +218,141 @@ def code_line(text, color=INK, fs=24, indent=0):
     """
     line = Text(("    " * indent) + text, font="monospace", font_size=fs, color=color)
     return line
+
+
+# ─── the monotonic stack (a vertical column of unresolved indices) ───────────
+# A monotonic stack is a story of a VERTICAL column that grows and shrinks: an
+# index is pushed (waits, still unresolved) and later popped (its answer becomes
+# known when a newcomer breaks the order). These helpers give cue scenes the
+# column vocabulary — a base line the stack grows up from, a labelled cell for
+# one entry, and a level→position map so push animates a new cell onto the top
+# and pop fades the top cell off. Reused by Lesson 22 acts 128/129/130 and any
+# future nearest-greater / histogram / span lesson.
+def stack_base(base_point, label="stack", w=1.6, color=C_STACK, fs=20):
+    """
+    The baseline the stack grows UP from, with a label beneath it. `base_point`
+    is the [x, y, 0] of the base line's center; cells stack upward from here so
+    the top-of-stack is the highest cell. Returns VGroup(line, label) with a
+    `.base_point` attribute the position helper reads.
+    """
+    line = Line(
+        [base_point[0] - w / 2, base_point[1], 0],
+        [base_point[0] + w / 2, base_point[1], 0],
+        color=color, stroke_width=5,
+    )
+    lab = Text(label, font_size=fs, color=INK_MUTED).next_to(line, DOWN, buff=0.16)
+    grp = VGroup(line, lab)
+    grp.base_point = list(base_point)
+    return grp
+
+
+def stack_pos(base_point, level, h=0.82, gap=0.12, pad=0.14):
+    """
+    Center [x, y, 0] of the stack cell at `level` (0 = bottom, just above the
+    base line) in a column growing UP. Push a cell by move_to(stack_pos(..,
+    len(stack))); pop by fading the cell at the current top level.
+    """
+    return [
+        base_point[0],
+        base_point[1] + pad + h / 2 + (h + gap) * level,
+        0,
+    ]
+
+
+def stack_cell(value, idx=None, color=C_STACK, w=1.7, h=0.82, fs=30, idx_fs=18):
+    """
+    One monotonic-stack cell: a value box with an optional small index tag at
+    its left ("i3"), since a monotonic stack conventionally stores indices whose
+    value it also shows. Returns VGroup with `.box` and `.val_text` attributes
+    for recolor/Transform, and `.idx_tag` when an index is given.
+    """
+    box = RoundedRectangle(
+        width=w, height=h, corner_radius=0.10,
+        stroke_color=color, stroke_width=2.6, fill_color=color, fill_opacity=0.16,
+    )
+    t = fit_label(str(value), w - 0.30, fs, INK).move_to(box.get_center())
+    cell = VGroup(box, t)
+    cell.box = box
+    cell.val_text = t
+    if idx is not None:
+        tag = Text(f"i{idx}", font_size=idx_fs, color=INK_SUBTLE, weight="BOLD")
+        tag.next_to(box, LEFT, buff=0.12)
+        cell.add(tag)
+        cell.idx_tag = tag
+    return cell
+
+
+def recolor_stack_cell(cell, color, fill=0.22):
+    """Recolor a stack cell's box (and its index tag) to a semantic hue."""
+    cell.box.set_stroke(color=color, width=3.0)
+    cell.box.set_fill(color=color, opacity=fill)
+    return cell
+
+
+# ─── the histogram (bars for largest-rectangle) ──────────────────────────────
+def histogram(heights, unit=0.42, w=1.0, gap=0.12, base_y=-1.9, color=C_CELL,
+              index=True, idx_fs=17):
+    """
+    A row of vertical bars of the given integer `heights`, all sitting on a
+    common baseline at `base_y` — the largest-rectangle-in-a-histogram picture.
+    Bar i has pixel height heights[i]*unit. Returns a VGroup with attributes:
+      .bars      — list of the bar Rectangles (for recolor / SurroundingRectangle)
+      .base_y    — the shared baseline y
+      .xs        — list of each bar's center x (for width brackets / walls)
+      .unit      — the height→units scale (for drawing rectangle overlays)
+    """
+    from manim import Rectangle
+    group = VGroup()
+    bars = []
+    xs = []
+    n = len(heights)
+    total_w = n * w + (n - 1) * gap
+    x0 = -total_w / 2 + w / 2
+    for i, hgt in enumerate(heights):
+        bh = max(hgt, 0.001) * unit
+        bar = Rectangle(
+            width=w, height=bh,
+            stroke_color=color, stroke_width=2.2, fill_color=color, fill_opacity=0.16,
+        )
+        cx = x0 + i * (w + gap)
+        bar.move_to([cx, base_y + bh / 2, 0])
+        lab = Text(str(hgt), font_size=24, color=INK).next_to(bar, UP, buff=0.10)
+        group.add(bar, lab)
+        bars.append(bar)
+        xs.append(cx)
+    if index:
+        for i, cx in enumerate(xs):
+            t = Text(str(i), font_size=idx_fs, color=INK_SUBTLE)
+            t.move_to([cx, base_y - 0.28, 0])
+            group.add(t)
+    group.bars = bars
+    group.base_y = base_y
+    group.xs = xs
+    group.unit = unit
+    group.bar_w = w
+    return group
+
+
+def recolor_bar(bar, color, fill=0.30):
+    """Recolor one histogram bar to a semantic hue."""
+    bar.set_stroke(color=color, width=3.0)
+    bar.set_fill(color=color, opacity=fill)
+    return bar
+
+
+def rect_overlay(hist, lo, hi, height, color=EMERALD, opacity=0.30):
+    """
+    A measured rectangle spanning histogram bars lo..hi (inclusive) at the given
+    bar `height`, sitting on the histogram baseline — the candidate answer for
+    the largest-rectangle family. Reads hist.xs / hist.base_y / hist.unit /
+    hist.bar_w, so keep those in sync if you shift the histogram.
+    """
+    from manim import Rectangle
+    left = hist.xs[lo] - hist.bar_w / 2
+    right = hist.xs[hi] + hist.bar_w / 2
+    w = right - left
+    h = height * hist.unit
+    rect = Rectangle(width=w, height=h, stroke_color=color, stroke_width=3.5,
+                     fill_color=color, fill_opacity=opacity)
+    rect.move_to([(left + right) / 2, hist.base_y + h / 2, 0])
+    return rect

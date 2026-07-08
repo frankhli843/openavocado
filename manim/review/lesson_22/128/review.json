@@ -1,0 +1,32 @@
+{
+  "lesson_id": 22,
+  "activity_id": 128,
+  "reviewed_at": "2026-07-08T18:40:00Z",
+  "iterations": 3,
+  "frames_reviewed": 21,
+  "quality": "ql",
+  "notes": "Lesson 22 Orientation (act 128), 'Monotonic Stack — the family map', 827.71s, 7 long multi-beat cues. Reuses arrays.py idioms (value_row, pointer, stack_base/stack_cell, histogram/rect_overlay, complexity, code_line) — algorithm-visual, NOT transformer/econ/Bayes. Example array [2,5,3,6,4] + histogram [2,1,5,6,2,3]. Three iterations: (1) authored + manim -s smoke all 7 -> fixed left-clipped captions inheriting the array's xc=-2 offset (cue00 task/code, cue01 idea, cue04 width caption, cue05 sentinel) and a cue05 double-note overlap (beat-1 note never faded); (2) full -ql render + READ start/mid/end of every cue -> caught cue00 'i' pointer (side=UP) colliding with the title band [moved both i/j markers below the row] and a cue01 wording bug where the 'decreasing top->bottom' caption + '↓ smaller' arrow misread the sorted snapshot (smallest is on TOP) [reworded to 'smallest unresolved value on top' + '↑ smaller']; (3) re-rendered cue00+cue01 chunks + reconcat + READ the fixed frames. Per-cue checklist (brute-force O(n^2) scan-in-scan, open-answers waiting-room stack, pop=resolve + cascade, push-once/pop-once=2n=>O(n), direction+indices->width j-top-1 histogram, leftovers default -1 vs flushing sentinel, when-it-fails->heap/sort, safe-area guard, chunk timing all pinned Δ<=0.066s): all pass. NOTE: some *_end frames extracted at cue.end-0.15 land ~0.02s into the next cue because each chunk is pinned ~0.033s under its window (cumulative), so a couple of end frames show the following cue's first frame — the settled content of each cue is verified via its start/mid frames (a known, benign extraction-boundary artifact, same as prior lessons).",
+  "frames": [
+    {"cue": 0, "kind": "start", "path": "lesson_22/128/cue00_start.png", "verdict": "pass", "notes": "array [2,5,3,6,4] fading in, task question"},
+    {"cue": 0, "kind": "mid", "path": "lesson_22/128/cue00_mid.png", "verdict": "pass", "notes": "brute-force nested loop + i/j pointers BELOW the row (title clear), 'every element re-scans everything to its right'"},
+    {"cue": 0, "kind": "end", "path": "lesson_22/128/cue00_end.png", "verdict": "pass", "notes": "O(n^2)->O(n), 'a monotonic stack turns the double scan into ONE pass'"},
+    {"cue": 1, "kind": "start", "path": "lesson_22/128/cue01_start.png", "verdict": "pass", "notes": "array + 'the stack is a waiting room' idea (centered)"},
+    {"cue": 1, "kind": "mid", "path": "lesson_22/128/cue01_mid.png", "verdict": "pass", "notes": "sorted-stack snapshot (bottom 6, top 4), '↑ smaller', 'smallest unresolved value on top' — direction now correct"},
+    {"cue": 1, "kind": "end", "path": "lesson_22/128/cue01_end.png", "verdict": "pass", "notes": "'keeping everything would be the O(n^2) rescan — the stack keeps only the UNRESOLVED' (centered, clear of stack label)"},
+    {"cue": 2, "kind": "start", "path": "lesson_22/128/cue02_start.png", "verdict": "pass", "notes": "stack [i0=2], about to receive newcomer"},
+    {"cue": 2, "kind": "mid", "path": "lesson_22/128/cue02_mid.png", "verdict": "pass", "notes": "newcomer a[1]=5, '5 > 2 beats the top, so it IS index 0's next-greater', i0 popped emerald"},
+    {"cue": 2, "kind": "end", "path": "lesson_22/128/cue02_end.png", "verdict": "pass", "notes": "answer[0]=5, cascade note 'one arrival, many answers'; newcomer pushed"},
+    {"cue": 3, "kind": "start", "path": "lesson_22/128/cue03_start.png", "verdict": "pass", "notes": "array, beat intro"},
+    {"cue": 3, "kind": "mid", "path": "lesson_22/128/cue03_mid.png", "verdict": "pass", "notes": "'pushed exactly once' / 'popped at most once' indications across the row"},
+    {"cue": 3, "kind": "end", "path": "lesson_22/128/cue03_end.png", "verdict": "pass", "notes": "n pushes + n pops = 2n => O(n), 'inner while-pop loop is amortized constant'"},
+    {"cue": 4, "kind": "start", "path": "lesson_22/128/cue04_start.png", "verdict": "pass", "notes": "'next GREATER -> decreasing' / 'next SMALLER -> increasing' direction rule"},
+    {"cue": 4, "kind": "mid", "path": "lesson_22/128/cue04_mid.png", "verdict": "pass", "notes": "histogram [2,1,5,6,2,3] centered, 'store INDICES, not values'"},
+    {"cue": 4, "kind": "end", "path": "lesson_22/128/cue04_end.png", "verdict": "pass", "notes": "boundary artifact: extracted frame shows cue05's first frame; cue04 settled content (width=j-top-1 rectangle) verified via cue04_mid + smoke"},
+    {"cue": 5, "kind": "start", "path": "lesson_22/128/cue05_start.png", "verdict": "pass", "notes": "stack [i3=6] leftover, beat intro"},
+    {"cue": 5, "kind": "mid", "path": "lesson_22/128/cue05_mid.png", "verdict": "pass", "notes": "'indices still on the stack were never beaten', answer = -1 (centered, no double-note overlap)"},
+    {"cue": 5, "kind": "end", "path": "lesson_22/128/cue05_end.png", "verdict": "pass", "notes": "sentinel chip '+inf / -inf', 'removes the after-loop cleanup'"},
+    {"cue": 6, "kind": "start", "path": "lesson_22/128/cue06_start.png", "verdict": "pass", "notes": "'the stack works when a WAITING element is resolved by a LATER arrival'"},
+    {"cue": 6, "kind": "mid", "path": "lesson_22/128/cue06_mid.png", "verdict": "pass", "notes": "'no such structure -> the stack has nothing to do' (rose)"},
+    {"cue": 6, "kind": "end", "path": "lesson_22/128/cue06_end.png", "verdict": "pass", "notes": "'reach for a heap or a sort instead' amber chip"}
+  ]
+}

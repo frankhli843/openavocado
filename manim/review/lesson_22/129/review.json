@@ -1,0 +1,29 @@
+{
+  "lesson_id": 22,
+  "activity_id": 129,
+  "reviewed_at": "2026-07-08T18:15:00Z",
+  "iterations": 2,
+  "frames_reviewed": 18,
+  "quality": "ql",
+  "notes": "Lesson 22 Part 1 (act 129), 'The machine via Next Greater Element', 75.19s, 6 cues. arr=[8,5,3,7,9], nge=[9,7,7,9,-1]. New reusable monotonic-stack idiom (arrays.py: stack_base/stack_cell/stack_pos/recolor_stack_cell): a vertical violet index-stack (values decreasing top->bottom), blue newcomer, emerald pop=resolve, an emerald arrow recording the answer. Two iterations: (1) authored + manim -s smoke all 6 cues READ (caught cue03 amort-note overlapping the stack label -> lifted STACK_BASE and narrowed/left-aligned the note), (2) full -ql render + READ start/mid/end of every cue from the muxed mp4. Per-cue checklist (stack decreasing-invariant correctness, push-just-waits vs pop-resolves pedagogy, cascade resolves several, leftovers->-1, O(n) bound, safe-area guard, chunk timing all Δ<=0.066s pinned): all pass. Minor: cue03 mid-frame has the transient floating-newcomer label near the array top (fully legible, end-state clean).",
+  "frames": [
+    {"cue": 0, "kind": "start", "path": "lesson_22/129/cue00_start.png", "verdict": "pass", "notes": "array fading in at t=0.15s (start of FadeIn)"},
+    {"cue": 0, "kind": "mid", "path": "lesson_22/129/cue00_mid.png", "verdict": "pass", "notes": "arr [8,5,3,7,9] + nge '?' row + stack base, pushing i0=8"},
+    {"cue": 0, "kind": "end", "path": "lesson_22/129/cue00_end.png", "verdict": "pass", "notes": "i0=8 on stack (violet), 'values decreasing top->bottom' caption"},
+    {"cue": 1, "kind": "start", "path": "lesson_22/129/cue01_start.png", "verdict": "pass", "notes": "stack [8], newcomer 5 arriving"},
+    {"cue": 1, "kind": "mid", "path": "lesson_22/129/cue01_mid.png", "verdict": "pass", "notes": "'5 < 8 resolves nothing' — pushing waiter"},
+    {"cue": 1, "kind": "end", "path": "lesson_22/129/cue01_end.png", "verdict": "pass", "notes": "stack [8,5,3] decreasing, '8·5·3 — decreasing' caption"},
+    {"cue": 2, "kind": "start", "path": "lesson_22/129/cue02_start.png", "verdict": "pass", "notes": "stack [8,5,3], newcomer 7 arrives"},
+    {"cue": 2, "kind": "mid", "path": "lesson_22/129/cue02_mid.png", "verdict": "pass", "notes": "'7 > 3' — top popped emerald, emerald arrow records nge[2]=7"},
+    {"cue": 2, "kind": "end", "path": "lesson_22/129/cue02_end.png", "verdict": "pass", "notes": "nge[2]=7 emerald, index 2 popped, stack [8,5]"},
+    {"cue": 3, "kind": "start", "path": "lesson_22/129/cue03_start.png", "verdict": "pass", "notes": "stack [8,5], newcomer 7 still popping"},
+    {"cue": 3, "kind": "mid", "path": "lesson_22/129/cue03_mid.png", "verdict": "pass", "notes": "'7 > 5 pop again nge[1]=7' cascade; nge[1]=nge[2]=7, stack shrinking to [8]; transient newcomer label near array (legible)"},
+    {"cue": 3, "kind": "end", "path": "lesson_22/129/cue03_end.png", "verdict": "pass", "notes": "'7 < 8 order restored — push 7'; stack [8,7], amort note clear of stack label"},
+    {"cue": 4, "kind": "start", "path": "lesson_22/129/cue04_start.png", "verdict": "pass", "notes": "end-of-scan state, stack [9], nge 0..3 resolved"},
+    {"cue": 4, "kind": "mid", "path": "lesson_22/129/cue04_mid.png", "verdict": "pass", "notes": "'index 4 is the tallest — nothing beats it'"},
+    {"cue": 4, "kind": "end", "path": "lesson_22/129/cue04_end.png", "verdict": "pass", "notes": "nge=[9,7,7,9,-1], -1 circumscribed rose, leftover i4=9"},
+    {"cue": 5, "kind": "start", "path": "lesson_22/129/cue05_start.png", "verdict": "pass", "notes": "array only, summary beat"},
+    {"cue": 5, "kind": "mid", "path": "lesson_22/129/cue05_mid.png", "verdict": "pass", "notes": "'every index enters once, leaves at most once'"},
+    {"cue": 5, "kind": "end", "path": "lesson_22/129/cue05_end.png", "verdict": "pass", "notes": "O(n^2) pair scan -> O(n) MathTex, emerald O(n), legible"}
+  ]
+}
