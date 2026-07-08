@@ -194,7 +194,20 @@ if (cmd === "status") {
   saveState({ lessons: state.lessons, updated_at: state.updated_at });
 } else if (cmd === "next") {
   const inFlight = state.lessons.find((l) => l.status === "in_flight");
-  const target = inFlight ?? pending.find((l) => l.status === "pending");
+  // Prefer the smallest still-pending lesson (fewest cue-bearing segments), then
+  // sequence, then id. This implements the acceptance's explicit ordering: do the
+  // shorter, single-segment lessons first to keep each session small and to build
+  // a library of reusable scene idioms before the multi-segment lessons. Ties fall
+  // back to the natural sequence/id order so the walk is deterministic.
+  const nextPending = pending
+    .filter((l) => l.status === "pending")
+    .sort(
+      (a, b) =>
+        a.segments.length - b.segments.length ||
+        a.sequence - b.sequence ||
+        a.lesson_id - b.lesson_id
+    )[0];
+  const target = inFlight ?? nextPending;
   if (!target) {
     console.log("backfill complete — no pending lessons.");
   } else {

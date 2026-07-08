@@ -1,0 +1,80 @@
+{
+  "lesson_id": 12,
+  "activity_id": 72,
+  "activity_type": "audio",
+  "title": "Audio: How Text Becomes Numbers",
+  "audio": {
+    "file_path": "runtime_artifacts/audio/lesson_12_audio.mp3",
+    "duration_sec": 1225.66
+  },
+  "audio_source": "artifact",
+  "cue_source": "orientation_visual.cues",
+  "cues": [
+    {
+      "index": 0,
+      "start": 0,
+      "end": 175.094,
+      "duration": 175.094,
+      "label": "High-level map",
+      "headline": "Text becomes a table of numbers",
+      "narration": "An LLM does not read words. Tokenization splits text into pieces, each piece gets an ID, and each ID selects a learned vector — a table of numbers the transformer can process."
+    },
+    {
+      "index": 1,
+      "start": 175.094,
+      "end": 350.189,
+      "duration": 175.095,
+      "label": "Analogy",
+      "headline": "The tokenizer is a workshop station",
+      "narration": "Picture the pipeline as a workshop line. The tokenizer station receives text, checks its label, changes it into IDs, and hands forward a receipt saying exactly what changed."
+    },
+    {
+      "index": 2,
+      "start": 350.189,
+      "end": 525.283,
+      "duration": 175.094,
+      "label": "Tiny example",
+      "headline": "Follow one concrete input",
+      "narration": "Take one small input and follow it. In 'she saw the saw', the word 'saw' appears twice, becomes the same token ID both times, and each ID looks up the same embedding row."
+    },
+    {
+      "index": 3,
+      "start": 525.283,
+      "end": 700.377,
+      "duration": 175.094,
+      "label": "Mechanism",
+      "headline": "IDs index rows; length costs compute",
+      "narration": "Each token ID is a row index into the embedding matrix, and the row's numbers carry learned meaning. Sequence length is a real compute cost — more tokens means more work."
+    },
+    {
+      "index": 4,
+      "start": 700.377,
+      "end": 875.471,
+      "duration": 175.094,
+      "label": "Implementation",
+      "headline": "Encode and decode are exact inverses",
+      "narration": "In code, expect small inputs, named variables, and simple assertions. Build a vocab, encode text to IDs, decode IDs back to text, and assert that decode(encode(x)) == x."
+    },
+    {
+      "index": 5,
+      "start": 875.471,
+      "end": 1050.566,
+      "duration": 175.095,
+      "label": "Misconception",
+      "headline": "Don't confuse the label with the object",
+      "narration": "Separate nearby ideas: a token is not a word, an ID is not its vector, a score is not a probability, and a high-level phase is not the detailed operation inside it."
+    },
+    {
+      "index": 6,
+      "start": 1050.566,
+      "end": 1225.66,
+      "duration": 175.094,
+      "label": "Synthesis",
+      "headline": "Return to the map, then practice",
+      "narration": "Return to the route: the audio gives the map, the visual makes it visible, the text defines it, and the code proves it. You can now explain text-to-tokens from every angle."
+    }
+  ],
+  "cue_span_sec": 1225.66,
+  "formulas": [],
+  "exported_at": "2026-07-08T04:22:55.804Z"
+}
