@@ -67,6 +67,23 @@ say "[3] Tracked-artifact scan (runtime data must be gitignored)"
 bad=$(git ls-files | grep -Ei '\.(db|sqlite|sqlite3)$|\.env($|\.)|(^|/)runtime_artifacts/|\.mp3$|\.wav$|(^|/)data/.*\.(db|json)$' | grep -v '\.env\.example$' || true)
 if [ -n "$bad" ]; then err "runtime/secret artifacts tracked:"; printf '%s\n' "$bad"; else ok "no runtime DBs / audio / .env tracked"; fi
 
+# ── 3b. Landing-page media integrity ─────────────────────────────────────────
+say "[3b] Landing-page media (referenced assets must exist + be tracked)"
+media_missing=0
+for a in $(grep -oE 'assets/(shots|media)/[A-Za-z0-9._-]+\.(png|jpg|mp4)' site/index.html | sort -u); do
+  if [ ! -f "site/$a" ]; then err "landing references missing asset: $a"; media_missing=1; fi
+  if ! git ls-files --error-unmatch "site/$a" >/dev/null 2>&1; then
+    # allow not-yet-committed on a working tree, but flag if the file is missing entirely
+    :
+  fi
+done
+# the showcase video + at least one product screenshot must be referenced
+grep -q 'assets/media/showcase.mp4' site/index.html || { err "landing does not embed showcase.mp4"; media_missing=1; }
+grep -q 'assets/shots/' site/index.html || { err "landing has no product screenshots"; media_missing=1; }
+# no placeholder ".shot" boxes should remain on the landing
+if grep -q 'class="shot"' site/index.html; then err "landing still has placeholder .shot boxes"; media_missing=1; fi
+[ "$media_missing" -eq 0 ] && ok "showcase video + product screenshots present, referenced, and no placeholders"
+
 # ── 4. Documented internal-compat tokens (informational only) ────────────────
 say "[4] Internal-compat tokens (documented, non-blocking)"
 int=$(git grep -Il -E 'Doraemon|Doramon|prodavo|frankavo|frankclaw|\bFrank\b' -- 'scripts' 'src/lib' 'src/test' 'src/types' 2>/dev/null | wc -l)

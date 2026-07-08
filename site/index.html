@@ -21,14 +21,31 @@
 <main class="wrap wide">
 <section class="hero">
   <div class="mark"><svg viewBox="635 -20 445 445" width="76" height="76" role="img" aria-label="Open Avocado"><path fill="#399103" d="M1232.67-1000.76a125.34,125.34,0,0,1,1-13c3.4-33,13.92-86.75,57.37-160.78,33-56.25,49.52-84.38,70.72-85.09,26.54-.89,46.12,32.06,79.12,87.6,39.58,66.6,49.47,123.11,52.53,154.17.83,8.43,1.25,12.64,1.12,17.1-1.53,52.59-48.78,130.92-130.92,130.92A130.92,130.92,0,0,1,1232.67-1000.76Z" transform="translate(-506.6 1267.13)"/><path fill="#f8ee7b" d="M1275.87-1006.33a84,84,0,0,1,.65-8.7c2.28-22.12,9.33-58.12,38.44-107.73,22.12-37.69,33.18-56.53,47.38-57,17.78-.6,30.9,21.48,53,58.69,26.52,44.62,33.14,82.48,35.2,103.29a90.81,90.81,0,0,1,.75,11.45c-1,35.23-32.68,87.71-87.71,87.71A87.71,87.71,0,0,1,1275.87-1006.33Z" transform="translate(-506.6 1267.13)"/><circle fill="#fff" cx="856.99" cy="264.46" r="42.81"/></svg></div>
+  <p class="eyebrow">Empower human learning</p>
   <h1><span class="b-open">Open</span><span class="b-avo"> Avocado</span></h1>
-  <p class="tagline">An open-source adaptive learning platform and lesson-generation framework.
-  Define what you want to learn, let the system keep evidence of what you know, and generate the next best lesson.</p>
+  <p class="tagline">A free, open-source adaptive learning platform powered by AI. Set a goal, and it keeps
+  evidence of what you actually know, then generates the single next lesson — with narration,
+  interactive visuals, code, and quizzes — to move you from familiarity to mastery.</p>
   <div class="btn-row">
-    <a class="btn btn-primary" href="quickstart.html">Get started</a>
-    <a class="btn btn-secondary" href="architecture.html">How it works</a>
-    <a class="btn btn-secondary" href="https://github.com/frankhli843/openavocado" target="_blank" rel="noopener">View on GitHub</a>
+    <a class="btn btn-primary" href="#demo">View the demo</a>
+    <a class="btn btn-secondary" href="quickstart.html">Read the docs</a>
+    <a class="btn btn-secondary" href="#run">Run locally</a>
+    <a class="btn btn-ghost" href="https://github.com/frankhli843/openavocado" target="_blank" rel="noopener">View on GitHub</a>
   </div>
+  <p class="hero-liveline">Live public site: <a href="https://frankhli843.github.io/openavocado/">https://frankhli843.github.io/openavocado/</a></p>
+</section>
+
+<section id="demo">
+  <div class="video-wrap">
+    <video controls preload="none" poster="assets/media/showcase-poster.jpg"
+      aria-label="Open Avocado showcase reel: audio-synced lesson videos across probability, economics, machine learning, deep learning, and algorithms">
+      <source src="assets/media/showcase.mp4" type="video/mp4">
+      Your browser does not support embedded video.
+      <a href="assets/media/showcase.mp4">Download the showcase reel (MP4)</a>.
+    </video>
+  </div>
+  <p class="video-cap">Showcase reel — audio-synced lesson videos Open Avocado generates, across probability,
+  economics, machine learning, deep learning, and algorithms (about five seconds per subject).</p>
 </section>
 
 <section class="mission">
@@ -47,18 +64,95 @@
 </section>
 
 <section>
-  <h2>The core idea</h2>
-  <p>Most courses are a fixed list of lessons for an average student. Open Avocado is different: it treats
-  learning as a loop driven by evidence. A learner defines goals and subjects; every answer, code submission,
-  quiz result, and diagnostic becomes a <strong>mastery signal</strong>; and a lesson generator uses that growing
-  evidence to author the single next lesson that closes the most important gap with the least effort.</p>
-  <p>The design goal is to move a learner from <strong>familiarity</strong> (orientation and vocabulary) to
-  <strong>competence</strong> (granular understanding and practice) to <strong>mastery</strong> (synthesis,
-  transfer, and independent creation).</p>
+  <div class="sec-head">
+    <h2>How the adaptive loop works</h2>
+    <p>Most courses are a fixed list of lessons for an average student. Open Avocado treats learning as a
+    loop driven by evidence — so the next lesson is always the one you need.</p>
+  </div>
+  <div class="loop">
+    <div class="step"><div class="n">1</div><h3>Define the goal</h3><p>Name a subject and what you want to be able to do. Open Avocado runs an initial assessment to map where you stand.</p></div>
+    <div class="step"><div class="n">2</div><h3>Keep the evidence</h3><p>Every answer, code submission, quiz result, and diagnostic becomes a durable <strong>mastery signal</strong>.</p></div>
+    <div class="step"><div class="n">3</div><h3>Generate the next lesson</h3><p>An AI lesson generator reads the evidence and authors the single next lesson that closes the biggest gap with the least effort.</p></div>
+    <div class="step"><div class="n">4</div><h3>Grow to mastery</h3><p>You move from <strong>familiarity</strong> to <strong>competence</strong> to <strong>mastery</strong> — and the loop repeats.</p></div>
+  </div>
+  <div class="split">
+    <figure class="shot-real split-media">
+      <img src="assets/shots/mastery.png" alt="Open Avocado mastery view showing the familiarity, competence, mastery, and post-mastery phases with a 96 percent mastery score and strengths, review-needed, and weak-spot tags." loading="lazy">
+      <figcaption><strong>Mastery view</strong> — phase progression and an evidence-based mastery score with strengths and weak spots.</figcaption>
+    </figure>
+    <div class="split-copy">
+      <h3>Progress you can see and trust</h3>
+      <p>Open Avocado holds a phase for a subject until it has enough evidence to advance. It shows exactly
+      what it is waiting on — completed lessons, assessed answers, code submissions — so progress is never a
+      mystery number.</p>
+      <p>Per-subject mastery scores, tags, and difficulty are visible to the learner <em>and</em> fed back
+      into what gets generated next.</p>
+    </div>
+  </div>
 </section>
 
 <section>
-  <h2>What a lesson contains</h2>
+  <div class="sec-head">
+    <h2>See a lesson come to life</h2>
+    <p>Every lesson is a full workspace: a knowledge-graph orientation, narrated walkthrough, bespoke
+    interactive visualizations, browser-run code, and adaptive quizzes — all real screenshots below.</p>
+  </div>
+  <div class="gallery">
+    <figure class="shot-real">
+      <img src="assets/shots/viz-attention.png" alt="Interactive Attention Score Calculator widget: pick a query token to see Q, K, V vectors and step through raw scores, scaling, softmax, and the weighted sum." loading="lazy">
+      <figcaption><strong>Interactive visualization</strong> — a bespoke attention-score calculator you can step through.</figcaption>
+    </figure>
+    <figure class="shot-real">
+      <img src="assets/shots/quiz.png" alt="Adaptive quiz showing select-one and select-all questions tagged by difficulty, each with a Check answer button." loading="lazy">
+      <figcaption><strong>Adaptive quiz</strong> — select-one, select-all, and written questions with instant grading.</figcaption>
+    </figure>
+    <figure class="shot-real">
+      <img src="assets/shots/code-exercise.png" alt="Scaffolded coding exercise with a task, constraints, worked walkthrough, input/output examples, and a browser-run Python editor with Run tests and Submit buttons." loading="lazy">
+      <figcaption><strong>Scaffolded code</strong> — browser-run Python (Pyodide) with hints, examples, and hidden tests.</figcaption>
+    </figure>
+    <figure class="shot-real">
+      <img src="assets/shots/viz-trie.png" alt="Interactive trie visualization stepping through inserting the word car, with an end-of-word flag and Prev/Next controls." loading="lazy">
+      <figcaption><strong>Step-through diagrams</strong> — algorithms and data structures you can drive one step at a time.</figcaption>
+    </figure>
+    <figure class="shot-real">
+      <img src="assets/shots/concept-map.png" alt="Concept map for a transformer block showing token embedding at the center connected to Q/K/V, attention, softmax, MLP, LayerNorm, and the residual stream." loading="lazy">
+      <figcaption><strong>Knowledge-graph orientation</strong> — every lesson opens by showing where it sits in the subject.</figcaption>
+    </figure>
+    <figure class="shot-real">
+      <img src="assets/shots/interactive-slider.png" alt="Interactive sliding-window widget: drag a size-three window across an array while the running sum and best-sum-so-far update." loading="lazy">
+      <figcaption><strong>Live manipulables</strong> — drag, slide, and watch the numbers update as you explore.</figcaption>
+    </figure>
+  </div>
+  <div class="split rev">
+    <figure class="shot-real split-media">
+      <img src="assets/shots/dashboard.png" alt="Open Avocado learner dashboard listing subjects such as Coding Interview Mastery and Model Building and Inference, each with a mastery percentage and progress bar." loading="lazy">
+      <figcaption><strong>Learner dashboard</strong> — subjects, mastery, and progress at a glance.</figcaption>
+    </figure>
+    <div class="split-copy">
+      <h3>A calm home for everything you're learning</h3>
+      <p>Track multiple subjects side by side, each with its own mastery score, phase, and lesson progress.
+      Open a subject to see its lessons, mastery breakdown, goals, and the AI's planning work.</p>
+      <p>Everything is responsive, so the full lesson workspace — audio, interactives, code, and quizzes —
+      works on a phone as well as a desktop.</p>
+    </div>
+  </div>
+  <div class="gallery">
+    <figure class="shot-real">
+      <img src="assets/shots/mobile-dashboard.png" alt="Open Avocado dashboard on a 390 pixel wide mobile screen with stacked subject cards." loading="lazy">
+      <figcaption><strong>Mobile (390px)</strong> — the dashboard, responsive.</figcaption>
+    </figure>
+    <figure class="shot-real">
+      <img src="assets/shots/mobile-lesson.png" alt="An Open Avocado lesson on a 390 pixel wide mobile screen showing the lesson header, goals, and concept map." loading="lazy">
+      <figcaption><strong>Mobile (390px)</strong> — the lesson workspace, responsive.</figcaption>
+    </figure>
+  </div>
+</section>
+
+<section>
+  <div class="sec-head">
+    <h2>What every lesson contains</h2>
+    <p>Not slides. A full, multimodal workspace built for the concept in front of you.</p>
+  </div>
   <div class="feature">
     <div class="f"><h3><span class="svg-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 14v-2a8 8 0 0 1 16 0v2"/><rect x="2.5" y="14" width="4" height="6" rx="1.3"/><rect x="17.5" y="14" width="4" height="6" rx="1.3"/></svg></span> Narrated walkthrough</h3><p>A comprehensive audio session with a learner-visible transcript and a synced visual timeline that changes as the audio advances.</p></div>
     <div class="f"><h3><span class="svg-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10 3h4v3.2a1.8 1.8 0 1 0 3.6 0V6H21v4.4h-.2a1.8 1.8 0 1 0 0 3.6h.2V21h-4.4v-.2a1.8 1.8 0 1 0-3.6 0v.2H10v-3.4a1.8 1.8 0 1 0-3.6 0v-.2H3V13h.2a1.8 1.8 0 1 0 0-3.6H3V3h4.4"/></svg></span> Bespoke interactives</h3><p>Purpose-built, sandboxed visual artifacts for each concept — not generic widgets — rendered from the database and mobile-verified.</p></div>
@@ -69,10 +163,12 @@
   </div>
 </section>
 
-<section>
-  <h2>Run it your way</h2>
-  <p>Open Avocado separates the <em>app</em> from the <em>lesson generator</em> behind a small adapter interface,
-  so you can plug in whatever produces lessons. Pick the local runtime that fits you:</p>
+<section id="run">
+  <div class="sec-head">
+    <h2>Run it your way</h2>
+    <p>Open Avocado separates the <em>app</em> from the <em>lesson generator</em> behind a small adapter
+    interface, so you can plug in whatever produces lessons. Pick the local runtime that fits you.</p>
+  </div>
   <div class="card-grid">
     <a class="card" href="run-api-key.html"><div class="ico"><span class="svg-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="8" cy="8" r="4"/><path d="M11 11l8 8"/><path d="M16 16l2-2"/><path d="M18.5 18.5l1.5-1.5"/></svg></span></div><h3>Direct API key <span class="badge badge-ok">ready</span></h3><p>The simplest standalone path. Bring an OpenAI or Google AI Studio key and go.</p></a>
     <a class="card" href="run-gemmaclaw.html"><div class="ico"><span class="svg-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="6" y="6" width="12" height="12" rx="2"/><path d="M9 2v3M15 2v3M9 19v3M15 19v3M2 9h3M2 15h3M19 9h3M19 15h3"/></svg></span></div><h3>Gemmaclaw <span class="badge badge-partial">partial</span></h3><p>Point at a local, OpenAI-compatible Gemma model gateway. No cloud key required.</p></a>
@@ -81,8 +177,37 @@
   </div>
 </section>
 
+<section class="os-band">
+  <p class="eyebrow">Open source &amp; community</p>
+  <h2>Built in the open, free to run</h2>
+  <p>Open Avocado is free and open source. Run it on your own machine, read every line, swap the model
+  runtime, and extend the lesson generator — no lock-in, no paywall between a learner and the next lesson.</p>
+  <div class="os-values">
+    <div class="v"><h3>Free &amp; open</h3><p>MIT-spirited, self-hostable, and transparent end to end.</p></div>
+    <div class="v"><h3>Local-first &amp; private</h3><p>Your data stays in a local SQLite database. Provider keys are encrypted and never sent to the browser.</p></div>
+    <div class="v"><h3>Pluggable runtimes</h3><p>A tiny adapter interface lets a cloud key, a local model, or an agent runtime drive generation.</p></div>
+    <div class="v"><h3>Contribution-friendly</h3><p>Clear docs, a public-readiness audit, and a separate-QA authoring model make it easy to help.</p></div>
+  </div>
+</section>
+
 <section>
-  <h2>Explore the docs</h2>
+  <div class="sec-head">
+    <h2>Who it's for</h2>
+    <p>One evidence-driven engine, useful from your first hour to your hardest problem set.</p>
+  </div>
+  <div class="aud-grid">
+    <div class="aud"><h3>Self-directed learners</h3><p>Learn a subject on your own terms, with a tutor that adapts to what you actually know.</p></div>
+    <div class="aud"><h3>Developers &amp; builders</h3><p>Fork it, plug in your model or agent, and build adaptive learning into your own product.</p></div>
+    <div class="aud"><h3>Educators &amp; tinkerers</h3><p>Author lessons with a generic agent/skill model and a real quality bar, not one-size-fits-all content.</p></div>
+    <div class="aud"><h3>Researchers</h3><p>An open, inspectable testbed for evidence-first, agent-generated, adaptive learning.</p></div>
+  </div>
+</section>
+
+<section>
+  <div class="sec-head">
+    <h2>Explore the docs</h2>
+    <p>Everything a new contributor or self-hoster needs, one card away.</p>
+  </div>
   <div class="card-grid">
     <a class="card" href="quickstart.html"><div class="ico"><span class="svg-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M13 2 4 14h6l-1 8 9-12h-6l1-8z"/></svg></span></div><h3>Quick Start</h3><p>Install, seed a database, and run the app locally in a few commands.</p></a>
     <a class="card" href="architecture.html"><div class="ico"><span class="svg-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="10" width="8" height="11" rx="1"/><rect x="13" y="4" width="8" height="17" rx="1"/><path d="M6 14h2M6 17h2M16 8h2M16 12h2M16 16h2"/></svg></span></div><h3>Architecture</h3><p>Core entities, the evidence loop, and the generation/completion flow.</p></a>
@@ -93,15 +218,13 @@
   </div>
 </section>
 
-<section>
-  <h2>A look at the product</h2>
-  <p class="subtle">Screenshots are captured from synthetic seed data only. Real, privacy-safe product screenshots
-  are added as the public demo matures.</p>
-  <div class="shot-grid">
-    <div class="shot">Subject dashboard — mastery &amp; progress</div>
-    <div class="shot">Lesson workspace — audio, interactives, code</div>
-    <div class="shot">Adaptive quiz — one question at a time</div>
-    <div class="shot">Mobile (390px) — responsive lesson view</div>
+<section class="cta-band">
+  <h2>Start learning in the open</h2>
+  <p class="lead">Run Open Avocado locally in a few minutes, or read how the adaptive loop works.</p>
+  <div class="btn-row">
+    <a class="btn btn-primary" href="quickstart.html">Quick start</a>
+    <a class="btn btn-secondary" href="run-api-key.html">Run with an API key</a>
+    <a class="btn btn-ghost" href="https://github.com/frankhli843/openavocado" target="_blank" rel="noopener">View on GitHub</a>
   </div>
 </section>
 </main>

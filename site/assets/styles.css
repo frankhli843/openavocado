@@ -169,6 +169,76 @@ footer { border-top: 1px solid var(--border); background: var(--bg-elev); }
 .breadcrumb { font-size: .88rem; color: var(--muted); margin-bottom: .3rem; }
 hr { border: none; border-top: 1px solid var(--border); margin: 2.2rem 0; }
 
+/* eyebrow */
+.eyebrow { text-transform: uppercase; letter-spacing: .09em; font-size: .78rem; font-weight: 700; color: var(--accent-strong); margin: 0 0 .5rem; }
+
+/* hero refinements */
+.hero { padding: 3.2rem 0 1.4rem; }
+.hero .eyebrow { margin-bottom: .7rem; }
+.btn-ghost { background: transparent; color: var(--accent-strong); border-color: transparent; }
+.btn-ghost:hover { background: var(--accent-soft); text-decoration: none; }
+.btn svg { width: 1.05em; height: 1.05em; }
+.hero-liveline { margin: 1rem auto 0; font-size: .92rem; color: var(--muted); }
+.hero-liveline a { font-weight: 600; }
+
+/* responsive video */
+.video-wrap { max-width: 940px; margin: 1.6rem auto 0; border-radius: 16px; overflow: hidden;
+  border: 1px solid var(--border); box-shadow: 0 12px 40px rgba(22,33,15,.10); background: #0a1207; }
+.video-wrap video { display: block; width: 100%; height: auto; }
+.video-cap { text-align: center; color: var(--muted); font-size: .86rem; margin: .7rem auto 0; max-width: 720px; }
+
+/* section heading block */
+.sec-head { text-align: center; max-width: 700px; margin: 0 auto 1.6rem; }
+.sec-head h2 { border: 0; padding: 0; margin: 0 0 .4rem; }
+.sec-head p { margin: 0; color: var(--muted); }
+
+/* real screenshot figure */
+figure.shot-real { margin: 0; border: 1px solid var(--border); border-radius: 14px; overflow: hidden;
+  background: var(--bg-elev); box-shadow: var(--shadow); }
+figure.shot-real img { display: block; width: 100%; height: auto; }
+figure.shot-real figcaption { padding: .7rem .95rem; font-size: .88rem; color: var(--fg-soft); border-top: 1px solid var(--border); background: #fff; }
+figure.shot-real figcaption strong { color: var(--fg); }
+
+/* gallery — masonry columns so varied-height screenshots pack tightly */
+.gallery { column-count: 2; column-gap: 1.2rem; margin: 1.4rem 0; }
+.gallery figure { break-inside: avoid; margin: 0 0 1.2rem; width: 100%; }
+@media (max-width: 720px) { .gallery { column-count: 1; } }
+
+/* split feature (image + text) */
+.split { display: grid; grid-template-columns: 1.1fr 1fr; gap: 2rem; align-items: center; margin: 2rem 0; }
+.split.rev { grid-template-columns: 1fr 1.1fr; }
+.split.rev .split-media { order: 2; }
+.split-copy h3 { margin-top: 0; font-size: 1.25rem; }
+.split-copy p { margin: .5rem 0; }
+
+/* adaptive loop steps */
+.loop { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 200px), 1fr)); gap: 1rem; margin: 1.4rem 0; counter-reset: lp; }
+.loop .step { background: var(--bg-elev); border: 1px solid var(--border); border-radius: 14px; padding: 1.2rem 1.15rem; position: relative; }
+.loop .step .n { width: 2rem; height: 2rem; border-radius: 50%; background: var(--accent); color: #fff; font-weight: 700; display: grid; place-items: center; font-size: .9rem; margin-bottom: .6rem; }
+.loop .step h3 { margin: 0 0 .25rem; font-size: 1.02rem; color: var(--fg); }
+.loop .step p { margin: 0; font-size: .9rem; }
+
+/* audience cards */
+.aud-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 240px), 1fr)); gap: 1rem; margin: 1.4rem 0; }
+.aud { background: var(--bg-elev); border: 1px solid var(--border); border-radius: 14px; padding: 1.2rem 1.25rem; }
+.aud h3 { margin: 0 0 .3rem; font-size: 1.02rem; color: var(--fg); }
+.aud p { margin: 0; font-size: .9rem; }
+
+/* open-source values band */
+.os-band { background: linear-gradient(180deg, #f2f8ec, #ffffff); border: 1px solid var(--border); border-radius: 18px; padding: 2rem 2.2rem; margin: 2.6rem 0; }
+.os-band h2 { border: 0; padding: 0; margin: 0 0 .3rem; }
+.os-values { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 220px), 1fr)); gap: 1.1rem; margin-top: 1.2rem; }
+.os-values .v h3 { margin: 0 0 .2rem; font-size: 1rem; color: var(--fg); }
+.os-values .v p { margin: 0; font-size: .9rem; }
+
+/* final cta */
+.cta-band { text-align: center; padding: 2.4rem 0 1rem; }
+.cta-band h2 { border: 0; padding: 0; }
+
+@media (max-width: 760px) {
+  .split, .split.rev { grid-template-columns: 1fr; }
+  .split.rev .split-media { order: 0; }
+}
 @media (max-width: 640px) {
   .hero h1 { font-size: 2.2rem; }
   h1 { font-size: 1.65rem; }
