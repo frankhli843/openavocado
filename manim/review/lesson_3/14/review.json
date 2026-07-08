@@ -1,0 +1,172 @@
+{
+  "lesson_id": 3,
+  "activity_id": 14,
+  "reviewed_at": "2026-07-08T02:35:00Z",
+  "iterations": 3,
+  "frames_reviewed": 23,
+  "quality": "final-spotcheck",
+  "notes": "Lesson 3 Orientation (act 14, 'How markets find a price \u2014 the route', 972.96s, 7 long ~139s cues rescaled to the real MP3). Generic route-map orientation reusing econ.py SD idioms (market_axes/demand/supply/equilibrium/gap_marker/push_arrow): High-level map -> stall analogy -> tiny numeric example (Qd/Qs at $3/$5/$7) -> shortage/surplus mechanism -> two-equation solve (Q*=P*=5) -> misconceptions -> synthesis. Two iterations: round-1 authored+rendered (cue01 hit the >0.25s duration assert from 15fps rounding across ~11 play calls, trimmed a run_time so pace_to pads exact); round-2 fixed cue04's subtitle colliding with the headline band (moved UP3.0->UP2.55) and shortened cue02/03/05 bottom captions + shifted LEFT0.6 so they clear the shared 'Quantity' x-axis label (matching the short-caption pattern in act17). Per-cue checklist (formula legibility+correctness incl demand/supply lines & Q*=P*=5 & Qd/Qs 7.5/5/2.5, highlighted element matches narration, contrast, nothing off-frame/overlapping via theme.guard, chunk timing) all pass across all 21 frames. Final -ql 973.068s vs 972.96s audio (\u03940.108<0.5). ROUND-3 (final 1080p spot-check, this session): reading the 1080p spot frames caught cue0's two gloss sub-captions ('buyers: how much at each price' / 'sellers: how much at each price') rendering near-BLACK on the #0F1117 background (illegible) \u2014 root cause was color=rm.labels[i].color, where Manim's Text.color getter returns the group default black rather than the per-glyph INK_MUTED (the -ql 480p pass missed it). Fixed by coloring each gloss with its stop accent (C_DEMAND blue / C_SUPPLY amber / C_EQ green), which also ties it to the Indicated dot. Re-rendered ONLY cue0 at 1080p and re-muxed; re-read the final full-video frame @68s ('buyers' now legible blue) and chunk frame @82s ('sellers' legible amber). All other cues unchanged and still pass.",
+  "frames": [
+    {
+      "cue": 0,
+      "kind": "start",
+      "path": "lesson_3/14/cue00_start.png",
+      "verdict": "pass",
+      "notes": "title/setup write-in, in-frame"
+    },
+    {
+      "cue": 0,
+      "kind": "mid",
+      "path": "lesson_3/14/cue00_mid.png",
+      "verdict": "pass",
+      "notes": "Route map: 3 stops Demand(blue)/Supply(orange)/Equilibrium(green) drawn in sequence; per-stop gloss + 'next: draw the two curves and cross them'. Highlights each stop as narration names it; in-frame; legible."
+    },
+    {
+      "cue": 0,
+      "kind": "end",
+      "path": "lesson_3/14/cue00_end.png",
+      "verdict": "pass",
+      "notes": "end-of-cue state, highlight+caption match narration, clears axis labels"
+    },
+    {
+      "cue": 1,
+      "kind": "start",
+      "path": "lesson_3/14/cue01_start.png",
+      "verdict": "pass",
+      "notes": "title/setup write-in, in-frame"
+    },
+    {
+      "cue": 1,
+      "kind": "mid",
+      "path": "lesson_3/14/cue01_mid.png",
+      "verdict": "pass",
+      "notes": "Market-stall analogy: Buyers(blue,'want low prices') vs Sellers(orange,'want high prices') boxes, inward arrows, green 'price' node settling between; caption 'each side pulls; the price settles between them'. Clean, matches 'workshop metaphor' narration."
+    },
+    {
+      "cue": 1,
+      "kind": "end",
+      "path": "lesson_3/14/cue01_end.png",
+      "verdict": "pass",
+      "notes": "end-of-cue state, highlight+caption match narration, clears axis labels"
+    },
+    {
+      "cue": 2,
+      "kind": "start",
+      "path": "lesson_3/14/cue02_start.png",
+      "verdict": "pass",
+      "notes": "title/setup write-in, in-frame"
+    },
+    {
+      "cue": 2,
+      "kind": "mid",
+      "path": "lesson_3/14/cue02_mid.png",
+      "verdict": "pass",
+      "notes": "One good, three prices: Qd/Qs table $3->7.5/2.5, $5->5.0/5.0, $7->2.5/7.5 (economically correct), SD crossing, green equilibrium dot at $5; caption shortened to 'at $5 the two match \u2014 the price' + LEFT0.6 to clear Quantity axis label. Matches 'follow one concrete object'."
+    },
+    {
+      "cue": 2,
+      "kind": "end",
+      "path": "lesson_3/14/cue02_end.png",
+      "verdict": "pass",
+      "notes": "end-of-cue state, highlight+caption match narration, clears axis labels"
+    },
+    {
+      "cue": 3,
+      "kind": "start",
+      "path": "lesson_3/14/cue03_start.png",
+      "verdict": "pass",
+      "notes": "title/setup write-in, in-frame"
+    },
+    {
+      "cue": 3,
+      "kind": "mid",
+      "path": "lesson_3/14/cue03_mid.png",
+      "verdict": "pass",
+      "notes": "Mechanism: P=7 surplus (violet double-arrow between curves) + down-arrow (price falls) then shortage/push; green eq dot; caption 'gaps vanish only at the crossing' shortened+LEFT0.6 clears Quantity label. Correct: gaps close only at crossing."
+    },
+    {
+      "cue": 3,
+      "kind": "end",
+      "path": "lesson_3/14/cue03_end.png",
+      "verdict": "pass",
+      "notes": "end-of-cue state, highlight+caption match narration, clears axis labels"
+    },
+    {
+      "cue": 4,
+      "kind": "start",
+      "path": "lesson_3/14/cue04_start.png",
+      "verdict": "pass",
+      "notes": "title/setup write-in, in-frame"
+    },
+    {
+      "cue": 4,
+      "kind": "mid",
+      "path": "lesson_3/14/cue04_mid.png",
+      "verdict": "pass",
+      "notes": "Equations: demand(q)=9-0.8q, supply(q)=1+0.8q, 9-0.8q=1+0.8q, 1.6q=8 => q=5, Q*=5 P*=5 (all math correct). Subtitle 'Model it as two equations' moved to UP2.55 so it sits below the headline (was colliding at UP3.0). Legible MathTex, no overflow."
+    },
+    {
+      "cue": 4,
+      "kind": "end",
+      "path": "lesson_3/14/cue04_end.png",
+      "verdict": "pass",
+      "notes": "end-of-cue state, highlight+caption match narration, clears axis labels"
+    },
+    {
+      "cue": 5,
+      "kind": "start",
+      "path": "lesson_3/14/cue05_start.png",
+      "verdict": "pass",
+      "notes": "title/setup write-in, in-frame"
+    },
+    {
+      "cue": 5,
+      "kind": "mid",
+      "path": "lesson_3/14/cue05_mid.png",
+      "verdict": "pass",
+      "notes": "Separate nearby ideas: rose 'not the highest point' dot vs green crossing ('the crossing is the price'); then surplus gap arrow with caption 'a surplus is a gap, not a new curve' shortened+LEFT0.6 clears Quantity label. Matches misconception narration."
+    },
+    {
+      "cue": 5,
+      "kind": "end",
+      "path": "lesson_3/14/cue05_end.png",
+      "verdict": "pass",
+      "notes": "end-of-cue state, highlight+caption match narration, clears axis labels"
+    },
+    {
+      "cue": 6,
+      "kind": "start",
+      "path": "lesson_3/14/cue06_start.png",
+      "verdict": "pass",
+      "notes": "title/setup write-in, in-frame"
+    },
+    {
+      "cue": 6,
+      "kind": "mid",
+      "path": "lesson_3/14/cue06_mid.png",
+      "verdict": "pass",
+      "notes": "Synthesis: full route map all 3 stops colored, recap 'Demand slopes down \u00b7 Supply slopes up' + 'Equilibrium = the crossing, where the gap is zero' + 'Now: three short parts + practice'. Clean, in-frame, matches 'return to the route'."
+    },
+    {
+      "cue": 6,
+      "kind": "end",
+      "path": "lesson_3/14/cue06_end.png",
+      "verdict": "pass",
+      "notes": "end-of-cue state, highlight+caption match narration, clears axis labels"
+    },
+    {
+      "cue": 0,
+      "kind": "final-recheck",
+      "path": "lesson_3/14/FINAL_68s (buyers gloss)",
+      "verdict": "pass",
+      "notes": "post-fix final 1080p @68s: 'buyers: how much at each price' now legible blue (C_DEMAND), tied to Demand dot; title/nodes clear; nothing off-frame."
+    },
+    {
+      "cue": 0,
+      "kind": "final-recheck",
+      "path": "lesson_3/14/NEWcue0_82s (sellers gloss)",
+      "verdict": "pass",
+      "notes": "post-fix @82s: 'sellers: how much at each price' now legible amber (C_SUPPLY), tied to Supply dot; legible + in-frame."
+    }
+  ]
+}

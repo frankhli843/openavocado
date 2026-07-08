@@ -1,0 +1,143 @@
+{
+  "lesson_id": 3,
+  "activity_id": 53,
+  "activity_type": "lesson_part",
+  "title": "Part 3: Taxes create a wedge and split burden",
+  "audio": {
+    "file_path": "runtime_artifacts/audio/lesson_3_activity_53_audio.mp3",
+    "duration_sec": 291.7
+  },
+  "audio_source": "artifact",
+  "cue_source": "audio.synced_visual.cues",
+  "cues": [
+    {
+      "index": 0,
+      "start": 0,
+      "end": 20.662,
+      "duration": 20.662,
+      "label": "Leo Let's make Taxes create a wedge and",
+      "headline": "The core idea is this A per-unit tax separates buyer price ",
+      "narration": "Leo: Let's make Taxes create a wedge and split burden work as its own small audi"
+    },
+    {
+      "index": 1,
+      "start": 20.662,
+      "end": 41.324,
+      "duration": 20.662,
+      "label": "The less responsive side bears more of t",
+      "headline": "Use the interactive as retrieval practice change one variab",
+      "narration": "The less responsive side bears more of the burden"
+    },
+    {
+      "index": 2,
+      "start": 41.324,
+      "end": 61.986,
+      "duration": 20.662,
+      "label": "Taxes create a wedge and split burdenM",
+      "headline": "I want the thing itself, not the label",
+      "narration": "Taxes create a wedge and split burden\n\nMaya: What is the concrete object we shou"
+    },
+    {
+      "index": 3,
+      "start": 61.986,
+      "end": 83.864,
+      "duration": 21.878,
+      "label": "Maya Why does that object matter",
+      "headline": "If I already know the vocabulary, what does following the ob",
+      "narration": "Maya: Why does that object matter"
+    },
+    {
+      "index": 4,
+      "start": 83.864,
+      "end": 104.526,
+      "duration": 20.662,
+      "label": "Maya Can you give me a simple analogy b",
+      "headline": "Leo Think of a thermostat for a busy room",
+      "narration": "Maya: Can you give me a simple analogy before the mechanics"
+    },
+    {
+      "index": 5,
+      "start": 104.526,
+      "end": 125.188,
+      "duration": 20.662,
+      "label": "A market price adjusts pressure between ",
+      "headline": "Maya Why does that analogy help, and where should I stop tr",
+      "narration": "A market price adjusts pressure between shortage and surplus"
+    },
+    {
+      "index": 6,
+      "start": 125.188,
+      "end": 145.85,
+      "duration": 20.662,
+      "label": "The real understanding comes from return",
+      "headline": "Maya Now make it concrete",
+      "narration": "The real understanding comes from returning to a price that changes how much buy"
+    },
+    {
+      "index": 7,
+      "start": 145.85,
+      "end": 166.512,
+      "duration": 20.662,
+      "label": "That creates a shortage",
+      "headline": "At a high price, sellers produce more than buyers want",
+      "narration": "That creates a shortage"
+    },
+    {
+      "index": 8,
+      "start": 166.512,
+      "end": 187.174,
+      "duration": 20.662,
+      "label": "The less responsive side bears more of t",
+      "headline": "Taxes create a wedge and split burden A per-unit tax separat",
+      "narration": "The less responsive side bears more of the burden"
+    },
+    {
+      "index": 9,
+      "start": 187.174,
+      "end": 207.836,
+      "duration": 20.662,
+      "label": "A per-unit tax separates buyer price fro",
+      "headline": "The less responsive side bears more of the burden",
+      "narration": "A per-unit tax separates buyer price from seller receipt"
+    },
+    {
+      "index": 10,
+      "start": 207.836,
+      "end": 229.714,
+      "duration": 21.878,
+      "label": "Supply usually rises as price rises",
+      "headline": "A shortage means quantity demanded is greater than quantity ",
+      "narration": "Supply usually rises as price rises"
+    },
+    {
+      "index": 11,
+      "start": 229.714,
+      "end": 250.376,
+      "duration": 20.662,
+      "label": "Maya How exactly does that mechanism im",
+      "headline": "Leo It improves what comes next by changing the evidence in",
+      "narration": "Maya: How exactly does that mechanism improve what comes next"
+    },
+    {
+      "index": 12,
+      "start": 250.376,
+      "end": 271.038,
+      "duration": 20.662,
+      "label": "Maya Why is naming the mechanism not en",
+      "headline": "Leo Because a name can hide an empty explanation",
+      "narration": "Maya: Why is naming the mechanism not enough here"
+    },
+    {
+      "index": 13,
+      "start": 271.038,
+      "end": 291.7,
+      "duration": 20.662,
+      "label": "Leo The common mistake is to think equi",
+      "headline": "It means the quantity plans match at that price",
+      "narration": "Leo: The common mistake is to think equilibrium means everyone is happy"
+    }
+  ],
+  "cue_span_sec": 291.7,
+  "formulas": [],
+  "exported_at": "2026-07-08T00:46:45.780Z"
+}

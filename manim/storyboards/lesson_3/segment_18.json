@@ -1,0 +1,143 @@
+{
+  "lesson_id": 3,
+  "activity_id": 18,
+  "activity_type": "lesson_part",
+  "title": "Part 2: Shortage and surplus push price back",
+  "audio": {
+    "file_path": "runtime_artifacts/audio/lesson_3_activity_18_audio.mp3",
+    "duration_sec": 287.98
+  },
+  "audio_source": "artifact",
+  "cue_source": "audio.synced_visual.cues",
+  "cues": [
+    {
+      "index": 0,
+      "start": 0,
+      "end": 20.399,
+      "duration": 20.399,
+      "label": "Leo Let's make Shortage and surplus pus",
+      "headline": "The core idea is this Prices away from equilibrium create p",
+      "narration": "Leo: Let's make Shortage and surplus push price back work as its own small audio"
+    },
+    {
+      "index": 1,
+      "start": 20.399,
+      "end": 40.797,
+      "duration": 20.398,
+      "label": "Prices away from equilibrium create pres",
+      "headline": "Shortage and surplus push price backMaya What is the conc",
+      "narration": "Prices away from equilibrium create pressure: shortages push up, surpluses push "
+    },
+    {
+      "index": 2,
+      "start": 40.797,
+      "end": 61.196,
+      "duration": 20.399,
+      "label": "The important thing is what happens to t",
+      "headline": "Maya Why does that object matter",
+      "narration": "The important thing is what happens to that object and why the next prediction, "
+    },
+    {
+      "index": 3,
+      "start": 61.196,
+      "end": 82.794,
+      "duration": 21.598,
+      "label": "It shows what information exists before ",
+      "headline": "Maya Can you give me a simple analogy before the mechanics",
+      "narration": "It shows what information exists before the operation, what the operation change"
+    },
+    {
+      "index": 4,
+      "start": 82.794,
+      "end": 103.193,
+      "duration": 20.399,
+      "label": "If it is too cold, it pushes the other",
+      "headline": "A market price adjusts pressure between shortage and surplus",
+      "narration": "If it is too cold, it pushes the other"
+    },
+    {
+      "index": 5,
+      "start": 103.193,
+      "end": 123.591,
+      "duration": 20.398,
+      "label": "But the analogy is only a bridge",
+      "headline": "The real understanding comes from returning to a price that ",
+      "narration": "But the analogy is only a bridge"
+    },
+    {
+      "index": 6,
+      "start": 123.591,
+      "end": 143.99,
+      "duration": 20.399,
+      "label": "Leo At a low price, many buyers want th",
+      "headline": "That creates a shortage",
+      "narration": "Leo: At a low price, many buyers want the good but sellers may not want to produ"
+    },
+    {
+      "index": 7,
+      "start": 143.99,
+      "end": 164.389,
+      "duration": 20.399,
+      "label": "Now connect that tiny example back to Sh",
+      "headline": "Shortage and surplus push price back Prices away from equili",
+      "narration": "Now connect that tiny example back to Shortage and surplus push price back: Pric"
+    },
+    {
+      "index": 8,
+      "start": 164.389,
+      "end": 184.787,
+      "duration": 20.398,
+      "label": "Shortage and surplus push price backMa",
+      "headline": "Leo Demand usually falls as price rises",
+      "narration": "Shortage and surplus push price back\n\nMaya: What is the mechanism I should under"
+    },
+    {
+      "index": 9,
+      "start": 184.787,
+      "end": 205.186,
+      "duration": 20.399,
+      "label": "A surplus means quantity supplied is gre",
+      "headline": "The key is to watch the intermediate representation, not onl",
+      "narration": "A surplus means quantity supplied is greater than quantity demanded"
+    },
+    {
+      "index": 10,
+      "start": 205.186,
+      "end": 226.784,
+      "duration": 21.598,
+      "label": "In a table or graph, the useful check is",
+      "headline": "The important test is whether the next step has a clearer, m",
+      "narration": "In a table or graph, the useful check is to compare quantities at the same price"
+    },
+    {
+      "index": 11,
+      "start": 226.784,
+      "end": 247.183,
+      "duration": 20.399,
+      "label": "The useful explanation has to say what i",
+      "headline": "Maya What is the common mistake here",
+      "narration": "The useful explanation has to say what information exists before the operation, "
+    },
+    {
+      "index": 12,
+      "start": 247.183,
+      "end": 267.581,
+      "duration": 20.398,
+      "label": "That mistake usually shows up when someo",
+      "headline": "Maya Can you go deeper on the cause-and-effect chain",
+      "narration": "That mistake usually shows up when someone can repeat the label but cannot point"
+    },
+    {
+      "index": 13,
+      "start": 267.581,
+      "end": 287.98,
+      "duration": 20.399,
+      "label": "Change Demand usually falls as price ri",
+      "headline": "Supply usually rises as price rises",
+      "narration": "Change: Demand usually falls as price rises"
+    }
+  ],
+  "cue_span_sec": 287.98,
+  "formulas": [],
+  "exported_at": "2026-07-08T00:46:45.780Z"
+}

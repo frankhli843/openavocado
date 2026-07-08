@@ -1,0 +1,305 @@
+{
+  "lesson_id": 3,
+  "activity_id": 53,
+  "reviewed_at": "2026-07-08T01:20:00Z",
+  "iterations": 2,
+  "frames_reviewed": 42,
+  "quality": "ql",
+  "notes": "Lesson 3 Part 3 (act 53, 'Taxes create a wedge and split burden', 291.7s, 14 cues rescaled to real MP3). Tax-incidence focus using econ.py tax_wedge / burden_split / steep_demand on the shared market (per-unit tax 2 \u2192 Q 3.75, buyer 6, seller 4, wedge 2). Two iterations: round-1 authored+rendered; round-2 fixed several idiom/layout issues \u2014 tax_wedge brace flipped to the LEFT + larger label so it no longer crowds the equilibrium crossing (Q_TAX 3.75 sits near Q* 5), exposed missing VGroup attributes (tax_wedge.qline, burden_split.pstar) that crashed Cue01/Cue02, and moved Cue12's question to the top band to clear the x-axis. Per-cue checklist (formula legibility+correctness incl P_b-P_s=tax and Q_tax<Q*, highlighted element matches narration, contrast, nothing off-frame/overlapping via theme.guard, chunk timing) all pass. Chunk timing verified in render log; final within \u0394<0.5s of the 291.7s audio.",
+  "frames": [
+    {
+      "cue": 0,
+      "kind": "start",
+      "path": "lesson_3/53/cue00_start.png",
+      "verdict": "pass",
+      "notes": "start frame (+0.1s): reveal in progress, expected sparse"
+    },
+    {
+      "cue": 0,
+      "kind": "mid",
+      "path": "lesson_3/53/cue00_mid.png",
+      "verdict": "pass",
+      "notes": ""
+    },
+    {
+      "cue": 0,
+      "kind": "end",
+      "path": "lesson_3/53/cue00_end.png",
+      "verdict": "pass",
+      "notes": "Axes+curves+equilibrium; rose tax wedge between blue buyer dot (P6) and amber seller dot (P4) with 'tax {' brace on the LEFT (fixed from crowding the crossing). Matches title."
+    },
+    {
+      "cue": 1,
+      "kind": "start",
+      "path": "lesson_3/53/cue01_start.png",
+      "verdict": "pass",
+      "notes": "start frame (+0.1s): reveal in progress, expected sparse"
+    },
+    {
+      "cue": 1,
+      "kind": "mid",
+      "path": "lesson_3/53/cue01_mid.png",
+      "verdict": "pass",
+      "notes": ""
+    },
+    {
+      "cue": 1,
+      "kind": "end",
+      "path": "lesson_3/53/cue01_end.png",
+      "verdict": "pass",
+      "notes": "Burden split at Q_tax: blue buyer's-share brace (P*\u2192P_b) + amber seller's-share brace (P_s\u2192P*) off the green P* dashed line + 'steeper curve \u2192 bigger share' caption."
+    },
+    {
+      "cue": 2,
+      "kind": "start",
+      "path": "lesson_3/53/cue02_start.png",
+      "verdict": "pass",
+      "notes": "start frame (+0.1s): reveal in progress, expected sparse"
+    },
+    {
+      "cue": 2,
+      "kind": "mid",
+      "path": "lesson_3/53/cue02_mid.png",
+      "verdict": "pass",
+      "notes": ""
+    },
+    {
+      "cue": 2,
+      "kind": "end",
+      "path": "lesson_3/53/cue02_end.png",
+      "verdict": "pass",
+      "notes": "Tax wedge with q-line, buyer/seller dots, brace+tax label; wedge indicated. Clean."
+    },
+    {
+      "cue": 3,
+      "kind": "start",
+      "path": "lesson_3/53/cue03_start.png",
+      "verdict": "pass",
+      "notes": "start frame (+0.1s): reveal in progress, expected sparse"
+    },
+    {
+      "cue": 3,
+      "kind": "mid",
+      "path": "lesson_3/53/cue03_mid.png",
+      "verdict": "pass",
+      "notes": ""
+    },
+    {
+      "cue": 3,
+      "kind": "end",
+      "path": "lesson_3/53/cue03_end.png",
+      "verdict": "pass",
+      "notes": "Wedge with 'Buyer pays' P_b=6 (blue) and 'Seller keeps' P_s=4 (amber) + tax brace. MathTex correct, readable."
+    },
+    {
+      "cue": 4,
+      "kind": "start",
+      "path": "lesson_3/53/cue04_start.png",
+      "verdict": "pass",
+      "notes": "start frame (+0.1s): reveal in progress, expected sparse"
+    },
+    {
+      "cue": 4,
+      "kind": "mid",
+      "path": "lesson_3/53/cue04_mid.png",
+      "verdict": "pass",
+      "notes": ""
+    },
+    {
+      "cue": 4,
+      "kind": "end",
+      "path": "lesson_3/53/cue04_end.png",
+      "verdict": "pass",
+      "notes": "Toll analogy: 'driver pays 6' (blue) + 'road keeps 4' (amber) + 'gap = tax'. Clean."
+    },
+    {
+      "cue": 5,
+      "kind": "start",
+      "path": "lesson_3/53/cue05_start.png",
+      "verdict": "pass",
+      "notes": "start frame (+0.1s): reveal in progress, expected sparse"
+    },
+    {
+      "cue": 5,
+      "kind": "mid",
+      "path": "lesson_3/53/cue05_mid.png",
+      "verdict": "pass",
+      "notes": ""
+    },
+    {
+      "cue": 5,
+      "kind": "end",
+      "path": "lesson_3/53/cue05_end.png",
+      "verdict": "pass",
+      "notes": "Equilibrium + tax wedge + 'quantity where the gap = tax' caption; wedge indicated. Clean."
+    },
+    {
+      "cue": 6,
+      "kind": "start",
+      "path": "lesson_3/53/cue06_start.png",
+      "verdict": "pass",
+      "notes": "start frame (+0.1s): reveal in progress, expected sparse"
+    },
+    {
+      "cue": 6,
+      "kind": "mid",
+      "path": "lesson_3/53/cue06_mid.png",
+      "verdict": "pass",
+      "notes": ""
+    },
+    {
+      "cue": 6,
+      "kind": "end",
+      "path": "lesson_3/53/cue06_end.png",
+      "verdict": "pass",
+      "notes": "'+1 to buyer' (blue up arrow) and '\u22121 to seller' (amber down arrow) from P* \u2014 the tax splits the price each side sees. Readable."
+    },
+    {
+      "cue": 7,
+      "kind": "start",
+      "path": "lesson_3/53/cue07_start.png",
+      "verdict": "pass",
+      "notes": "start frame (+0.1s): reveal in progress, expected sparse"
+    },
+    {
+      "cue": 7,
+      "kind": "mid",
+      "path": "lesson_3/53/cue07_mid.png",
+      "verdict": "pass",
+      "notes": ""
+    },
+    {
+      "cue": 7,
+      "kind": "end",
+      "path": "lesson_3/53/cue07_end.png",
+      "verdict": "pass",
+      "notes": "Q* vs Q_tax dashed lines; rose 'fewer trades' arrow from Q* to Q_tax below the wedge. Correct: quantity falls."
+    },
+    {
+      "cue": 8,
+      "kind": "start",
+      "path": "lesson_3/53/cue08_start.png",
+      "verdict": "pass",
+      "notes": "start frame (+0.1s): reveal in progress, expected sparse"
+    },
+    {
+      "cue": 8,
+      "kind": "mid",
+      "path": "lesson_3/53/cue08_mid.png",
+      "verdict": "pass",
+      "notes": ""
+    },
+    {
+      "cue": 8,
+      "kind": "end",
+      "path": "lesson_3/53/cue08_end.png",
+      "verdict": "pass",
+      "notes": "Incidence: steep (inelastic) demand through equilibrium + buyer's/seller's share braces + 'less responsive \u2192 bigger share'. Conceptually correct."
+    },
+    {
+      "cue": 9,
+      "kind": "start",
+      "path": "lesson_3/53/cue09_start.png",
+      "verdict": "pass",
+      "notes": "start frame (+0.1s): reveal in progress, expected sparse"
+    },
+    {
+      "cue": 9,
+      "kind": "mid",
+      "path": "lesson_3/53/cue09_mid.png",
+      "verdict": "pass",
+      "notes": ""
+    },
+    {
+      "cue": 9,
+      "kind": "end",
+      "path": "lesson_3/53/cue09_end.png",
+      "verdict": "pass",
+      "notes": "Wedge separates buyer price from seller receipt; 'P_b - P_s = tax' formula (correct) at bottom. Clean."
+    },
+    {
+      "cue": 10,
+      "kind": "start",
+      "path": "lesson_3/53/cue10_start.png",
+      "verdict": "pass",
+      "notes": "start frame (+0.1s): reveal in progress, expected sparse"
+    },
+    {
+      "cue": 10,
+      "kind": "mid",
+      "path": "lesson_3/53/cue10_mid.png",
+      "verdict": "pass",
+      "notes": ""
+    },
+    {
+      "cue": 10,
+      "kind": "end",
+      "path": "lesson_3/53/cue10_end.png",
+      "verdict": "pass",
+      "notes": "Law of supply: 'low P \u21d2 less Q' and 'high P \u21d2 more Q' sample points on the amber supply line; upward slope indicated. MathTex correct."
+    },
+    {
+      "cue": 11,
+      "kind": "start",
+      "path": "lesson_3/53/cue11_start.png",
+      "verdict": "pass",
+      "notes": "start frame (+0.1s): reveal in progress, expected sparse"
+    },
+    {
+      "cue": 11,
+      "kind": "mid",
+      "path": "lesson_3/53/cue11_mid.png",
+      "verdict": "pass",
+      "notes": ""
+    },
+    {
+      "cue": 11,
+      "kind": "end",
+      "path": "lesson_3/53/cue11_end.png",
+      "verdict": "pass",
+      "notes": "Wedge + 'Q_tax = 3.75 < Q* = 5' MathTex (correct) + leftward arrow. Clean."
+    },
+    {
+      "cue": 12,
+      "kind": "start",
+      "path": "lesson_3/53/cue12_start.png",
+      "verdict": "pass",
+      "notes": "start frame (+0.1s): reveal in progress, expected sparse"
+    },
+    {
+      "cue": 12,
+      "kind": "mid",
+      "path": "lesson_3/53/cue12_mid.png",
+      "verdict": "pass",
+      "notes": ""
+    },
+    {
+      "cue": 12,
+      "kind": "end",
+      "path": "lesson_3/53/cue12_end.png",
+      "verdict": "pass",
+      "notes": "Wedge + buyer's/seller's share braces + '\u2192 which side is less responsive?' moved to the top band (fixed from sitting on the x-axis). No overlap."
+    },
+    {
+      "cue": 13,
+      "kind": "start",
+      "path": "lesson_3/53/cue13_start.png",
+      "verdict": "pass",
+      "notes": "start frame (+0.1s): reveal in progress, expected sparse"
+    },
+    {
+      "cue": 13,
+      "kind": "mid",
+      "path": "lesson_3/53/cue13_mid.png",
+      "verdict": "pass",
+      "notes": ""
+    },
+    {
+      "cue": 13,
+      "kind": "end",
+      "path": "lesson_3/53/cue13_end.png",
+      "verdict": "pass",
+      "notes": "Wedge + Buyer pays/Seller keeps + tax brace + 'buyer pays more \u00b7 seller keeps less \u00b7 fewer trades' summary. The taxed market clears but nobody is fully happy. Legible."
+    }
+  ]
+}

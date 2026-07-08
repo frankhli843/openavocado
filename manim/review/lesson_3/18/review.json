@@ -1,0 +1,305 @@
+{
+  "lesson_id": 3,
+  "activity_id": 18,
+  "reviewed_at": "2026-07-08T01:12:00Z",
+  "iterations": 2,
+  "frames_reviewed": 42,
+  "quality": "ql",
+  "notes": "Lesson 3 Part 2 (act 18, 'Shortage and surplus push price back', 287.98s, 14 cues rescaled to real MP3). Dynamics/convergence focus using econ.py gap_marker + push_arrow on the shared linear market. Two iterations: round-1 authored+rendered all 14; round-2 fixed Cue10 (wide verdict overlapped the Quantity axis label -> compact '\u2192 shortage' in the clear left wedge) and Cue12 (question text sat on the x-axis -> moved to the top band and shifted right to clear the Price label). Per-cue checklist (formula legibility+correctness, highlighted element matches narration, contrast, nothing off-frame/overlapping via theme.guard, chunk timing) all pass. Chunk timing verified in render log; final 288.0s vs audio 287.98s \u03940.02s (<0.5s).",
+  "frames": [
+    {
+      "cue": 0,
+      "kind": "start",
+      "path": "lesson_3/18/cue00_start.png",
+      "verdict": "pass",
+      "notes": "start frame (+0.1s): reveal in progress, expected sparse"
+    },
+    {
+      "cue": 0,
+      "kind": "mid",
+      "path": "lesson_3/18/cue00_mid.png",
+      "verdict": "pass",
+      "notes": ""
+    },
+    {
+      "cue": 0,
+      "kind": "end",
+      "path": "lesson_3/18/cue00_end.png",
+      "verdict": "pass",
+      "notes": "Axes+curves+equilibrium; up (rose/shortage) and down (violet/surplus) push arrows on the price axis. Matches title. In-frame."
+    },
+    {
+      "cue": 1,
+      "kind": "start",
+      "path": "lesson_3/18/cue01_start.png",
+      "verdict": "pass",
+      "notes": "start frame (+0.1s): reveal in progress, expected sparse"
+    },
+    {
+      "cue": 1,
+      "kind": "mid",
+      "path": "lesson_3/18/cue01_mid.png",
+      "verdict": "pass",
+      "notes": ""
+    },
+    {
+      "cue": 1,
+      "kind": "end",
+      "path": "lesson_3/18/cue01_end.png",
+      "verdict": "pass",
+      "notes": "Both off-equilibrium prices marked: violet Surplus gap (P=7) with down arrow, rose Shortage gap (P=3) with up arrow. Correct geometry, no collisions."
+    },
+    {
+      "cue": 2,
+      "kind": "start",
+      "path": "lesson_3/18/cue02_start.png",
+      "verdict": "pass",
+      "notes": "start frame (+0.1s): reveal in progress, expected sparse"
+    },
+    {
+      "cue": 2,
+      "kind": "mid",
+      "path": "lesson_3/18/cue02_mid.png",
+      "verdict": "pass",
+      "notes": ""
+    },
+    {
+      "cue": 2,
+      "kind": "end",
+      "path": "lesson_3/18/cue02_end.png",
+      "verdict": "pass",
+      "notes": "White price marker slides down the y-axis to P* then up to P*; equilibrium flashes. 'price adjusts toward the crossing'. Clean."
+    },
+    {
+      "cue": 3,
+      "kind": "start",
+      "path": "lesson_3/18/cue03_start.png",
+      "verdict": "pass",
+      "notes": "start frame (+0.1s): reveal in progress, expected sparse"
+    },
+    {
+      "cue": 3,
+      "kind": "mid",
+      "path": "lesson_3/18/cue03_mid.png",
+      "verdict": "pass",
+      "notes": ""
+    },
+    {
+      "cue": 3,
+      "kind": "end",
+      "path": "lesson_3/18/cue03_end.png",
+      "verdict": "pass",
+      "notes": "Thermostat analogy: green dashed set point at P*, 'too high \u2192 cools off' (violet)+down arrow, 'too low \u2192 heats up' (rose)+up arrow. Readable, no overlap."
+    },
+    {
+      "cue": 4,
+      "kind": "start",
+      "path": "lesson_3/18/cue04_start.png",
+      "verdict": "pass",
+      "notes": "start frame (+0.1s): reveal in progress, expected sparse"
+    },
+    {
+      "cue": 4,
+      "kind": "mid",
+      "path": "lesson_3/18/cue04_mid.png",
+      "verdict": "pass",
+      "notes": ""
+    },
+    {
+      "cue": 4,
+      "kind": "end",
+      "path": "lesson_3/18/cue04_end.png",
+      "verdict": "pass",
+      "notes": "Shortage at P=3 with rose double-arrow + 'buyers bid the price up' caption + up push arrow. Correct."
+    },
+    {
+      "cue": 5,
+      "kind": "start",
+      "path": "lesson_3/18/cue05_start.png",
+      "verdict": "pass",
+      "notes": "start frame (+0.1s): reveal in progress, expected sparse"
+    },
+    {
+      "cue": 5,
+      "kind": "mid",
+      "path": "lesson_3/18/cue05_mid.png",
+      "verdict": "pass",
+      "notes": ""
+    },
+    {
+      "cue": 5,
+      "kind": "end",
+      "path": "lesson_3/18/cue05_end.png",
+      "verdict": "pass",
+      "notes": "Full diagram + equilibrium + 'pressure only vanishes at the crossing' caption; dot flashes. Clean."
+    },
+    {
+      "cue": 6,
+      "kind": "start",
+      "path": "lesson_3/18/cue06_start.png",
+      "verdict": "pass",
+      "notes": "start frame (+0.1s): reveal in progress, expected sparse"
+    },
+    {
+      "cue": 6,
+      "kind": "mid",
+      "path": "lesson_3/18/cue06_mid.png",
+      "verdict": "pass",
+      "notes": ""
+    },
+    {
+      "cue": 6,
+      "kind": "end",
+      "path": "lesson_3/18/cue06_end.png",
+      "verdict": "pass",
+      "notes": "Shortage detail at P=3: 'few made' under amber Qs dot, 'many wanted' under blue Qd dot, rose Shortage arrow. No collisions."
+    },
+    {
+      "cue": 7,
+      "kind": "start",
+      "path": "lesson_3/18/cue07_start.png",
+      "verdict": "pass",
+      "notes": "start frame (+0.1s): reveal in progress, expected sparse"
+    },
+    {
+      "cue": 7,
+      "kind": "mid",
+      "path": "lesson_3/18/cue07_mid.png",
+      "verdict": "pass",
+      "notes": ""
+    },
+    {
+      "cue": 7,
+      "kind": "end",
+      "path": "lesson_3/18/cue07_end.png",
+      "verdict": "pass",
+      "notes": "Shortage arrow slides up, equilibrium flashes with 'gap = 0'. Correct convergence."
+    },
+    {
+      "cue": 8,
+      "kind": "start",
+      "path": "lesson_3/18/cue08_start.png",
+      "verdict": "pass",
+      "notes": "start frame (+0.1s): reveal in progress, expected sparse"
+    },
+    {
+      "cue": 8,
+      "kind": "mid",
+      "path": "lesson_3/18/cue08_mid.png",
+      "verdict": "pass",
+      "notes": ""
+    },
+    {
+      "cue": 8,
+      "kind": "end",
+      "path": "lesson_3/18/cue08_end.png",
+      "verdict": "pass",
+      "notes": "'surplus \u2193' (violet) and 'shortage \u2191' (rose) push arrows with labels; equilibrium flashes. Clean."
+    },
+    {
+      "cue": 9,
+      "kind": "start",
+      "path": "lesson_3/18/cue09_start.png",
+      "verdict": "pass",
+      "notes": "start frame (+0.1s): reveal in progress, expected sparse"
+    },
+    {
+      "cue": 9,
+      "kind": "mid",
+      "path": "lesson_3/18/cue09_mid.png",
+      "verdict": "pass",
+      "notes": ""
+    },
+    {
+      "cue": 9,
+      "kind": "end",
+      "path": "lesson_3/18/cue09_end.png",
+      "verdict": "pass",
+      "notes": "Surplus at P=7 with 'Q_s > Q_d' (correct, legible) + down push arrow. Left blue demand dot, right amber supply dot."
+    },
+    {
+      "cue": 10,
+      "kind": "start",
+      "path": "lesson_3/18/cue10_start.png",
+      "verdict": "pass",
+      "notes": "start frame (+0.1s): reveal in progress, expected sparse"
+    },
+    {
+      "cue": 10,
+      "kind": "mid",
+      "path": "lesson_3/18/cue10_mid.png",
+      "verdict": "pass",
+      "notes": ""
+    },
+    {
+      "cue": 10,
+      "kind": "end",
+      "path": "lesson_3/18/cue10_end.png",
+      "verdict": "pass",
+      "notes": "P=3 line; Q_s=2.5 (amber) and Q_d=7.5 (blue) readings clear; compact '\u2192 shortage' in the clear left wedge (fixed from overlapping Quantity label)."
+    },
+    {
+      "cue": 11,
+      "kind": "start",
+      "path": "lesson_3/18/cue11_start.png",
+      "verdict": "pass",
+      "notes": "start frame (+0.1s): reveal in progress, expected sparse"
+    },
+    {
+      "cue": 11,
+      "kind": "mid",
+      "path": "lesson_3/18/cue11_mid.png",
+      "verdict": "pass",
+      "notes": ""
+    },
+    {
+      "cue": 11,
+      "kind": "end",
+      "path": "lesson_3/18/cue11_end.png",
+      "verdict": "pass",
+      "notes": "Equilibrium + 'stable' + 'Q_d = Q_s \u21d2 no push' MathTex (correct). Dot flashes. Clean."
+    },
+    {
+      "cue": 12,
+      "kind": "start",
+      "path": "lesson_3/18/cue12_start.png",
+      "verdict": "pass",
+      "notes": "start frame (+0.1s): reveal in progress, expected sparse"
+    },
+    {
+      "cue": 12,
+      "kind": "mid",
+      "path": "lesson_3/18/cue12_mid.png",
+      "verdict": "pass",
+      "notes": ""
+    },
+    {
+      "cue": 12,
+      "kind": "end",
+      "path": "lesson_3/18/cue12_end.png",
+      "verdict": "pass",
+      "notes": "Misconception: rose Shortage gap + 'up' answer + arrow; '\u2192 which way does price move?' at top (moved right to clear the Price label). No overlap."
+    },
+    {
+      "cue": 13,
+      "kind": "start",
+      "path": "lesson_3/18/cue13_start.png",
+      "verdict": "pass",
+      "notes": "start frame (+0.1s): reveal in progress, expected sparse"
+    },
+    {
+      "cue": 13,
+      "kind": "mid",
+      "path": "lesson_3/18/cue13_mid.png",
+      "verdict": "pass",
+      "notes": ""
+    },
+    {
+      "cue": 13,
+      "kind": "end",
+      "path": "lesson_3/18/cue13_end.png",
+      "verdict": "pass",
+      "notes": "Both push arrows dimmed as 'converge to P*, Q*' (green) settles at the equilibrium dot; dot flashes. Clean."
+    }
+  ]
+}

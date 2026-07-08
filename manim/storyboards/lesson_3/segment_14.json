@@ -1,0 +1,108 @@
+{
+  "lesson_id": 3,
+  "activity_id": 14,
+  "activity_type": "audio",
+  "title": "Audio: How Markets Find a Price",
+  "audio": {
+    "file_path": "runtime_artifacts/audio/lesson_3_audio.mp3",
+    "duration_sec": 972.96
+  },
+  "audio_source": "artifact",
+  "cue_source": "orientation_visual.cues",
+  "cues": [
+    {
+      "index": 0,
+      "start": 0,
+      "end": 139.458,
+      "duration": 139.458,
+      "label": "High-level map",
+      "headline": "Locate the lesson before details",
+      "narration": "Locate the lesson before details for Supply, Demand, and Equilibrium.",
+      "active_elements": [
+        "Subject",
+        "Lesson"
+      ]
+    },
+    {
+      "index": 1,
+      "start": 139.458,
+      "end": 277.834,
+      "duration": 138.376,
+      "label": "Analogy",
+      "headline": "Translate the idea into a workshop metaphor",
+      "narration": "Translate the idea into a workshop metaphor for Supply, Demand, and Equilibrium.",
+      "active_elements": [
+        "Receive",
+        "Transform"
+      ]
+    },
+    {
+      "index": 2,
+      "start": 277.834,
+      "end": 417.292,
+      "duration": 139.458,
+      "label": "Tiny example",
+      "headline": "Follow one concrete object",
+      "narration": "Follow one concrete object for Supply, Demand, and Equilibrium.",
+      "active_elements": [
+        "Object",
+        "Change"
+      ]
+    },
+    {
+      "index": 3,
+      "start": 417.292,
+      "end": 555.668,
+      "duration": 138.376,
+      "label": "Mechanism",
+      "headline": "Expose what changes and why",
+      "narration": "Expose what changes and why for Supply, Demand, and Equilibrium.",
+      "active_elements": [
+        "Before",
+        "During"
+      ]
+    },
+    {
+      "index": 4,
+      "start": 555.668,
+      "end": 695.126,
+      "duration": 139.458,
+      "label": "Implementation",
+      "headline": "Connect to code and tests",
+      "narration": "Connect to code and tests for Supply, Demand, and Equilibrium.",
+      "active_elements": [
+        "Variable",
+        "Assert"
+      ]
+    },
+    {
+      "index": 5,
+      "start": 695.126,
+      "end": 833.502,
+      "duration": 138.376,
+      "label": "Misconception",
+      "headline": "Separate nearby ideas",
+      "narration": "Separate nearby ideas for Supply, Demand, and Equilibrium.",
+      "active_elements": [
+        "Confusing label",
+        "Correct relation"
+      ]
+    },
+    {
+      "index": 6,
+      "start": 833.502,
+      "end": 972.96,
+      "duration": 139.458,
+      "label": "Synthesis",
+      "headline": "Return to the route and prepare practice",
+      "narration": "Return to the route and prepare practice for Supply, Demand, and Equilibrium.",
+      "active_elements": [
+        "Subject",
+        "Lesson"
+      ]
+    }
+  ],
+  "cue_span_sec": 972.96,
+  "formulas": [],
+  "exported_at": "2026-07-08T00:46:45.779Z"
+}

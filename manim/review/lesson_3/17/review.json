@@ -1,0 +1,305 @@
+{
+  "lesson_id": 3,
+  "activity_id": 17,
+  "reviewed_at": "2026-07-08T01:00:00Z",
+  "iterations": 2,
+  "frames_reviewed": 42,
+  "quality": "ql",
+  "notes": "Lesson 3 Part 1 (act 17, 'Equilibrium is the crossing point', 274.75s, 14 cues rescaled to the real MP3 via backfill-lesson3-cue-timing-rescale.mjs). Visual spine = shared price-quantity idioms in manim/econ.py (market_axes, demand_curve/supply_curve, equilibrium, gap_marker, push_arrow) with the one fixed linear market demand(q)=9-0.8q, supply(q)=1+0.8q, equilibrium Q*=5 P*=5. Two review iterations: round-1 authored+rendered all 14; round-2 fixed label collisions in Cue06 ('buyers want many' moved below its dot), Cue10 (Q_s reading was hidden behind the Supply label -> moved below the price line, and the wide verdict overlapped the Quantity/Demand labels -> replaced with a compact '\u2192 surplus' in the clear right wedge), Cue12 ('not here' moved right of the wrong dot, 'the crossing' moved below the equilibrium dot), and Cue03 ('sellers want more' flipped to LEFT to clear the Supply label). Per-cue checklist (formula legibility+correctness, highlighted element matches narration, contrast, nothing off-frame/overlapping via theme.guard safe-area assertion, chunk timing): all pass. Chunk timing verified in render log: every cue within pinning tolerance, final 274.804s vs audio 274.75s \u03940.054s (<0.5s).",
+  "frames": [
+    {
+      "cue": 0,
+      "kind": "start",
+      "path": "lesson_3/17/cue00_start.png",
+      "verdict": "pass",
+      "notes": "start frame (+0.1s): reveal in progress, expected sparse"
+    },
+    {
+      "cue": 0,
+      "kind": "mid",
+      "path": "lesson_3/17/cue00_mid.png",
+      "verdict": "pass",
+      "notes": ""
+    },
+    {
+      "cue": 0,
+      "kind": "end",
+      "path": "lesson_3/17/cue00_end.png",
+      "verdict": "pass",
+      "notes": "Axes + blue downward Demand + amber upward Supply drawn; green equilibrium dot flashes at the crossing. Matches 'equilibrium is the crossing point'. In-frame, legible."
+    },
+    {
+      "cue": 1,
+      "kind": "start",
+      "path": "lesson_3/17/cue01_start.png",
+      "verdict": "pass",
+      "notes": "start frame (+0.1s): reveal in progress, expected sparse"
+    },
+    {
+      "cue": 1,
+      "kind": "mid",
+      "path": "lesson_3/17/cue01_mid.png",
+      "verdict": "pass",
+      "notes": ""
+    },
+    {
+      "cue": 1,
+      "kind": "end",
+      "path": "lesson_3/17/cue01_end.png",
+      "verdict": "pass",
+      "notes": "Equilibrium dot + dashed P*/Q* guides + 'Q demanded = Q supplied' note. Correct: crossing = same quantity. Labels clear of curves."
+    },
+    {
+      "cue": 2,
+      "kind": "start",
+      "path": "lesson_3/17/cue02_start.png",
+      "verdict": "pass",
+      "notes": "start frame (+0.1s): reveal in progress, expected sparse"
+    },
+    {
+      "cue": 2,
+      "kind": "mid",
+      "path": "lesson_3/17/cue02_mid.png",
+      "verdict": "pass",
+      "notes": ""
+    },
+    {
+      "cue": 2,
+      "kind": "end",
+      "path": "lesson_3/17/cue02_end.png",
+      "verdict": "pass",
+      "notes": "Crossing boxed + curves dimmed then restored; eye lands on the single balanced price. In-frame."
+    },
+    {
+      "cue": 3,
+      "kind": "start",
+      "path": "lesson_3/17/cue03_start.png",
+      "verdict": "pass",
+      "notes": "start frame (+0.1s): reveal in progress, expected sparse"
+    },
+    {
+      "cue": 3,
+      "kind": "mid",
+      "path": "lesson_3/17/cue03_mid.png",
+      "verdict": "pass",
+      "notes": ""
+    },
+    {
+      "cue": 3,
+      "kind": "end",
+      "path": "lesson_3/17/cue03_end.png",
+      "verdict": "pass",
+      "notes": "Scale analogy: 'buyers want more' (blue, lower-left) + 'sellers want more' (amber, upper-left) + 'settles at the crossing'; equilibrium dot indicated. Readable."
+    },
+    {
+      "cue": 4,
+      "kind": "start",
+      "path": "lesson_3/17/cue04_start.png",
+      "verdict": "pass",
+      "notes": "start frame (+0.1s): reveal in progress, expected sparse"
+    },
+    {
+      "cue": 4,
+      "kind": "mid",
+      "path": "lesson_3/17/cue04_mid.png",
+      "verdict": "pass",
+      "notes": ""
+    },
+    {
+      "cue": 4,
+      "kind": "end",
+      "path": "lesson_3/17/cue04_end.png",
+      "verdict": "pass",
+      "notes": "Surplus at P=7 (violet double-arrow between blue demand dot and amber supply dot) + downward push arrow; equilibrium indicated. Correct geometry."
+    },
+    {
+      "cue": 5,
+      "kind": "start",
+      "path": "lesson_3/17/cue05_start.png",
+      "verdict": "pass",
+      "notes": "start frame (+0.1s): reveal in progress, expected sparse"
+    },
+    {
+      "cue": 5,
+      "kind": "mid",
+      "path": "lesson_3/17/cue05_mid.png",
+      "verdict": "pass",
+      "notes": ""
+    },
+    {
+      "cue": 5,
+      "kind": "end",
+      "path": "lesson_3/17/cue05_end.png",
+      "verdict": "pass",
+      "notes": "Full diagram + equilibrium + 'two lines, one crossing' caption. Clean."
+    },
+    {
+      "cue": 6,
+      "kind": "start",
+      "path": "lesson_3/17/cue06_start.png",
+      "verdict": "pass",
+      "notes": "start frame (+0.1s): reveal in progress, expected sparse"
+    },
+    {
+      "cue": 6,
+      "kind": "mid",
+      "path": "lesson_3/17/cue06_mid.png",
+      "verdict": "pass",
+      "notes": ""
+    },
+    {
+      "cue": 6,
+      "kind": "end",
+      "path": "lesson_3/17/cue06_end.png",
+      "verdict": "pass",
+      "notes": "Shortage at P=3: 'sellers make few' under amber dot (Qs=2.5), 'buyers want many' under blue dot (Qd=7.5), rose Shortage arrow above. No collisions after fix."
+    },
+    {
+      "cue": 7,
+      "kind": "start",
+      "path": "lesson_3/17/cue07_start.png",
+      "verdict": "pass",
+      "notes": "start frame (+0.1s): reveal in progress, expected sparse"
+    },
+    {
+      "cue": 7,
+      "kind": "mid",
+      "path": "lesson_3/17/cue07_mid.png",
+      "verdict": "pass",
+      "notes": ""
+    },
+    {
+      "cue": 7,
+      "kind": "end",
+      "path": "lesson_3/17/cue07_end.png",
+      "verdict": "pass",
+      "notes": "Shortage arrow slides up then equilibrium dot flashes with 'gap = 0'. Correct: crossing closes the gap."
+    },
+    {
+      "cue": 8,
+      "kind": "start",
+      "path": "lesson_3/17/cue08_start.png",
+      "verdict": "pass",
+      "notes": "start frame (+0.1s): reveal in progress, expected sparse"
+    },
+    {
+      "cue": 8,
+      "kind": "mid",
+      "path": "lesson_3/17/cue08_mid.png",
+      "verdict": "pass",
+      "notes": ""
+    },
+    {
+      "cue": 8,
+      "kind": "end",
+      "path": "lesson_3/17/cue08_end.png",
+      "verdict": "pass",
+      "notes": "Mechanism: two curves + equilibrium with P*/Q* guides. Clean."
+    },
+    {
+      "cue": 9,
+      "kind": "start",
+      "path": "lesson_3/17/cue09_start.png",
+      "verdict": "pass",
+      "notes": "start frame (+0.1s): reveal in progress, expected sparse"
+    },
+    {
+      "cue": 9,
+      "kind": "mid",
+      "path": "lesson_3/17/cue09_mid.png",
+      "verdict": "pass",
+      "notes": ""
+    },
+    {
+      "cue": 9,
+      "kind": "end",
+      "path": "lesson_3/17/cue09_end.png",
+      "verdict": "pass",
+      "notes": "Surplus at P=7 with 'Q_s > Q_d' MathTex (correct, legible). Left blue demand dot, right amber supply dot."
+    },
+    {
+      "cue": 10,
+      "kind": "start",
+      "path": "lesson_3/17/cue10_start.png",
+      "verdict": "pass",
+      "notes": "start frame (+0.1s): reveal in progress, expected sparse"
+    },
+    {
+      "cue": 10,
+      "kind": "mid",
+      "path": "lesson_3/17/cue10_mid.png",
+      "verdict": "pass",
+      "notes": ""
+    },
+    {
+      "cue": 10,
+      "kind": "end",
+      "path": "lesson_3/17/cue10_end.png",
+      "verdict": "pass",
+      "notes": "P=7 line; Q_d=2.5 (blue) and Q_s=7.5 (amber) readings clear below the line; compact '\u2192 surplus' verdict in the right wedge, clear of all labels after fix."
+    },
+    {
+      "cue": 11,
+      "kind": "start",
+      "path": "lesson_3/17/cue11_start.png",
+      "verdict": "pass",
+      "notes": "start frame (+0.1s): reveal in progress, expected sparse"
+    },
+    {
+      "cue": 11,
+      "kind": "mid",
+      "path": "lesson_3/17/cue11_mid.png",
+      "verdict": "pass",
+      "notes": ""
+    },
+    {
+      "cue": 11,
+      "kind": "end",
+      "path": "lesson_3/17/cue11_end.png",
+      "verdict": "pass",
+      "notes": "'Q_d(P*) = Q_s(P*)' MathTex (correct) at equilibrium; dashed guides indicated; dot flashes."
+    },
+    {
+      "cue": 12,
+      "kind": "start",
+      "path": "lesson_3/17/cue12_start.png",
+      "verdict": "pass",
+      "notes": "start frame (+0.1s): reveal in progress, expected sparse"
+    },
+    {
+      "cue": 12,
+      "kind": "mid",
+      "path": "lesson_3/17/cue12_mid.png",
+      "verdict": "pass",
+      "notes": ""
+    },
+    {
+      "cue": 12,
+      "kind": "end",
+      "path": "lesson_3/17/cue12_end.png",
+      "verdict": "pass",
+      "notes": "Misconception: rose 'not here' dot on the supply curve (crossed out) vs green 'the crossing' below the equilibrium dot; no label overlap after fix."
+    },
+    {
+      "cue": 13,
+      "kind": "start",
+      "path": "lesson_3/17/cue13_start.png",
+      "verdict": "pass",
+      "notes": "start frame (+0.1s): reveal in progress, expected sparse"
+    },
+    {
+      "cue": 13,
+      "kind": "mid",
+      "path": "lesson_3/17/cue13_mid.png",
+      "verdict": "pass",
+      "notes": ""
+    },
+    {
+      "cue": 13,
+      "kind": "end",
+      "path": "lesson_3/17/cue13_end.png",
+      "verdict": "pass",
+      "notes": "Law of demand: 'high P \u21d2 less Q' and 'low P \u21d2 more Q' sample points on the blue demand line; downward slope indicated. MathTex correct."
+    }
+  ]
+}
