@@ -30,14 +30,15 @@ HERO_BODY = f"""
 <section id="demo">
   <div class="video-wrap">
     <video controls preload="none" poster="assets/media/showcase-poster.jpg"
-      aria-label="Open Avocado showcase reel: audio-synced lesson videos across probability, economics, machine learning, deep learning, and algorithms">
+      aria-label="Open Avocado feature walkthrough with voiceover: subjects and mastery, lesson orientation, interactive visualizations, adaptive quizzes, progress, and an audio-synced lesson-video segment">
       <source src="assets/media/showcase.mp4" type="video/mp4">
       Your browser does not support embedded video.
-      <a href="assets/media/showcase.mp4">Download the showcase reel (MP4)</a>.
+      <a href="assets/media/showcase.mp4">Download the feature walkthrough (MP4)</a>.
     </video>
   </div>
-  <p class="video-cap">Showcase reel — audio-synced lesson videos Open Avocado generates, across probability,
-  economics, machine learning, deep learning, and algorithms (about five seconds per subject).</p>
+  <p class="video-cap">Feature walkthrough with voiceover — a guided tour of Open Avocado: subjects and evidence-based
+  mastery, lesson orientation, interactive visualizations, adaptive quizzes, and progress, ending with an
+  audio-synced lesson-video segment the platform generates.</p>
 </section>
 
 <section class="mission">
