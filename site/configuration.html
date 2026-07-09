@@ -63,13 +63,15 @@ bootstrap credentials.</p>
 </ul>
 <div class="table-wrap"><table>
 <tr><th>Variable</th><th>Purpose</th></tr>
-<tr><td><code>AVOCADOCORE_DEFAULT_PROVIDER</code></td><td>Default model provider (e.g. <code>openai</code>, <code>google-ai-studio</code>).</td></tr>
-<tr><td><code>AVOCADOCORE_ACP_ENDPOINT</code> / <code>_MODEL</code> / <code>_TOKEN</code></td><td>OpenAI-compatible base URL (the app appends <code>/chat/completions</code>), model, and optional bearer token for question rephrasing and instant feedback. Point these at a local server for a fully local run — see <a href="run-local-llm.html">Run with your own local LLM</a>.</td></tr>
+<tr><td><code>AVOCADOCORE_DEFAULT_PROVIDER</code></td><td>Default model provider. Use <code>google-ai-studio</code> to call Gemini directly when no OpenAI-compatible endpoint is configured.</td></tr>
+<tr><td><code>AVOCADOCORE_ACP_ENDPOINT</code> / <code>_MODEL</code> / <code>_TOKEN</code></td><td>OpenAI-compatible base URL (the app appends <code>/chat/completions</code>), model, and optional bearer token for question rephrasing and instant feedback. If set, this endpoint takes precedence over direct Google AI Studio calls. Point it at a local server for a fully local run — see <a href="run-local-llm.html">Run with your own local LLM</a>.</td></tr>
 <tr><td><code>AVOCADOCORE_COMPLETION_ADAPTER</code></td><td>Selects the lesson-generation completion adapter: <code>noop</code> (default) or <code>local-queue</code> (enqueue generation in-process for the direct-key and local-model runtimes).</td></tr>
+<tr><td><code>GOOGLE_AI_STUDIO_API_KEY</code> / <code>GOOGLE_AI_STUDIO_MODEL</code></td><td>Server-side Gemini key and model for direct Google AI Studio calls. <code>GOOGLE_AI_STUDIO_MODEL</code> defaults to <code>gemini-2.5-flash</code>.</td></tr>
+<tr><td><code>AVOCADOCORE_LLM_TIMEOUT_MS</code></td><td>Optional provider request timeout in milliseconds; raise it for slower hosted models.</td></tr>
 <tr><td><code>OPENAI_API_KEY</code></td><td>Enables OpenAI TTS for narration; without it, an offline <code>espeak-ng</code> + <code>ffmpeg</code> voice is used.</td></tr>
 </table></div>
 <p>A copyable <code>.env.example</code> ships in the repository. Copy it to <code>.env.local</code> (gitignored) and
-fill in what your runtime needs. See the four <a href="quickstart.html#runtimes">runtime guides</a> for exact recipes.</p>
+fill in what your runtime needs. See the <a href="quickstart.html#runtimes">runtime guides</a> for exact recipes.</p>
 </main>
 <footer><div class="footer-inner">
 <p><strong>Open Avocado</strong> — open-source adaptive learning platform &amp; lesson-generation framework.</p>

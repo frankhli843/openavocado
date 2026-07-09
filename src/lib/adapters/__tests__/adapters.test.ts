@@ -15,6 +15,9 @@ import {
   doraTaskAdapter,
   doraTaskRegenerationAdapter,
   doraTaskSubjectCreatedDispatcher,
+  agentHarnessAdapter,
+  agentHarnessRegenerationAdapter,
+  agentHarnessSubjectCreatedDispatcher,
 } from "../index";
 
 afterEach(() => {
@@ -47,13 +50,18 @@ describe("getCompletionAdapter", () => {
     expect(getCompletionAdapter()).toBe(doraTaskAdapter);
   });
 
+  it("returns agent-harness adapter", () => {
+    vi.stubEnv("AVOCADOCORE_COMPLETION_ADAPTER", "agent-harness");
+    expect(getCompletionAdapter()).toBe(agentHarnessAdapter);
+  });
+
   it("falls back to noop for unknown adapter name", () => {
     vi.stubEnv("AVOCADOCORE_COMPLETION_ADAPTER", "unknown-adapter");
     expect(getCompletionAdapter()).toBe(noopAdapter);
   });
 
   it("all completion adapters have a name and dispatch function", () => {
-    for (const adapter of [noopAdapter, localQueueAdapter, webhookAdapter, doraTaskAdapter]) {
+    for (const adapter of [noopAdapter, localQueueAdapter, webhookAdapter, doraTaskAdapter, agentHarnessAdapter]) {
       expect(typeof adapter.name).toBe("string");
       expect(adapter.name.length).toBeGreaterThan(0);
       expect(typeof adapter.dispatch).toBe("function");
@@ -87,6 +95,11 @@ describe("getRegenerationAdapter", () => {
     expect(getRegenerationAdapter()).toBe(doraTaskRegenerationAdapter);
   });
 
+  it("returns agent-harness regeneration adapter", () => {
+    vi.stubEnv("AVOCADOCORE_COMPLETION_ADAPTER", "agent-harness");
+    expect(getRegenerationAdapter()).toBe(agentHarnessRegenerationAdapter);
+  });
+
   it("falls back to noop for unknown adapter name", () => {
     vi.stubEnv("AVOCADOCORE_COMPLETION_ADAPTER", "unknown-adapter");
     expect(getRegenerationAdapter()).toBe(noopRegenerationAdapter);
@@ -99,6 +112,7 @@ describe("getRegenerationAdapter", () => {
       ["local-queue", localQueueAdapter, localQueueRegenerationAdapter],
       ["webhook", webhookAdapter, webhookRegenerationAdapter],
       ["dora-task", doraTaskAdapter, doraTaskRegenerationAdapter],
+      ["agent-harness", agentHarnessAdapter, agentHarnessRegenerationAdapter],
     ] as const;
 
     for (const [name, completion, regeneration] of pairs) {
@@ -168,6 +182,11 @@ describe("getSubjectCreatedDispatcher", () => {
     expect(getSubjectCreatedDispatcher()).toBe(doraTaskSubjectCreatedDispatcher);
   });
 
+  it("returns agent-harness subject-created dispatcher", () => {
+    vi.stubEnv("AVOCADOCORE_COMPLETION_ADAPTER", "agent-harness");
+    expect(getSubjectCreatedDispatcher()).toBe(agentHarnessSubjectCreatedDispatcher);
+  });
+
   it("falls back to noop for unknown adapter name", () => {
     vi.stubEnv("AVOCADOCORE_COMPLETION_ADAPTER", "unknown-thing");
     expect(getSubjectCreatedDispatcher()).toBe(noopSubjectCreatedDispatcher);
@@ -194,12 +213,20 @@ describe("getSubjectCreatedDispatcher", () => {
     expect(result.error).toContain("AVOCADOCORE_WEBHOOK_URL");
   });
 
+  it("agent-harness dispatcher returns error when no command configured", async () => {
+    vi.stubEnv("AVOCADOCORE_AGENT_HARNESS_COMMAND", "");
+    const result = await agentHarnessSubjectCreatedDispatcher(subjectCreatedEvent);
+    expect(result.ok).toBe(false);
+    expect(result.error).toContain("AVOCADOCORE_AGENT_HARNESS_COMMAND");
+  });
+
   it("all subject-created dispatchers have the correct function signature", () => {
     for (const dispatcher of [
       noopSubjectCreatedDispatcher,
       localQueueSubjectCreatedDispatcher,
       webhookSubjectCreatedDispatcher,
       doraTaskSubjectCreatedDispatcher,
+      agentHarnessSubjectCreatedDispatcher,
     ]) {
       expect(typeof dispatcher).toBe("function");
     }

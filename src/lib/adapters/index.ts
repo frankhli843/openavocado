@@ -20,6 +20,11 @@ import {
   doraTaskRegenerationAdapter,
   doraTaskSubjectCreatedDispatcher,
 } from "./dora-task";
+import {
+  agentHarnessAdapter,
+  agentHarnessRegenerationAdapter,
+  agentHarnessSubjectCreatedDispatcher,
+} from "./agent-harness";
 
 /** Function signature for subject.created first-lesson dispatch. */
 export type SubjectCreatedDispatcher = (
@@ -32,6 +37,7 @@ const ADAPTERS: Record<CompletionAdapter, CompletionHookAdapter> = {
   "local-queue": localQueueAdapter,
   webhook: webhookAdapter,
   "dora-task": doraTaskAdapter,
+  "agent-harness": agentHarnessAdapter,
 };
 
 const REGENERATION_ADAPTERS: Record<CompletionAdapter, RegenerationHookAdapter> = {
@@ -39,6 +45,7 @@ const REGENERATION_ADAPTERS: Record<CompletionAdapter, RegenerationHookAdapter> 
   "local-queue": localQueueRegenerationAdapter,
   webhook: webhookRegenerationAdapter,
   "dora-task": doraTaskRegenerationAdapter,
+  "agent-harness": agentHarnessRegenerationAdapter,
 };
 
 const SUBJECT_CREATED_DISPATCHERS: Record<CompletionAdapter, SubjectCreatedDispatcher> = {
@@ -46,6 +53,7 @@ const SUBJECT_CREATED_DISPATCHERS: Record<CompletionAdapter, SubjectCreatedDispa
   "local-queue": localQueueSubjectCreatedDispatcher,
   webhook: webhookSubjectCreatedDispatcher,
   "dora-task": doraTaskSubjectCreatedDispatcher,
+  "agent-harness": agentHarnessSubjectCreatedDispatcher,
 };
 
 /**
@@ -85,5 +93,6 @@ export {
   localQueueAdapter, localQueueRegenerationAdapter, localQueueSubjectCreatedDispatcher,
   webhookAdapter, webhookRegenerationAdapter, webhookSubjectCreatedDispatcher,
   doraTaskAdapter, doraTaskRegenerationAdapter, doraTaskSubjectCreatedDispatcher,
+  agentHarnessAdapter, agentHarnessRegenerationAdapter, agentHarnessSubjectCreatedDispatcher,
 };
 export { ADAPTERS, REGENERATION_ADAPTERS, SUBJECT_CREATED_DISPATCHERS };

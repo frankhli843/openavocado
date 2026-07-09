@@ -3,10 +3,10 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Run with a Hermes agent runtime (planned) — Open Avocado</title>
-<meta name="description" content="Wire a local Hermes agent as the lesson generator through the agent-harness command adapter.">
-<meta property="og:title" content="Run with a Hermes agent runtime (planned) — Open Avocado">
-<meta property="og:description" content="Wire a local Hermes agent as the lesson generator through the agent-harness command adapter.">
+<title>Run with a Hermes-style local agent — Open Avocado</title>
+<meta name="description" content="Copy-paste setup prompt for wiring a Hermes-style local agent through the agent-harness command adapter.">
+<meta property="og:title" content="Run with a Hermes-style local agent — Open Avocado">
+<meta property="og:description" content="Copy-paste setup prompt for wiring a Hermes-style local agent through the agent-harness command adapter.">
 <meta property="og:type" content="website">
 <meta property="og:url" content="https://frankhli843.github.io/openavocado/">
 <meta name="twitter:card" content="summary">
@@ -20,50 +20,50 @@
 </div></nav>
 <main class="wrap">
 <p class="breadcrumb"><a href="quickstart.html">Quick Start</a> › Run locally</p>
-<h1><span class="svg-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 4h11a2 2 0 0 1 2 2v11a3 3 0 0 1-3 3H7a3 3 0 0 1-3-3V6"/><path d="M4 6a2 2 0 0 1 4 0v3H4z"/><path d="M9 9h7M9 13h7M9 17h4"/></svg></span> Run with a Hermes agent runtime <span class="badge badge-planned">planned</span></h1>
-<p class="lead">Wire a local Hermes agent (Nous Research) — or any local agentic runtime that can run tools and code — as the lesson generator through Open Avocado's agent-harness command adapter.</p>
+<h1><span class="svg-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 4h11a2 2 0 0 1 2 2v11a3 3 0 0 1-3 3H7a3 3 0 0 1-3-3V6"/><path d="M4 6a2 2 0 0 1 4 0v3H4z"/><path d="M9 9h7M9 13h7M9 17h4"/></svg></span> Run with a Hermes-style local agent <span class="badge badge-partial">prompt</span></h1>
+<p class="lead">Use this prompt for a Hermes-style local agent wrapper. Open Avocado ships the generic command adapter; a polished reference Hermes wrapper is still a contribution opportunity.</p>
 
-<div class="planned"><p><strong>Status: planned / not yet wired end-to-end.</strong> Open Avocado already exposes the
-generic <em>command adapter</em> this runtime would use, but a turnkey Hermes integration is not shipped. This page
-documents the intended interface and the current blocker honestly, so you can wire it yourself or track progress.</p></div>
+<h2>What this page gives you</h2>
+<p>This is a concise setup prompt for a Hermes-style local agent. It does not claim Open Avocado ships a deep, custom a Hermes-style local agent
+integration. The app exposes generic hooks; the agent or wrapper you run supplies the runtime-specific behavior.</p>
 
-<h2>Who this is for</h2>
+<h2>Links</h2>
 <ul>
-  <li>You run a local agentic runtime (Hermes Agent, or similar) that can take a prompt, use tools, execute code, and return a result.</li>
-  <li>You want a fully local agent loop authoring lessons, without a hosted task platform.</li>
+  <li><a href="https://github.com/frankhli843/openavocado" target="_blank" rel="noopener">Open Avocado repository</a></li>
+  <li><a href="https://nousresearch.com/" target="_blank" rel="noopener">Nous Research / Hermes project site</a></li>
 </ul>
 
-<h2>The intended interface</h2>
-<p>The <code>agent-harness</code> completion adapter shells out to a command you configure and hands it the generation
-task on stdin (learner evidence + the lesson quality bar). The command is expected to author a validated lesson and
-write it back, then exit non-zero on failure. Hermes would be wrapped by such a command.</p>
-<pre><code># Planned configuration:
-export AVOCADOCORE_COMPLETION_ADAPTER=agent-harness
-export AVOCADOCORE_AGENT_HARNESS_COMMAND=/path/to/hermes-lesson-runner
-export AVOCADOCORE_AGENT_HARNESS_TIMEOUT_MS=1800000
-</code></pre>
-<p>Your <code>hermes-lesson-runner</code> wrapper is the missing piece: it must translate the task payload into a Hermes
-session, run the agent, and persist the resulting lesson through the database or app API.</p>
+<h2>Copy-paste setup prompt</h2>
+<pre><code>You are setting up Open Avocado with a Hermes-style local agent.
 
-<h2>What already exists vs. what's missing</h2>
-<div class="table-wrap"><table>
-<tr><th>Piece</th><th>Status</th></tr>
-<tr><td><code>agent-harness</code> command adapter + timeout</td><td><span class="badge badge-ok">ready</span> — the app can invoke an arbitrary command per event.</td></tr>
-<tr><td>Task payload with full learner evidence + quality bar</td><td><span class="badge badge-ok">ready</span> — same payload every adapter receives.</td></tr>
-<tr><td>Hermes wrapper (<code>hermes-lesson-runner</code>)</td><td><span class="badge badge-planned">planned</span> — you supply this; a reference wrapper is not yet shipped.</td></tr>
-<tr><td>Validated write-back + QA loop for Hermes output</td><td><span class="badge badge-planned">planned</span> — reuse the generator contract and a separate reviewer.</td></tr>
-</table></div>
+Repository: https://github.com/frankhli843/openavocado
 
-<h2>Current blocker</h2>
-<p>There is no shipped, tested Hermes wrapper, and small local agent models vary widely in their ability to satisfy the
-full lesson contract (bespoke interactives, synced visuals, hidden tests, separate QA). Until a reference wrapper lands,
-treat Hermes as a build-it-yourself integration on top of the ready <code>agent-harness</code> adapter. Contributions of
-a reference wrapper are welcome — see <a href="contributing.html">Contributing</a>.</p>
+Goal: connect a Hermes-style local agent to Open Avocado as a lesson-generation or lesson-review agent without committing secrets or learner data.
 
-<h2>How it will connect to lesson generation</h2>
-<p>Identical contract to every other runtime: consume the task payload, meet the
-<a href="lesson-authoring.html">lesson-authoring standard</a>, and write validated lesson content back. Only the
-execution engine (a local Hermes agent) differs.</p>
+Do this:
+1. Clone the repository and read README.md, docs/architecture.md, docs/lesson-authoring-guide.md, and .env.example.
+2. Install dependencies with pnpm install, create a throwaway local SQLite database, run pnpm db:migrate --seed, pnpm test, and pnpm build.
+3. Choose the integration path:
+   - For a local command wrapper, set AVOCADOCORE_COMPLETION_ADAPTER=agent-harness and AVOCADOCORE_AGENT_HARNESS_COMMAND to a wrapper script that reads the event JSON from stdin.
+   - For an HTTP worker, set AVOCADOCORE_COMPLETION_ADAPTER=webhook and AVOCADOCORE_WEBHOOK_URL to your service.
+   - For an external task system, set AVOCADOCORE_COMPLETION_ADAPTER=dora-task and configure its endpoint or CLI.
+4. If using Google AI Studio, set GOOGLE_AI_STUDIO_API_KEY, AVOCADOCORE_DEFAULT_PROVIDER=google-ai-studio, and GOOGLE_AI_STUDIO_MODEL=gemini-2.5-flash in .env.local or the server environment. Never print or commit the key.
+5. Implement the smallest wrapper for a Hermes-style local agent: accept subject.created, lesson.completed, and lesson.discarded payloads; read current learner evidence; author or review a lesson using docs/lesson-authoring-guide.md; validate the generated content; write it back through the database or an authenticated app API; exit nonzero on failure.
+6. Verify locally with curl /api/health, a browser pass through the dashboard and lesson page, pnpm test, pnpm build, and scripts/check-public-readiness.sh.
+7. Leave the repo clean. Do not commit .env.local, data/*.db, runtime_artifacts, screenshots with private data, or API keys.
+
+Return a short report with files changed, commands run, adapter chosen, provider health evidence with secrets redacted, and any remaining blockers.</code></pre>
+
+<h2>Adapter to use</h2>
+<p>Use <code>agent-harness</code> for a local command wrapper. The missing piece is a maintained reference wrapper that translates Open Avocado event JSON into a Hermes agent session and writes validated lessons back.</p>
+
+<h2>Acceptance criteria</h2>
+<ul>
+  <li>The runtime can read the Open Avocado repo and local docs.</li>
+  <li>The wrapper receives the generation event JSON and either writes a valid lesson back or exits nonzero with a clear error.</li>
+  <li><code>/api/health</code> shows provider wiring without exposing raw keys.</li>
+  <li><code>pnpm test</code>, <code>pnpm build</code>, and <code>bash scripts/check-public-readiness.sh</code> pass before publishing.</li>
+</ul>
 </main>
 <footer><div class="footer-inner">
 <p><strong>Open Avocado</strong> — open-source adaptive learning platform &amp; lesson-generation framework.</p>

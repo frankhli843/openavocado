@@ -1,5 +1,7 @@
 import { NextResponse } from "next/server";
+import type { RetryQuestion } from "@/lib/quiz-state";
 import type { MultipleChoiceQuestion } from "@/lib/lesson-content/schema";
+import { callConfiguredLlmForJson } from "@/lib/providers/llm";
 import { makeFallbackRetry, validateRetryQuestion } from "@/lib/quiz-state";
 
 interface RephraseRequestBody {
@@ -11,11 +13,11 @@ interface RephraseRequestBody {
 /**
  * POST /api/rephrase-question
  *
- * Rephrases a missed multiple-choice question for a retry.
- * If AVOCADOCORE_ACP_ENDPOINT is configured, calls the LLM API and validates
- * the result. Falls back to the deterministic shuffler on any failure.
+ * Rephrases a missed multiple-choice question for a retry. Uses the configured
+ * provider abstraction, then falls back to the deterministic shuffler on any
+ * missing provider, transport failure, or validation failure.
  *
- * Response: { ok: boolean; retry: RetryQuestion; source: "acp"|"fallback" }
+ * Response: { ok: boolean; retry: RetryQuestion; source: "provider"|"fallback" }
  */
 export async function POST(request: Request) {
   try {
@@ -26,73 +28,30 @@ export async function POST(request: Request) {
       return NextResponse.json({ ok: false, error: "missing required fields" }, { status: 400 });
     }
 
-    const endpoint = process.env.AVOCADOCORE_ACP_ENDPOINT;
-    const token = process.env.AVOCADOCORE_ACP_TOKEN;
-
-    if (endpoint) {
-      try {
-        const acpResult = await callAcpEndpoint(endpoint, token, retry_id, original);
-        if (acpResult) {
-          const validation = validateRetryQuestion(acpResult);
-          if (validation.valid) {
-            return NextResponse.json({
-              ok: true,
-              retry: { ...acpResult, retry_id, origin_question_id, source: "acp" },
-              source: "acp",
-            });
-          }
-          console.warn("[rephrase-question] ACP output failed validation:", validation.errors);
+    try {
+      const providerResult = await callConfiguredLlmForJson(buildRephrasePrompt(original));
+      if (providerResult) {
+        const retry = providerResult as Partial<RetryQuestion>;
+        const validation = validateRetryQuestion(retry);
+        if (validation.valid) {
+          return NextResponse.json({
+            ok: true,
+            retry: { ...retry, retry_id, origin_question_id, source: "acp" },
+            source: "provider",
+          });
         }
-      } catch (err) {
-        console.warn("[rephrase-question] ACP call failed:", err);
+        console.warn("[rephrase-question] Provider output failed validation:", validation.errors);
       }
+    } catch (err) {
+      console.warn("[rephrase-question] Provider call failed:", err);
     }
 
-    // Deterministic fallback — always works, no model required.
     const fallback = makeFallbackRetry(retry_id, origin_question_id, original);
     return NextResponse.json({ ok: true, retry: fallback, source: "fallback" });
   } catch (err) {
     console.error("[rephrase-question] Unexpected error:", err);
     return NextResponse.json({ ok: false, error: "internal error" }, { status: 500 });
   }
-}
-
-/**
- * Call the configured ACP/LLM endpoint to rephrase the question.
- * Expects an OpenAI-compatible chat completions API.
- * Returns the parsed retry object or null on any failure.
- */
-async function callAcpEndpoint(
-  endpoint: string,
-  token: string | undefined,
-  retry_id: string,
-  original: RephraseRequestBody["original"]
-): Promise<Partial<import("@/lib/quiz-state").RetryQuestion> | null> {
-  const prompt = buildRephrasePrompt(original);
-
-  const headers: Record<string, string> = { "Content-Type": "application/json" };
-  if (token) headers["Authorization"] = `Bearer ${token}`;
-
-  const res = await fetch(`${endpoint}/chat/completions`, {
-    method: "POST",
-    headers,
-    body: JSON.stringify({
-      model: process.env.AVOCADOCORE_ACP_MODEL ?? "gpt-4o-mini",
-      messages: [{ role: "user", content: prompt }],
-      response_format: { type: "json_object" },
-      max_tokens: 600,
-      temperature: 0.7,
-    }),
-    signal: AbortSignal.timeout(8000),
-  });
-
-  if (!res.ok) return null;
-  const data = await res.json() as { choices?: Array<{ message?: { content?: string } }> };
-  const raw = data.choices?.[0]?.message?.content;
-  if (!raw) return null;
-
-  const parsed = JSON.parse(raw) as Partial<import("@/lib/quiz-state").RetryQuestion>;
-  return parsed;
 }
 
 function buildRephrasePrompt(

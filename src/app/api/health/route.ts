@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { getDb } from "@/db/connection";
+import { getProviderHealthSummary } from "@/lib/providers/llm";
 
 /**
  * GET /api/health
@@ -20,6 +21,9 @@ export async function GET() {
 
   // Auth mode
   checks.auth = process.env.AVOCADOCORE_AUTH_REQUIRED === "true" ? "required" : "open";
+
+  // Provider wiring reports presence/model names only, never raw secrets.
+  checks.provider = getProviderHealthSummary();
 
   const allOk = Object.values(checks).every((v) => v.startsWith("ok") || v === "required" || v === "open");
 

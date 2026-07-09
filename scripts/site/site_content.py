@@ -166,18 +166,15 @@ HERO_BODY = f"""
     private with your own local LLM, or hand authoring to an agent runtime — pick what fits you.</p>
   </div>
   <div class="card-grid">
-    <a class="card" href="run-api-key.html"><div class="ico">🔑</div><h3>Direct API key <span class="badge badge-ok">ready</span></h3><p>Fastest start. Bring an OpenAI or Google AI Studio key and go.</p></a>
-    <a class="card" href="run-local-llm.html"><div class="ico">🖥️</div><h3>Your own local LLM <span class="badge badge-ok">ready</span></h3><p>Privacy / offline / self-hosted. Any OpenAI-compatible local server — llama.cpp, Ollama, vLLM, LM Studio. No cloud key, data stays on your machine.</p></a>
-    <a class="card" href="run-gemmaclaw.html"><div class="ico">🦎</div><h3>Gemmaclaw <span class="badge badge-partial">partial</span></h3><p>A specific local-model gateway example (Gemma) over the same OpenAI-compatible path.</p></a>
+    <a class="card" href="run-api-key.html"><div class="ico">🔑</div><h3>Direct API key <span class="badge badge-ok">ready</span></h3><p>Fastest start. Bring a Google AI Studio key or OpenAI-compatible endpoint.</p></a>
+    <a class="card" href="run-local-llm.html"><div class="ico">🖥️</div><h3>Your own local LLM <span class="badge badge-ok">ready</span></h3><p>Privacy / offline / self-hosted. Any OpenAI-compatible local server — llama.cpp, Ollama, vLLM, LM Studio.</p></a>
     <a class="card" href="run-openclaw.html"><div class="ico">🤖</div><h3>OpenClaw <span class="badge badge-ok">ready</span></h3><p>Hand lesson generation to an external agent/task runner via the task adapter.</p></a>
-    <a class="card" href="run-hermes.html"><div class="ico">📜</div><h3>Hermes <span class="badge badge-planned">planned</span></h3><p>Wire a local Hermes agent runtime through the agent-harness command adapter.</p></a>
-  </div>
-  <p class="runtime-group-label">Or drive setup with an agentic coding tool — paste a prompt and let the agent stand Open Avocado up for you:</p>
-  <div class="card-grid">
-    <a class="card" href="run-claude-code.html"><div class="ico">⚡</div><h3>Claude Code <span class="badge badge-prompt">prompt</span></h3><p>Point Anthropic's agentic CLI at the repo with a setup prompt; it installs, runs, and extends Open Avocado.</p></a>
-    <a class="card" href="run-codex.html"><div class="ico">🐍</div><h3>Codex <span class="badge badge-prompt">prompt</span></h3><p>Drive setup and lesson authoring with OpenAI's Codex CLI via a copy-paste prompt.</p></a>
-    <a class="card" href="run-opencode.html"><div class="ico">🧩</div><h3>OpenCode <span class="badge badge-prompt">prompt</span></h3><p>Use the open-source OpenCode terminal agent to install, run, and author lessons.</p></a>
-    <a class="card" href="run-antigravity.html"><div class="ico">🚀</div><h3>Antigravity <span class="badge badge-prompt">prompt</span></h3><p>Point Google's Antigravity agent platform at the repo with a setup prompt.</p></a>
+    <a class="card" href="run-claude-code.html"><div class="ico">🛠️</div><h3>Claude Code <span class="badge badge-ok">prompt</span></h3><p>A copy-paste setup prompt for Claude Code to wire itself as an Open Avocado lesson author.</p></a>
+    <a class="card" href="run-codex.html"><div class="ico">⌘</div><h3>Codex <span class="badge badge-ok">prompt</span></h3><p>A setup prompt for OpenAI Codex CLI or cloud agent workflows.</p></a>
+    <a class="card" href="run-opencode.html"><div class="ico">◈</div><h3>OpenCode <span class="badge badge-ok">prompt</span></h3><p>A setup prompt for the OpenCode terminal agent.</p></a>
+    <a class="card" href="run-antigravity.html"><div class="ico">🛰️</div><h3>Antigravity <span class="badge badge-ok">prompt</span></h3><p>A setup prompt for Google's agent-first IDE, linked to official docs.</p></a>
+    <a class="card" href="run-hermes.html"><div class="ico">📜</div><h3>Hermes <span class="badge badge-partial">prompt</span></h3><p>A local-agent prompt path for Hermes-style wrappers. Reference wrapper still wanted.</p></a>
+    <a class="card" href="run-gemmaclaw.html"><div class="ico">🦎</div><h3>Gemmaclaw <span class="badge badge-partial">partial</span></h3><p>A specific local-model gateway example (Gemma) over the same OpenAI-compatible path.</p></a>
   </div>
 </section>
 
@@ -273,7 +270,8 @@ is never returned by the API. This is the recommended path for multi-user instal
 export OPENAI_API_KEY=sk-...            # OpenAI
 # or
 export GOOGLE_AI_STUDIO_API_KEY=...     # Google AI Studio (Gemini)
-export AVOCADOCORE_DEFAULT_PROVIDER=google-ai-studio   # or openai
+export AVOCADOCORE_DEFAULT_PROVIDER=google-ai-studio
+export GOOGLE_AI_STUDIO_MODEL=gemini-2.5-flash
 
 # Generate lessons synchronously in-process on subject creation / completion:
 export AVOCADOCORE_COMPLETION_ADAPTER=local-queue
@@ -579,175 +577,106 @@ that contract — OpenClaw or otherwise — is a valid backend.</p>
 """
 
 
-# ── Runtime: Hermes ──────────────────────────────────────────────────────────
-RUN_HERMES = _rt_header(
-    "📜", "Run with a Hermes agent runtime",
-    '<span class="badge badge-planned">planned</span>',
-    "Wire a local Hermes agent (Nous Research) — or any local agentic runtime that can run tools and code — as the "
-    "lesson generator through Open Avocado's agent-harness command adapter."
-) + f"""
-<div class="planned"><p><strong>Status: planned / not yet wired end-to-end.</strong> Open Avocado already exposes the
-generic <em>command adapter</em> this runtime would use, but a turnkey Hermes integration is not shipped. This page
-documents the intended interface and the current blocker honestly, so you can wire it yourself or track progress.</p></div>
 
-<h2>Who this is for</h2>
+def _agent_prompt_page(icon, title, badge_html, audience, runtime_name, upstream_links, adapter_note):
+    prompt = f"""You are setting up Open Avocado with {runtime_name}.
+
+Repository: {REPO}
+
+Goal: connect {runtime_name} to Open Avocado as a lesson-generation or lesson-review agent without committing secrets or learner data.
+
+Do this:
+1. Clone the repository and read README.md, docs/architecture.md, docs/lesson-authoring-guide.md, and .env.example.
+2. Install dependencies with pnpm install, create a throwaway local SQLite database, run pnpm db:migrate --seed, pnpm test, and pnpm build.
+3. Choose the integration path:
+   - For a local command wrapper, set AVOCADOCORE_COMPLETION_ADAPTER=agent-harness and AVOCADOCORE_AGENT_HARNESS_COMMAND to a wrapper script that reads the event JSON from stdin.
+   - For an HTTP worker, set AVOCADOCORE_COMPLETION_ADAPTER=webhook and AVOCADOCORE_WEBHOOK_URL to your service.
+   - For an external task system, set AVOCADOCORE_COMPLETION_ADAPTER=dora-task and configure its endpoint or CLI.
+4. If using Google AI Studio, set GOOGLE_AI_STUDIO_API_KEY, AVOCADOCORE_DEFAULT_PROVIDER=google-ai-studio, and GOOGLE_AI_STUDIO_MODEL=gemini-2.5-flash in .env.local or the server environment. Never print or commit the key.
+5. Implement the smallest wrapper for {runtime_name}: accept subject.created, lesson.completed, and lesson.discarded payloads; read current learner evidence; author or review a lesson using docs/lesson-authoring-guide.md; validate the generated content; write it back through the database or an authenticated app API; exit nonzero on failure.
+6. Verify locally with curl /api/health, a browser pass through the dashboard and lesson page, pnpm test, pnpm build, and scripts/check-public-readiness.sh.
+7. Leave the repo clean. Do not commit .env.local, data/*.db, runtime_artifacts, screenshots with private data, or API keys.
+
+Return a short report with files changed, commands run, adapter chosen, provider health evidence with secrets redacted, and any remaining blockers."""
+    return _rt_header(icon, title, badge_html, audience) + f"""
+<h2>What this page gives you</h2>
+<p>This is a concise setup prompt for {runtime_name}. It does not claim Open Avocado ships a deep, custom {runtime_name}
+integration. The app exposes generic hooks; the agent or wrapper you run supplies the runtime-specific behavior.</p>
+
+<h2>Links</h2>
 <ul>
-  <li>You run a local agentic runtime (Hermes Agent, or similar) that can take a prompt, use tools, execute code, and return a result.</li>
-  <li>You want a fully local agent loop authoring lessons, without a hosted task platform.</li>
+  <li><a href="{REPO}" target="_blank" rel="noopener">Open Avocado repository</a></li>
+  {upstream_links}
 </ul>
 
-<h2>The intended interface</h2>
-<p>The <code>agent-harness</code> completion adapter shells out to a command you configure and hands it the generation
-task on stdin (learner evidence + the lesson quality bar). The command is expected to author a validated lesson and
-write it back, then exit non-zero on failure. Hermes would be wrapped by such a command.</p>
-<pre><code># Planned configuration:
-export AVOCADOCORE_COMPLETION_ADAPTER=agent-harness
-export AVOCADOCORE_AGENT_HARNESS_COMMAND=/path/to/hermes-lesson-runner
-export AVOCADOCORE_AGENT_HARNESS_TIMEOUT_MS=1800000
-</code></pre>
-<p>Your <code>hermes-lesson-runner</code> wrapper is the missing piece: it must translate the task payload into a Hermes
-session, run the agent, and persist the resulting lesson through the database or app API.</p>
+<h2>Copy-paste setup prompt</h2>
+<pre><code>{prompt}</code></pre>
 
-<h2>What already exists vs. what's missing</h2>
-<table>
-<tr><th>Piece</th><th>Status</th></tr>
-<tr><td><code>agent-harness</code> command adapter + timeout</td><td><span class="badge badge-ok">ready</span> — the app can invoke an arbitrary command per event.</td></tr>
-<tr><td>Task payload with full learner evidence + quality bar</td><td><span class="badge badge-ok">ready</span> — same payload every adapter receives.</td></tr>
-<tr><td>Hermes wrapper (<code>hermes-lesson-runner</code>)</td><td><span class="badge badge-planned">planned</span> — you supply this; a reference wrapper is not yet shipped.</td></tr>
-<tr><td>Validated write-back + QA loop for Hermes output</td><td><span class="badge badge-planned">planned</span> — reuse the generator contract and a separate reviewer.</td></tr>
-</table>
+<h2>Adapter to use</h2>
+<p>{adapter_note}</p>
 
-<h2>Current blocker</h2>
-<p>There is no shipped, tested Hermes wrapper, and small local agent models vary widely in their ability to satisfy the
-full lesson contract (bespoke interactives, synced visuals, hidden tests, separate QA). Until a reference wrapper lands,
-treat Hermes as a build-it-yourself integration on top of the ready <code>agent-harness</code> adapter. Contributions of
-a reference wrapper are welcome — see <a href="contributing.html">Contributing</a>.</p>
-
-<h2>How it will connect to lesson generation</h2>
-<p>Identical contract to every other runtime: consume the task payload, meet the
-<a href="lesson-authoring.html">lesson-authoring standard</a>, and write validated lesson content back. Only the
-execution engine (a local Hermes agent) differs.</p>
+<h2>Acceptance criteria</h2>
+<ul>
+  <li>The runtime can read the Open Avocado repo and local docs.</li>
+  <li>The wrapper receives the generation event JSON and either writes a valid lesson back or exits nonzero with a clear error.</li>
+  <li><code>/api/health</code> shows provider wiring without exposing raw keys.</li>
+  <li><code>pnpm test</code>, <code>pnpm build</code>, and <code>bash scripts/check-public-readiness.sh</code> pass before publishing.</li>
+</ul>
 """
 
 
-# ── Runtime: agentic coding tools (Claude Code / Codex / OpenCode / Antigravity) ─
-# These are external agent runtimes. Open Avocado does NOT ship a bespoke plugin
-# for any of them — the page hands the agent a copy-pastable setup prompt built
-# from documented commands, and the agent drives the same generator contract every
-# other runtime uses. Keep this honest: a recipe, not a one-click integration.
-def _agent_prompt_page(icon, product, descriptor, link_url, link_label, link_kind, launch, extra_note=""):
-    header = _rt_header(
-        icon, f"Run with {product}",
-        '<span class="badge badge-prompt">prompt</span>',
-        f"{product} is {descriptor} — a separate <em>agent runtime</em> that reads a repository, runs commands, "
-        f"edits files, and executes code. Point it at Open Avocado with the setup prompt below and it will stand the "
-        f"app up and author or review lessons through the documented contract. This is a bring-your-own-agent path: "
-        f"no bespoke {product} integration is shipped."
-    )
-    body = f"""
-<div class="note"><p><strong>Two different runtimes.</strong> {product} is the <em>agent runtime</em> that does the
-work. Open Avocado is the <em>app runtime</em> — a Next.js app plus a pluggable lesson generator. This page tells the
-agent how to connect the two; it does not claim a turnkey {product} plugin.</p></div>
-
-<h2>Who this is for</h2>
-<ul>
-  <li>You already use {product} and want it to set up, run, and extend Open Avocado for you.</li>
-  <li>You want an agent to author or review lessons against the <a href="lesson-authoring.html">quality bar</a> instead of wiring generation by hand.</li>
-</ul>
-
-<h2>1 &middot; Install &amp; launch {product}</h2>
-<p>Install {product} from its {link_kind} — <a href="{link_url}" target="_blank" rel="noopener">{link_label}</a> — then
-launch it in an empty working directory:</p>
-<pre><code>{launch}</code></pre>
-{extra_note}
-
-<h2>2 &middot; Paste this setup prompt</h2>
-<p>Copy the prompt below into {product}. It uses only documented Open Avocado commands — nothing bespoke:</p>
-<pre><code>You are setting up Open Avocado, an open-source adaptive-learning app, from scratch.
-
-1. Clone and read the repository so you understand it:
-     git clone {REPO}.git
-     cd openavocado
-   Read README.md and the docs it links (Quick Start, Architecture,
-   Configuration, and the Lesson Authoring standard).
-
-2. Install dependencies and create local config:
-     pnpm install
-     cp .env.example .env.local
-   In .env.local set ONE provider key (kept server-side, never committed):
-     GOOGLE_AI_STUDIO_API_KEY=&lt;your Google AI Studio key&gt;
-     AVOCADOCORE_DEFAULT_PROVIDER=google-ai-studio
-     # optional: GOOGLE_AI_STUDIO_MODEL=&lt;model id&gt;
-   # or, for OpenAI:  OPENAI_API_KEY=sk-...  and  AVOCADOCORE_DEFAULT_PROVIDER=openai
-   Keep in-process generation on:
-     AVOCADOCORE_COMPLETION_ADAPTER=local-queue
-
-3. Seed a local database and start the app:
-     mkdir -p data
-     pnpm db:migrate --seed
-     pnpm dev            # http://localhost:3000
-
-4. Verify it is healthy:
-     curl -s http://localhost:3000/api/health
-   Confirm the default provider is configured and the database answers.
-
-5. Generate and review a lesson:
-   Create a subject in the UI (or complete a lesson) so the generator runs.
-   Read the generated lesson payload and check it against the lesson-authoring
-   quality bar (evidence-first, real interactives, hidden tests, separate QA).
-   Improve the config or lesson content until it meets the bar, then write
-   validated lessons back through the documented contract (the app API or
-   database) — never fabricate content.
-
-6. Prove it works before you finish:
-     pnpm test
-     pnpm build
-   Report the health output, test results, and one generated lesson.
-</code></pre>
-
-<h2>3 &middot; How it connects to lesson generation</h2>
-<p>{product} does not need a special adapter. It drives the <strong>same documented contract</strong> every runtime
-uses: run the in-process generator (<code>local-queue</code>) with a configured provider and review its output against
-the <a href="lesson-authoring.html">lesson-authoring standard</a>, or act as the external runner behind the
-<a href="run-openclaw.html"><code>dora-task</code></a> / <a href="run-hermes.html"><code>agent-harness</code></a>
-adapters and write validated lessons back. See <a href="configuration.html">Configuration</a> for every variable.</p>
-
-<div class="note"><p><strong>Honest status.</strong> Open Avocado ships the app, the generator contract, and the
-adapters — not a packaged {product} plugin. Lesson quality depends on the model and on the agent following the quality
-bar. Treat this as a repeatable setup recipe, not a one-click integration.</p></div>
-"""
-    return header + body
-
-
+# ── Runtime: Claude Code ─────────────────────────────────────────────────────
 RUN_CLAUDE_CODE = _agent_prompt_page(
-    "⚡", "Claude Code", "Anthropic's agentic coding CLI",
-    "https://github.com/anthropics/claude-code", "github.com/anthropics/claude-code", "repository",
-    "claude          # launch Claude Code in the current directory\n"
-    "# install &amp; docs: https://docs.claude.com/en/docs/claude-code",
+    "🛠️", "Run with Claude Code",
+    '<span class="badge badge-ok">prompt</span>',
+    "Paste this prompt into Claude Code when you want Anthropic's coding agent to inspect the Open Avocado repo, set up a wrapper, run tests, and verify the app.",
+    "Claude Code",
+    '<li><a href="https://github.com/anthropics/claude-code" target="_blank" rel="noopener">Claude Code GitHub repository</a></li>\n  <li><a href="https://code.claude.com/docs/en/overview" target="_blank" rel="noopener">Claude Code official docs</a></li>',
+    "Use <code>agent-harness</code> for a local Claude Code wrapper command, <code>webhook</code> for a service wrapper, or <code>dora-task</code> if your existing task runner dispatches Claude Code jobs."
 )
 
+
+# ── Runtime: Codex ───────────────────────────────────────────────────────────
 RUN_CODEX = _agent_prompt_page(
-    "🐍", "Codex", "OpenAI's agentic coding CLI",
-    "https://github.com/openai/codex", "github.com/openai/codex", "repository",
-    "codex           # launch the Codex CLI in the current directory\n"
-    "# install &amp; docs: https://developers.openai.com/codex",
+    "⌘", "Run with Codex",
+    '<span class="badge badge-ok">prompt</span>',
+    "Paste this prompt into OpenAI Codex when you want Codex to wire Open Avocado, run checks, and create or review lesson-generation wrappers.",
+    "Codex",
+    '<li><a href="https://github.com/openai/codex" target="_blank" rel="noopener">OpenAI Codex GitHub repository</a></li>\n  <li><a href="https://developers.openai.com/codex" target="_blank" rel="noopener">Codex developer docs</a></li>',
+    "Use <code>agent-harness</code> for a local Codex CLI wrapper, or <code>webhook</code> if you run Codex behind a service that accepts Open Avocado generation events."
 )
 
+
+# ── Runtime: OpenCode ────────────────────────────────────────────────────────
 RUN_OPENCODE = _agent_prompt_page(
-    "🧩", "OpenCode", "an open-source, terminal-based AI coding agent",
-    "https://github.com/sst/opencode", "github.com/sst/opencode", "repository",
-    "curl -fsSL https://opencode.ai/install | bash   # install\n"
-    "opencode         # launch OpenCode in the current directory\n"
-    "# docs: https://opencode.ai/docs",
+    "◈", "Run with OpenCode",
+    '<span class="badge badge-ok">prompt</span>',
+    "Paste this prompt into OpenCode's terminal agent to set up Open Avocado, choose an adapter, and verify a local wrapper.",
+    "OpenCode",
+    '<li><a href="https://opencode.ai/docs/" target="_blank" rel="noopener">OpenCode docs</a></li>\n  <li><a href="https://github.com/anomalyco/opencode" target="_blank" rel="noopener">OpenCode GitHub repository</a></li>',
+    "Use <code>agent-harness</code> for a local OpenCode command wrapper. If you host OpenCode behind a service, use the <code>webhook</code> adapter instead."
 )
 
+
+# ── Runtime: Antigravity ─────────────────────────────────────────────────────
 RUN_ANTIGRAVITY = _agent_prompt_page(
-    "🚀", "Antigravity", "Google's agentic development platform",
-    "https://antigravity.google/", "antigravity.google", "documentation",
-    "# Download the Antigravity editor from https://antigravity.google\n"
-    "# Open an empty folder and start an agent session in it.",
-    extra_note='<div class="note"><p>Antigravity is a Google agentic development platform in public preview, not an '
-    'open-source CLI — there is no public source repository, so the link above is the official documentation.</p></div>',
+    "🛰️", "Run with Antigravity",
+    '<span class="badge badge-ok">prompt</span>',
+    "Paste this prompt into Google's Antigravity IDE to have an agent inspect Open Avocado, make a local wrapper, and verify the app in its integrated browser.",
+    "Antigravity",
+    '<li><a href="https://antigravity.google/" target="_blank" rel="noopener">Google Antigravity</a></li>\n  <li><a href="https://antigravity.google/docs" target="_blank" rel="noopener">Antigravity docs</a></li>',
+    "Use <code>agent-harness</code> when Antigravity can run a local wrapper command. Use <code>webhook</code> if you expose an Antigravity-controlled service instead."
+)
+
+
+# ── Runtime: Hermes ──────────────────────────────────────────────────────────
+RUN_HERMES = _agent_prompt_page(
+    "📜", "Run with a Hermes-style local agent",
+    '<span class="badge badge-partial">prompt</span>',
+    "Use this prompt for a Hermes-style local agent wrapper. Open Avocado ships the generic command adapter; a polished reference Hermes wrapper is still a contribution opportunity.",
+    "a Hermes-style local agent",
+    '<li><a href="https://nousresearch.com/" target="_blank" rel="noopener">Nous Research / Hermes project site</a></li>',
+    "Use <code>agent-harness</code> for a local command wrapper. The missing piece is a maintained reference wrapper that translates Open Avocado event JSON into a Hermes agent session and writes validated lessons back."
 )
 
 
@@ -800,20 +729,16 @@ curl -s  http://localhost:3000/api/health | head -c 300</code></pre>
 <h2 id="runtimes">Choose a lesson-generation runtime</h2>
 <p>The app runs the same regardless of how lessons are produced. Pick one:</p>
 <div class="card-grid">
-  <a class="card" href="run-api-key.html"><div class="ico">🔑</div><h3>Direct API key <span class="badge badge-ok">ready</span></h3><p>Fastest start — bring one hosted LLM key.</p></a>
+  <a class="card" href="run-api-key.html"><div class="ico">🔑</div><h3>Direct API key <span class="badge badge-ok">ready</span></h3><p>Fastest start — bring Google AI Studio or an OpenAI-compatible endpoint.</p></a>
   <a class="card" href="run-local-llm.html"><div class="ico">🖥️</div><h3>Your own local LLM <span class="badge badge-ok">ready</span></h3><p>Privacy/offline — any OpenAI-compatible local server (llama.cpp, Ollama, vLLM, LM Studio).</p></a>
-  <a class="card" href="run-gemmaclaw.html"><div class="ico">🦎</div><h3>Gemmaclaw <span class="badge badge-partial">partial</span></h3><p>A specific local-model gateway (Gemma) example.</p></a>
   <a class="card" href="run-openclaw.html"><div class="ico">🤖</div><h3>OpenClaw <span class="badge badge-ok">ready</span></h3><p>External agent/task runner for full-quality lessons.</p></a>
-  <a class="card" href="run-hermes.html"><div class="ico">📜</div><h3>Hermes <span class="badge badge-planned">planned</span></h3><p>Local Hermes agent via the command adapter.</p></a>
+  <a class="card" href="run-claude-code.html"><div class="ico">🛠️</div><h3>Claude Code <span class="badge badge-ok">prompt</span></h3><p>Paste a setup prompt into Claude Code and let it wire a wrapper.</p></a>
+  <a class="card" href="run-codex.html"><div class="ico">⌘</div><h3>Codex <span class="badge badge-ok">prompt</span></h3><p>Paste a setup prompt into Codex for repo setup, tests, and adapter wiring.</p></a>
+  <a class="card" href="run-opencode.html"><div class="ico">◈</div><h3>OpenCode <span class="badge badge-ok">prompt</span></h3><p>Paste a setup prompt into OpenCode's terminal agent.</p></a>
+  <a class="card" href="run-antigravity.html"><div class="ico">🛰️</div><h3>Antigravity <span class="badge badge-ok">prompt</span></h3><p>Paste a setup prompt into Google's agent-first IDE.</p></a>
+  <a class="card" href="run-hermes.html"><div class="ico">📜</div><h3>Hermes <span class="badge badge-partial">prompt</span></h3><p>Hermes-style local wrapper path. Reference wrapper welcome.</p></a>
+  <a class="card" href="run-gemmaclaw.html"><div class="ico">🦎</div><h3>Gemmaclaw <span class="badge badge-partial">partial</span></h3><p>A specific local-model gateway (Gemma) example.</p></a>
 </div>
-<p class="runtime-group-label">Or drive setup with an agentic coding tool (paste a prompt):</p>
-<div class="card-grid">
-  <a class="card" href="run-claude-code.html"><div class="ico">⚡</div><h3>Claude Code <span class="badge badge-prompt">prompt</span></h3><p>Anthropic's agentic CLI — setup prompt.</p></a>
-  <a class="card" href="run-codex.html"><div class="ico">🐍</div><h3>Codex <span class="badge badge-prompt">prompt</span></h3><p>OpenAI's Codex CLI — setup prompt.</p></a>
-  <a class="card" href="run-opencode.html"><div class="ico">🧩</div><h3>OpenCode <span class="badge badge-prompt">prompt</span></h3><p>Open-source terminal agent — setup prompt.</p></a>
-  <a class="card" href="run-antigravity.html"><div class="ico">🚀</div><h3>Antigravity <span class="badge badge-prompt">prompt</span></h3><p>Google's agent platform — setup prompt.</p></a>
-</div>
-
 <p>Next: <a href="configuration.html">Configuration</a> for every environment variable, or
 <a href="architecture.html">Architecture</a> for how the pieces fit together.</p>
 """
@@ -986,21 +911,24 @@ bootstrap credentials.</p>
 </ul>
 <table>
 <tr><th>Variable</th><th>Purpose</th></tr>
-<tr><td><code>AVOCADOCORE_DEFAULT_PROVIDER</code></td><td>Default model provider (e.g. <code>openai</code>, <code>google-ai-studio</code>).</td></tr>
-<tr><td><code>AVOCADOCORE_ACP_ENDPOINT</code> / <code>_MODEL</code> / <code>_TOKEN</code></td><td>OpenAI-compatible base URL (the app appends <code>/chat/completions</code>), model, and optional bearer token for question rephrasing and instant feedback. Point these at a local server for a fully local run — see <a href="run-local-llm.html">Run with your own local LLM</a>.</td></tr>
+<tr><td><code>AVOCADOCORE_DEFAULT_PROVIDER</code></td><td>Default model provider. Use <code>google-ai-studio</code> to call Gemini directly when no OpenAI-compatible endpoint is configured.</td></tr>
+<tr><td><code>AVOCADOCORE_ACP_ENDPOINT</code> / <code>_MODEL</code> / <code>_TOKEN</code></td><td>OpenAI-compatible base URL (the app appends <code>/chat/completions</code>), model, and optional bearer token for question rephrasing and instant feedback. If set, this endpoint takes precedence over direct Google AI Studio calls. Point it at a local server for a fully local run — see <a href="run-local-llm.html">Run with your own local LLM</a>.</td></tr>
 <tr><td><code>AVOCADOCORE_COMPLETION_ADAPTER</code></td><td>Selects the lesson-generation completion adapter: <code>noop</code> (default) or <code>local-queue</code> (enqueue generation in-process for the direct-key and local-model runtimes).</td></tr>
+<tr><td><code>GOOGLE_AI_STUDIO_API_KEY</code> / <code>GOOGLE_AI_STUDIO_MODEL</code></td><td>Server-side Gemini key and model for direct Google AI Studio calls. <code>GOOGLE_AI_STUDIO_MODEL</code> defaults to <code>gemini-2.5-flash</code>.</td></tr>
+<tr><td><code>AVOCADOCORE_LLM_TIMEOUT_MS</code></td><td>Optional provider request timeout in milliseconds; raise it for slower hosted models.</td></tr>
 <tr><td><code>OPENAI_API_KEY</code></td><td>Enables OpenAI TTS for narration; without it, an offline <code>espeak-ng</code> + <code>ffmpeg</code> voice is used.</td></tr>
 </table>
 <p>A copyable <code>.env.example</code> ships in the repository. Copy it to <code>.env.local</code> (gitignored) and
-fill in what your runtime needs. See the four <a href="quickstart.html#runtimes">runtime guides</a> for exact recipes.</p>
+fill in what your runtime needs. See the <a href="quickstart.html#runtimes">runtime guides</a> for exact recipes.</p>
 """
 
 
 # ── Contributing ─────────────────────────────────────────────────────────────
 CONTRIBUTING = f"""
 <h1>Contributing</h1>
-<p class="lead">Open Avocado is open source and welcomes contributions — from bug fixes to new lesson-generation
-runtimes (a reference <a href="run-hermes.html">Hermes</a> wrapper is a great first big project).</p>
+<p class="lead">Open Avocado is looking for contributors — human developers, educators, researchers, and AI agents —
+to improve the project together. Bug fixes, docs, lesson-quality improvements, runtime wrappers, and careful reviews
+all help move the mission forward.</p>
 
 <h2>Set up</h2>
 <pre><code>git clone {REPO}.git
@@ -1028,9 +956,9 @@ pnpm dev</code></pre>
 
 <h2>Good first contributions</h2>
 <ul>
-  <li>A reference wrapper for the <a href="run-hermes.html">Hermes</a> / <code>agent-harness</code> runtime.</li>
-  <li>Additional lesson-generator adapters (new providers or task systems).</li>
-  <li>Docs and example improvements on this site.</li>
+  <li>Reference wrappers for <a href="run-claude-code.html">Claude Code</a>, <a href="run-codex.html">Codex</a>, <a href="run-opencode.html">OpenCode</a>, <a href="run-antigravity.html">Antigravity</a>, or <a href="run-hermes.html">Hermes</a> using <code>agent-harness</code>.</li>
+  <li>Additional lesson-generator adapters, provider integrations, or task-system bridges.</li>
+  <li>Docs, examples, tests, accessibility fixes, and lesson-quality improvements.</li>
 </ul>
 <p>Open an issue to discuss larger changes first: <a href="{REPO}/issues">{REPO}/issues</a>.</p>
 """
@@ -1153,20 +1081,19 @@ PAGE_BODIES = {
     "run-openclaw.html": ("quickstart.html", "Run with an external agent task runner — Open Avocado",
         "Hand lesson generation to an external agent/task runner such as OpenClaw via the task adapter.",
         RUN_OPENCLAW),
-    "run-hermes.html": ("quickstart.html", "Run with a Hermes agent runtime (planned) — Open Avocado",
-        "Wire a local Hermes agent as the lesson generator through the agent-harness command adapter.",
-        RUN_HERMES),
     "run-claude-code.html": ("quickstart.html", "Run with Claude Code — Open Avocado",
-        "Point Anthropic's Claude Code agent at Open Avocado with a copy-pastable setup prompt that installs, "
-        "runs, and authors lessons through the documented contract.",
+        "Copy-paste setup prompt for wiring Claude Code to Open Avocado through a generic adapter.",
         RUN_CLAUDE_CODE),
     "run-codex.html": ("quickstart.html", "Run with Codex — Open Avocado",
-        "Use OpenAI's Codex CLI to set up and run Open Avocado via a copy-pastable setup prompt.",
+        "Copy-paste setup prompt for wiring Codex to Open Avocado through a generic adapter.",
         RUN_CODEX),
     "run-opencode.html": ("quickstart.html", "Run with OpenCode — Open Avocado",
-        "Use the open-source OpenCode terminal agent to set up, run, and author lessons for Open Avocado.",
+        "Copy-paste setup prompt for wiring OpenCode to Open Avocado through a generic adapter.",
         RUN_OPENCODE),
     "run-antigravity.html": ("quickstart.html", "Run with Antigravity — Open Avocado",
-        "Point Google's Antigravity agentic development platform at Open Avocado with a setup prompt.",
+        "Copy-paste setup prompt for wiring Google's Antigravity IDE to Open Avocado through a generic adapter.",
         RUN_ANTIGRAVITY),
+    "run-hermes.html": ("quickstart.html", "Run with a Hermes-style local agent — Open Avocado",
+        "Copy-paste setup prompt for wiring a Hermes-style local agent through the agent-harness command adapter.",
+        RUN_HERMES),
 }
