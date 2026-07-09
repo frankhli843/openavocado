@@ -1,0 +1,107 @@
+{
+  "lesson_id": 27,
+  "activity_id": 158,
+  "activity_type": "audio",
+  "title": "Audio: no pattern labels — recognize, articulate, implement",
+  "audio": {
+    "file_path": "runtime_artifacts/audio/lesson_27_audio.mp3",
+    "duration_sec": 597.22
+  },
+  "audio_source": "artifact",
+  "cue_source": "orientation_visual.cues",
+  "cues": [
+    {
+      "index": 0,
+      "start": 0,
+      "end": 47.8,
+      "duration": 47.8,
+      "label": "Training wheels off",
+      "headline": "No labels, no hints",
+      "narration": "Today the problems arrive without technique labels. You have to figure out what you are looking at before you write a single line of code."
+    },
+    {
+      "index": 1,
+      "start": 47.8,
+      "end": 99.5,
+      "duration": 51.7,
+      "label": "Recognition instinct",
+      "headline": "Ask the right questions",
+      "narration": "Build a mental checklist: contiguous subarray = sliding window, repeated max/min = heap, all combinations = backtracking."
+    },
+    {
+      "index": 2,
+      "start": 99.5,
+      "end": 167.2,
+      "duration": 67.7,
+      "label": "Five-step framework",
+      "headline": "Read, output, constraints, template, verify",
+      "narration": "Step one: read fully. Step two: identify the output type. Step three: check constraints. Step four: match to a known template. Step five: verify against examples."
+    },
+    {
+      "index": 3,
+      "start": 167.2,
+      "end": 223,
+      "duration": 55.8,
+      "label": "Problem 1",
+      "headline": "Minimum Window Substring",
+      "narration": "Find the minimum window in s containing every character of t. Substring means contiguous. Coverage condition. This is a sliding window with frequency map."
+    },
+    {
+      "index": 4,
+      "start": 223,
+      "end": 286.7,
+      "duration": 63.7,
+      "label": "Sliding window detail",
+      "headline": "Expand then shrink",
+      "narration": "Maintain need and have frequency maps. Track formed count. When formed equals required, shrink from left. Record minimum valid window."
+    },
+    {
+      "index": 5,
+      "start": 286.7,
+      "end": 354.4,
+      "duration": 67.7,
+      "label": "Problem 2",
+      "headline": "Task Scheduler",
+      "narration": "Schedule tasks with cooldown, minimize idle time. Most frequent task determines minimum length. Greedy with a max heap or a mathematical formula."
+    },
+    {
+      "index": 6,
+      "start": 354.4,
+      "end": 414.1,
+      "duration": 59.7,
+      "label": "Formula approach",
+      "headline": "(f-1)(n+1) + count_max",
+      "narration": "The formula: max frequency f, count of tasks at max frequency. Result is max of total tasks and (f-1)(n+1) + count_max."
+    },
+    {
+      "index": 7,
+      "start": 414.1,
+      "end": 469.8,
+      "duration": 55.7,
+      "label": "Problem 3",
+      "headline": "Palindrome Partitioning",
+      "narration": "All possible palindrome partitions. Return all means enumerate. n up to 16 means exponential is fine. Choose-explore-unchoose backtracking."
+    },
+    {
+      "index": 8,
+      "start": 469.8,
+      "end": 537.5,
+      "duration": 67.7,
+      "label": "DP optimization",
+      "headline": "Precompute palindrome table",
+      "narration": "Build a dp table where dp[i][j] is true when substring i..j is a palindrome. O(1) lookup inside the backtracking, so the bottleneck is the number of valid partitions."
+    },
+    {
+      "index": 9,
+      "start": 537.5,
+      "end": 597.2,
+      "duration": 59.7,
+      "label": "The real lesson",
+      "headline": "Name the shape first",
+      "narration": "The first thirty seconds of reading a new problem matter more than the next thirty minutes of coding. Can you name the shape before you touch the keyboard?"
+    }
+  ],
+  "cue_span_sec": 597.2,
+  "formulas": [],
+  "exported_at": "2026-07-09T00:27:19.441Z"
+}

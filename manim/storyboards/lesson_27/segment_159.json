@@ -1,0 +1,91 @@
+{
+  "lesson_id": 27,
+  "activity_id": 159,
+  "activity_type": "lesson_part",
+  "title": "Part 1: Sliding Window — Minimum Window Substring (LC 76)",
+  "audio": {
+    "file_path": "runtime_artifacts/audio/lesson_27_activity_159_audio.mp3",
+    "duration_sec": 100.61
+  },
+  "audio_source": "artifact",
+  "cue_source": "audio.synced_visual.cues",
+  "cues": [
+    {
+      "index": 0,
+      "start": 0,
+      "end": 7.5,
+      "duration": 7.5,
+      "label": "Key insight",
+      "headline": "Never reset the window",
+      "narration": "The right pointer only moves forward, the left pointer only moves forward. No character is visited more than twice."
+    },
+    {
+      "index": 1,
+      "start": 7.5,
+      "end": 17.6,
+      "duration": 10.1,
+      "label": "Two dictionaries",
+      "headline": "Need and window maps",
+      "narration": "Need counts what t requires. Window counts what the current range contains. Formed tracks how many characters are satisfied."
+    },
+    {
+      "index": 2,
+      "start": 17.6,
+      "end": 27.7,
+      "duration": 10.1,
+      "label": "Formed count",
+      "headline": "Running tally",
+      "narration": "When window[c] reaches need[c], increment formed. When formed equals distinct needed characters, the window is valid."
+    },
+    {
+      "index": 3,
+      "start": 27.7,
+      "end": 37.7,
+      "duration": 10,
+      "label": "Shrink phase",
+      "headline": "Minimize the window",
+      "narration": "When valid, record the minimum, then remove the leftmost character and check if formed drops. Stop shrinking when the window is no longer valid."
+    },
+    {
+      "index": 4,
+      "start": 37.7,
+      "end": 47.8,
+      "duration": 10.1,
+      "label": "Expand again",
+      "headline": "Continue right",
+      "narration": "After shrinking invalidates the window, continue expanding right to find the next valid window."
+    },
+    {
+      "index": 5,
+      "start": 47.8,
+      "end": 60.4,
+      "duration": 12.6,
+      "label": "The template",
+      "headline": "Expand then shrink",
+      "narration": "This expand-then-shrink loop is the core of every sliding window problem. Adapt the validity check and the bookkeeping for each variant."
+    },
+    {
+      "index": 6,
+      "start": 60.4,
+      "end": 72.9,
+      "duration": 12.5,
+      "label": "Edge cases",
+      "headline": "Three gotchas",
+      "narration": "Three edge cases: t longer than s, duplicate characters in t, and tracking the start index of the best window, not just the length."
+    },
+    {
+      "index": 7,
+      "start": 72.9,
+      "end": 100.6,
+      "duration": 27.7,
+      "label": "Complexity",
+      "headline": "O(|s| + |t|)",
+      "narration": "Each character in s enters and leaves the window at most once. Building the need map is O(|t|). Space is O(alphabet size)."
+    }
+  ],
+  "cue_span_sec": 100.6,
+  "formulas": [
+    "O(|s| + |t|)"
+  ],
+  "exported_at": "2026-07-09T00:27:19.442Z"
+}

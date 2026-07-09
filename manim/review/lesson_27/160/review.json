@@ -1,0 +1,172 @@
+{
+  "lesson_id": 27,
+  "activity_id": 160,
+  "reviewed_at": "2026-07-09T00:40:00Z",
+  "iterations": 2,
+  "frames_reviewed": 23,
+  "quality": "ql",
+  "notes": "L27 Part 2 (act 160) 'Palindrome Partitioning \u2014 backtracking + palindrome DP', 82.5s, 8 cues. Reuses backtracking.py (three_beats/snapshot_chip/complexity) + bayes.chip + inline dp grid/tree; NOT transformer scenes. MathTex only for O(n\u00b72^n) and n=16\u2192\u22642^15\u224832K. s=aab \u2192 partitions [a,a,b] and [aa,b]; dp table verified (dp[0][1]=T aa, dp[1][2]=F ab, dp[0][2]=F aab, diagonal T). READ start/mid/end each cue (tail cue07 no _end). Round-1 iteration fixed Cue06 concat-overshoot (0.667s TOO LONG \u2192 tightened family-chip pacing to fit 12.4s window). All legible/in-frame/on-brand.",
+  "frames": [
+    {
+      "cue": 0,
+      "kind": "end",
+      "path": "lesson_27/160/cue00_end.png",
+      "verdict": "pass",
+      "notes": "[end] decision tree of split points: root empty \u2192 children 'a'(j=0) and 'aa'(j=1); 'at index i try every end j, keep palindromic cuts'"
+    },
+    {
+      "cue": 0,
+      "kind": "mid",
+      "path": "lesson_27/160/cue00_mid.png",
+      "verdict": "pass",
+      "notes": "[mid] decision tree of split points: root empty \u2192 children 'a'(j=0) and 'aa'(j=1); 'at index i try every end j, keep palindromic cuts'"
+    },
+    {
+      "cue": 0,
+      "kind": "start",
+      "path": "lesson_27/160/cue00_start.png",
+      "verdict": "pass",
+      "notes": "[start] decision tree of split points: root empty \u2192 children 'a'(j=0) and 'aa'(j=1); 'at index i try every end j, keep palindromic cuts'"
+    },
+    {
+      "cue": 1,
+      "kind": "end",
+      "path": "lesson_27/160/cue01_end.png",
+      "verdict": "pass",
+      "notes": "[end] path [a,a,b] with start==len(s) \u2192 copy (emerald) [a,a,b] to result list"
+    },
+    {
+      "cue": 1,
+      "kind": "mid",
+      "path": "lesson_27/160/cue01_mid.png",
+      "verdict": "pass",
+      "notes": "[mid] path [a,a,b] with start==len(s) \u2192 copy (emerald) [a,a,b] to result list"
+    },
+    {
+      "cue": 1,
+      "kind": "start",
+      "path": "lesson_27/160/cue01_start.png",
+      "verdict": "pass",
+      "notes": "[start] path [a,a,b] with start==len(s) \u2192 copy (emerald) [a,a,b] to result list"
+    },
+    {
+      "cue": 2,
+      "kind": "end",
+      "path": "lesson_27/160/cue02_end.png",
+      "verdict": "pass",
+      "notes": "[end] pop 'b' (amber un-choose marker) after recursion returns; 'resets state so next branch starts clean'"
+    },
+    {
+      "cue": 2,
+      "kind": "mid",
+      "path": "lesson_27/160/cue02_mid.png",
+      "verdict": "pass",
+      "notes": "[mid] pop 'b' (amber un-choose marker) after recursion returns; 'resets state so next branch starts clean'"
+    },
+    {
+      "cue": 2,
+      "kind": "start",
+      "path": "lesson_27/160/cue02_start.png",
+      "verdict": "pass",
+      "notes": "[start] pop 'b' (amber un-choose marker) after recursion returns; 'resets state so next branch starts clean'"
+    },
+    {
+      "cue": 3,
+      "kind": "end",
+      "path": "lesson_27/160/cue03_end.png",
+      "verdict": "pass",
+      "notes": "[end] inline two-pointer O(n)/call vs precomputed dp O(1)/call after O(n^2) setup; 'for n<=16 both fine'"
+    },
+    {
+      "cue": 3,
+      "kind": "mid",
+      "path": "lesson_27/160/cue03_mid.png",
+      "verdict": "pass",
+      "notes": "[mid] inline two-pointer O(n)/call vs precomputed dp O(1)/call after O(n^2) setup; 'for n<=16 both fine'"
+    },
+    {
+      "cue": 3,
+      "kind": "start",
+      "path": "lesson_27/160/cue03_start.png",
+      "verdict": "pass",
+      "notes": "[start] inline two-pointer O(n)/call vs precomputed dp O(1)/call after O(n^2) setup; 'for n<=16 both fine'"
+    },
+    {
+      "cue": 4,
+      "kind": "end",
+      "path": "lesson_27/160/cue04_end.png",
+      "verdict": "pass",
+      "notes": "[end] dp table for aab: diagonal T (single chars), pair dp[0][1]=T(aa)/dp[1][2]=F(ab), full dp[0][2]=F(aab); rules base/pair/len>=3 ends-match AND inner dp"
+    },
+    {
+      "cue": 4,
+      "kind": "mid",
+      "path": "lesson_27/160/cue04_mid.png",
+      "verdict": "pass",
+      "notes": "[mid] dp table for aab: diagonal T (single chars), pair dp[0][1]=T(aa)/dp[1][2]=F(ab), full dp[0][2]=F(aab); rules base/pair/len>=3 ends-match AND inner dp"
+    },
+    {
+      "cue": 4,
+      "kind": "start",
+      "path": "lesson_27/160/cue04_start.png",
+      "verdict": "pass",
+      "notes": "[start] dp table for aab: diagonal T (single chars), pair dp[0][1]=T(aa)/dp[1][2]=F(ab), full dp[0][2]=F(aab); rules base/pair/len>=3 ends-match AND inner dp"
+    },
+    {
+      "cue": 5,
+      "kind": "end",
+      "path": "lesson_27/160/cue05_end.png",
+      "verdict": "pass",
+      "notes": "[end] bottleneck = (#valid partitions)*n for path copying; n=16 => <=2^15~32K partitions MathTex"
+    },
+    {
+      "cue": 5,
+      "kind": "mid",
+      "path": "lesson_27/160/cue05_mid.png",
+      "verdict": "pass",
+      "notes": "[mid] bottleneck = (#valid partitions)*n for path copying; n=16 => <=2^15~32K partitions MathTex"
+    },
+    {
+      "cue": 5,
+      "kind": "start",
+      "path": "lesson_27/160/cue05_start.png",
+      "verdict": "pass",
+      "notes": "[start] bottleneck = (#valid partitions)*n for path copying; n=16 => <=2^15~32K partitions MathTex"
+    },
+    {
+      "cue": 6,
+      "kind": "end",
+      "path": "lesson_27/160/cue06_end.png",
+      "verdict": "pass",
+      "notes": "[end] backtracking=choose\u00b7explore\u00b7un-choose three_beats + family (combinations/permutations/subsets/N-queens/Sudoku); 'only the validity check changes'"
+    },
+    {
+      "cue": 6,
+      "kind": "mid",
+      "path": "lesson_27/160/cue06_mid.png",
+      "verdict": "pass",
+      "notes": "[mid] backtracking=choose\u00b7explore\u00b7un-choose three_beats + family (combinations/permutations/subsets/N-queens/Sudoku); 'only the validity check changes'"
+    },
+    {
+      "cue": 6,
+      "kind": "start",
+      "path": "lesson_27/160/cue06_start.png",
+      "verdict": "pass",
+      "notes": "[start] backtracking=choose\u00b7explore\u00b7un-choose three_beats + family (combinations/permutations/subsets/N-queens/Sudoku); 'only the validity check changes'"
+    },
+    {
+      "cue": 7,
+      "kind": "mid",
+      "path": "lesson_27/160/cue07_mid.png",
+      "verdict": "pass",
+      "notes": "[mid] 'return all possible'/'find every valid'/'list all' signal chips + small constraint (n<=~20) => O(n*2^n) backtracking verdict"
+    },
+    {
+      "cue": 7,
+      "kind": "start",
+      "path": "lesson_27/160/cue07_start.png",
+      "verdict": "pass",
+      "notes": "[start] 'return all possible'/'find every valid'/'list all' signal chips + small constraint (n<=~20) => O(n*2^n) backtracking verdict"
+    }
+  ]
+}

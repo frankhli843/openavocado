@@ -1,0 +1,214 @@
+{
+  "lesson_id": 27,
+  "activity_id": 158,
+  "reviewed_at": "2026-07-09T00:42:00Z",
+  "iterations": 1,
+  "frames_reviewed": 29,
+  "quality": "ql",
+  "notes": "L27 Orientation (act 158) 'No Pattern Labels: Recognize, Articulate, Implement Under Pressure', 597.2s, 10 cues. Meta recognition lesson: signal->technique map + 5-step read, then 3 unlabeled worked examples named to their shape. Reuses arrays.py (value_row/window_bracket/code_line/complexity) + bayes.chip; NOT transformer scenes. MathTex only for the Task Scheduler idle formula (f-1)(n+1)+c_max [worked (3-1)(2+1)+1=7] and the palindrome recurrence/dp. Examples verified: MinWindow s=ADOBECODEBANC t=ABC answer=BANC; Palindrome dp for aab (dp[0][1]=T aa, dp[1][2]=F ab, dp[0][2]=F aab, diagonal T). READ start/mid/end each cue (tail cue09 no _end boundary frame \u2014 expected). Staged reveals build progressively (map row-by-row, 5 steps, dp diagonal->pair->full). All legible, in-frame (safe-area guard passed), on-brand. 1 -ql iteration, no defects.",
+  "frames": [
+    {
+      "cue": 0,
+      "kind": "end",
+      "path": "lesson_27/158/cue00_end.png",
+      "verdict": "pass",
+      "notes": "[end] 'No labels, no hints': intro + 3 problem cards (Min Window Substring/Task Scheduler/Palindrome Partitioning) each with 'technique? -> ???', punch 'figure out WHAT you're looking at before writing a line'"
+    },
+    {
+      "cue": 0,
+      "kind": "mid",
+      "path": "lesson_27/158/cue00_mid.png",
+      "verdict": "pass",
+      "notes": "[mid] 'No labels, no hints': intro + 3 problem cards (Min Window Substring/Task Scheduler/Palindrome Partitioning) each with 'technique? -> ???', punch 'figure out WHAT you're looking at before writing a line'"
+    },
+    {
+      "cue": 0,
+      "kind": "start",
+      "path": "lesson_27/158/cue00_start.png",
+      "verdict": "pass",
+      "notes": "[start] 'No labels, no hints': intro + 3 problem cards (Min Window Substring/Task Scheduler/Palindrome Partitioning) each with 'technique? -> ???', punch 'figure out WHAT you're looking at before writing a line'"
+    },
+    {
+      "cue": 1,
+      "kind": "end",
+      "path": "lesson_27/158/cue01_end.png",
+      "verdict": "pass",
+      "notes": "[end] signal->technique map building: contiguous subarray/substring->sliding window, repeated max/min->heap, all combos/perms->backtracking, shortest path/levels/grid->BFS, answer is value in range->binary search"
+    },
+    {
+      "cue": 1,
+      "kind": "mid",
+      "path": "lesson_27/158/cue01_mid.png",
+      "verdict": "pass",
+      "notes": "[mid] signal->technique map building: contiguous subarray/substring->sliding window, repeated max/min->heap, all combos/perms->backtracking, shortest path/levels/grid->BFS, answer is value in range->binary search"
+    },
+    {
+      "cue": 1,
+      "kind": "start",
+      "path": "lesson_27/158/cue01_start.png",
+      "verdict": "pass",
+      "notes": "[start] signal->technique map building: contiguous subarray/substring->sliding window, repeated max/min->heap, all combos/perms->backtracking, shortest path/levels/grid->BFS, answer is value in range->binary search"
+    },
+    {
+      "cue": 2,
+      "kind": "end",
+      "path": "lesson_27/158/cue02_end.png",
+      "verdict": "pass",
+      "notes": "[end] 5-step read: 1 Read fully, 2 Output type, 3 Constraints, 4 Match template, 5 Verify examples \u2014 numbered rings accent/amber/emerald/violet/rose"
+    },
+    {
+      "cue": 2,
+      "kind": "mid",
+      "path": "lesson_27/158/cue02_mid.png",
+      "verdict": "pass",
+      "notes": "[mid] 5-step read: 1 Read fully, 2 Output type, 3 Constraints, 4 Match template, 5 Verify examples \u2014 numbered rings accent/amber/emerald/violet/rose"
+    },
+    {
+      "cue": 2,
+      "kind": "start",
+      "path": "lesson_27/158/cue02_start.png",
+      "verdict": "pass",
+      "notes": "[start] 5-step read: 1 Read fully, 2 Output type, 3 Constraints, 4 Match template, 5 Verify examples \u2014 numbered rings accent/amber/emerald/violet/rose"
+    },
+    {
+      "cue": 3,
+      "kind": "end",
+      "path": "lesson_27/158/cue03_end.png",
+      "verdict": "pass",
+      "notes": "[end] Minimum Window Substring: s=ADOBECODEBANC + t=ABC rows, clues (substring->contiguous, coverage condition, minimize->shrink), answer window BANC(9-12) emerald, verdict 'SLIDING WINDOW with frequency map'"
+    },
+    {
+      "cue": 3,
+      "kind": "mid",
+      "path": "lesson_27/158/cue03_mid.png",
+      "verdict": "pass",
+      "notes": "[mid] Minimum Window Substring: s=ADOBECODEBANC + t=ABC rows, clues (substring->contiguous, coverage condition, minimize->shrink), answer window BANC(9-12) emerald, verdict 'SLIDING WINDOW with frequency map'"
+    },
+    {
+      "cue": 3,
+      "kind": "start",
+      "path": "lesson_27/158/cue03_start.png",
+      "verdict": "pass",
+      "notes": "[start] Minimum Window Substring: s=ADOBECODEBANC + t=ABC rows, clues (substring->contiguous, coverage condition, minimize->shrink), answer window BANC(9-12) emerald, verdict 'SLIDING WINDOW with frequency map'"
+    },
+    {
+      "cue": 4,
+      "kind": "end",
+      "path": "lesson_27/158/cue04_end.png",
+      "verdict": "pass",
+      "notes": "[end] expand-then-shrink bookkeeping: need/window chips, code loop (window[c]+=1, formed++ when ==need, while formed==required shrink+record), 'formed==required -> valid, start shrinking'"
+    },
+    {
+      "cue": 4,
+      "kind": "mid",
+      "path": "lesson_27/158/cue04_mid.png",
+      "verdict": "pass",
+      "notes": "[mid] expand-then-shrink bookkeeping: need/window chips, code loop (window[c]+=1, formed++ when ==need, while formed==required shrink+record), 'formed==required -> valid, start shrinking'"
+    },
+    {
+      "cue": 4,
+      "kind": "start",
+      "path": "lesson_27/158/cue04_start.png",
+      "verdict": "pass",
+      "notes": "[start] expand-then-shrink bookkeeping: need/window chips, code loop (window[c]+=1, formed++ when ==need, while formed==required shrink+record), 'formed==required -> valid, start shrinking'"
+    },
+    {
+      "cue": 5,
+      "kind": "end",
+      "path": "lesson_27/158/cue05_end.png",
+      "verdict": "pass",
+      "notes": "[end] Task Scheduler: cooldown problem, slots A B C A B \u2014 A with A stamped 3x at idx0/3/6 (A_ _A_ _A), 'A most frequent stamps the frame', verdict GREEDY(max-heap)/formula"
+    },
+    {
+      "cue": 5,
+      "kind": "mid",
+      "path": "lesson_27/158/cue05_mid.png",
+      "verdict": "pass",
+      "notes": "[mid] Task Scheduler: cooldown problem, slots A B C A B \u2014 A with A stamped 3x at idx0/3/6 (A_ _A_ _A), 'A most frequent stamps the frame', verdict GREEDY(max-heap)/formula"
+    },
+    {
+      "cue": 5,
+      "kind": "start",
+      "path": "lesson_27/158/cue05_start.png",
+      "verdict": "pass",
+      "notes": "[start] Task Scheduler: cooldown problem, slots A B C A B \u2014 A with A stamped 3x at idx0/3/6 (A_ _A_ _A), 'A most frequent stamps the frame', verdict GREEDY(max-heap)/formula"
+    },
+    {
+      "cue": 6,
+      "kind": "end",
+      "path": "lesson_27/158/cue06_end.png",
+      "verdict": "pass",
+      "notes": "[end] idle formula MathTex len=max(|tasks|,(f-1)(n+1)+c_max), legend f/n/c_max defined, worked (3-1)(2+1)+1=6+1=7 emerald"
+    },
+    {
+      "cue": 6,
+      "kind": "mid",
+      "path": "lesson_27/158/cue06_mid.png",
+      "verdict": "pass",
+      "notes": "[mid] idle formula MathTex len=max(|tasks|,(f-1)(n+1)+c_max), legend f/n/c_max defined, worked (3-1)(2+1)+1=6+1=7 emerald"
+    },
+    {
+      "cue": 6,
+      "kind": "start",
+      "path": "lesson_27/158/cue06_start.png",
+      "verdict": "pass",
+      "notes": "[start] idle formula MathTex len=max(|tasks|,(f-1)(n+1)+c_max), legend f/n/c_max defined, worked (3-1)(2+1)+1=6+1=7 emerald"
+    },
+    {
+      "cue": 7,
+      "kind": "end",
+      "path": "lesson_27/158/cue07_end.png",
+      "verdict": "pass",
+      "notes": "[end] Palindrome Partitioning: s=aab, partitions [a,a,b] and [aa,b] emerald chips, clues 'all/every valid'->enumerate->backtracking, n<=16 exponential fine -> choose\u00b7explore\u00b7un-choose"
+    },
+    {
+      "cue": 7,
+      "kind": "mid",
+      "path": "lesson_27/158/cue07_mid.png",
+      "verdict": "pass",
+      "notes": "[mid] Palindrome Partitioning: s=aab, partitions [a,a,b] and [aa,b] emerald chips, clues 'all/every valid'->enumerate->backtracking, n<=16 exponential fine -> choose\u00b7explore\u00b7un-choose"
+    },
+    {
+      "cue": 7,
+      "kind": "start",
+      "path": "lesson_27/158/cue07_start.png",
+      "verdict": "pass",
+      "notes": "[start] Palindrome Partitioning: s=aab, partitions [a,a,b] and [aa,b] emerald chips, clues 'all/every valid'->enumerate->backtracking, n<=16 exponential fine -> choose\u00b7explore\u00b7un-choose"
+    },
+    {
+      "cue": 8,
+      "kind": "end",
+      "path": "lesson_27/158/cue08_end.png",
+      "verdict": "pass",
+      "notes": "[end] precompute dp[i][j] table for aab: diagonal T (single char), pair dp[0][1]=T(aa)/dp[1][2]=F(ab), full dp[0][2]=F(aab); recurrence (s_i=s_j) AND dp[i+1][j-1]; 'O(1) lookup after O(n^2) setup'"
+    },
+    {
+      "cue": 8,
+      "kind": "mid",
+      "path": "lesson_27/158/cue08_mid.png",
+      "verdict": "pass",
+      "notes": "[mid] precompute dp[i][j] table for aab: diagonal T (single char), pair dp[0][1]=T(aa)/dp[1][2]=F(ab), full dp[0][2]=F(aab); recurrence (s_i=s_j) AND dp[i+1][j-1]; 'O(1) lookup after O(n^2) setup'"
+    },
+    {
+      "cue": 8,
+      "kind": "start",
+      "path": "lesson_27/158/cue08_start.png",
+      "verdict": "pass",
+      "notes": "[start] precompute dp[i][j] table for aab: diagonal T (single char), pair dp[0][1]=T(aa)/dp[1][2]=F(ab), full dp[0][2]=F(aab); recurrence (s_i=s_j) AND dp[i+1][j-1]; 'O(1) lookup after O(n^2) setup'"
+    },
+    {
+      "cue": 9,
+      "kind": "mid",
+      "path": "lesson_27/158/cue09_mid.png",
+      "verdict": "pass",
+      "notes": "[mid] 'Name the shape first': first 30s of reading beat next 30min coding; recap 3 shapes (MinWindow->sliding window+freq, TaskScheduler->greedy/heap+formula, Palindrome->backtracking+dp); 'can you name the shape before you write a line?'"
+    },
+    {
+      "cue": 9,
+      "kind": "start",
+      "path": "lesson_27/158/cue09_start.png",
+      "verdict": "pass",
+      "notes": "[start] 'Name the shape first': first 30s of reading beat next 30min coding; recap 3 shapes (MinWindow->sliding window+freq, TaskScheduler->greedy/heap+formula, Palindrome->backtracking+dp); 'can you name the shape before you write a line?'"
+    }
+  ]
+}

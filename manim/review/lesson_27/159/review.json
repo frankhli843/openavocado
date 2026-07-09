@@ -1,0 +1,172 @@
+{
+  "lesson_id": 27,
+  "activity_id": 159,
+  "reviewed_at": "2026-07-09T00:40:00Z",
+  "iterations": 1,
+  "frames_reviewed": 23,
+  "quality": "ql",
+  "notes": "L27 Part 1 (act 159) 'Minimum Window Substring \u2014 sliding window mechanics', 100.6s, 8 cues. Reuses arrays.py (value_row/window_bracket/pointer/code_line/complexity) + bayes.chip; NOT transformer scenes. MathTex only for O(|s|+|t|). s=ADOBECODEBANC t=ABC answer=BANC. READ start/mid/end each cue (tail cue07 has no _end boundary frame \u2014 expected). All cues legible, in-frame (safe-area guard passed), on-brand dark palette; both pointers monotonic-forward story correct. 1 -ql iteration, no defects.",
+  "frames": [
+    {
+      "cue": 0,
+      "kind": "end",
+      "path": "lesson_27/159/cue00_end.png",
+      "verdict": "pass",
+      "notes": "[end] 'Never reset': array ADOBECODEBANC, L pointer (amber) below idx0, R pointer (blue) above idx3, 'no character visited more than twice' \u2014 L/R only move forward"
+    },
+    {
+      "cue": 0,
+      "kind": "mid",
+      "path": "lesson_27/159/cue00_mid.png",
+      "verdict": "pass",
+      "notes": "[mid] 'Never reset': array ADOBECODEBANC, L pointer (amber) below idx0, R pointer (blue) above idx3, 'no character visited more than twice' \u2014 L/R only move forward"
+    },
+    {
+      "cue": 0,
+      "kind": "start",
+      "path": "lesson_27/159/cue00_start.png",
+      "verdict": "pass",
+      "notes": "[start] 'Never reset': array ADOBECODEBANC, L pointer (amber) below idx0, R pointer (blue) above idx3, 'no character visited more than twice' \u2014 L/R only move forward"
+    },
+    {
+      "cue": 1,
+      "kind": "end",
+      "path": "lesson_27/159/cue01_end.png",
+      "verdict": "pass",
+      "notes": "[end] need={A:1,B:1,C:1} (amber), window={} (blue), formed=0/required=3 (emerald) \u2014 the three maps that drive validity"
+    },
+    {
+      "cue": 1,
+      "kind": "mid",
+      "path": "lesson_27/159/cue01_mid.png",
+      "verdict": "pass",
+      "notes": "[mid] need={A:1,B:1,C:1} (amber), window={} (blue), formed=0/required=3 (emerald) \u2014 the three maps that drive validity"
+    },
+    {
+      "cue": 1,
+      "kind": "start",
+      "path": "lesson_27/159/cue01_start.png",
+      "verdict": "pass",
+      "notes": "[start] need={A:1,B:1,C:1} (amber), window={} (blue), formed=0/required=3 (emerald) \u2014 the three maps that drive validity"
+    },
+    {
+      "cue": 2,
+      "kind": "end",
+      "path": "lesson_27/159/cue02_end.png",
+      "verdict": "pass",
+      "notes": "[end] code_line window[c]==need[c]\u2192formed+=1; 'when formed==distinct needed chars the window is VALID' emerald chip"
+    },
+    {
+      "cue": 2,
+      "kind": "mid",
+      "path": "lesson_27/159/cue02_mid.png",
+      "verdict": "pass",
+      "notes": "[mid] code_line window[c]==need[c]\u2192formed+=1; 'when formed==distinct needed chars the window is VALID' emerald chip"
+    },
+    {
+      "cue": 2,
+      "kind": "start",
+      "path": "lesson_27/159/cue02_start.png",
+      "verdict": "pass",
+      "notes": "[start] code_line window[c]==need[c]\u2192formed+=1; 'when formed==distinct needed chars the window is VALID' emerald chip"
+    },
+    {
+      "cue": 3,
+      "kind": "end",
+      "path": "lesson_27/159/cue03_end.png",
+      "verdict": "pass",
+      "notes": "[end] array with valid window bracket, drop arrow (rose) at leftmost, shrinks to smaller emerald window BANC(9-12) still valid; 'stop shrinking once formed drops below required'"
+    },
+    {
+      "cue": 3,
+      "kind": "mid",
+      "path": "lesson_27/159/cue03_mid.png",
+      "verdict": "pass",
+      "notes": "[mid] array with valid window bracket, drop arrow (rose) at leftmost, shrinks to smaller emerald window BANC(9-12) still valid; 'stop shrinking once formed drops below required'"
+    },
+    {
+      "cue": 3,
+      "kind": "start",
+      "path": "lesson_27/159/cue03_start.png",
+      "verdict": "pass",
+      "notes": "[start] array with valid window bracket, drop arrow (rose) at leftmost, shrinks to smaller emerald window BANC(9-12) still valid; 'stop shrinking once formed drops below required'"
+    },
+    {
+      "cue": 4,
+      "kind": "end",
+      "path": "lesson_27/159/cue04_end.png",
+      "verdict": "pass",
+      "notes": "[end] invalid window (rose, missing A) after shrink, R pointer pushes forward again to hunt next valid window"
+    },
+    {
+      "cue": 4,
+      "kind": "mid",
+      "path": "lesson_27/159/cue04_mid.png",
+      "verdict": "pass",
+      "notes": "[mid] invalid window (rose, missing A) after shrink, R pointer pushes forward again to hunt next valid window"
+    },
+    {
+      "cue": 4,
+      "kind": "start",
+      "path": "lesson_27/159/cue04_start.png",
+      "verdict": "pass",
+      "notes": "[start] invalid window (rose, missing A) after shrink, R pointer pushes forward again to hunt next valid window"
+    },
+    {
+      "cue": 5,
+      "kind": "end",
+      "path": "lesson_27/159/cue05_end.png",
+      "verdict": "pass",
+      "notes": "[end] expand-then-shrink core loop: expand R, while valid shrink L, record best; 'only validity check + bookkeeping change per variant'"
+    },
+    {
+      "cue": 5,
+      "kind": "mid",
+      "path": "lesson_27/159/cue05_mid.png",
+      "verdict": "pass",
+      "notes": "[mid] expand-then-shrink core loop: expand R, while valid shrink L, record best; 'only validity check + bookkeeping change per variant'"
+    },
+    {
+      "cue": 5,
+      "kind": "start",
+      "path": "lesson_27/159/cue05_start.png",
+      "verdict": "pass",
+      "notes": "[start] expand-then-shrink core loop: expand R, while valid shrink L, record best; 'only validity check + bookkeeping change per variant'"
+    },
+    {
+      "cue": 6,
+      "kind": "end",
+      "path": "lesson_27/159/cue06_end.png",
+      "verdict": "pass",
+      "notes": "[end] three gotchas: t longer than s; duplicate chars in t (counts must match); track START index of best window not just length"
+    },
+    {
+      "cue": 6,
+      "kind": "mid",
+      "path": "lesson_27/159/cue06_mid.png",
+      "verdict": "pass",
+      "notes": "[mid] three gotchas: t longer than s; duplicate chars in t (counts must match); track START index of best window not just length"
+    },
+    {
+      "cue": 6,
+      "kind": "start",
+      "path": "lesson_27/159/cue06_start.png",
+      "verdict": "pass",
+      "notes": "[start] three gotchas: t longer than s; duplicate chars in t (counts must match); track START index of best window not just length"
+    },
+    {
+      "cue": 7,
+      "kind": "mid",
+      "path": "lesson_27/159/cue07_mid.png",
+      "verdict": "pass",
+      "notes": "[mid] O(|s|+|t|): array enclosed, 'R passes each char once +1', 'L passes each char at most once -1', bound O(|s|+|t|) MathTex, space O(alphabet)"
+    },
+    {
+      "cue": 7,
+      "kind": "start",
+      "path": "lesson_27/159/cue07_start.png",
+      "verdict": "pass",
+      "notes": "[start] O(|s|+|t|): array enclosed, 'R passes each char once +1', 'L passes each char at most once -1', bound O(|s|+|t|) MathTex, space O(alphabet)"
+    }
+  ]
+}

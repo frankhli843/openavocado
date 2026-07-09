@@ -1,0 +1,91 @@
+{
+  "lesson_id": 27,
+  "activity_id": 160,
+  "activity_type": "lesson_part",
+  "title": "Part 2: Backtracking — Palindrome Partitioning (LC 131)",
+  "audio": {
+    "file_path": "runtime_artifacts/audio/lesson_27_activity_160_audio.mp3",
+    "duration_sec": 82.49
+  },
+  "audio_source": "artifact",
+  "cue_source": "audio.synced_visual.cues",
+  "cues": [
+    {
+      "index": 0,
+      "start": 0,
+      "end": 6.2,
+      "duration": 6.2,
+      "label": "Structure",
+      "headline": "Decision tree of splits",
+      "narration": "Each node represents a split point. At position i, try every end position j. If s[i..j] is a palindrome, add to path and recurse."
+    },
+    {
+      "index": 1,
+      "start": 6.2,
+      "end": 14.4,
+      "duration": 8.2,
+      "label": "Base case",
+      "headline": "Start equals length",
+      "narration": "When start equals the string length, the current path is a complete valid partition. Copy it into the result list."
+    },
+    {
+      "index": 2,
+      "start": 14.4,
+      "end": 22.7,
+      "duration": 8.3,
+      "label": "Un-choose",
+      "headline": "Pop after recursion",
+      "narration": "After the recursive call returns, pop the last substring from the path. This is the backtracking step that resets state for the next branch."
+    },
+    {
+      "index": 3,
+      "start": 22.7,
+      "end": 33,
+      "duration": 10.3,
+      "label": "Palindrome check",
+      "headline": "Inline vs precomputed",
+      "narration": "Inline two-pointer check is O(n) per call. Precomputed DP table is O(1) per call after O(n^2) setup. For n up to 16, both work."
+    },
+    {
+      "index": 4,
+      "start": 33,
+      "end": 43.3,
+      "duration": 10.3,
+      "label": "DP table",
+      "headline": "Fill diagonals outward",
+      "narration": "Base: every single character is a palindrome. Then pairs: dp[i][i+1] is true if s[i] equals s[i+1]. Then length 3 and up: dp[i][j] = (s[i] == s[j]) and dp[i+1][j-1]."
+    },
+    {
+      "index": 5,
+      "start": 43.3,
+      "end": 53.6,
+      "duration": 10.3,
+      "label": "Optimization",
+      "headline": "Bottleneck is output size",
+      "narration": "After precomputation, the backtracking cost is proportional to the number of valid partitions times n for path copying. For n = 16, this is at most 32K partitions."
+    },
+    {
+      "index": 6,
+      "start": 53.6,
+      "end": 66,
+      "duration": 12.4,
+      "label": "Template",
+      "headline": "Backtracking = choose-explore-unchoose",
+      "narration": "This pattern applies to every enumeration problem: combinations, permutations, subsets, N-queens, Sudoku. The only thing that changes is the validity check."
+    },
+    {
+      "index": 7,
+      "start": 66,
+      "end": 82.5,
+      "duration": 16.5,
+      "label": "Recognition",
+      "headline": "'All possible' is the signal",
+      "narration": "When a problem says 'return all possible,' 'find every valid,' or 'list all,' and the constraint is small, you are looking at backtracking."
+    }
+  ],
+  "cue_span_sec": 82.5,
+  "formulas": [
+    "O(n \\cdot 2^n)"
+  ],
+  "exported_at": "2026-07-09T00:27:19.442Z"
+}
