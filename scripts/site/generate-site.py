@@ -158,6 +158,7 @@ h1 .svg-ico, h2 .svg-ico, h3 .svg-ico { margin-right: .35rem; }
 .card .ico { font-size: 1.35rem; }
 .card h3 { margin: .5rem 0 .3rem; color: var(--fg); }
 .card p { margin: 0; font-size: .92rem; }
+.runtime-group-label { margin: 2rem 0 -.2rem; font-weight: 700; font-size: .95rem; color: var(--fg-soft); }
 
 /* mission band */
 .mission { background: linear-gradient(180deg, var(--accent-soft), #fbfdf8); border: 1px solid var(--border);
@@ -186,6 +187,7 @@ h1 .svg-ico, h2 .svg-ico, h3 .svg-ico { margin-right: .35rem; }
 .badge-ok { background: var(--accent-soft); color: var(--accent-strong); }
 .badge-planned { background: #eceee9; color: var(--muted); }
 .badge-partial { background: #fdf3d6; color: var(--warn); }
+.badge-prompt { background: #e7eef8; color: #2f5bb0; }
 
 /* tables */
 .table-wrap { overflow-x: auto; max-width: 100%; margin: 1.1rem 0; -webkit-overflow-scrolling: touch; }

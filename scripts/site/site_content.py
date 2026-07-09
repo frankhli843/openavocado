@@ -172,6 +172,13 @@ HERO_BODY = f"""
     <a class="card" href="run-openclaw.html"><div class="ico">🤖</div><h3>OpenClaw <span class="badge badge-ok">ready</span></h3><p>Hand lesson generation to an external agent/task runner via the task adapter.</p></a>
     <a class="card" href="run-hermes.html"><div class="ico">📜</div><h3>Hermes <span class="badge badge-planned">planned</span></h3><p>Wire a local Hermes agent runtime through the agent-harness command adapter.</p></a>
   </div>
+  <p class="runtime-group-label">Or drive setup with an agentic coding tool — paste a prompt and let the agent stand Open Avocado up for you:</p>
+  <div class="card-grid">
+    <a class="card" href="run-claude-code.html"><div class="ico">⚡</div><h3>Claude Code <span class="badge badge-prompt">prompt</span></h3><p>Point Anthropic's agentic CLI at the repo with a setup prompt; it installs, runs, and extends Open Avocado.</p></a>
+    <a class="card" href="run-codex.html"><div class="ico">🐍</div><h3>Codex <span class="badge badge-prompt">prompt</span></h3><p>Drive setup and lesson authoring with OpenAI's Codex CLI via a copy-paste prompt.</p></a>
+    <a class="card" href="run-opencode.html"><div class="ico">🧩</div><h3>OpenCode <span class="badge badge-prompt">prompt</span></h3><p>Use the open-source OpenCode terminal agent to install, run, and author lessons.</p></a>
+    <a class="card" href="run-antigravity.html"><div class="ico">🚀</div><h3>Antigravity <span class="badge badge-prompt">prompt</span></h3><p>Point Google's Antigravity agent platform at the repo with a setup prompt.</p></a>
+  </div>
 </section>
 
 <section class="os-band">
@@ -623,6 +630,127 @@ execution engine (a local Hermes agent) differs.</p>
 """
 
 
+# ── Runtime: agentic coding tools (Claude Code / Codex / OpenCode / Antigravity) ─
+# These are external agent runtimes. Open Avocado does NOT ship a bespoke plugin
+# for any of them — the page hands the agent a copy-pastable setup prompt built
+# from documented commands, and the agent drives the same generator contract every
+# other runtime uses. Keep this honest: a recipe, not a one-click integration.
+def _agent_prompt_page(icon, product, descriptor, link_url, link_label, link_kind, launch, extra_note=""):
+    header = _rt_header(
+        icon, f"Run with {product}",
+        '<span class="badge badge-prompt">prompt</span>',
+        f"{product} is {descriptor} — a separate <em>agent runtime</em> that reads a repository, runs commands, "
+        f"edits files, and executes code. Point it at Open Avocado with the setup prompt below and it will stand the "
+        f"app up and author or review lessons through the documented contract. This is a bring-your-own-agent path: "
+        f"no bespoke {product} integration is shipped."
+    )
+    body = f"""
+<div class="note"><p><strong>Two different runtimes.</strong> {product} is the <em>agent runtime</em> that does the
+work. Open Avocado is the <em>app runtime</em> — a Next.js app plus a pluggable lesson generator. This page tells the
+agent how to connect the two; it does not claim a turnkey {product} plugin.</p></div>
+
+<h2>Who this is for</h2>
+<ul>
+  <li>You already use {product} and want it to set up, run, and extend Open Avocado for you.</li>
+  <li>You want an agent to author or review lessons against the <a href="lesson-authoring.html">quality bar</a> instead of wiring generation by hand.</li>
+</ul>
+
+<h2>1 &middot; Install &amp; launch {product}</h2>
+<p>Install {product} from its {link_kind} — <a href="{link_url}" target="_blank" rel="noopener">{link_label}</a> — then
+launch it in an empty working directory:</p>
+<pre><code>{launch}</code></pre>
+{extra_note}
+
+<h2>2 &middot; Paste this setup prompt</h2>
+<p>Copy the prompt below into {product}. It uses only documented Open Avocado commands — nothing bespoke:</p>
+<pre><code>You are setting up Open Avocado, an open-source adaptive-learning app, from scratch.
+
+1. Clone and read the repository so you understand it:
+     git clone {REPO}.git
+     cd openavocado
+   Read README.md and the docs it links (Quick Start, Architecture,
+   Configuration, and the Lesson Authoring standard).
+
+2. Install dependencies and create local config:
+     pnpm install
+     cp .env.example .env.local
+   In .env.local set ONE provider key (kept server-side, never committed):
+     GOOGLE_AI_STUDIO_API_KEY=&lt;your Google AI Studio key&gt;
+     AVOCADOCORE_DEFAULT_PROVIDER=google-ai-studio
+     # optional: GOOGLE_AI_STUDIO_MODEL=&lt;model id&gt;
+   # or, for OpenAI:  OPENAI_API_KEY=sk-...  and  AVOCADOCORE_DEFAULT_PROVIDER=openai
+   Keep in-process generation on:
+     AVOCADOCORE_COMPLETION_ADAPTER=local-queue
+
+3. Seed a local database and start the app:
+     mkdir -p data
+     pnpm db:migrate --seed
+     pnpm dev            # http://localhost:3000
+
+4. Verify it is healthy:
+     curl -s http://localhost:3000/api/health
+   Confirm the default provider is configured and the database answers.
+
+5. Generate and review a lesson:
+   Create a subject in the UI (or complete a lesson) so the generator runs.
+   Read the generated lesson payload and check it against the lesson-authoring
+   quality bar (evidence-first, real interactives, hidden tests, separate QA).
+   Improve the config or lesson content until it meets the bar, then write
+   validated lessons back through the documented contract (the app API or
+   database) — never fabricate content.
+
+6. Prove it works before you finish:
+     pnpm test
+     pnpm build
+   Report the health output, test results, and one generated lesson.
+</code></pre>
+
+<h2>3 &middot; How it connects to lesson generation</h2>
+<p>{product} does not need a special adapter. It drives the <strong>same documented contract</strong> every runtime
+uses: run the in-process generator (<code>local-queue</code>) with a configured provider and review its output against
+the <a href="lesson-authoring.html">lesson-authoring standard</a>, or act as the external runner behind the
+<a href="run-openclaw.html"><code>dora-task</code></a> / <a href="run-hermes.html"><code>agent-harness</code></a>
+adapters and write validated lessons back. See <a href="configuration.html">Configuration</a> for every variable.</p>
+
+<div class="note"><p><strong>Honest status.</strong> Open Avocado ships the app, the generator contract, and the
+adapters — not a packaged {product} plugin. Lesson quality depends on the model and on the agent following the quality
+bar. Treat this as a repeatable setup recipe, not a one-click integration.</p></div>
+"""
+    return header + body
+
+
+RUN_CLAUDE_CODE = _agent_prompt_page(
+    "⚡", "Claude Code", "Anthropic's agentic coding CLI",
+    "https://github.com/anthropics/claude-code", "github.com/anthropics/claude-code", "repository",
+    "claude          # launch Claude Code in the current directory\n"
+    "# install &amp; docs: https://docs.claude.com/en/docs/claude-code",
+)
+
+RUN_CODEX = _agent_prompt_page(
+    "🐍", "Codex", "OpenAI's agentic coding CLI",
+    "https://github.com/openai/codex", "github.com/openai/codex", "repository",
+    "codex           # launch the Codex CLI in the current directory\n"
+    "# install &amp; docs: https://developers.openai.com/codex",
+)
+
+RUN_OPENCODE = _agent_prompt_page(
+    "🧩", "OpenCode", "an open-source, terminal-based AI coding agent",
+    "https://github.com/sst/opencode", "github.com/sst/opencode", "repository",
+    "curl -fsSL https://opencode.ai/install | bash   # install\n"
+    "opencode         # launch OpenCode in the current directory\n"
+    "# docs: https://opencode.ai/docs",
+)
+
+RUN_ANTIGRAVITY = _agent_prompt_page(
+    "🚀", "Antigravity", "Google's agentic development platform",
+    "https://antigravity.google/", "antigravity.google", "documentation",
+    "# Download the Antigravity editor from https://antigravity.google\n"
+    "# Open an empty folder and start an agent session in it.",
+    extra_note='<div class="note"><p>Antigravity is a Google agentic development platform in public preview, not an '
+    'open-source CLI — there is no public source repository, so the link above is the official documentation.</p></div>',
+)
+
+
 # ── Quick Start ──────────────────────────────────────────────────────────────
 QUICKSTART = f"""
 <h1>Quick Start</h1>
@@ -677,6 +805,13 @@ curl -s  http://localhost:3000/api/health | head -c 300</code></pre>
   <a class="card" href="run-gemmaclaw.html"><div class="ico">🦎</div><h3>Gemmaclaw <span class="badge badge-partial">partial</span></h3><p>A specific local-model gateway (Gemma) example.</p></a>
   <a class="card" href="run-openclaw.html"><div class="ico">🤖</div><h3>OpenClaw <span class="badge badge-ok">ready</span></h3><p>External agent/task runner for full-quality lessons.</p></a>
   <a class="card" href="run-hermes.html"><div class="ico">📜</div><h3>Hermes <span class="badge badge-planned">planned</span></h3><p>Local Hermes agent via the command adapter.</p></a>
+</div>
+<p class="runtime-group-label">Or drive setup with an agentic coding tool (paste a prompt):</p>
+<div class="card-grid">
+  <a class="card" href="run-claude-code.html"><div class="ico">⚡</div><h3>Claude Code <span class="badge badge-prompt">prompt</span></h3><p>Anthropic's agentic CLI — setup prompt.</p></a>
+  <a class="card" href="run-codex.html"><div class="ico">🐍</div><h3>Codex <span class="badge badge-prompt">prompt</span></h3><p>OpenAI's Codex CLI — setup prompt.</p></a>
+  <a class="card" href="run-opencode.html"><div class="ico">🧩</div><h3>OpenCode <span class="badge badge-prompt">prompt</span></h3><p>Open-source terminal agent — setup prompt.</p></a>
+  <a class="card" href="run-antigravity.html"><div class="ico">🚀</div><h3>Antigravity <span class="badge badge-prompt">prompt</span></h3><p>Google's agent platform — setup prompt.</p></a>
 </div>
 
 <p>Next: <a href="configuration.html">Configuration</a> for every environment variable, or
@@ -1021,4 +1156,17 @@ PAGE_BODIES = {
     "run-hermes.html": ("quickstart.html", "Run with a Hermes agent runtime (planned) — Open Avocado",
         "Wire a local Hermes agent as the lesson generator through the agent-harness command adapter.",
         RUN_HERMES),
+    "run-claude-code.html": ("quickstart.html", "Run with Claude Code — Open Avocado",
+        "Point Anthropic's Claude Code agent at Open Avocado with a copy-pastable setup prompt that installs, "
+        "runs, and authors lessons through the documented contract.",
+        RUN_CLAUDE_CODE),
+    "run-codex.html": ("quickstart.html", "Run with Codex — Open Avocado",
+        "Use OpenAI's Codex CLI to set up and run Open Avocado via a copy-pastable setup prompt.",
+        RUN_CODEX),
+    "run-opencode.html": ("quickstart.html", "Run with OpenCode — Open Avocado",
+        "Use the open-source OpenCode terminal agent to set up, run, and author lessons for Open Avocado.",
+        RUN_OPENCODE),
+    "run-antigravity.html": ("quickstart.html", "Run with Antigravity — Open Avocado",
+        "Point Google's Antigravity agentic development platform at Open Avocado with a setup prompt.",
+        RUN_ANTIGRAVITY),
 }

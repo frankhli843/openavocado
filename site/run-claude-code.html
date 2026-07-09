@@ -1,0 +1,104 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Run with Claude Code — Open Avocado</title>
+<meta name="description" content="Point Anthropic's Claude Code agent at Open Avocado with a copy-pastable setup prompt that installs, runs, and authors lessons through the documented contract.">
+<meta property="og:title" content="Run with Claude Code — Open Avocado">
+<meta property="og:description" content="Point Anthropic's Claude Code agent at Open Avocado with a copy-pastable setup prompt that installs, runs, and authors lessons through the documented contract.">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://frankhli843.github.io/openavocado/">
+<meta name="twitter:card" content="summary">
+<link rel="icon" type="image/svg+xml" href="assets/favicon.svg">
+<link rel="stylesheet" href="assets/styles.css">
+</head>
+<body>
+<nav class="topnav"><div class="topnav-inner">
+<a class="brand" href="index.html"><svg viewBox="635 -20 445 445" role="img" aria-label="Open Avocado" width="22" height="22"><path fill="#399103" d="M1232.67-1000.76a125.34,125.34,0,0,1,1-13c3.4-33,13.92-86.75,57.37-160.78,33-56.25,49.52-84.38,70.72-85.09,26.54-.89,46.12,32.06,79.12,87.6,39.58,66.6,49.47,123.11,52.53,154.17.83,8.43,1.25,12.64,1.12,17.1-1.53,52.59-48.78,130.92-130.92,130.92A130.92,130.92,0,0,1,1232.67-1000.76Z" transform="translate(-506.6 1267.13)"/><path fill="#f8ee7b" d="M1275.87-1006.33a84,84,0,0,1,.65-8.7c2.28-22.12,9.33-58.12,38.44-107.73,22.12-37.69,33.18-56.53,47.38-57,17.78-.6,30.9,21.48,53,58.69,26.52,44.62,33.14,82.48,35.2,103.29a90.81,90.81,0,0,1,.75,11.45c-1,35.23-32.68,87.71-87.71,87.71A87.71,87.71,0,0,1,1275.87-1006.33Z" transform="translate(-506.6 1267.13)"/><circle fill="#fff" cx="856.99" cy="264.46" r="42.81"/></svg><span><span class="b-open">Open</span><span class="b-avo"> Avocado</span></span></a>
+<div class="nav-links"><a href="index.html">Home</a><a href="quickstart.html" class="active">Quick Start</a><a href="architecture.html">Architecture</a><a href="lesson-authoring.html">Lesson Authoring</a><a href="configuration.html">Configuration</a><a href="contributing.html">Contributing</a><a href="deployment.html">Deploy</a><a href="privacy.html">Privacy</a><a class="gh" href="https://github.com/frankhli843/openavocado" target="_blank" rel="noopener">GitHub</a></div>
+</div></nav>
+<main class="wrap">
+<p class="breadcrumb"><a href="quickstart.html">Quick Start</a> › Run locally</p>
+<h1><span class="svg-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M13 2 4 14h6l-1 8 9-12h-6l1-8z"/></svg></span> Run with Claude Code <span class="badge badge-prompt">prompt</span></h1>
+<p class="lead">Claude Code is Anthropic's agentic coding CLI — a separate <em>agent runtime</em> that reads a repository, runs commands, edits files, and executes code. Point it at Open Avocado with the setup prompt below and it will stand the app up and author or review lessons through the documented contract. This is a bring-your-own-agent path: no bespoke Claude Code integration is shipped.</p>
+
+<div class="note"><p><strong>Two different runtimes.</strong> Claude Code is the <em>agent runtime</em> that does the
+work. Open Avocado is the <em>app runtime</em> — a Next.js app plus a pluggable lesson generator. This page tells the
+agent how to connect the two; it does not claim a turnkey Claude Code plugin.</p></div>
+
+<h2>Who this is for</h2>
+<ul>
+  <li>You already use Claude Code and want it to set up, run, and extend Open Avocado for you.</li>
+  <li>You want an agent to author or review lessons against the <a href="lesson-authoring.html">quality bar</a> instead of wiring generation by hand.</li>
+</ul>
+
+<h2>1 &middot; Install &amp; launch Claude Code</h2>
+<p>Install Claude Code from its repository — <a href="https://github.com/anthropics/claude-code" target="_blank" rel="noopener">github.com/anthropics/claude-code</a> — then
+launch it in an empty working directory:</p>
+<pre><code>claude          # launch Claude Code in the current directory
+# install &amp; docs: https://docs.claude.com/en/docs/claude-code</code></pre>
+
+
+<h2>2 &middot; Paste this setup prompt</h2>
+<p>Copy the prompt below into Claude Code. It uses only documented Open Avocado commands — nothing bespoke:</p>
+<pre><code>You are setting up Open Avocado, an open-source adaptive-learning app, from scratch.
+
+1. Clone and read the repository so you understand it:
+     git clone https://github.com/frankhli843/openavocado.git
+     cd openavocado
+   Read README.md and the docs it links (Quick Start, Architecture,
+   Configuration, and the Lesson Authoring standard).
+
+2. Install dependencies and create local config:
+     pnpm install
+     cp .env.example .env.local
+   In .env.local set ONE provider key (kept server-side, never committed):
+     GOOGLE_AI_STUDIO_API_KEY=&lt;your Google AI Studio key&gt;
+     AVOCADOCORE_DEFAULT_PROVIDER=google-ai-studio
+     # optional: GOOGLE_AI_STUDIO_MODEL=&lt;model id&gt;
+   # or, for OpenAI:  OPENAI_API_KEY=sk-...  and  AVOCADOCORE_DEFAULT_PROVIDER=openai
+   Keep in-process generation on:
+     AVOCADOCORE_COMPLETION_ADAPTER=local-queue
+
+3. Seed a local database and start the app:
+     mkdir -p data
+     pnpm db:migrate --seed
+     pnpm dev            # http://localhost:3000
+
+4. Verify it is healthy:
+     curl -s http://localhost:3000/api/health
+   Confirm the default provider is configured and the database answers.
+
+5. Generate and review a lesson:
+   Create a subject in the UI (or complete a lesson) so the generator runs.
+   Read the generated lesson payload and check it against the lesson-authoring
+   quality bar (evidence-first, real interactives, hidden tests, separate QA).
+   Improve the config or lesson content until it meets the bar, then write
+   validated lessons back through the documented contract (the app API or
+   database) — never fabricate content.
+
+6. Prove it works before you finish:
+     pnpm test
+     pnpm build
+   Report the health output, test results, and one generated lesson.
+</code></pre>
+
+<h2>3 &middot; How it connects to lesson generation</h2>
+<p>Claude Code does not need a special adapter. It drives the <strong>same documented contract</strong> every runtime
+uses: run the in-process generator (<code>local-queue</code>) with a configured provider and review its output against
+the <a href="lesson-authoring.html">lesson-authoring standard</a>, or act as the external runner behind the
+<a href="run-openclaw.html"><code>dora-task</code></a> / <a href="run-hermes.html"><code>agent-harness</code></a>
+adapters and write validated lessons back. See <a href="configuration.html">Configuration</a> for every variable.</p>
+
+<div class="note"><p><strong>Honest status.</strong> Open Avocado ships the app, the generator contract, and the
+adapters — not a packaged Claude Code plugin. Lesson quality depends on the model and on the agent following the quality
+bar. Treat this as a repeatable setup recipe, not a one-click integration.</p></div>
+</main>
+<footer><div class="footer-inner">
+<p><strong>Open Avocado</strong> — open-source adaptive learning platform &amp; lesson-generation framework.</p>
+<p><a href="https://github.com/frankhli843/openavocado">GitHub repository</a> · <a href="https://frankhli843.github.io/openavocado/">Live site</a> · <a href="privacy.html">Privacy &amp; data boundaries</a></p>
+<p class="subtle">Built with Next.js, React, TypeScript, and SQLite. No personal data or credentials are stored in this repository.</p>
+</div></footer>
+</body>
+</html>
