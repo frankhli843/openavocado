@@ -1,0 +1,56 @@
+{
+  "lesson_id": 8,
+  "activity_id": 47,
+  "activity_type": "lesson_part",
+  "title": "Part 2: Compute and Containers",
+  "audio": {
+    "file_path": "runtime_artifacts/audio/lesson_8_activity_47_audio.mp3",
+    "duration_sec": 417.5
+  },
+  "audio_source": "artifact",
+  "cue_source": "audio.synced_visual.cues",
+  "cues": [
+    {
+      "index": 0,
+      "start": 0,
+      "end": 139,
+      "duration": 139,
+      "label": "Name mapping",
+      "headline": "Cloud Run, Artifact Registry, GKE",
+      "narration": "GCP compute maps almost directly onto your AWS knowledge. Cloud Run is GCP's answer to Fargate with ECS. Artifact Registry is the equivalent of ECR, where you push your container images. And GKE, Google Kubernetes Engine, is the counterpart to EKS.",
+      "active_elements": [
+        "Cloud Run <-> Fargate/ECS",
+        "Artifact Registry <-> ECR"
+      ]
+    },
+    {
+      "index": 1,
+      "start": 139,
+      "end": 278,
+      "duration": 139,
+      "label": "Cloud Run scales to zero",
+      "headline": "Zero instances, then a cold start",
+      "narration": "The biggest behavioral difference: Cloud Run scales to zero by default. When no requests arrive, it shuts down every instance and charges you nothing. When a request comes in, it spins up within a few hundred milliseconds. That is great for variable traffic, but it introduces cold starts that Fargate does not have.",
+      "active_elements": [
+        "no requests -> 0 instances -> $0",
+        "request -> cold start"
+      ]
+    },
+    {
+      "index": 2,
+      "start": 278,
+      "end": 418,
+      "duration": 140,
+      "label": "GKE is real Kubernetes",
+      "headline": "Managed control plane, born at Google",
+      "narration": "GKE runs actual Kubernetes clusters — you deploy Pods, Services, Deployments, and StatefulSets exactly as anywhere else. Kubernetes was created at Google and open-sourced in 2014, and GKE manages the control plane, etcd, and node upgrades for you.",
+      "active_elements": [
+        "Pods/Services/Deployments",
+        "managed control plane + etcd"
+      ]
+    }
+  ],
+  "cue_span_sec": 418,
+  "formulas": [],
+  "exported_at": "2026-07-09T05:16:12.364Z"
+}

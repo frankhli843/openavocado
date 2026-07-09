@@ -1,0 +1,74 @@
+{
+  "lesson_id": 8,
+  "activity_id": 46,
+  "reviewed_at": "2026-07-09T05:35:00Z",
+  "iterations": 2,
+  "frames_reviewed": 9,
+  "quality": "ql",
+  "notes": "L8 activity 46 'GCP Through an AWS Lens', 3 cues. Uses cloud.py (service_box, map_pair GCP≈AWS, column, hierarchy, iam_binding). No formulas (identity/boundary model). READ start/mid/end each cue; accumulate-then-hold so mid==end (no transient collisions). Layout defects fixed at smoke stage (safe-area). Last-cue end frame re-extracted within muxed duration. All cues pass at -ql.",
+  "frames": [
+    {
+      "cue": 0,
+      "kind": "start",
+      "path": "lesson_8/46/cue00_start.png",
+      "verdict": "pass",
+      "notes": "[start reveal] four-layer tree: nested (progressively narrower) Org>Folder>Project>Resource boxes with down-arrows, vs a flat 'AWS account' box + 'vs'; note 'you cannot create a resource outside a project'."
+    },
+    {
+      "cue": 0,
+      "kind": "mid",
+      "path": "lesson_8/46/cue00_mid.png",
+      "verdict": "pass",
+      "notes": "[mid, full] four-layer tree: nested (progressively narrower) Org>Folder>Project>Resource boxes with down-arrows, vs a flat 'AWS account' box + 'vs'; note 'you cannot create a resource outside a project'."
+    },
+    {
+      "cue": 0,
+      "kind": "end",
+      "path": "lesson_8/46/cue00_end.png",
+      "verdict": "pass",
+      "notes": "[end, held] four-layer tree: nested (progressively narrower) Org>Folder>Project>Resource boxes with down-arrows, vs a flat 'AWS account' box + 'vs'; note 'you cannot create a resource outside a project'."
+    },
+    {
+      "cue": 1,
+      "kind": "start",
+      "path": "lesson_8/46/cue01_start.png",
+      "verdict": "pass",
+      "notes": "[start reveal] IAM cascade: same tree with a green full-height cascade arrow (left) + each level pulsed; Project level boxed 'billing + API-enablement boundary'; folder note. Rotated side-label removed (was off-frame)."
+    },
+    {
+      "cue": 1,
+      "kind": "mid",
+      "path": "lesson_8/46/cue01_mid.png",
+      "verdict": "pass",
+      "notes": "[mid, full] IAM cascade: same tree with a green full-height cascade arrow (left) + each level pulsed; Project level boxed 'billing + API-enablement boundary'; folder note. Rotated side-label removed (was off-frame)."
+    },
+    {
+      "cue": 1,
+      "kind": "end",
+      "path": "lesson_8/46/cue01_end.png",
+      "verdict": "pass",
+      "notes": "[end, held] IAM cascade: same tree with a green full-height cascade arrow (left) + each level pulsed; Project level boxed 'billing + API-enablement boundary'; folder note. Rotated side-label removed (was off-frame)."
+    },
+    {
+      "cue": 2,
+      "kind": "start",
+      "path": "lesson_8/46/cue02_start.png",
+      "verdict": "pass",
+      "notes": "[start reveal] one project: 'Project: prod-api' box with 4 resource chips (VM/Bucket/Database/Cloud Run) arrowed up into it; note 'exactly ONE project — more structured than AWS, scales'."
+    },
+    {
+      "cue": 2,
+      "kind": "mid",
+      "path": "lesson_8/46/cue02_mid.png",
+      "verdict": "pass",
+      "notes": "[mid, full] one project: 'Project: prod-api' box with 4 resource chips (VM/Bucket/Database/Cloud Run) arrowed up into it; note 'exactly ONE project — more structured than AWS, scales'."
+    },
+    {
+      "cue": 2,
+      "kind": "end",
+      "path": "lesson_8/46/cue02_end.png",
+      "verdict": "pass",
+      "notes": "[end, held] one project: 'Project: prod-api' box with 4 resource chips (VM/Bucket/Database/Cloud Run) arrowed up into it; note 'exactly ONE project — more structured than AWS, scales'."
+    }
+  ]
+}

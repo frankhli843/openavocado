@@ -1,0 +1,74 @@
+{
+  "lesson_id": 8,
+  "activity_id": 47,
+  "reviewed_at": "2026-07-09T05:35:00Z",
+  "iterations": 2,
+  "frames_reviewed": 9,
+  "quality": "ql",
+  "notes": "L8 activity 47 'GCP Through an AWS Lens', 3 cues. Uses cloud.py (service_box, map_pair GCP≈AWS, column, hierarchy, iam_binding). No formulas (identity/boundary model). READ start/mid/end each cue; accumulate-then-hold so mid==end (no transient collisions). Layout defects fixed at smoke stage (safe-area). Last-cue end frame re-extracted within muxed duration. All cues pass at -ql.",
+  "frames": [
+    {
+      "cue": 0,
+      "kind": "start",
+      "path": "lesson_8/47/cue00_start.png",
+      "verdict": "pass",
+      "notes": "[start reveal] name mapping: 3 map_pairs Cloud Run≈Fargate+ECS, Artifact Registry≈ECR, GKE≈EKS (blue≈amber); note 'mostly a rename'. Legible."
+    },
+    {
+      "cue": 0,
+      "kind": "mid",
+      "path": "lesson_8/47/cue00_mid.png",
+      "verdict": "pass",
+      "notes": "[mid, full] name mapping: 3 map_pairs Cloud Run≈Fargate+ECS, Artifact Registry≈ECR, GKE≈EKS (blue≈amber); note 'mostly a rename'. Legible."
+    },
+    {
+      "cue": 0,
+      "kind": "end",
+      "path": "lesson_8/47/cue00_end.png",
+      "verdict": "pass",
+      "notes": "[end, held] name mapping: 3 map_pairs Cloud Run≈Fargate+ECS, Artifact Registry≈ECR, GKE≈EKS (blue≈amber); note 'mostly a rename'. Legible."
+    },
+    {
+      "cue": 1,
+      "kind": "start",
+      "path": "lesson_8/47/cue01_start.png",
+      "verdict": "pass",
+      "notes": "[start reveal] scale to zero: 3-state flow no-requests(0 instances,$0) -> request-arrives(1 box, cold start, Fargate lacks) -> warm(3 boxes); note 'scales to zero... at the cost of cold starts'."
+    },
+    {
+      "cue": 1,
+      "kind": "mid",
+      "path": "lesson_8/47/cue01_mid.png",
+      "verdict": "pass",
+      "notes": "[mid, full] scale to zero: 3-state flow no-requests(0 instances,$0) -> request-arrives(1 box, cold start, Fargate lacks) -> warm(3 boxes); note 'scales to zero... at the cost of cold starts'."
+    },
+    {
+      "cue": 1,
+      "kind": "end",
+      "path": "lesson_8/47/cue01_end.png",
+      "verdict": "pass",
+      "notes": "[end, held] scale to zero: 3-state flow no-requests(0 instances,$0) -> request-arrives(1 box, cold start, Fargate lacks) -> warm(3 boxes); note 'scales to zero... at the cost of cold starts'."
+    },
+    {
+      "cue": 2,
+      "kind": "start",
+      "path": "lesson_8/47/cue02_start.png",
+      "verdict": "pass",
+      "notes": "[start reveal] GKE cluster: GKE cluster box containing Pods/Services/Deployments/StatefulSets chips; note 'Google manages control plane/etcd/node upgrades' + 'created at Google, open-sourced 2014'."
+    },
+    {
+      "cue": 2,
+      "kind": "mid",
+      "path": "lesson_8/47/cue02_mid.png",
+      "verdict": "pass",
+      "notes": "[mid, full] GKE cluster: GKE cluster box containing Pods/Services/Deployments/StatefulSets chips; note 'Google manages control plane/etcd/node upgrades' + 'created at Google, open-sourced 2014'."
+    },
+    {
+      "cue": 2,
+      "kind": "end",
+      "path": "lesson_8/47/cue02_end.png",
+      "verdict": "pass",
+      "notes": "[end, held] GKE cluster: GKE cluster box containing Pods/Services/Deployments/StatefulSets chips; note 'Google manages control plane/etcd/node upgrades' + 'created at Google, open-sourced 2014'."
+    }
+  ]
+}

@@ -1,0 +1,108 @@
+{
+  "lesson_id": 8,
+  "activity_id": 45,
+  "activity_type": "audio",
+  "title": "Audio: GCP Through an AWS Lens — Full Orientation",
+  "audio": {
+    "file_path": "runtime_artifacts/audio/lesson_8_audio.mp3",
+    "duration_sec": 1078.97
+  },
+  "audio_source": "artifact",
+  "cue_source": "orientation_visual.cues",
+  "cues": [
+    {
+      "index": 0,
+      "start": 0,
+      "end": 154,
+      "duration": 154,
+      "label": "High-level map",
+      "headline": "One object: a cloud resource request",
+      "narration": "Locate the lesson before the details. The object we follow is a single cloud resource request that must live in the right account boundary and identity model. The goal is not to memorize a translation table, but to see where GCP draws its boundaries differently from AWS.",
+      "active_elements": [
+        "object: resource request",
+        "boundary + identity"
+      ]
+    },
+    {
+      "index": 1,
+      "start": 154,
+      "end": 308,
+      "duration": 154,
+      "label": "Analogy",
+      "headline": "Two office buildings, different floor plans",
+      "narration": "Moving from AWS to GCP is like moving between two office buildings. Both have rooms, badges, teams, and budgets — but the floor plan and the badge rules are different. The analogy gives traction; the real understanding comes from the boundaries underneath.",
+      "active_elements": [
+        "AWS building",
+        "GCP building"
+      ]
+    },
+    {
+      "index": 2,
+      "start": 308,
+      "end": 462,
+      "duration": 154,
+      "label": "Tiny example",
+      "headline": "Account + roles vs org, folder, project, SA",
+      "narration": "In AWS you often start with an account and IAM roles. In GCP you start with an organization, folders, projects, service accounts, and IAM bindings on resources. The small version keeps the same relationships as the real system.",
+      "active_elements": [
+        "AWS: account + roles",
+        "GCP: org/folder/project/SA"
+      ]
+    },
+    {
+      "index": 3,
+      "start": 462,
+      "end": 617,
+      "duration": 155,
+      "label": "Mechanism",
+      "headline": "Project, bindings, service accounts, enabled APIs",
+      "narration": "A GCP project is the main resource and billing container. IAM bindings attach principals to roles on resources. Service accounts are the identities workloads use. APIs must be enabled before services can be used. Networks, storage, and compute all inherit the project and IAM model.",
+      "active_elements": [
+        "project = container",
+        "binding + SA + API"
+      ]
+    },
+    {
+      "index": 4,
+      "start": 617,
+      "end": 771,
+      "duration": 154,
+      "label": "Implementation",
+      "headline": "Which project, principal, role, API?",
+      "narration": "In practice the useful check is four questions: which project owns this resource, which principal is acting, which role grants the permission, and which API or quota blocks it. If those line up, the concept is usable, not just memorized.",
+      "active_elements": [
+        "project? principal?",
+        "role? API/quota?"
+      ]
+    },
+    {
+      "index": 5,
+      "start": 771,
+      "end": 925,
+      "duration": 154,
+      "label": "Misconception",
+      "headline": "One AWS account is not always one project",
+      "narration": "The common mistake is mapping one AWS account directly to one GCP project in every situation. Sometimes that works, but the organization and folder layers matter — the mistake happens when the label becomes louder than the object.",
+      "active_elements": [
+        "1 account = 1 project?",
+        "org + folders matter"
+      ]
+    },
+    {
+      "index": 6,
+      "start": 925,
+      "end": 1079,
+      "duration": 154,
+      "label": "Synthesis",
+      "headline": "Familiar only after you respect the boundaries",
+      "narration": "The takeaway: GCP feels familiar only after you respect its project and identity boundaries. The contract behind every request is identity plus resource plus role plus scope. Keep the object visible and the rest of the lesson stops being mysterious.",
+      "active_elements": [
+        "identity + resource",
+        "role + scope"
+      ]
+    }
+  ],
+  "cue_span_sec": 1079,
+  "formulas": [],
+  "exported_at": "2026-07-09T05:16:11.864Z"
+}

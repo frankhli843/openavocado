@@ -1,0 +1,56 @@
+{
+  "lesson_id": 8,
+  "activity_id": 46,
+  "activity_type": "lesson_part",
+  "title": "Part 1: GCP's Resource Hierarchy",
+  "audio": {
+    "file_path": "runtime_artifacts/audio/lesson_8_activity_46_audio.mp3",
+    "duration_sec": 412.58
+  },
+  "audio_source": "artifact",
+  "cue_source": "audio.synced_visual.cues",
+  "cues": [
+    {
+      "index": 0,
+      "start": 0,
+      "end": 138,
+      "duration": 138,
+      "label": "The four-layer tree",
+      "headline": "Organization to Folder to Project to Resource",
+      "narration": "GCP organizes every resource into a strict four-layer hierarchy: Organization, then Folder, then Project, then Resource. Unlike AWS, where an account is a largely flat isolation boundary, GCP projects are always nested inside this tree — you cannot create a resource outside a project.",
+      "active_elements": [
+        "Org > Folder > Project > Resource",
+        "AWS: flat account"
+      ]
+    },
+    {
+      "index": 1,
+      "start": 138,
+      "end": 275,
+      "duration": 137,
+      "label": "Policies cascade down",
+      "headline": "The project is the billing and API boundary",
+      "narration": "IAM policies cascade downward through the tree, so a role granted on a folder flows to every project beneath it. The Project is the fundamental unit: it defines the billing boundary and the API-enablement boundary. Folders are an optional grouping layer for departments, teams, or environments, and they can nest.",
+      "active_elements": [
+        "IAM cascades down",
+        "Project = billing + API"
+      ]
+    },
+    {
+      "index": 2,
+      "start": 275,
+      "end": 413,
+      "duration": 138,
+      "label": "Every resource has a home",
+      "headline": "Exactly one project, and it scales better",
+      "narration": "Every resource — a VM, a bucket, a database, a Cloud Run service — must belong to exactly one Project, and every project belongs somewhere in this tree. This is more structured than AWS, but it scales better for large organizations.",
+      "active_elements": [
+        "resource -> one project",
+        "structured, scales"
+      ]
+    }
+  ],
+  "cue_span_sec": 413,
+  "formulas": [],
+  "exported_at": "2026-07-09T05:16:12.076Z"
+}

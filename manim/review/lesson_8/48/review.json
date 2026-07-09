@@ -1,0 +1,74 @@
+{
+  "lesson_id": 8,
+  "activity_id": 48,
+  "reviewed_at": "2026-07-09T05:35:00Z",
+  "iterations": 2,
+  "frames_reviewed": 9,
+  "quality": "ql",
+  "notes": "L8 activity 48 'GCP Through an AWS Lens', 3 cues. Uses cloud.py (service_box, map_pair GCP≈AWS, column, hierarchy, iam_binding). No formulas (identity/boundary model). READ start/mid/end each cue; accumulate-then-hold so mid==end (no transient collisions). Layout defects fixed at smoke stage (safe-area). Last-cue end frame re-extracted within muxed duration. All cues pass at -ql.",
+  "frames": [
+    {
+      "cue": 0,
+      "kind": "start",
+      "path": "lesson_8/48/cue00_start.png",
+      "verdict": "pass",
+      "notes": "[start reveal] service map: GCS≈S3 (named buckets of objects / object storage) and Pub/Sub≈SQS+SNS (one messaging system / queue+fan-out); note 'same use cases... different names, some new behaviour'."
+    },
+    {
+      "cue": 0,
+      "kind": "mid",
+      "path": "lesson_8/48/cue00_mid.png",
+      "verdict": "pass",
+      "notes": "[mid, full] service map: GCS≈S3 (named buckets of objects / object storage) and Pub/Sub≈SQS+SNS (one messaging system / queue+fan-out); note 'same use cases... different names, some new behaviour'."
+    },
+    {
+      "cue": 0,
+      "kind": "end",
+      "path": "lesson_8/48/cue00_end.png",
+      "verdict": "pass",
+      "notes": "[end, held] service map: GCS≈S3 (named buckets of objects / object storage) and Pub/Sub≈SQS+SNS (one messaging system / queue+fan-out); note 'same use cases... different names, some new behaviour'."
+    },
+    {
+      "cue": 1,
+      "kind": "start",
+      "path": "lesson_8/48/cue01_start.png",
+      "verdict": "pass",
+      "notes": "[start reveal] storage classes ladder: descending staggered boxes Standard/Nearline/Coldline/Archive with access frequency + green 'colder -> cheaper' axis arrow; note matches S3 tiers, uniform bucket-level access."
+    },
+    {
+      "cue": 1,
+      "kind": "mid",
+      "path": "lesson_8/48/cue01_mid.png",
+      "verdict": "pass",
+      "notes": "[mid, full] storage classes ladder: descending staggered boxes Standard/Nearline/Coldline/Archive with access frequency + green 'colder -> cheaper' axis arrow; note matches S3 tiers, uniform bucket-level access."
+    },
+    {
+      "cue": 1,
+      "kind": "end",
+      "path": "lesson_8/48/cue01_end.png",
+      "verdict": "pass",
+      "notes": "[end, held] storage classes ladder: descending staggered boxes Standard/Nearline/Coldline/Archive with access frequency + green 'colder -> cheaper' axis arrow; note matches S3 tiers, uniform bucket-level access."
+    },
+    {
+      "cue": 2,
+      "kind": "start",
+      "path": "lesson_8/48/cue02_start.png",
+      "verdict": "pass",
+      "notes": "[start reveal] publish/subscribe: producer -> topic (publish), topic -> push subscriber (Google->HTTPS endpoint) AND pull subscriber (your service polls); note 'SQS is pull-only; Pub/Sub supports both'."
+    },
+    {
+      "cue": 2,
+      "kind": "mid",
+      "path": "lesson_8/48/cue02_mid.png",
+      "verdict": "pass",
+      "notes": "[mid, full] publish/subscribe: producer -> topic (publish), topic -> push subscriber (Google->HTTPS endpoint) AND pull subscriber (your service polls); note 'SQS is pull-only; Pub/Sub supports both'."
+    },
+    {
+      "cue": 2,
+      "kind": "end",
+      "path": "lesson_8/48/cue02_end.png",
+      "verdict": "pass",
+      "notes": "[end, held] publish/subscribe: producer -> topic (publish), topic -> push subscriber (Google->HTTPS endpoint) AND pull subscriber (your service polls); note 'SQS is pull-only; Pub/Sub supports both'."
+    }
+  ]
+}

@@ -1,0 +1,74 @@
+{
+  "lesson_id": 8,
+  "activity_id": 49,
+  "reviewed_at": "2026-07-09T05:35:00Z",
+  "iterations": 2,
+  "frames_reviewed": 9,
+  "quality": "ql",
+  "notes": "L8 activity 49 'GCP Through an AWS Lens', 3 cues. Uses cloud.py (service_box, map_pair GCP≈AWS, column, hierarchy, iam_binding). No formulas (identity/boundary model). READ start/mid/end each cue; accumulate-then-hold so mid==end (no transient collisions). Layout defects fixed at smoke stage (safe-area). Last-cue end frame re-extracted within muxed duration. All cues pass at -ql.",
+  "frames": [
+    {
+      "cue": 0,
+      "kind": "start",
+      "path": "lesson_8/49/cue00_start.png",
+      "verdict": "pass",
+      "notes": "[start reveal] binding: question 'which principal can perform which actions on which resources?'; principal+role+resource chips tagged WHO/WHAT/WHERE; note 'every IAM policy is exactly this three-part binding'."
+    },
+    {
+      "cue": 0,
+      "kind": "mid",
+      "path": "lesson_8/49/cue00_mid.png",
+      "verdict": "pass",
+      "notes": "[mid, full] binding: question 'which principal can perform which actions on which resources?'; principal+role+resource chips tagged WHO/WHAT/WHERE; note 'every IAM policy is exactly this three-part binding'."
+    },
+    {
+      "cue": 0,
+      "kind": "end",
+      "path": "lesson_8/49/cue00_end.png",
+      "verdict": "pass",
+      "notes": "[end, held] binding: question 'which principal can perform which actions on which resources?'; principal+role+resource chips tagged WHO/WHAT/WHERE; note 'every IAM policy is exactly this three-part binding'."
+    },
+    {
+      "cue": 1,
+      "kind": "start",
+      "path": "lesson_8/49/cue01_start.png",
+      "verdict": "pass",
+      "notes": "[start reveal] kinds: Principals column (user/service account/Google group/domain, blue) and Roles column (Basic/Predefined/Custom, emerald); rose warn 'Basic roles very broad — avoid in production'."
+    },
+    {
+      "cue": 1,
+      "kind": "mid",
+      "path": "lesson_8/49/cue01_mid.png",
+      "verdict": "pass",
+      "notes": "[mid, full] kinds: Principals column (user/service account/Google group/domain, blue) and Roles column (Basic/Predefined/Custom, emerald); rose warn 'Basic roles very broad — avoid in production'."
+    },
+    {
+      "cue": 1,
+      "kind": "end",
+      "path": "lesson_8/49/cue01_end.png",
+      "verdict": "pass",
+      "notes": "[end, held] kinds: Principals column (user/service account/Google group/domain, blue) and Roles column (Basic/Predefined/Custom, emerald); rose warn 'Basic roles very broad — avoid in production'."
+    },
+    {
+      "cue": 2,
+      "kind": "start",
+      "path": "lesson_8/49/cue02_start.png",
+      "verdict": "pass",
+      "notes": "[start reveal] concrete grant: binding user:frank + roles/run.developer + project:prod-api with plain-English gloss; service-account box (violet) 'a machine identity'; note 'workloads act without long-lived keys'."
+    },
+    {
+      "cue": 2,
+      "kind": "mid",
+      "path": "lesson_8/49/cue02_mid.png",
+      "verdict": "pass",
+      "notes": "[mid, full] concrete grant: binding user:frank + roles/run.developer + project:prod-api with plain-English gloss; service-account box (violet) 'a machine identity'; note 'workloads act without long-lived keys'."
+    },
+    {
+      "cue": 2,
+      "kind": "end",
+      "path": "lesson_8/49/cue02_end.png",
+      "verdict": "pass",
+      "notes": "[end, held] concrete grant: binding user:frank + roles/run.developer + project:prod-api with plain-English gloss; service-account box (violet) 'a machine identity'; note 'workloads act without long-lived keys'."
+    }
+  ]
+}

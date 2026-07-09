@@ -1,0 +1,158 @@
+{
+  "lesson_id": 8,
+  "activity_id": 45,
+  "reviewed_at": "2026-07-09T05:35:00Z",
+  "iterations": 2,
+  "frames_reviewed": 21,
+  "quality": "ql",
+  "notes": "L8 activity 45 'GCP Through an AWS Lens', 7 cues. Uses cloud.py (service_box, map_pair GCP≈AWS, column, hierarchy, iam_binding). No formulas (identity/boundary model). READ start/mid/end each cue; accumulate-then-hold so mid==end (no transient collisions). Layout defects fixed at smoke stage (safe-area). Last-cue end frame re-extracted within muxed duration. All cues pass at -ql.",
+  "frames": [
+    {
+      "cue": 0,
+      "kind": "start",
+      "path": "lesson_8/45/cue00_start.png",
+      "verdict": "pass",
+      "notes": "[start reveal] high-level map: focus box 'a cloud resource request' (emerald) with arrows to 'account boundary' (blue) + 'identity model' (amber); note goal is not a translation table. In-frame, legible."
+    },
+    {
+      "cue": 0,
+      "kind": "mid",
+      "path": "lesson_8/45/cue00_mid.png",
+      "verdict": "pass",
+      "notes": "[mid, full] high-level map: focus box 'a cloud resource request' (emerald) with arrows to 'account boundary' (blue) + 'identity model' (amber); note goal is not a translation table. In-frame, legible."
+    },
+    {
+      "cue": 0,
+      "kind": "end",
+      "path": "lesson_8/45/cue00_end.png",
+      "verdict": "pass",
+      "notes": "[end, held] high-level map: focus box 'a cloud resource request' (emerald) with arrows to 'account boundary' (blue) + 'identity model' (amber); note goal is not a translation table. In-frame, legible."
+    },
+    {
+      "cue": 1,
+      "kind": "start",
+      "path": "lesson_8/45/cue01_start.png",
+      "verdict": "pass",
+      "notes": "[start reveal] analogy: two building boxes AWS (amber) vs GCP (blue), each holding rooms/badges/teams/budgets chips; note 'same rooms... different floor plan and badge rules'. Titles clear of chips after layout fix."
+    },
+    {
+      "cue": 1,
+      "kind": "mid",
+      "path": "lesson_8/45/cue01_mid.png",
+      "verdict": "pass",
+      "notes": "[mid, full] analogy: two building boxes AWS (amber) vs GCP (blue), each holding rooms/badges/teams/budgets chips; note 'same rooms... different floor plan and badge rules'. Titles clear of chips after layout fix."
+    },
+    {
+      "cue": 1,
+      "kind": "end",
+      "path": "lesson_8/45/cue01_end.png",
+      "verdict": "pass",
+      "notes": "[end, held] analogy: two building boxes AWS (amber) vs GCP (blue), each holding rooms/badges/teams/budgets chips; note 'same rooms... different floor plan and badge rules'. Titles clear of chips after layout fix."
+    },
+    {
+      "cue": 2,
+      "kind": "start",
+      "path": "lesson_8/45/cue02_start.png",
+      "verdict": "pass",
+      "notes": "[start reveal] tiny example: two columns — AWS 'account, IAM roles' (amber) vs GCP 'organization/folders/projects/service accounts/IAM bindings' (blue); note keeps same relationships."
+    },
+    {
+      "cue": 2,
+      "kind": "mid",
+      "path": "lesson_8/45/cue02_mid.png",
+      "verdict": "pass",
+      "notes": "[mid, full] tiny example: two columns — AWS 'account, IAM roles' (amber) vs GCP 'organization/folders/projects/service accounts/IAM bindings' (blue); note keeps same relationships."
+    },
+    {
+      "cue": 2,
+      "kind": "end",
+      "path": "lesson_8/45/cue02_end.png",
+      "verdict": "pass",
+      "notes": "[end, held] tiny example: two columns — AWS 'account, IAM roles' (amber) vs GCP 'organization/folders/projects/service accounts/IAM bindings' (blue); note keeps same relationships."
+    },
+    {
+      "cue": 3,
+      "kind": "start",
+      "path": "lesson_8/45/cue03_start.png",
+      "verdict": "pass",
+      "notes": "[start reveal] mechanism: 5-step numbered list (Project=container/bindings/service accounts/APIs enabled/inherit project+IAM); step 1 boxed+emerald-highlighted. Legible."
+    },
+    {
+      "cue": 3,
+      "kind": "mid",
+      "path": "lesson_8/45/cue03_mid.png",
+      "verdict": "pass",
+      "notes": "[mid, full] mechanism: 5-step numbered list (Project=container/bindings/service accounts/APIs enabled/inherit project+IAM); step 1 boxed+emerald-highlighted. Legible."
+    },
+    {
+      "cue": 3,
+      "kind": "end",
+      "path": "lesson_8/45/cue03_end.png",
+      "verdict": "pass",
+      "notes": "[end, held] mechanism: 5-step numbered list (Project=container/bindings/service accounts/APIs enabled/inherit project+IAM); step 1 boxed+emerald-highlighted. Legible."
+    },
+    {
+      "cue": 4,
+      "kind": "start",
+      "path": "lesson_8/45/cue04_start.png",
+      "verdict": "pass",
+      "notes": "[start reveal] implementation: 2x2 grid of 4 question cards (which PROJECT/PRINCIPAL/ROLE/API+QUOTA) color-coded; note 'if these line up, usable not memorized'."
+    },
+    {
+      "cue": 4,
+      "kind": "mid",
+      "path": "lesson_8/45/cue04_mid.png",
+      "verdict": "pass",
+      "notes": "[mid, full] implementation: 2x2 grid of 4 question cards (which PROJECT/PRINCIPAL/ROLE/API+QUOTA) color-coded; note 'if these line up, usable not memorized'."
+    },
+    {
+      "cue": 4,
+      "kind": "end",
+      "path": "lesson_8/45/cue04_end.png",
+      "verdict": "pass",
+      "notes": "[end, held] implementation: 2x2 grid of 4 question cards (which PROJECT/PRINCIPAL/ROLE/API+QUOTA) color-coded; note 'if these line up, usable not memorized'."
+    },
+    {
+      "cue": 5,
+      "kind": "start",
+      "path": "lesson_8/45/cue05_start.png",
+      "verdict": "pass",
+      "notes": "[start reveal] misconception: '1 AWS account = 1 GCP project' with rose strike-through + 'not in every situation'; below, Organization over project dev/staging/prod tree; note 'org and folder layers matter'. mid==end verified."
+    },
+    {
+      "cue": 5,
+      "kind": "mid",
+      "path": "lesson_8/45/cue05_mid.png",
+      "verdict": "pass",
+      "notes": "[mid, full] misconception: '1 AWS account = 1 GCP project' with rose strike-through + 'not in every situation'; below, Organization over project dev/staging/prod tree; note 'org and folder layers matter'. mid==end verified."
+    },
+    {
+      "cue": 5,
+      "kind": "end",
+      "path": "lesson_8/45/cue05_end.png",
+      "verdict": "pass",
+      "notes": "[end, held] misconception: '1 AWS account = 1 GCP project' with rose strike-through + 'not in every situation'; below, Organization over project dev/staging/prod tree; note 'org and folder layers matter'. mid==end verified."
+    },
+    {
+      "cue": 6,
+      "kind": "start",
+      "path": "lesson_8/45/cue06_start.png",
+      "verdict": "pass",
+      "notes": "[start reveal] synthesis: takeaway line + contract chips identity+resource+role+scope joined by '+'; note 'keep the object visible'. In-frame after scale-to-fit."
+    },
+    {
+      "cue": 6,
+      "kind": "mid",
+      "path": "lesson_8/45/cue06_mid.png",
+      "verdict": "pass",
+      "notes": "[mid, full] synthesis: takeaway line + contract chips identity+resource+role+scope joined by '+'; note 'keep the object visible'. In-frame after scale-to-fit."
+    },
+    {
+      "cue": 6,
+      "kind": "end",
+      "path": "lesson_8/45/cue06_end.png",
+      "verdict": "pass",
+      "notes": "[end, held] synthesis: takeaway line + contract chips identity+resource+role+scope joined by '+'; note 'keep the object visible'. In-frame after scale-to-fit."
+    }
+  ]
+}

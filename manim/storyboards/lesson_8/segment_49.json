@@ -1,0 +1,56 @@
+{
+  "lesson_id": 8,
+  "activity_id": 49,
+  "activity_type": "lesson_part",
+  "title": "Part 4: IAM and Cloud Identity",
+  "audio": {
+    "file_path": "runtime_artifacts/audio/lesson_8_activity_49_audio.mp3",
+    "duration_sec": 438.26
+  },
+  "audio_source": "artifact",
+  "cue_source": "audio.synced_visual.cues",
+  "cues": [
+    {
+      "index": 0,
+      "start": 0,
+      "end": 146,
+      "duration": 146,
+      "label": "Who, what, where",
+      "headline": "A binding of principal, role, resource",
+      "narration": "GCP IAM answers a single question: which principal can perform which actions on which resources? Every IAM policy is a binding of three things: a principal, the who; a role, the what they can do; and a resource, the where they can do it.",
+      "active_elements": [
+        "principal (who)",
+        "role (what) + resource (where)"
+      ]
+    },
+    {
+      "index": 1,
+      "start": 146,
+      "end": 292,
+      "duration": 146,
+      "label": "Principals and roles",
+      "headline": "Users, service accounts, groups, domains",
+      "narration": "Principals can be Google user accounts, service accounts for machine identities, Google groups, or a whole Cloud Identity domain. Roles come in three kinds: Basic roles like Owner, Editor, and Viewer, which are very broad; Predefined roles curated by Google; and Custom roles where you define the exact permission set.",
+      "active_elements": [
+        "user / SA / group / domain",
+        "Basic / Predefined / Custom"
+      ]
+    },
+    {
+      "index": 2,
+      "start": 292,
+      "end": 438,
+      "duration": 146,
+      "label": "Bind and let the machine act",
+      "headline": "Service accounts replace credential juggling",
+      "narration": "A binding grants, for example, user frank the role roles slash run dot developer on the project prod-api. Service accounts are machine identities that let workloads act without long-lived keys, eliminating whole classes of credential-management problems.",
+      "active_elements": [
+        "grant role on resource",
+        "service accounts = machine identity"
+      ]
+    }
+  ],
+  "cue_span_sec": 438,
+  "formulas": [],
+  "exported_at": "2026-07-09T05:16:13.072Z"
+}

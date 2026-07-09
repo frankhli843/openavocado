@@ -1,0 +1,56 @@
+{
+  "lesson_id": 8,
+  "activity_id": 48,
+  "activity_type": "lesson_part",
+  "title": "Part 3: Storage and Messaging",
+  "audio": {
+    "file_path": "runtime_artifacts/audio/lesson_8_activity_48_audio.mp3",
+    "duration_sec": 446.21
+  },
+  "audio_source": "artifact",
+  "cue_source": "audio.synced_visual.cues",
+  "cues": [
+    {
+      "index": 0,
+      "start": 0,
+      "end": 149,
+      "duration": 149,
+      "label": "Buckets and a topic",
+      "headline": "GCS is S3; Pub/Sub is SQS plus SNS",
+      "narration": "Cloud Storage, or GCS, is GCP's S3: named buckets holding objects, with globally unique bucket names and the same flat key-value model. Pub/Sub is GCP's managed messaging service, combining the capabilities of both AWS SQS and SNS into one system.",
+      "active_elements": [
+        "GCS buckets <-> S3",
+        "Pub/Sub <-> SQS + SNS"
+      ]
+    },
+    {
+      "index": 1,
+      "start": 149,
+      "end": 297,
+      "duration": 148,
+      "label": "Storage classes by access",
+      "headline": "Standard to Nearline to Coldline to Archive",
+      "narration": "GCS has storage classes that match S3's tiers, chosen by how often you read the data: Standard for frequent access, Nearline for about once a month, Coldline for once a quarter, and Archive for once a year. GCS also uses uniform bucket-level access by default, encouraging IAM over per-object ACLs.",
+      "active_elements": [
+        "Standard > Nearline > Coldline > Archive",
+        "colder = cheaper"
+      ]
+    },
+    {
+      "index": 2,
+      "start": 297,
+      "end": 446,
+      "duration": 149,
+      "label": "Publish, then subscribe",
+      "headline": "Push and pull, not pull-only",
+      "narration": "In Pub/Sub, producers publish messages to a topic and consumers subscribe to receive them. Unlike SQS, which is pull-only, Pub/Sub supports both push delivery, where Google pushes to your HTTPS endpoint, and pull delivery, where your service polls. It was built for Google-scale event streaming.",
+      "active_elements": [
+        "topic -> subscribers",
+        "push AND pull"
+      ]
+    }
+  ],
+  "cue_span_sec": 446,
+  "formulas": [],
+  "exported_at": "2026-07-09T05:16:12.648Z"
+}
