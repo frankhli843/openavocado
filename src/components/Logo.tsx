@@ -16,7 +16,7 @@ export function AvocadoMark({ size = 28, style }: { size?: number; style?: CSSPr
       height={size}
       viewBox="635 -20 445 445"
       role="img"
-      aria-label="AvocadoCore"
+      aria-label="Open Avocado"
       style={style}
     >
       <path
@@ -39,7 +39,7 @@ export function Logo({ size = 22 }: { size?: number }) {
     <span className="inline-flex items-center gap-2 select-none">
       <AvocadoMark size={size} />
       <span className="font-semibold text-gray-900 tracking-tight">
-        Avocado<span className="text-green-700">Core</span>
+        Open <span className="text-green-700">Avocado</span>
       </span>
     </span>
   );
