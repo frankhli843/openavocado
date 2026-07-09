@@ -1,0 +1,74 @@
+{
+  "lesson_id": 9,
+  "activity_id": 60,
+  "reviewed_at": "2026-07-09T02:25:00Z",
+  "iterations": 1,
+  "frames_reviewed": 9,
+  "quality": "ql",
+  "notes": "L9 'Part 1 \u2014 open + resize + arrayify (420.4s, 3 cues)' \u2014 Code It From Scratch: PIL/NumPy preprocessing to (1,3,896,896) float32 for Gemma 4 vision. Reuses imgprep.py idiom lib. READ start/mid/end each cue; all legible, in-frame (safe-area guard passed), on-brand (dark palette, blue/orange/green, mono code + serif prose). Math verified: ImageNet mean/std exact, shape transitions (H,W,C)->(C,H,W)->(1,C,H,W) correct, float64 trap correct. 1 -ql pass, no rerender needed. ffprobe within 0.13s of storyboard span.",
+  "frames": [
+    {
+      "cue": 0,
+      "kind": "start",
+      "path": "lesson_9/60/cue00_start.png",
+      "verdict": "pass",
+      "notes": "[start] Image.open('cat.jpg'): cat.jpg box, 4x4 pixel grid, .size->(4,4), .mode->'RGB', 'PIL .size is (Width,Height) not (H,W)'"
+    },
+    {
+      "cue": 0,
+      "kind": "mid",
+      "path": "lesson_9/60/cue00_mid.png",
+      "verdict": "pass",
+      "notes": "[mid] Image.open('cat.jpg'): cat.jpg box, 4x4 pixel grid, .size->(4,4), .mode->'RGB', 'PIL .size is (Width,Height) not (H,W)'"
+    },
+    {
+      "cue": 0,
+      "kind": "end",
+      "path": "lesson_9/60/cue00_end.png",
+      "verdict": "pass",
+      "notes": "[end] Image.open('cat.jpg'): cat.jpg box, 4x4 pixel grid, .size->(4,4), .mode->'RGB', 'PIL .size is (Width,Height) not (H,W)'"
+    },
+    {
+      "cue": 1,
+      "kind": "start",
+      "path": "lesson_9/60/cue01_start.png",
+      "verdict": "pass",
+      "notes": "[start] img.resize((896,896),LANCZOS): before (1920,1080) -> after (896,896) grid, 'resize takes (Width,Height) same order as .size'"
+    },
+    {
+      "cue": 1,
+      "kind": "mid",
+      "path": "lesson_9/60/cue01_mid.png",
+      "verdict": "pass",
+      "notes": "[mid] img.resize((896,896),LANCZOS): before (1920,1080) -> after (896,896) grid, 'resize takes (Width,Height) same order as .size'"
+    },
+    {
+      "cue": 1,
+      "kind": "end",
+      "path": "lesson_9/60/cue01_end.png",
+      "verdict": "pass",
+      "notes": "[end] img.resize((896,896),LANCZOS): before (1920,1080) -> after (896,896) grid, 'resize takes (Width,Height) same order as .size'"
+    },
+    {
+      "cue": 2,
+      "kind": "start",
+      "path": "lesson_9/60/cue02_start.png",
+      "verdict": "pass",
+      "notes": "[start] np.asarray(img): uint8 array (896,896,3), RGB channels cube, dtype uint8 values 0..255, 'channels last' handed to Part 2"
+    },
+    {
+      "cue": 2,
+      "kind": "mid",
+      "path": "lesson_9/60/cue02_mid.png",
+      "verdict": "pass",
+      "notes": "[mid] np.asarray(img): uint8 array (896,896,3), RGB channels cube, dtype uint8 values 0..255, 'channels last' handed to Part 2"
+    },
+    {
+      "cue": 2,
+      "kind": "end",
+      "path": "lesson_9/60/cue02_end.png",
+      "verdict": "pass",
+      "notes": "[end] np.asarray(img): uint8 array (896,896,3), RGB channels cube, dtype uint8 values 0..255, 'channels last' handed to Part 2"
+    }
+  ]
+}

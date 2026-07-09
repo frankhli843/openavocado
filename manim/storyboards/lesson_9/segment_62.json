@@ -1,0 +1,44 @@
+{
+  "lesson_id": 9,
+  "activity_id": 62,
+  "activity_type": "lesson_part",
+  "title": "Part 3: Permute HWC → CHW and Add the Batch Dimension",
+  "audio": {
+    "file_path": "runtime_artifacts/audio/lesson_9_activity_62_audio.mp3",
+    "duration_sec": 442.97
+  },
+  "audio_source": "artifact",
+  "cue_source": "audio.synced_visual.cues",
+  "cues": [
+    {
+      "index": 0,
+      "start": 0,
+      "end": 147.656,
+      "duration": 147.656,
+      "label": "Input",
+      "headline": "NumPy gives H-W-C; frameworks want C-H-W",
+      "narration": "NumPy hands us (896, 896, 3) with channels last, but PyTorch and the Gemma 4 encoder expect channels first — the array is right, the axis order is wrong, so we reorder axes."
+    },
+    {
+      "index": 1,
+      "start": 147.656,
+      "end": 295.312,
+      "duration": 147.656,
+      "label": "Transform",
+      "headline": "transpose(2,0,1) to CHW, then add the batch dim",
+      "narration": "arr.transpose(2, 0, 1) reorders the axes to (3, 896, 896), channels first; then arr[None, ...] adds a leading batch dimension to make (1, 3, 896, 896)."
+    },
+    {
+      "index": 2,
+      "start": 295.312,
+      "end": 442.968,
+      "duration": 147.656,
+      "label": "Handoff",
+      "headline": "A (1, 3, 896, 896) float tensor, ready for the model",
+      "narration": "The finished tensor is (1, 3, 896, 896) float32 — normalized, channels-first, and batched — ready to feed straight into the model with no more preprocessing."
+    }
+  ],
+  "cue_span_sec": 442.968,
+  "formulas": [],
+  "exported_at": "2026-07-09T02:10:38.424Z"
+}

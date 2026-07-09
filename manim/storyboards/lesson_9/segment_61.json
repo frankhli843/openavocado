@@ -1,0 +1,44 @@
+{
+  "lesson_id": 9,
+  "activity_id": 61,
+  "activity_type": "lesson_part",
+  "title": "Part 2: Rescale to Float + Normalize with Broadcasting",
+  "audio": {
+    "file_path": "runtime_artifacts/audio/lesson_9_activity_61_audio.mp3",
+    "duration_sec": 380.28
+  },
+  "audio_source": "artifact",
+  "cue_source": "audio.synced_visual.cues",
+  "cues": [
+    {
+      "index": 0,
+      "start": 0,
+      "end": 126.76,
+      "duration": 126.76,
+      "label": "Input",
+      "headline": "Pixels arrive as integers 0-255; models want floats",
+      "narration": "Pixels arrive as uint8 integers from 0 to 255, but models need floats — dividing a uint8 array by 255 gives correct values in 0 to 1 but as float64, which wastes twice the memory, so call astype(float32) before dividing."
+    },
+    {
+      "index": 1,
+      "start": 126.76,
+      "end": 253.52,
+      "duration": 126.76,
+      "label": "Transform",
+      "headline": "astype(float32)/255, then (arr - mean)/std",
+      "narration": "arr.astype(np.float32)/255 maps 0-255 into 0-1; then (arr - mean)/std applies the length-3 ImageNet mean and std, broadcast across every pixel, to center each channel near zero."
+    },
+    {
+      "index": 2,
+      "start": 253.52,
+      "end": 380.28,
+      "duration": 126.76,
+      "label": "Handoff",
+      "headline": "A float32 array, roughly zero-mean per channel",
+      "narration": "The result is a float32 array, still shaped (896, 896, 3) but now roughly zero-mean per channel: the shape is unchanged while the dtype and range have changed."
+    }
+  ],
+  "cue_span_sec": 380.28,
+  "formulas": [],
+  "exported_at": "2026-07-09T02:10:38.424Z"
+}

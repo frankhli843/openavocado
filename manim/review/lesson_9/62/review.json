@@ -1,0 +1,74 @@
+{
+ "lesson_id": 9,
+ "activity_id": 62,
+ "reviewed_at": "2026-07-09T02:55:00Z",
+ "iterations": 2,
+ "frames_reviewed": 9,
+ "quality": "ql",
+ "notes": "L9 'Part 3 \u2014 permute + batch (443.0s, 3 cues)' \u2014 Code It From Scratch: PIL/NumPy preprocessing to (1,3,896,896) float32 for Gemma 4 vision. Reuses imgprep.py idiom lib. READ start/mid/end each cue; all legible, in-frame (safe-area guard passed), on-brand (dark palette, blue/orange/green, mono code + serif prose). Math verified: ImageNet mean/std exact, shape transitions (H,W,C)->(C,H,W)->(1,C,H,W) correct, float64 trap correct. ITER2: final spot-check caught Cue1 mid-window collision (gray permute-axes label overlapping blue channels-FIRST caption, visible beats ~70-96 / t175-243s in final; -ql end-frame review had missed it because the label fades by cue end). Fixed activity_62.py:136 (moved permute label ABOVE chips, move_to(UP*1.15)); re-rendered Cue1 -ql + READ beat-80 mid frame = clean, both labels clear, no overlap. Re-rendering final Cue1. ffprobe within 0.13s of storyboard span.",
+ "frames": [
+  {
+   "cue": 0,
+   "kind": "start",
+   "path": "lesson_9/62/cue00_start.png",
+   "verdict": "pass",
+   "notes": "[start] NumPy HxWxC vs frameworks CxHxW: (896 H,896 W,3 C) channels LAST; PIL/NumPy H,W,C vs PyTorch C,H,W; 'array right, axis order wrong'"
+  },
+  {
+   "cue": 0,
+   "kind": "mid",
+   "path": "lesson_9/62/cue00_mid.png",
+   "verdict": "pass",
+   "notes": "[mid] NumPy HxWxC vs frameworks CxHxW: (896 H,896 W,3 C) channels LAST; PIL/NumPy H,W,C vs PyTorch C,H,W; 'array right, axis order wrong'"
+  },
+  {
+   "cue": 0,
+   "kind": "end",
+   "path": "lesson_9/62/cue00_end.png",
+   "verdict": "pass",
+   "notes": "[end] NumPy HxWxC vs frameworks CxHxW: (896 H,896 W,3 C) channels LAST; PIL/NumPy H,W,C vs PyTorch C,H,W; 'array right, axis order wrong'"
+  },
+  {
+   "cue": 1,
+   "kind": "start",
+   "path": "lesson_9/62/cue01_start.png",
+   "verdict": "pass",
+   "notes": "[start] transpose(2,0,1)->CHW then [None]->NCHW: (1 N,3 C,896 H,896 W), N highlighted, 'N=1 -> batch of one image'"
+  },
+  {
+   "cue": 1,
+   "kind": "mid",
+   "path": "lesson_9/62/cue01_mid.png",
+   "verdict": "pass",
+   "notes": "[mid ITER2 RE-REVIEWED beat80] transpose(2,0,1)->(3 C,896 H,896 W) channels FIRST; permute-axes label now ABOVE chips, channels-FIRST caption BELOW chips, NO overlap (prior collision fixed), legible/on-brand"
+  },
+  {
+   "cue": 1,
+   "kind": "end",
+   "path": "lesson_9/62/cue01_end.png",
+   "verdict": "pass",
+   "notes": "[end] transpose(2,0,1)->CHW then [None]->NCHW: (1 N,3 C,896 H,896 W), N highlighted, 'N=1 -> batch of one image'"
+  },
+  {
+   "cue": 2,
+   "kind": "start",
+   "path": "lesson_9/62/cue02_start.png",
+   "verdict": "pass",
+   "notes": "[start] handoff (1,3,896,896) float32 tensor: normalized/channels-first/batched; shape/dtype/range summary; 'feed straight into model(tensor)'"
+  },
+  {
+   "cue": 2,
+   "kind": "mid",
+   "path": "lesson_9/62/cue02_mid.png",
+   "verdict": "pass",
+   "notes": "[mid] handoff (1,3,896,896) float32 tensor: normalized/channels-first/batched; shape/dtype/range summary; 'feed straight into model(tensor)'"
+  },
+  {
+   "cue": 2,
+   "kind": "end",
+   "path": "lesson_9/62/cue02_end.png",
+   "verdict": "pass",
+   "notes": "[end] handoff (1,3,896,896) float32 tensor: normalized/channels-first/batched; shape/dtype/range summary; 'feed straight into model(tensor)'"
+  }
+ ]
+}

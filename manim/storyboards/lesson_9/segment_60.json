@@ -1,0 +1,44 @@
+{
+  "lesson_id": 9,
+  "activity_id": 60,
+  "activity_type": "lesson_part",
+  "title": "Part 1: Opening, Inspecting, and Resizing in PIL",
+  "audio": {
+    "file_path": "runtime_artifacts/audio/lesson_9_activity_60_audio.mp3",
+    "duration_sec": 420.43
+  },
+  "audio_source": "artifact",
+  "cue_source": "audio.synced_visual.cues",
+  "cues": [
+    {
+      "index": 0,
+      "start": 0,
+      "end": 140.144,
+      "duration": 140.144,
+      "label": "Input",
+      "headline": "Image.open a picture becomes a grid of pixels",
+      "narration": "Image.open(path).convert('RGB') loads any format and forces exactly three channels; inspect .size, but note PIL reports (Width, Height) — the reverse of NumPy's (H, W, C)."
+    },
+    {
+      "index": 1,
+      "start": 140.144,
+      "end": 280.288,
+      "duration": 140.144,
+      "label": "Transform",
+      "headline": "img.resize to the fixed shape the model expects",
+      "narration": "img.resize((896, 896)) resamples the image to the model's fixed spatial shape; like .size, resize takes its argument in (Width, Height) order."
+    },
+    {
+      "index": 2,
+      "start": 280.288,
+      "end": 420.432,
+      "duration": 140.144,
+      "label": "Handoff",
+      "headline": "np.asarray hands NumPy a uint8 (896, 896, 3) array",
+      "narration": "np.asarray(img) hands NumPy a uint8 array of shape (896, 896, 3) with channels last — and no arithmetic happens until the dtype becomes float32."
+    }
+  ],
+  "cue_span_sec": 420.432,
+  "formulas": [],
+  "exported_at": "2026-07-09T02:10:38.423Z"
+}
