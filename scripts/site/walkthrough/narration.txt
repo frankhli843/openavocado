@@ -1,0 +1,9 @@
+beat1|Open Avocado is a free, open source adaptive learning platform, powered by A I. You set a goal, and it works out the single next lesson you actually need.
+beat2|Everything starts from your subjects. Each one carries a mastery score, built from real evidence of what you already know.
+beat3|Open a lesson, and it begins with a knowledge graph orientation, so you always see exactly where this concept fits.
+beat4|Every lesson is a full workspace, with bespoke interactive visualizations you can manipulate to build real intuition.
+beat5|Adaptive quizzes check your understanding one question at a time, and re ask anything you miss until it clicks.
+beat6|Your mastery grows from familiarity, to competence, to mastery, and Open Avocado always generates what you need next.
+beat7|And you run it your way. Use your own local L L M for private, offline learning. Bring your own hosted A P I key for the fastest start. Or connect an agent harness for richer, more agentic lesson generation.
+beat8|Open Avocado can even turn a lesson into a narrated video, with the audio synced to the visuals. Here is one it generated.
+outro|Open Avocado. Free, open source, and yours to run. Start learning with the live demo today.

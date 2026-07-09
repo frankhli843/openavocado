@@ -71,7 +71,7 @@ function UnsupportedWidget({ errors, unsupported }: { errors: string[]; unsuppor
         {unsupported ? "Unsupported interactive widget" : "This interactive widget could not be loaded"}
       </div>
       <p className="text-amber-700 mb-2">
-        The lesson generator produced an interactive spec this version of AvocadoCore cannot render safely.
+        The lesson generator produced an interactive spec this version of Open Avocado cannot render safely.
         The rest of the lesson still works.
       </p>
       <ul className="list-disc pl-5 space-y-0.5 text-xs text-amber-700">
