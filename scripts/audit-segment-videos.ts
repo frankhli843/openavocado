@@ -16,10 +16,11 @@
  *   6. poster (.poster.png) and captions (.vtt) exist next to the mp4.
  *
  * Exit behaviour mirrors audit:transcripts / audit:visual-artifacts:
- *   - warn-only by default (exit 0) — correct while the Phase 4 backfill is in
- *     flight and most lessons legitimately have no video yet;
- *   - `--strict` hard-fails (exit 1) on ANY missing/invalid segment video. Flip
- *     the lesson-completion checks to pass --strict once backfill is complete.
+ *   - STRICT by default (exit 1 on ANY missing/invalid segment video) — the
+ *     Phase 4 backfill completed 2026-07-09 (all 22 audio-bearing lessons carry
+ *     a registered, reviewed video), so every published segment must have one.
+ *   - `--no-strict` restores warn-only (exit 0) for diagnostic reporting during
+ *     a fresh backfill of a newly authored lesson before its videos land.
  *   - `--lesson <id>` scopes the audit to one lesson (used by backfill-videos.ts
  *     to gate a lesson as done).
  *   - `--json` prints the machine-readable report.
@@ -45,7 +46,10 @@ type SegmentRow = {
 const dbPath = process.env.AVOCADOCORE_DB_PATH ?? "data/avocadocore.db";
 const runtimeRoot = process.env.AVOCADOCORE_RUNTIME_ROOT ?? process.cwd();
 const reviewRoot = process.env.MANIM_REVIEW_ROOT ?? process.cwd();
-const strict = process.argv.includes("--strict");
+// Strict by default now that the Phase 4 backfill is complete; --no-strict
+// (or the legacy --strict, still accepted) toggles. --strict remains a no-op
+// alias so existing callers keep working.
+const strict = !process.argv.includes("--no-strict");
 const json = process.argv.includes("--json");
 const lessonArgIdx = process.argv.indexOf("--lesson");
 const onlyLesson = lessonArgIdx >= 0 ? Number(process.argv[lessonArgIdx + 1]) : null;
@@ -250,7 +254,7 @@ if (json) {
       for (const f of arr)
         console.log(`    act ${f.activity_id} (${f.type}): ${f.errors.join("; ")}`);
   }
-  console.log(strict ? "[strict] failing on any missing/invalid segment video" : "[warn-only] flip to --strict after Phase 4 backfill completes");
+  console.log(strict ? "[strict] failing on any missing/invalid segment video (default; --no-strict for warn-only)" : "[warn-only] diagnostic mode — not gating on missing/invalid segment video");
 }
 
 if (strict && failures.length > 0) process.exitCode = 1;
