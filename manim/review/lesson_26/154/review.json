@@ -1,0 +1,130 @@
+{
+  "lesson_id": 26,
+  "activity_id": 154,
+  "reviewed_at": "2026-07-09T00:16:00Z",
+  "iterations": 1,
+  "frames_reviewed": 17,
+  "quality": "ql",
+  "notes": "L26 Part 2 (act 154) 'Upper binary search — Magnetic Force and the round-up trap', 112.2s, 6 cues. Uses binsearch.py + a number_line helper. READ start/mid/end each cue. 1 -ql iteration, all cues passed first render. Magnetic Force greedy/exchange/round-up math verified (sorted [1,2,4,8,9], m=3, answer gap=3).",
+  "frames": [
+    {
+      "cue": 0,
+      "kind": "start",
+      "path": "lesson_26/154/cue00_start.png",
+      "verdict": "pass",
+      "notes": "[start] upper template code (mid=(lo+hi+1)//2 round UP, feasible→lo=mid else hi=mid-1, return lo) + candidate 1..5 ✓✓✓✗✗, boundary ring on 3, 'last ✓ = the answer'"
+    },
+    {
+      "cue": 0,
+      "kind": "mid",
+      "path": "lesson_26/154/cue00_mid.png",
+      "verdict": "pass",
+      "notes": "[mid] upper template code (mid=(lo+hi+1)//2 round UP, feasible→lo=mid else hi=mid-1, return lo) + candidate 1..5 ✓✓✓✗✗, boundary ring on 3, 'last ✓ = the answer'"
+    },
+    {
+      "cue": 0,
+      "kind": "end",
+      "path": "lesson_26/154/cue00_end.png",
+      "verdict": "pass",
+      "notes": "[end] upper template code (mid=(lo+hi+1)//2 round UP, feasible→lo=mid else hi=mid-1, return lo) + candidate 1..5 ✓✓✓✗✗, boundary ring on 3, 'last ✓ = the answer'"
+    },
+    {
+      "cue": 1,
+      "kind": "start",
+      "path": "lesson_26/154/cue01_start.png",
+      "verdict": "pass",
+      "notes": "[start] greedy placement number line [1,2,4,8,9], candidate gap d=3, place at 1→4→8, gaps 3≥3 and 4≥3, 'placed all 3 balls ✓ feasible'"
+    },
+    {
+      "cue": 1,
+      "kind": "mid",
+      "path": "lesson_26/154/cue01_mid.png",
+      "verdict": "pass",
+      "notes": "[mid] greedy placement number line [1,2,4,8,9], candidate gap d=3, place at 1→4→8, gaps 3≥3 and 4≥3, 'placed all 3 balls ✓ feasible'"
+    },
+    {
+      "cue": 1,
+      "kind": "end",
+      "path": "lesson_26/154/cue01_end.png",
+      "verdict": "pass",
+      "notes": "[end] greedy placement number line [1,2,4,8,9], candidate gap d=3, place at 1→4→8, gaps 3≥3 and 4≥3, 'placed all 3 balls ✓ feasible'"
+    },
+    {
+      "cue": 2,
+      "kind": "start",
+      "path": "lesson_26/154/cue02_start.png",
+      "verdict": "pass",
+      "notes": "[start] exchange proof: optimal placement (violet 2,4,9) slides left to greedy (emerald 1,4,8) via amber arrows, 'sliding left never shrinks a gap'"
+    },
+    {
+      "cue": 2,
+      "kind": "mid",
+      "path": "lesson_26/154/cue02_mid.png",
+      "verdict": "pass",
+      "notes": "[mid] exchange proof: optimal placement (violet 2,4,9) slides left to greedy (emerald 1,4,8) via amber arrows, 'sliding left never shrinks a gap'"
+    },
+    {
+      "cue": 2,
+      "kind": "end",
+      "path": "lesson_26/154/cue02_end.png",
+      "verdict": "pass",
+      "notes": "[end] exchange proof: optimal placement (violet 2,4,9) slides left to greedy (emerald 1,4,8) via amber arrows, 'sliding left never shrinks a gap'"
+    },
+    {
+      "cue": 3,
+      "kind": "start",
+      "path": "lesson_26/154/cue03_start.png",
+      "verdict": "pass",
+      "notes": "[start] range: number line, span=9-1=8, lo=1 (smallest gap), hi=span/(m-1)=8/2=4"
+    },
+    {
+      "cue": 3,
+      "kind": "mid",
+      "path": "lesson_26/154/cue03_mid.png",
+      "verdict": "pass",
+      "notes": "[mid] range: number line, span=9-1=8, lo=1 (smallest gap), hi=span/(m-1)=8/2=4"
+    },
+    {
+      "cue": 3,
+      "kind": "end",
+      "path": "lesson_26/154/cue03_end.png",
+      "verdict": "pass",
+      "notes": "[end] range: number line, span=9-1=8, lo=1 (smallest gap), hi=span/(m-1)=8/2=4"
+    },
+    {
+      "cue": 4,
+      "kind": "start",
+      "path": "lesson_26/154/cue04_start.png",
+      "verdict": "pass",
+      "notes": "[start] update rule: can(mid)✓→push lo up lo=mid (try larger gaps); can(mid)✗→pull hi down hi=mid-1"
+    },
+    {
+      "cue": 4,
+      "kind": "mid",
+      "path": "lesson_26/154/cue04_mid.png",
+      "verdict": "pass",
+      "notes": "[mid] update rule: can(mid)✓→push lo up lo=mid (try larger gaps); can(mid)✗→pull hi down hi=mid-1"
+    },
+    {
+      "cue": 4,
+      "kind": "end",
+      "path": "lesson_26/154/cue04_end.png",
+      "verdict": "pass",
+      "notes": "[end] update rule: can(mid)✓→push lo up lo=mid (try larger gaps); can(mid)✗→pull hi down hi=mid-1"
+    },
+    {
+      "cue": 5,
+      "kind": "start",
+      "path": "lesson_26/154/cue05_start.png",
+      "verdict": "pass",
+      "notes": "[start] off-by-one: lo=3,hi=4 round down mid=3→lo unchanged→∞ loop; round up mid=4 breaks the tie"
+    },
+    {
+      "cue": 5,
+      "kind": "mid",
+      "path": "lesson_26/154/cue05_mid.png",
+      "verdict": "pass",
+      "notes": "[mid] off-by-one: lo=3,hi=4 round down mid=3→lo unchanged→∞ loop; round up mid=4 breaks the tie"
+    }
+  ]
+}

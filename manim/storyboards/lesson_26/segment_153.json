@@ -1,0 +1,73 @@
+{
+  "lesson_id": 26,
+  "activity_id": 153,
+  "activity_type": "lesson_part",
+  "title": "Part 1: Lower binary search — Koko Eating Bananas and Split Array Largest Sum",
+  "audio": {
+    "file_path": "runtime_artifacts/audio/lesson_26_activity_153_audio.mp3",
+    "duration_sec": 122.83
+  },
+  "audio_source": "artifact",
+  "cue_source": "audio.synced_visual.cues",
+  "cues": [
+    {
+      "index": 0,
+      "start": 0,
+      "end": 22.3,
+      "duration": 22.3,
+      "label": "Lower template",
+      "headline": "lo < hi, mid = (lo+hi)/2",
+      "narration": "The lower binary search template finds the smallest feasible candidate by narrowing the range from both sides."
+    },
+    {
+      "index": 1,
+      "start": 22.3,
+      "end": 46.2,
+      "duration": 23.9,
+      "label": "Ceiling division",
+      "headline": "ceil(pile / speed) counts hours",
+      "narration": "Each pile takes ceiling of pile over speed hours. Use integer arithmetic: (pile + speed - 1) // speed."
+    },
+    {
+      "index": 2,
+      "start": 46.2,
+      "end": 70.7,
+      "duration": 24.5,
+      "label": "Split Array",
+      "headline": "Same template, greedy partition",
+      "narration": "Split Array Largest Sum uses the same lower search: candidate is the max allowed sum, feasibility is a greedy left-to-right scan counting subarrays."
+    },
+    {
+      "index": 3,
+      "start": 70.7,
+      "end": 95.3,
+      "duration": 24.6,
+      "label": "Range bounds",
+      "headline": "lo = max element, hi = total sum",
+      "narration": "For partition problems, lo is the largest element (no subarray can be smaller), hi is the total sum (one subarray holds everything)."
+    },
+    {
+      "index": 4,
+      "start": 95.3,
+      "end": 111.7,
+      "duration": 16.4,
+      "label": "Zero init trap",
+      "headline": "lo = 0 breaks the feasibility check",
+      "narration": "Setting lo to zero tests a meaningless candidate: zero speed means infinite time, and zero max sum means no element fits. Always use the tightest meaningful lower bound."
+    },
+    {
+      "index": 5,
+      "start": 111.7,
+      "end": 122.8,
+      "duration": 11.1,
+      "label": "Greedy is optimal",
+      "headline": "Extend each subarray as far as possible",
+      "narration": "The greedy scan uses the fewest subarrays for a given target, so if greedy needs more than k, nothing else can do it in k either."
+    }
+  ],
+  "cue_span_sec": 122.8,
+  "formulas": [
+    "O(n \\cdot \\log(\\max(\\text{piles})))"
+  ],
+  "exported_at": "2026-07-08T23:50:19.168Z"
+}

@@ -1,0 +1,130 @@
+{
+  "lesson_id": 26,
+  "activity_id": 153,
+  "reviewed_at": "2026-07-09T00:16:00Z",
+  "iterations": 2,
+  "frames_reviewed": 17,
+  "quality": "ql",
+  "notes": "L26 Part 1 (act 153) 'Lower binary search — Koko and Split Array', 122.8s, 6 cues. Uses binsearch.py + arrays.py. READ start/mid/end each cue. 2 -ql iterations (round-1 fixed candidate-chip overlapping Σ subarray-sum labels in Cue02, and clipped complexity formula 'piles' rendered as raw math letters in Cue05 → \\text{piles}). Koko/Split Array math verified.",
+  "frames": [
+    {
+      "cue": 0,
+      "kind": "start",
+      "path": "lesson_26/153/cue00_start.png",
+      "verdict": "pass",
+      "notes": "[start] lower template code (lo<hi, mid=(lo+hi)//2, feasible→hi=mid else lo=mid+1, return lo) + candidate 1..8 ✗✗✗✓✓✓✓✓, boundary ring on 4, 'first ✓ = the answer'"
+    },
+    {
+      "cue": 0,
+      "kind": "mid",
+      "path": "lesson_26/153/cue00_mid.png",
+      "verdict": "pass",
+      "notes": "[mid] lower template code (lo<hi, mid=(lo+hi)//2, feasible→hi=mid else lo=mid+1, return lo) + candidate 1..8 ✗✗✗✓✓✓✓✓, boundary ring on 4, 'first ✓ = the answer'"
+    },
+    {
+      "cue": 0,
+      "kind": "end",
+      "path": "lesson_26/153/cue00_end.png",
+      "verdict": "pass",
+      "notes": "[end] lower template code (lo<hi, mid=(lo+hi)//2, feasible→hi=mid else lo=mid+1, return lo) + candidate 1..8 ✗✗✗✓✓✓✓✓, boundary ring on 4, 'first ✓ = the answer'"
+    },
+    {
+      "cue": 1,
+      "kind": "start",
+      "path": "lesson_26/153/cue01_start.png",
+      "verdict": "pass",
+      "notes": "[start] Koko piles [3,6,7,11], speed k=4, ceil formula (pile+k-1)//k, hours per pile [1,2,2,3], hours=8 ≤ h=8 ✓ feasible"
+    },
+    {
+      "cue": 1,
+      "kind": "mid",
+      "path": "lesson_26/153/cue01_mid.png",
+      "verdict": "pass",
+      "notes": "[mid] Koko piles [3,6,7,11], speed k=4, ceil formula (pile+k-1)//k, hours per pile [1,2,2,3], hours=8 ≤ h=8 ✓ feasible"
+    },
+    {
+      "cue": 1,
+      "kind": "end",
+      "path": "lesson_26/153/cue01_end.png",
+      "verdict": "pass",
+      "notes": "[end] Koko piles [3,6,7,11], speed k=4, ceil formula (pile+k-1)//k, hours per pile [1,2,2,3], hours=8 ≤ h=8 ✓ feasible"
+    },
+    {
+      "cue": 2,
+      "kind": "start",
+      "path": "lesson_26/153/cue02_start.png",
+      "verdict": "pass",
+      "notes": "[start] Split Array [7,2,5,10,8]: greedy [7,2,5]=14 / [10,8]=18, candidate ≤18, 2 subarrays ≤ k=2 ✓ feasible (chip below Σ labels, fixed)"
+    },
+    {
+      "cue": 2,
+      "kind": "mid",
+      "path": "lesson_26/153/cue02_mid.png",
+      "verdict": "pass",
+      "notes": "[mid] Split Array [7,2,5,10,8]: greedy [7,2,5]=14 / [10,8]=18, candidate ≤18, 2 subarrays ≤ k=2 ✓ feasible (chip below Σ labels, fixed)"
+    },
+    {
+      "cue": 2,
+      "kind": "end",
+      "path": "lesson_26/153/cue02_end.png",
+      "verdict": "pass",
+      "notes": "[end] Split Array [7,2,5,10,8]: greedy [7,2,5]=14 / [10,8]=18, candidate ≤18, 2 subarrays ≤ k=2 ✓ feasible (chip below Σ labels, fixed)"
+    },
+    {
+      "cue": 3,
+      "kind": "start",
+      "path": "lesson_26/153/cue03_start.png",
+      "verdict": "pass",
+      "notes": "[start] range bounds: max element 10 (amber) = lo, total sum 32 = hi, search only [10..32]"
+    },
+    {
+      "cue": 3,
+      "kind": "mid",
+      "path": "lesson_26/153/cue03_mid.png",
+      "verdict": "pass",
+      "notes": "[mid] range bounds: max element 10 (amber) = lo, total sum 32 = hi, search only [10..32]"
+    },
+    {
+      "cue": 3,
+      "kind": "end",
+      "path": "lesson_26/153/cue03_end.png",
+      "verdict": "pass",
+      "notes": "[end] range bounds: max element 10 (amber) = lo, total sum 32 = hi, search only [10..32]"
+    },
+    {
+      "cue": 4,
+      "kind": "start",
+      "path": "lesson_26/153/cue04_start.png",
+      "verdict": "pass",
+      "notes": "[start] lo=0 trap: speed 0→infinite hours, max sum 0→no element fits; use tightest meaningful lower bound"
+    },
+    {
+      "cue": 4,
+      "kind": "mid",
+      "path": "lesson_26/153/cue04_mid.png",
+      "verdict": "pass",
+      "notes": "[mid] lo=0 trap: speed 0→infinite hours, max sum 0→no element fits; use tightest meaningful lower bound"
+    },
+    {
+      "cue": 4,
+      "kind": "end",
+      "path": "lesson_26/153/cue04_end.png",
+      "verdict": "pass",
+      "notes": "[end] lo=0 trap: speed 0→infinite hours, max sum 0→no element fits; use tightest meaningful lower bound"
+    },
+    {
+      "cue": 5,
+      "kind": "start",
+      "path": "lesson_26/153/cue05_start.png",
+      "verdict": "pass",
+      "notes": "[start] greedy optimal: extend each subarray as far as candidate allows → fewest subarrays; O(n·log(max piles)) bound (fixed clipping)"
+    },
+    {
+      "cue": 5,
+      "kind": "mid",
+      "path": "lesson_26/153/cue05_mid.png",
+      "verdict": "pass",
+      "notes": "[mid] greedy optimal: extend each subarray as far as candidate allows → fewest subarrays; O(n·log(max piles)) bound (fixed clipping)"
+    }
+  ]
+}

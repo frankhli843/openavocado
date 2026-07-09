@@ -1,0 +1,172 @@
+{
+  "lesson_id": 26,
+  "activity_id": 152,
+  "reviewed_at": "2026-07-09T00:16:00Z",
+  "iterations": 2,
+  "frames_reviewed": 23,
+  "quality": "ql",
+  "notes": "L26 Orientation (act 152) 'Binary search on the answer — when the answer IS the search space', 1007.9s, 8 cues. New idiom lib binsearch.py (candidate_row + monotonic ✓/✗ badges, paint_feasibility, boundary_ring, region_brace). READ start/mid/end each cue from muxed mp4. 2 -ql iterations (round-1 fixed family-chip row width overflow >safe-area, Split-Array candidate-chip overlapping Σ labels). All math verified.",
+  "frames": [
+    {
+      "cue": 0,
+      "kind": "start",
+      "path": "lesson_26/152/cue00_start.png",
+      "verdict": "pass",
+      "notes": "[start] family: candidate row 1..10 monotonic ✗✗✗✗✗✓✓✓✓✓, boundary ring on 6, infeasible/feasible braces, 'boundary=answer', 3 family chips Koko/Split Array/Magnetic Force"
+    },
+    {
+      "cue": 0,
+      "kind": "mid",
+      "path": "lesson_26/152/cue00_mid.png",
+      "verdict": "pass",
+      "notes": "[mid] family: candidate row 1..10 monotonic ✗✗✗✗✗✓✓✓✓✓, boundary ring on 6, infeasible/feasible braces, 'boundary=answer', 3 family chips Koko/Split Array/Magnetic Force"
+    },
+    {
+      "cue": 0,
+      "kind": "end",
+      "path": "lesson_26/152/cue00_end.png",
+      "verdict": "pass",
+      "notes": "[end] family: candidate row 1..10 monotonic ✗✗✗✗✗✓✓✓✓✓, boundary ring on 6, infeasible/feasible braces, 'boundary=answer', 3 family chips Koko/Split Array/Magnetic Force"
+    },
+    {
+      "cue": 1,
+      "kind": "start",
+      "path": "lesson_26/152/cue01_start.png",
+      "verdict": "pass",
+      "notes": "[start] Koko oracle can(k)=Σ⌈pile/k⌉≤h; piles [3,6,7,11], k=4 → hours 1+2+2+3=8 ≤ h=8 feasible; 'try smaller speed'"
+    },
+    {
+      "cue": 1,
+      "kind": "mid",
+      "path": "lesson_26/152/cue01_mid.png",
+      "verdict": "pass",
+      "notes": "[mid] Koko oracle can(k)=Σ⌈pile/k⌉≤h; piles [3,6,7,11], k=4 → hours 1+2+2+3=8 ≤ h=8 feasible; 'try smaller speed'"
+    },
+    {
+      "cue": 1,
+      "kind": "end",
+      "path": "lesson_26/152/cue01_end.png",
+      "verdict": "pass",
+      "notes": "[end] Koko oracle can(k)=Σ⌈pile/k⌉≤h; piles [3,6,7,11], k=4 → hours 1+2+2+3=8 ≤ h=8 feasible; 'try smaller speed'"
+    },
+    {
+      "cue": 2,
+      "kind": "start",
+      "path": "lesson_26/152/cue02_start.png",
+      "verdict": "pass",
+      "notes": "[start] monotonicity: speeds ✗✗✗✓✓✓✓✓ (k≥4), emerald arrow, 'if k works k+1 works', 'one clean ✗→✓ flip'"
+    },
+    {
+      "cue": 2,
+      "kind": "mid",
+      "path": "lesson_26/152/cue02_mid.png",
+      "verdict": "pass",
+      "notes": "[mid] monotonicity: speeds ✗✗✗✓✓✓✓✓ (k≥4), emerald arrow, 'if k works k+1 works', 'one clean ✗→✓ flip'"
+    },
+    {
+      "cue": 2,
+      "kind": "end",
+      "path": "lesson_26/152/cue02_end.png",
+      "verdict": "pass",
+      "notes": "[end] monotonicity: speeds ✗✗✗✓✓✓✓✓ (k≥4), emerald arrow, 'if k works k+1 works', 'one clean ✗→✓ flip'"
+    },
+    {
+      "cue": 3,
+      "kind": "start",
+      "path": "lesson_26/152/cue03_start.png",
+      "verdict": "pass",
+      "notes": "[start] template 3 pieces RANGE/ORACLE(monotonic)/SEARCH + lower-search code skeleton, 'only can() changes'"
+    },
+    {
+      "cue": 3,
+      "kind": "mid",
+      "path": "lesson_26/152/cue03_mid.png",
+      "verdict": "pass",
+      "notes": "[mid] template 3 pieces RANGE/ORACLE(monotonic)/SEARCH + lower-search code skeleton, 'only can() changes'"
+    },
+    {
+      "cue": 3,
+      "kind": "end",
+      "path": "lesson_26/152/cue03_end.png",
+      "verdict": "pass",
+      "notes": "[end] template 3 pieces RANGE/ORACLE(monotonic)/SEARCH + lower-search code skeleton, 'only can() changes'"
+    },
+    {
+      "cue": 4,
+      "kind": "start",
+      "path": "lesson_26/152/cue04_start.png",
+      "verdict": "pass",
+      "notes": "[start] upper search flips direction: gaps ✓✓✓✗✗✗✗✗ (gap≤3), boundary ring on 3, 'search for LAST ✓', round-up mid formula"
+    },
+    {
+      "cue": 4,
+      "kind": "mid",
+      "path": "lesson_26/152/cue04_mid.png",
+      "verdict": "pass",
+      "notes": "[mid] upper search flips direction: gaps ✓✓✓✗✗✗✗✗ (gap≤3), boundary ring on 3, 'search for LAST ✓', round-up mid formula"
+    },
+    {
+      "cue": 4,
+      "kind": "end",
+      "path": "lesson_26/152/cue04_end.png",
+      "verdict": "pass",
+      "notes": "[end] upper search flips direction: gaps ✓✓✓✗✗✗✗✗ (gap≤3), boundary ring on 3, 'search for LAST ✓', round-up mid formula"
+    },
+    {
+      "cue": 5,
+      "kind": "start",
+      "path": "lesson_26/152/cue05_start.png",
+      "verdict": "pass",
+      "notes": "[start] Split Array [7,2,5,10,8]: greedy parts [7,2,5]=14 / [10,8]=18, candidate=max allowed sum, 2 subarrays ≤ k → 18 feasible"
+    },
+    {
+      "cue": 5,
+      "kind": "mid",
+      "path": "lesson_26/152/cue05_mid.png",
+      "verdict": "pass",
+      "notes": "[mid] Split Array [7,2,5,10,8]: greedy parts [7,2,5]=14 / [10,8]=18, candidate=max allowed sum, 2 subarrays ≤ k → 18 feasible"
+    },
+    {
+      "cue": 5,
+      "kind": "end",
+      "path": "lesson_26/152/cue05_end.png",
+      "verdict": "pass",
+      "notes": "[end] Split Array [7,2,5,10,8]: greedy parts [7,2,5]=14 / [10,8]=18, candidate=max allowed sum, 2 subarrays ≤ k → 18 feasible"
+    },
+    {
+      "cue": 6,
+      "kind": "start",
+      "path": "lesson_26/152/cue06_start.png",
+      "verdict": "pass",
+      "notes": "[start] off-by-one: round down (3+4)//2=3 → lo unchanged → ∞ loop (rose); round up (3+4+1)//2=4 → range moves (emerald)"
+    },
+    {
+      "cue": 6,
+      "kind": "mid",
+      "path": "lesson_26/152/cue06_mid.png",
+      "verdict": "pass",
+      "notes": "[mid] off-by-one: round down (3+4)//2=3 → lo unchanged → ∞ loop (rose); round up (3+4+1)//2=4 → range moves (emerald)"
+    },
+    {
+      "cue": 6,
+      "kind": "end",
+      "path": "lesson_26/152/cue06_end.png",
+      "verdict": "pass",
+      "notes": "[end] off-by-one: round down (3+4)//2=3 → lo unchanged → ∞ loop (rose); round up (3+4+1)//2=4 → range moves (emerald)"
+    },
+    {
+      "cue": 7,
+      "kind": "start",
+      "path": "lesson_26/152/cue07_start.png",
+      "verdict": "pass",
+      "notes": "[start] recognition rule: monotonic can(x)∈poly-time ⇒ BS on answer; 3-point checklist; 'search the answer'"
+    },
+    {
+      "cue": 7,
+      "kind": "mid",
+      "path": "lesson_26/152/cue07_mid.png",
+      "verdict": "pass",
+      "notes": "[mid] recognition rule: monotonic can(x)∈poly-time ⇒ BS on answer; 3-point checklist; 'search the answer'"
+    }
+  ]
+}

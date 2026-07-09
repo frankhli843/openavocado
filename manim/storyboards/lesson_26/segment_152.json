@@ -1,0 +1,89 @@
+{
+  "lesson_id": 26,
+  "activity_id": 152,
+  "activity_type": "audio",
+  "title": "Audio: binary search on the answer — when the answer IS the search space",
+  "audio": {
+    "file_path": "runtime_artifacts/audio/lesson_26_audio.mp3",
+    "duration_sec": 1007.91
+  },
+  "audio_source": "artifact",
+  "cue_source": "orientation_visual.cues",
+  "cues": [
+    {
+      "index": 0,
+      "start": 0,
+      "end": 114.2,
+      "duration": 114.2,
+      "label": "The family",
+      "headline": "The answer IS the search space",
+      "narration": "A whole family of problems where you search a range of candidate answers for the boundary between infeasible and feasible."
+    },
+    {
+      "index": 1,
+      "start": 114.2,
+      "end": 248.6,
+      "duration": 134.4,
+      "label": "Koko",
+      "headline": "Minimize speed, greedy hours",
+      "narration": "Koko Eating Bananas: search on speed, sum ceiling divisions, check against h hours."
+    },
+    {
+      "index": 2,
+      "start": 248.6,
+      "end": 376.3,
+      "duration": 127.7,
+      "label": "Monotonicity",
+      "headline": "Faster is always enough",
+      "narration": "If speed k works, speed k+1 works too, because eating faster never takes more hours. The feasibility function is monotonic."
+    },
+    {
+      "index": 3,
+      "start": 376.3,
+      "end": 504,
+      "duration": 127.7,
+      "label": "Template",
+      "headline": "Range, feasibility, search",
+      "narration": "Three pieces: define the range, write the feasibility oracle, binary-search. Same code structure every time."
+    },
+    {
+      "index": 4,
+      "start": 504,
+      "end": 638.3,
+      "duration": 134.3,
+      "label": "Upper search",
+      "headline": "Maximize the minimum gap",
+      "narration": "Magnetic Force flips the direction: small gaps are feasible, large gaps are not. Upper search with round-up mid avoids the infinite loop."
+    },
+    {
+      "index": 5,
+      "start": 638.3,
+      "end": 772.7,
+      "duration": 134.4,
+      "label": "Split Array",
+      "headline": "Minimize max subarray sum",
+      "narration": "Same template: candidate is the max allowed sum, feasibility is a greedy scan counting subarrays, lower search for the leftmost feasible."
+    },
+    {
+      "index": 6,
+      "start": 772.7,
+      "end": 907.1,
+      "duration": 134.4,
+      "label": "Off-by-one",
+      "headline": "Round up prevents infinite loop",
+      "narration": "In upper search, rounding down mid when lo and hi differ by one causes an infinite loop. Round up: mid = (lo + hi + 1) / 2."
+    },
+    {
+      "index": 7,
+      "start": 907.1,
+      "end": 1007.9,
+      "duration": 100.8,
+      "label": "Recognition",
+      "headline": "Monotonic feasibility implies BS-on-answer",
+      "narration": "The recognition rule: if you can write a monotonic can(candidate) in polynomial time, you have a binary search on the answer."
+    }
+  ],
+  "cue_span_sec": 1007.9,
+  "formulas": [],
+  "exported_at": "2026-07-08T23:50:19.167Z"
+}

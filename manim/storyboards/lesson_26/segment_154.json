@@ -1,0 +1,73 @@
+{
+  "lesson_id": 26,
+  "activity_id": 154,
+  "activity_type": "lesson_part",
+  "title": "Part 2: Upper binary search — Magnetic Force and the round-up trap",
+  "audio": {
+    "file_path": "runtime_artifacts/audio/lesson_26_activity_154_audio.mp3",
+    "duration_sec": 112.15
+  },
+  "audio_source": "artifact",
+  "cue_source": "audio.synced_visual.cues",
+  "cues": [
+    {
+      "index": 0,
+      "start": 0,
+      "end": 20.4,
+      "duration": 20.4,
+      "label": "Upper template",
+      "headline": "mid = (lo+hi+1)/2 rounds UP",
+      "narration": "The upper binary search finds the largest feasible candidate. Rounding up mid prevents the infinite loop."
+    },
+    {
+      "index": 1,
+      "start": 20.4,
+      "end": 42.1,
+      "duration": 21.7,
+      "label": "Greedy rule",
+      "headline": "Place at the earliest valid position",
+      "narration": "Sort positions, start at position zero, then place a ball whenever the gap from the last ball is at least the candidate distance."
+    },
+    {
+      "index": 2,
+      "start": 42.1,
+      "end": 64.6,
+      "duration": 22.5,
+      "label": "Exchange proof",
+      "headline": "Greedy never does worse",
+      "narration": "Any optimal placement can be slid leftward to the greedy position without shrinking gaps. So if greedy cannot place all m balls, nothing else can either."
+    },
+    {
+      "index": 3,
+      "start": 64.6,
+      "end": 87,
+      "duration": 22.4,
+      "label": "Range",
+      "headline": "lo = 1, hi = span / (m-1)",
+      "narration": "The smallest gap is 1 (distinct positions). The largest is the total span divided by m minus 1 evenly spaced balls."
+    },
+    {
+      "index": 4,
+      "start": 87,
+      "end": 102,
+      "duration": 15,
+      "label": "Update rule",
+      "headline": "feasible: lo = mid, infeasible: hi = mid - 1",
+      "narration": "When feasible, push lo up to try larger gaps. When infeasible, pull hi down."
+    },
+    {
+      "index": 5,
+      "start": 102,
+      "end": 112.2,
+      "duration": 10.2,
+      "label": "Off-by-one",
+      "headline": "Round down loops forever",
+      "narration": "If lo equals hi minus one and mid rounds down to lo, a feasible result sets lo to lo again, looping forever. Round up to break the tie."
+    }
+  ],
+  "cue_span_sec": 112.2,
+  "formulas": [
+    "O(n \\log n + n \\cdot \\log(\\text{span}))"
+  ],
+  "exported_at": "2026-07-08T23:50:19.168Z"
+}
