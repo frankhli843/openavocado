@@ -4,6 +4,7 @@
 #
 # FAILS (exit 1) when a public-facing surface leaks a private brand/name, when a
 # hard secret is tracked in git, or when a public surface still says "AvocadoCore"
+# as product branding (the single documented 2017-origin lineage line is allowed)
 # instead of "Open Avocado". WARNS (no failure) on documented internal-compat
 # tokens in non-public code (scripts/, tests, internal library prompt strings).
 #
@@ -50,8 +51,11 @@ for p in "${PUBLIC_PATHS[@]}"; do
   [ -e "$p" ] || continue
   h=$(git grep -InE "$FORBIDDEN" -- "$p" 2>/dev/null)
   [ -n "$h" ] && { err "private token in $p:"; printf '%s\n' "$h"; }
-  b=$(git grep -In 'AvocadoCore' -- "$p" 2>/dev/null)
-  [ -n "$b" ] && { err "old brand 'AvocadoCore' in $p (use 'Open Avocado'):"; printf '%s\n' "$b"; }
+  # 'AvocadoCore' is allowed ONLY on the sanctioned historical-origin line, which is
+  # identified by naming the 2017 origin year on the same line (see docs/showcase-assets.md
+  # + the mission section). Any other public 'AvocadoCore' branding still fails.
+  b=$(git grep -In 'AvocadoCore' -- "$p" 2>/dev/null | grep -v '2017')
+  [ -n "$b" ] && { err "old brand 'AvocadoCore' in $p (use 'Open Avocado'; only the 2017-origin lineage line may name it):"; printf '%s\n' "$b"; }
 done
 # Private IP / tailnet / raw nip.io host leakage in public surfaces
 IP_RE='\b(178\.105\.119|89\.167\.21)\.[0-9]+\b|\b100\.(6[4-9]|[7-9][0-9]|1[0-1][0-9])\.[0-9]+\.[0-9]+\b'
