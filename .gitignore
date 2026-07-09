@@ -62,3 +62,4 @@ out/
 # runtime_artifacts/ above and *.mp3 elsewhere in this file.
 runtime_artifacts/
 /audio/
+.videobuild/
