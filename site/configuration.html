@@ -64,8 +64,8 @@ bootstrap credentials.</p>
 <div class="table-wrap"><table>
 <tr><th>Variable</th><th>Purpose</th></tr>
 <tr><td><code>AVOCADOCORE_DEFAULT_PROVIDER</code></td><td>Default model provider (e.g. <code>openai</code>, <code>google-ai-studio</code>).</td></tr>
-<tr><td><code>AVOCADOCORE_FEEDBACK_PROVIDER</code> / <code>_BASE_URL</code> / <code>_MODEL</code></td><td>Provider for instant learner feedback (grading, hints, code feedback) — point at a local OpenAI-compatible model for a fully local run.</td></tr>
-<tr><td><code>AVOCADOCORE_ACP_ENDPOINT</code> / <code>_MODEL</code> / <code>_TOKEN</code></td><td>OpenAI-compatible endpoint for question rephrasing and lightweight generation.</td></tr>
+<tr><td><code>AVOCADOCORE_ACP_ENDPOINT</code> / <code>_MODEL</code> / <code>_TOKEN</code></td><td>OpenAI-compatible base URL (the app appends <code>/chat/completions</code>), model, and optional bearer token for question rephrasing and instant feedback. Point these at a local server for a fully local run — see <a href="run-local-llm.html">Run with your own local LLM</a>.</td></tr>
+<tr><td><code>AVOCADOCORE_COMPLETION_ADAPTER</code></td><td>Selects the lesson-generation completion adapter: <code>noop</code> (default) or <code>local-queue</code> (enqueue generation in-process for the direct-key and local-model runtimes).</td></tr>
 <tr><td><code>OPENAI_API_KEY</code></td><td>Enables OpenAI TTS for narration; without it, an offline <code>espeak-ng</code> + <code>ffmpeg</code> voice is used.</td></tr>
 </table></div>
 <p>A copyable <code>.env.example</code> ships in the repository. Copy it to <code>.env.local</code> (gitignored) and

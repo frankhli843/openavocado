@@ -37,21 +37,19 @@
 
 <h2>Configuration</h2>
 <p>Open Avocado talks to a local model through its <strong>OpenAI-compatible endpoint</strong> settings. Point the
-feedback provider and the rephrase/generation endpoint at your gateway:</p>
-<pre><code># Instant learner-facing feedback (grading, hints, code feedback) via a local model:
-export AVOCADOCORE_FEEDBACK_PROVIDER=local
-export AVOCADOCORE_FEEDBACK_BASE_URL=http://127.0.0.1:8080/v1
-export AVOCADOCORE_FEEDBACK_MODEL=your-local-model
-
-# Question rephrasing / lightweight generation endpoint (OpenAI-compatible):
-export AVOCADOCORE_ACP_ENDPOINT=http://127.0.0.1:8080/v1/chat/completions
+rephrase/generation endpoint at your gateway (set the base URL; the app appends <code>/chat/completions</code>):</p>
+<pre><code># OpenAI-compatible base URL of your local gateway (NOT including /chat/completions):
+export AVOCADOCORE_ACP_ENDPOINT=http://127.0.0.1:8080/v1
 export AVOCADOCORE_ACP_MODEL=your-local-model
 # export AVOCADOCORE_ACP_TOKEN=...   # only if your gateway requires a bearer token
 
+# Enqueue lesson generation locally instead of the no-op default:
 export AVOCADOCORE_COMPLETION_ADAPTER=local-queue
 </code></pre>
 <p>Replace the host, port, and model with your gateway's values. Nothing here assumes any particular machine — a
-gateway on <code>127.0.0.1</code> is the common case for a single-workstation setup.</p>
+gateway on <code>127.0.0.1</code> is the common case for a single-workstation setup. This is the same mechanism as
+<a href="run-local-llm.html">Run with your own local LLM</a>, which covers llama.cpp, Ollama, vLLM, and LM Studio
+generically.</p>
 
 <div class="note"><p><strong>Status:</strong> The instant-feedback and question-rephrase paths run against a local
 OpenAI-compatible endpoint today. Full end-to-end <em>lesson authoring</em> from a single local model is best-effort:
