@@ -160,11 +160,13 @@ HERO_BODY = f"""
   <div class="sec-head">
     <h2>Run it your way</h2>
     <p>Open Avocado separates the <em>app</em> from the <em>lesson generator</em> behind a small adapter
-    interface, so you can plug in whatever produces lessons. Pick the local runtime that fits you.</p>
+    interface, so you can plug in whatever produces lessons. Start fastest with a hosted API key, keep everything
+    private with your own local LLM, or hand authoring to an agent runtime — pick what fits you.</p>
   </div>
   <div class="card-grid">
-    <a class="card" href="run-api-key.html"><div class="ico">🔑</div><h3>Direct API key <span class="badge badge-ok">ready</span></h3><p>The simplest standalone path. Bring an OpenAI or Google AI Studio key and go.</p></a>
-    <a class="card" href="run-gemmaclaw.html"><div class="ico">🦎</div><h3>Gemmaclaw <span class="badge badge-partial">partial</span></h3><p>Point at a local, OpenAI-compatible Gemma model gateway. No cloud key required.</p></a>
+    <a class="card" href="run-api-key.html"><div class="ico">🔑</div><h3>Direct API key <span class="badge badge-ok">ready</span></h3><p>Fastest start. Bring an OpenAI or Google AI Studio key and go.</p></a>
+    <a class="card" href="run-local-llm.html"><div class="ico">🖥️</div><h3>Your own local LLM <span class="badge badge-ok">ready</span></h3><p>Privacy / offline / self-hosted. Any OpenAI-compatible local server — llama.cpp, Ollama, vLLM, LM Studio. No cloud key, data stays on your machine.</p></a>
+    <a class="card" href="run-gemmaclaw.html"><div class="ico">🦎</div><h3>Gemmaclaw <span class="badge badge-partial">partial</span></h3><p>A specific local-model gateway example (Gemma) over the same OpenAI-compatible path.</p></a>
     <a class="card" href="run-openclaw.html"><div class="ico">🤖</div><h3>OpenClaw <span class="badge badge-ok">ready</span></h3><p>Hand lesson generation to an external agent/task runner via the task adapter.</p></a>
     <a class="card" href="run-hermes.html"><div class="ico">📜</div><h3>Hermes <span class="badge badge-planned">planned</span></h3><p>Wire a local Hermes agent runtime through the agent-harness command adapter.</p></a>
   </div>
@@ -306,6 +308,131 @@ direct model call that returns validated lesson content, which is written back t
 """
 
 
+# ── Runtime: Your own local LLM ──────────────────────────────────────────────
+RUN_LOCAL_LLM = _rt_header(
+    "🖥️", "Run with your own local LLM",
+    '<span class="badge badge-ok">ready</span>',
+    "The privacy-first, self-hosted path. Point Open Avocado at your own local model instead of a hosted "
+    "provider, so learning content never leaves your machine. Any OpenAI-compatible local server works — "
+    "llama.cpp server, Ollama, vLLM, or LM Studio."
+) + f"""
+<h2>Hosted API key vs. your own local LLM</h2>
+<p>Open Avocado gives you two standalone ways to bring a model, and they are deliberately separate:</p>
+<ul>
+  <li><strong>Hosted API key</strong> — the fastest way to start. You bring an OpenAI or Google AI Studio key and
+  the app calls the provider directly. Prompts leave your machine for the provider. See
+  <a href="run-api-key.html">Run with a direct API key</a>.</li>
+  <li><strong>Your own local LLM</strong> (this page) — the privacy / offline / self-hosted path. You run a model on
+  your own hardware and Open Avocado talks to it over its OpenAI-compatible HTTP endpoint. No cloud key, and
+  learning content stays local.</li>
+</ul>
+<p>For richer, multi-step agentic authoring there are also the <a href="run-openclaw.html">OpenClaw</a> and
+<a href="run-hermes.html">Hermes</a> agent-runtime paths.</p>
+
+<h2>Who this is for</h2>
+<ul>
+  <li>You care about privacy or need to work offline — learning data must stay on your own hardware.</li>
+  <li>You already run, or can run, a local model server that speaks the OpenAI chat-completions API.</li>
+  <li>You want to avoid per-token cloud costs and API keys entirely.</li>
+</ul>
+
+<h2>Prerequisites</h2>
+<ul>
+  <li>A local model server reachable over HTTP that exposes an <strong>OpenAI-compatible <code>/v1</code></strong>
+  endpoint (see the table below).</li>
+  <li>A machine that can serve your chosen model at a usable speed. A small instruct model (roughly 4–8B, quantized)
+  runs on a modern laptop or a single consumer GPU; larger models give better lessons but need more VRAM/RAM.</li>
+</ul>
+
+<h2>Supported local runtimes</h2>
+<p>Any server that implements the OpenAI <code>/v1/chat/completions</code> API works. Common choices and their
+default base URLs:</p>
+<table>
+<tr><th>Runtime</th><th>Start it (example)</th><th>OpenAI-compatible base URL</th></tr>
+<tr><td>llama.cpp server</td><td><code>llama-server -m model.gguf --port 8080</code></td><td><code>http://127.0.0.1:8080/v1</code></td></tr>
+<tr><td>Ollama</td><td><code>ollama serve</code></td><td><code>http://127.0.0.1:11434/v1</code></td></tr>
+<tr><td>vLLM</td><td><code>vllm serve your-model</code></td><td><code>http://127.0.0.1:8000/v1</code></td></tr>
+<tr><td>LM Studio</td><td><code>lms server start</code></td><td><code>http://127.0.0.1:1234/v1</code></td></tr>
+</table>
+
+<h2>Configuration</h2>
+<p>Open Avocado reads the local endpoint from environment variables. Set the <strong>base URL</strong> (the app
+appends <code>/chat/completions</code> itself), the model name your server serves, and switch the completion adapter
+to <code>local-queue</code> so generation is enqueued locally:</p>
+<pre><code># OpenAI-compatible base URL of your local server (NOT including /chat/completions):
+export AVOCADOCORE_ACP_ENDPOINT=http://127.0.0.1:8080/v1
+# The model name your server exposes (must match your runtime, e.g. an Ollama tag):
+export AVOCADOCORE_ACP_MODEL=your-local-model
+# Only if your local server requires a bearer token (most do not):
+# export AVOCADOCORE_ACP_TOKEN=your-token
+
+# Enqueue lesson generation locally instead of the no-op default:
+export AVOCADOCORE_COMPLETION_ADAPTER=local-queue
+</code></pre>
+<p>Replace the host, port, and model with your server's values. Everything runs against
+<code>127.0.0.1</code> for a single-workstation setup; nothing here assumes any particular machine or vendor.
+See <a href="configuration.html">Configuration</a> for the full environment-variable reference.</p>
+
+<h2>Run it</h2>
+<pre><code># 1. Start your local model server (pick one; substitute your own model/port):
+#    llama-server -m model.gguf --port 8080     # llama.cpp
+#    ollama serve                               # Ollama (then: ollama pull &lt;model&gt;)
+#    vllm serve your-model                      # vLLM
+#    lms server start                           # LM Studio
+# 2. Point Open Avocado at it with the env vars above, then:
+pnpm install
+mkdir -p data
+pnpm db:migrate --seed
+pnpm dev
+</code></pre>
+
+<h2>Smoke test</h2>
+<pre><code># 1. Your server answers the OpenAI-style models list:
+curl -s http://127.0.0.1:8080/v1/models | head -c 300
+
+# 2. A raw chat completion round-trips (this is the exact API Open Avocado uses):
+curl -s http://127.0.0.1:8080/v1/chat/completions \\
+  -H 'Content-Type: application/json' \\
+  -d '{{"model":"your-local-model","messages":[{{"role":"user","content":"Reply with the word ok."}}]}}' \\
+  | head -c 300
+
+# 3. Open Avocado reports the app healthy:
+curl -s http://localhost:3000/api/health | head -c 300
+</code></pre>
+
+<h2>Common failure modes</h2>
+<table>
+<tr><th>Symptom</th><th>Cause &amp; fix</th></tr>
+<tr><td>Connection refused</td><td>Server not running or wrong port. Confirm the <code>/v1/models</code> curl above works before starting the app.</td></tr>
+<tr><td>Quiz retries fall back to deterministic text</td><td>The endpoint was unreachable, timed out, or returned an unexpected shape. Open Avocado waits at most ~8&nbsp;s for the local model and then degrades gracefully rather than blocking the learner. A slow model or a cold first request commonly trips this — warm the model, or use a smaller/faster one.</td></tr>
+<tr><td>Endpoint errors on <code>response_format</code></td><td>Open Avocado requests JSON output (<code>response_format: json_object</code>). Most servers support it; if yours does not, use a build/flag that enables JSON/grammar-constrained output (llama.cpp and vLLM both support it) or a model/runtime that honors it.</td></tr>
+<tr><td>Lessons look shallow or invalid</td><td>A small local model may not satisfy the full lesson-generation contract (bespoke interactives, synced visuals, hidden tests). Try a more capable model, or use the local model only for feedback/quiz retries and author lessons via <a href="run-openclaw.html">OpenClaw</a>.</td></tr>
+</table>
+
+<div class="note"><p><strong>What runs locally today:</strong> instant learner-facing feedback and adaptive quiz
+rephrasing/retries call your local OpenAI-compatible endpoint, and lesson generation is enqueued through the
+<code>local-queue</code> adapter. Full end-to-end lesson <em>authoring</em> from a single local model is best-effort and
+depends on the model's capability — the same single-model tradeoff as the hosted API-key path. For the richest,
+multi-step lessons, use a capable model or an agentic runtime.</p></div>
+
+<h2>Privacy &amp; performance tradeoffs</h2>
+<ul>
+  <li><strong>Privacy:</strong> with a local endpoint, prompts and learning content go only to <code>127.0.0.1</code>.
+  No cloud provider, no API key, no per-token billing. This is the reason to choose this path over the hosted key.</li>
+  <li><strong>Performance:</strong> latency and lesson quality track your hardware and model. Small quantized models are
+  fast but produce thinner lessons; larger models are richer but slower and need more memory. The ~8&nbsp;s quiz-retry
+  timeout means very slow setups will fall back to deterministic behavior more often.</li>
+  <li><strong>Portability:</strong> switching between local and hosted is only a change of base URL and model — no code
+  changes, because every runtime speaks the same OpenAI-compatible contract.</li>
+</ul>
+
+<h2>How it connects to lesson generation</h2>
+<p>Your local server is just an OpenAI-compatible backend for the same feedback and generation code paths described in
+<a href="configuration.html">Configuration</a> and <a href="architecture.html">Architecture</a>. Swapping a hosted
+provider for your own model is a matter of changing the base URL and model — the rest of Open Avocado is unchanged.</p>
+"""
+
+
 # ── Runtime: Gemmaclaw ───────────────────────────────────────────────────────
 RUN_GEMMACLAW = _rt_header(
     "🦎", "Run with Gemmaclaw (local model)",
@@ -328,21 +455,19 @@ RUN_GEMMACLAW = _rt_header(
 
 <h2>Configuration</h2>
 <p>Open Avocado talks to a local model through its <strong>OpenAI-compatible endpoint</strong> settings. Point the
-feedback provider and the rephrase/generation endpoint at your gateway:</p>
-<pre><code># Instant learner-facing feedback (grading, hints, code feedback) via a local model:
-export AVOCADOCORE_FEEDBACK_PROVIDER=local
-export AVOCADOCORE_FEEDBACK_BASE_URL=http://127.0.0.1:8080/v1
-export AVOCADOCORE_FEEDBACK_MODEL=your-local-model
-
-# Question rephrasing / lightweight generation endpoint (OpenAI-compatible):
-export AVOCADOCORE_ACP_ENDPOINT=http://127.0.0.1:8080/v1/chat/completions
+rephrase/generation endpoint at your gateway (set the base URL; the app appends <code>/chat/completions</code>):</p>
+<pre><code># OpenAI-compatible base URL of your local gateway (NOT including /chat/completions):
+export AVOCADOCORE_ACP_ENDPOINT=http://127.0.0.1:8080/v1
 export AVOCADOCORE_ACP_MODEL=your-local-model
 # export AVOCADOCORE_ACP_TOKEN=...   # only if your gateway requires a bearer token
 
+# Enqueue lesson generation locally instead of the no-op default:
 export AVOCADOCORE_COMPLETION_ADAPTER=local-queue
 </code></pre>
 <p>Replace the host, port, and model with your gateway's values. Nothing here assumes any particular machine — a
-gateway on <code>127.0.0.1</code> is the common case for a single-workstation setup.</p>
+gateway on <code>127.0.0.1</code> is the common case for a single-workstation setup. This is the same mechanism as
+<a href="run-local-llm.html">Run with your own local LLM</a>, which covers llama.cpp, Ollama, vLLM, and LM Studio
+generically.</p>
 
 <div class="note"><p><strong>Status:</strong> The instant-feedback and question-rephrase paths run against a local
 OpenAI-compatible endpoint today. Full end-to-end <em>lesson authoring</em> from a single local model is best-effort:
@@ -545,8 +670,9 @@ curl -s  http://localhost:3000/api/health | head -c 300</code></pre>
 <h2 id="runtimes">Choose a lesson-generation runtime</h2>
 <p>The app runs the same regardless of how lessons are produced. Pick one:</p>
 <div class="card-grid">
-  <a class="card" href="run-api-key.html"><div class="ico">🔑</div><h3>Direct API key <span class="badge badge-ok">ready</span></h3><p>Simplest standalone path — bring one LLM key.</p></a>
-  <a class="card" href="run-gemmaclaw.html"><div class="ico">🦎</div><h3>Gemmaclaw <span class="badge badge-partial">partial</span></h3><p>Local, OpenAI-compatible model gateway.</p></a>
+  <a class="card" href="run-api-key.html"><div class="ico">🔑</div><h3>Direct API key <span class="badge badge-ok">ready</span></h3><p>Fastest start — bring one hosted LLM key.</p></a>
+  <a class="card" href="run-local-llm.html"><div class="ico">🖥️</div><h3>Your own local LLM <span class="badge badge-ok">ready</span></h3><p>Privacy/offline — any OpenAI-compatible local server (llama.cpp, Ollama, vLLM, LM Studio).</p></a>
+  <a class="card" href="run-gemmaclaw.html"><div class="ico">🦎</div><h3>Gemmaclaw <span class="badge badge-partial">partial</span></h3><p>A specific local-model gateway (Gemma) example.</p></a>
   <a class="card" href="run-openclaw.html"><div class="ico">🤖</div><h3>OpenClaw <span class="badge badge-ok">ready</span></h3><p>External agent/task runner for full-quality lessons.</p></a>
   <a class="card" href="run-hermes.html"><div class="ico">📜</div><h3>Hermes <span class="badge badge-planned">planned</span></h3><p>Local Hermes agent via the command adapter.</p></a>
 </div>
@@ -724,8 +850,8 @@ bootstrap credentials.</p>
 <table>
 <tr><th>Variable</th><th>Purpose</th></tr>
 <tr><td><code>AVOCADOCORE_DEFAULT_PROVIDER</code></td><td>Default model provider (e.g. <code>openai</code>, <code>google-ai-studio</code>).</td></tr>
-<tr><td><code>AVOCADOCORE_FEEDBACK_PROVIDER</code> / <code>_BASE_URL</code> / <code>_MODEL</code></td><td>Provider for instant learner feedback (grading, hints, code feedback) — point at a local OpenAI-compatible model for a fully local run.</td></tr>
-<tr><td><code>AVOCADOCORE_ACP_ENDPOINT</code> / <code>_MODEL</code> / <code>_TOKEN</code></td><td>OpenAI-compatible endpoint for question rephrasing and lightweight generation.</td></tr>
+<tr><td><code>AVOCADOCORE_ACP_ENDPOINT</code> / <code>_MODEL</code> / <code>_TOKEN</code></td><td>OpenAI-compatible base URL (the app appends <code>/chat/completions</code>), model, and optional bearer token for question rephrasing and instant feedback. Point these at a local server for a fully local run — see <a href="run-local-llm.html">Run with your own local LLM</a>.</td></tr>
+<tr><td><code>AVOCADOCORE_COMPLETION_ADAPTER</code></td><td>Selects the lesson-generation completion adapter: <code>noop</code> (default) or <code>local-queue</code> (enqueue generation in-process for the direct-key and local-model runtimes).</td></tr>
 <tr><td><code>OPENAI_API_KEY</code></td><td>Enables OpenAI TTS for narration; without it, an offline <code>espeak-ng</code> + <code>ffmpeg</code> voice is used.</td></tr>
 </table>
 <p>A copyable <code>.env.example</code> ships in the repository. Copy it to <code>.env.local</code> (gitignored) and
@@ -880,6 +1006,10 @@ PAGE_BODIES = {
     "run-api-key.html": ("quickstart.html", "Run with a direct API key — Open Avocado",
         "The simplest standalone runtime: bring one OpenAI or Google AI Studio key.",
         RUN_API_KEY),
+    "run-local-llm.html": ("quickstart.html", "Run with your own local LLM — Open Avocado",
+        "Privacy-first self-hosted runtime: point Open Avocado at your own OpenAI-compatible local model "
+        "(llama.cpp, Ollama, vLLM, LM Studio). No cloud key, data stays on your machine.",
+        RUN_LOCAL_LLM),
     "run-gemmaclaw.html": ("quickstart.html", "Run with Gemmaclaw (local model) — Open Avocado",
         "Run Open Avocado against a local, OpenAI-compatible Gemma model gateway.",
         RUN_GEMMACLAW),
