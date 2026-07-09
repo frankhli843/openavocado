@@ -1,0 +1,74 @@
+{
+  "lesson_id": 11,
+  "activity_id": 67,
+  "reviewed_at": "2026-07-09T04:15:00Z",
+  "iterations": 2,
+  "frames_reviewed": 9,
+  "quality": "ql",
+  "notes": "L11 Part 1 (act 67) 'Why Fingerpicking: The Two Dimensions of Guitar Sound', 319.44s, 3 cues. Uses guitar.py (StringSet, strum_column, pluck, time_axis). READ start/mid/end each cue; accumulate+hold, mid==end. 1 smoke fix (Cue01 STRUMMING/FINGERPICKING subtitles touched headline -> lowered to y=2.4); -ql clean.",
+  "frames": [
+    {
+      "cue": 0,
+      "kind": "start",
+      "path": "lesson_11/67/cue00_start.png",
+      "verdict": "pass",
+      "notes": "[start reveal] Am chord on 6-string set; strum_column (vertical, strings 5/4/3/2/1 at one x) 'strum -> every note at once' vs unfold sequence spread right 'or unfold: one note at a time'; 'same chord · same pitches · different texture'. String 6 muted in Am (excluded). In-frame."
+    },
+    {
+      "cue": 0,
+      "kind": "mid",
+      "path": "lesson_11/67/cue00_mid.png",
+      "verdict": "pass",
+      "notes": "[mid, full] Am chord on 6-string set; strum_column (vertical, strings 5/4/3/2/1 at one x) 'strum -> every note at once' vs unfold sequence spread right 'or unfold: one note at a time'; 'same chord · same pitches · different texture'. String 6 muted in Am (excluded). In-frame."
+    },
+    {
+      "cue": 0,
+      "kind": "end",
+      "path": "lesson_11/67/cue00_end.png",
+      "verdict": "pass",
+      "notes": "[end, held] Am chord on 6-string set; strum_column (vertical, strings 5/4/3/2/1 at one x) 'strum -> every note at once' vs unfold sequence spread right 'or unfold: one note at a time'; 'same chord · same pitches · different texture'. String 6 muted in Am (excluded). In-frame."
+    },
+    {
+      "cue": 1,
+      "kind": "start",
+      "path": "lesson_11/67/cue01_start.png",
+      "verdict": "pass",
+      "notes": "[start reveal] texture schematic: LEFT STRUMMING vertical column of 5 dots + 'vertical · all notes at one moment'; RIGHT FINGERPICKING 5 dots spread along a time-> arrow + 'horizontal · spread across time'; 'same pitches, different character'. Subtitles clear of headline after fix."
+    },
+    {
+      "cue": 1,
+      "kind": "mid",
+      "path": "lesson_11/67/cue01_mid.png",
+      "verdict": "pass",
+      "notes": "[mid, full] texture schematic: LEFT STRUMMING vertical column of 5 dots + 'vertical · all notes at one moment'; RIGHT FINGERPICKING 5 dots spread along a time-> arrow + 'horizontal · spread across time'; 'same pitches, different character'. Subtitles clear of headline after fix."
+    },
+    {
+      "cue": 1,
+      "kind": "end",
+      "path": "lesson_11/67/cue01_end.png",
+      "verdict": "pass",
+      "notes": "[end, held] texture schematic: LEFT STRUMMING vertical column of 5 dots + 'vertical · all notes at one moment'; RIGHT FINGERPICKING 5 dots spread along a time-> arrow + 'horizontal · spread across time'; 'same pitches, different character'. Subtitles clear of headline after fix."
+    },
+    {
+      "cue": 2,
+      "kind": "start",
+      "path": "lesson_11/67/cue02_start.png",
+      "verdict": "pass",
+      "notes": "[start reveal] 6-string set; thumb bass line (amber, 4 steady p dots on string 5) under brace 'thumb: bass line'; fingers melody (i/m/a on treble 3/2/1) under brace 'fingers: melody'; 'independent — a pick can only hit everything at once'."
+    },
+    {
+      "cue": 2,
+      "kind": "mid",
+      "path": "lesson_11/67/cue02_mid.png",
+      "verdict": "pass",
+      "notes": "[mid, full] 6-string set; thumb bass line (amber, 4 steady p dots on string 5) under brace 'thumb: bass line'; fingers melody (i/m/a on treble 3/2/1) under brace 'fingers: melody'; 'independent — a pick can only hit everything at once'."
+    },
+    {
+      "cue": 2,
+      "kind": "end",
+      "path": "lesson_11/67/cue02_end.png",
+      "verdict": "pass",
+      "notes": "[end, held] 6-string set; thumb bass line (amber, 4 steady p dots on string 5) under brace 'thumb: bass line'; fingers melody (i/m/a on treble 3/2/1) under brace 'fingers: melody'; 'independent — a pick can only hit everything at once'."
+    }
+  ]
+}

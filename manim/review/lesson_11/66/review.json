@@ -1,0 +1,158 @@
+{
+  "lesson_id": 11,
+  "activity_id": 66,
+  "reviewed_at": "2026-07-09T04:15:00Z",
+  "iterations": 2,
+  "frames_reviewed": 21,
+  "quality": "ql",
+  "notes": "L11 Orientation (act 66) 'Fingerpicking Fundamentals: Why Your Hands Should Do Different Jobs', 1020.19s, 7 cues. Uses guitar.py (StringSet, region_brace, pima_row, pluck). READ start/mid/end each cue; scenes accumulate + hold so mid==end (no transient/fading labels). 1 layout fix at smoke stage (Cue01 pima-row overlapping role text -> stacked roles below row); -ql pass clean. No formulas (rhythmic topic).",
+  "frames": [
+    {
+      "cue": 0,
+      "kind": "start",
+      "path": "lesson_11/66/cue00_start.png",
+      "verdict": "pass",
+      "notes": "[start reveal] bass strings 6/5/4 tinted amber under brace 'thumb: bass pulse' vs treble 3/2/1 blue brace 'fingers: melody'; 'stop competing for the same job'. Strings thicker toward bass. Legible, in-frame."
+    },
+    {
+      "cue": 0,
+      "kind": "mid",
+      "path": "lesson_11/66/cue00_mid.png",
+      "verdict": "pass",
+      "notes": "[mid, full] bass strings 6/5/4 tinted amber under brace 'thumb: bass pulse' vs treble 3/2/1 blue brace 'fingers: melody'; 'stop competing for the same job'. Strings thicker toward bass. Legible, in-frame."
+    },
+    {
+      "cue": 0,
+      "kind": "end",
+      "path": "lesson_11/66/cue00_end.png",
+      "verdict": "pass",
+      "notes": "[end, held] bass strings 6/5/4 tinted amber under brace 'thumb: bass pulse' vs treble 3/2/1 blue brace 'fingers: melody'; 'stop competing for the same job'. Strings thicker toward bass. Legible, in-frame."
+    },
+    {
+      "cue": 1,
+      "kind": "start",
+      "path": "lesson_11/66/cue01_start.png",
+      "verdict": "pass",
+      "notes": "[start reveal] object text 'a repeating picking pattern, split between bass and melody strings' + 'a small band in one hand'; PIMA chips p(amber)/i(blue)/m(green)/a(violet); roles 'p -> bass player: keeps the floor steady', 'i·m·a -> upper voices: rhythm & color'. No overlap after fix."
+    },
+    {
+      "cue": 1,
+      "kind": "mid",
+      "path": "lesson_11/66/cue01_mid.png",
+      "verdict": "pass",
+      "notes": "[mid, full] object text 'a repeating picking pattern, split between bass and melody strings' + 'a small band in one hand'; PIMA chips p(amber)/i(blue)/m(green)/a(violet); roles 'p -> bass player: keeps the floor steady', 'i·m·a -> upper voices: rhythm & color'. No overlap after fix."
+    },
+    {
+      "cue": 1,
+      "kind": "end",
+      "path": "lesson_11/66/cue01_end.png",
+      "verdict": "pass",
+      "notes": "[end, held] object text 'a repeating picking pattern, split between bass and melody strings' + 'a small band in one hand'; PIMA chips p(amber)/i(blue)/m(green)/a(violet); roles 'p -> bass player: keeps the floor steady', 'i·m·a -> upper voices: rhythm & color'. No overlap after fix."
+    },
+    {
+      "cue": 2,
+      "kind": "start",
+      "path": "lesson_11/66/cue02_start.png",
+      "verdict": "pass",
+      "notes": "[start reveal] 6-string set (bass amber/treble blue); thumb alternates bass 5<->4 (amber p dots) while i(blue,str3)/m(green,str2) pluck between; letters above dots; legend. All plucks in-frame."
+    },
+    {
+      "cue": 2,
+      "kind": "mid",
+      "path": "lesson_11/66/cue02_mid.png",
+      "verdict": "pass",
+      "notes": "[mid, full] 6-string set (bass amber/treble blue); thumb alternates bass 5<->4 (amber p dots) while i(blue,str3)/m(green,str2) pluck between; letters above dots; legend. All plucks in-frame."
+    },
+    {
+      "cue": 2,
+      "kind": "end",
+      "path": "lesson_11/66/cue02_end.png",
+      "verdict": "pass",
+      "notes": "[end, held] 6-string set (bass amber/treble blue); thumb alternates bass 5<->4 (amber p dots) while i(blue,str3)/m(green,str2) pluck between; letters above dots; legend. All plucks in-frame."
+    },
+    {
+      "cue": 3,
+      "kind": "start",
+      "path": "lesson_11/66/cue03_start.png",
+      "verdict": "pass",
+      "notes": "[start reveal] 7-step build list (anchor / assign thumb bass / assign i·m·a treble / practice thumb pulse alone / add ONE finger note / add rest slowly / keep fretting simple); step 4 in amber SurroundingRectangle. Legible."
+    },
+    {
+      "cue": 3,
+      "kind": "mid",
+      "path": "lesson_11/66/cue03_mid.png",
+      "verdict": "pass",
+      "notes": "[mid, full] 7-step build list (anchor / assign thumb bass / assign i·m·a treble / practice thumb pulse alone / add ONE finger note / add rest slowly / keep fretting simple); step 4 in amber SurroundingRectangle. Legible."
+    },
+    {
+      "cue": 3,
+      "kind": "end",
+      "path": "lesson_11/66/cue03_end.png",
+      "verdict": "pass",
+      "notes": "[end, held] 7-step build list (anchor / assign thumb bass / assign i·m·a treble / practice thumb pulse alone / add ONE finger note / add rest slowly / keep fretting simple); step 4 in amber SurroundingRectangle. Legible."
+    },
+    {
+      "cue": 4,
+      "kind": "start",
+      "path": "lesson_11/66/cue04_start.png",
+      "verdict": "pass",
+      "notes": "[start reveal] rhythm ruler 1 & 2 & 3 & 4 & ; p (amber) on the numbered beats, i/m on the & offbeats, letters tagged above; 'test: the thumb pulse stays even when a finger note is added or removed'. In-frame."
+    },
+    {
+      "cue": 4,
+      "kind": "mid",
+      "path": "lesson_11/66/cue04_mid.png",
+      "verdict": "pass",
+      "notes": "[mid, full] rhythm ruler 1 & 2 & 3 & 4 & ; p (amber) on the numbered beats, i/m on the & offbeats, letters tagged above; 'test: the thumb pulse stays even when a finger note is added or removed'. In-frame."
+    },
+    {
+      "cue": 4,
+      "kind": "end",
+      "path": "lesson_11/66/cue04_end.png",
+      "verdict": "pass",
+      "notes": "[end, held] rhythm ruler 1 & 2 & 3 & 4 & ; p (amber) on the numbered beats, i/m on the & offbeats, letters tagged above; 'test: the thumb pulse stays even when a finger note is added or removed'. In-frame."
+    },
+    {
+      "cue": 5,
+      "kind": "start",
+      "path": "lesson_11/66/cue05_start.png",
+      "verdict": "pass",
+      "notes": "[start reveal] 'one clump' panel (rose, 'p i m a' glued, ✗ fingers glued together) vs 'independent roles' (4 separate PIMA chips in own colors, ✓ each digit a predictable job). Clean before/after contrast."
+    },
+    {
+      "cue": 5,
+      "kind": "mid",
+      "path": "lesson_11/66/cue05_mid.png",
+      "verdict": "pass",
+      "notes": "[mid, full] 'one clump' panel (rose, 'p i m a' glued, ✗ fingers glued together) vs 'independent roles' (4 separate PIMA chips in own colors, ✓ each digit a predictable job). Clean before/after contrast."
+    },
+    {
+      "cue": 5,
+      "kind": "end",
+      "path": "lesson_11/66/cue05_end.png",
+      "verdict": "pass",
+      "notes": "[end, held] 'one clump' panel (rose, 'p i m a' glued, ✗ fingers glued together) vs 'independent roles' (4 separate PIMA chips in own colors, ✓ each digit a predictable job). Clean before/after contrast."
+    },
+    {
+      "cue": 6,
+      "kind": "start",
+      "path": "lesson_11/66/cue06_start.png",
+      "verdict": "pass",
+      "notes": "[start reveal] division of labor: amber panel 'steady bass role / thumb, low strings, the pulse' + blue panel 'flexible upper voices / i·m·a, treble, melody & color', 'not random plucking — a division of labor you can hear'."
+    },
+    {
+      "cue": 6,
+      "kind": "mid",
+      "path": "lesson_11/66/cue06_mid.png",
+      "verdict": "pass",
+      "notes": "[mid, full] division of labor: amber panel 'steady bass role / thumb, low strings, the pulse' + blue panel 'flexible upper voices / i·m·a, treble, melody & color', 'not random plucking — a division of labor you can hear'."
+    },
+    {
+      "cue": 6,
+      "kind": "end",
+      "path": "lesson_11/66/cue06_end.png",
+      "verdict": "pass",
+      "notes": "[end, held] division of labor: amber panel 'steady bass role / thumb, low strings, the pulse' + blue panel 'flexible upper voices / i·m·a, treble, melody & color', 'not random plucking — a division of labor you can hear'."
+    }
+  ]
+}

@@ -1,0 +1,108 @@
+{
+  "lesson_id": 11,
+  "activity_id": 66,
+  "activity_type": "audio",
+  "title": "Lesson Orientation",
+  "audio": {
+    "file_path": "runtime_artifacts/audio/lesson_11_audio.mp3",
+    "duration_sec": 1020.19
+  },
+  "audio_source": "artifact",
+  "cue_source": "orientation_visual.cues",
+  "cues": [
+    {
+      "index": 0,
+      "start": 0,
+      "end": 146,
+      "duration": 146,
+      "label": "Why separate the jobs",
+      "headline": "Thumb and fingers stop competing",
+      "narration": "Fingerpicking splits the thumb and finger jobs so they stop competing: the thumb keeps a steady bass pulse while the fingers place melody and chord tones above it.",
+      "active_elements": [
+        "thumb: bass pulse",
+        "fingers: melody"
+      ]
+    },
+    {
+      "index": 1,
+      "start": 146,
+      "end": 291,
+      "duration": 145,
+      "label": "Follow one object",
+      "headline": "A repeating pattern split bass vs melody",
+      "narration": "Follow one object: a repeating picking pattern split between bass and melody strings. Think of a small band in one hand: the thumb is the bass player, the index, middle and ring fingers are the upper voices.",
+      "active_elements": [
+        "bass strings",
+        "melody strings"
+      ]
+    },
+    {
+      "index": 2,
+      "start": 291,
+      "end": 437,
+      "duration": 146,
+      "label": "A tiny concrete example",
+      "headline": "Thumb alternates, fingers fill the gaps",
+      "narration": "On a simple pattern the thumb alternates between two bass strings while the index and middle fingers pluck the higher strings in the gaps between thumb notes.",
+      "active_elements": [
+        "thumb alternates",
+        "fingers between"
+      ]
+    },
+    {
+      "index": 3,
+      "start": 437,
+      "end": 583,
+      "duration": 146,
+      "label": "The mechanism, step by step",
+      "headline": "Anchor, assign, then grow the pattern",
+      "narration": "Anchor the picking hand relaxed, assign the thumb to bass strings and the fingers to treble strings, then grow the pattern: thumb pulse alone, add one finger note, add the rest slowly.",
+      "active_elements": [
+        "anchor + assign",
+        "grow slowly"
+      ]
+    },
+    {
+      "index": 4,
+      "start": 583,
+      "end": 729,
+      "duration": 146,
+      "label": "Read it as rhythm",
+      "headline": "Count beats, not symbols",
+      "narration": "Read the pattern as rhythm, not algebra: count where the thumb lands and where the finger notes fit between those beats. The test is whether the thumb pulse stays even when a finger note is added or removed.",
+      "active_elements": [
+        "thumb beats",
+        "finger offbeats"
+      ]
+    },
+    {
+      "index": 5,
+      "start": 729,
+      "end": 874,
+      "duration": 145,
+      "label": "The common mistake",
+      "headline": "Do not move the fingers as one clump",
+      "narration": "The common mistake is moving every finger as one clump. Independence comes from giving each digit a predictable role, so the thumb's motion never disturbs the fingers.",
+      "active_elements": [
+        "one clump: wrong",
+        "independent roles"
+      ]
+    },
+    {
+      "index": 6,
+      "start": 874,
+      "end": 1020,
+      "duration": 146,
+      "label": "Division of labor",
+      "headline": "A steady bass, flexible upper voices",
+      "narration": "Fingerpicking is not random plucking: it is a division of labor between a steady bass role and flexible upper voices. That is the model to carry into the practice that follows.",
+      "active_elements": [
+        "steady bass",
+        "flexible voices"
+      ]
+    }
+  ],
+  "cue_span_sec": 1020,
+  "formulas": [],
+  "exported_at": "2026-07-09T03:57:45.588Z"
+}

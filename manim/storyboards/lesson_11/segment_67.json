@@ -1,0 +1,56 @@
+{
+  "lesson_id": 11,
+  "activity_id": 67,
+  "activity_type": "lesson_part",
+  "title": "Why Fingerpicking: The Two Dimensions of Guitar Sound",
+  "audio": {
+    "file_path": "runtime_artifacts/audio/lesson_11_activity_67_audio.mp3",
+    "duration_sec": 319.44
+  },
+  "audio_source": "artifact",
+  "cue_source": "audio.synced_visual.cues",
+  "cues": [
+    {
+      "index": 0,
+      "start": 0,
+      "end": 106,
+      "duration": 106,
+      "label": "One chord, two textures",
+      "headline": "Strum it, then unfold it in time",
+      "narration": "Hold an A minor chord. Strum it and every string rings at once, a single wall of sound. Pluck the strings one at a time and the same chord unfolds, each note getting its own moment in time.",
+      "active_elements": [
+        "strum: all at once",
+        "pluck: one at a time"
+      ]
+    },
+    {
+      "index": 1,
+      "start": 106,
+      "end": 213,
+      "duration": 107,
+      "label": "Vertical vs horizontal",
+      "headline": "Texture is how notes sit in time",
+      "narration": "Texture is how notes are arranged in time. Strumming is vertical: all notes at the same moment. Fingerpicking is horizontal: the same pitches spread across time, giving a completely different character.",
+      "active_elements": [
+        "vertical: simultaneous",
+        "horizontal: sequential"
+      ]
+    },
+    {
+      "index": 2,
+      "start": 213,
+      "end": 319,
+      "duration": 106,
+      "label": "Two instruments at once",
+      "headline": "Bass line under an independent melody",
+      "narration": "Horizontal texture lets the thumb hold a bass line while the fingers carry the melody, independently. That is the guitar's famous two-instruments-at-once effect, and a single pick cannot produce it.",
+      "active_elements": [
+        "thumb: bass line",
+        "fingers: melody"
+      ]
+    }
+  ],
+  "cue_span_sec": 319,
+  "formulas": [],
+  "exported_at": "2026-07-09T03:57:45.589Z"
+}

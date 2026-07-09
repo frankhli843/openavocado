@@ -1,0 +1,56 @@
+{
+  "lesson_id": 11,
+  "activity_id": 68,
+  "activity_type": "lesson_part",
+  "title": "Meet PIMA: Your Right Hand's Job Assignment",
+  "audio": {
+    "file_path": "runtime_artifacts/audio/lesson_11_activity_68_audio.mp3",
+    "duration_sec": 330.53
+  },
+  "audio_source": "artifact",
+  "cue_source": "audio.synced_visual.cues",
+  "cues": [
+    {
+      "index": 0,
+      "start": 0,
+      "end": 110,
+      "duration": 110,
+      "label": "PIMA: Spanish names",
+      "headline": "Four letters name the picking hand",
+      "narration": "PIMA names each right-hand picking finger from Spanish: p is pulgar, the thumb; i is índice, the index; m is medio, the middle; a is anular, the ring. Four letters, the alphabet of fingerpicking.",
+      "active_elements": [
+        "p pulgar",
+        "i m a"
+      ]
+    },
+    {
+      "index": 1,
+      "start": 110,
+      "end": 220,
+      "duration": 110,
+      "label": "Each finger owns a region",
+      "headline": "One finger, one string region",
+      "narration": "Each finger is assigned to a string region: p covers the bass strings six, five and four; i plays string three; m plays string two; a plays string one.",
+      "active_elements": [
+        "p: 6/5/4",
+        "i:3 m:2 a:1"
+      ]
+    },
+    {
+      "index": 2,
+      "start": 220,
+      "end": 331,
+      "duration": 111,
+      "label": "Why this split works",
+      "headline": "Strong thumb below, light fingers above",
+      "narration": "The thumb is the strongest digit and reaches the wound bass strings without disturbing the others; the three lighter fingers sit naturally above the treble strings. The thumb is the foundation, the fingers carry the melody.",
+      "active_elements": [
+        "thumb: foundation",
+        "fingers: treble"
+      ]
+    }
+  ],
+  "cue_span_sec": 331,
+  "formulas": [],
+  "exported_at": "2026-07-09T03:57:45.589Z"
+}

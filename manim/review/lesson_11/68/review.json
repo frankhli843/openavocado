@@ -1,0 +1,74 @@
+{
+  "lesson_id": 11,
+  "activity_id": 68,
+  "reviewed_at": "2026-07-09T04:15:00Z",
+  "iterations": 2,
+  "frames_reviewed": 9,
+  "quality": "ql",
+  "notes": "L11 Part 2 (act 68) 'Meet PIMA: Your Right Hand's Job Assignment', 330.53s, 3 cues. Uses guitar.py (StringSet, pima_row, finger_legend, assign_arrow, region_brace). READ start/mid/end each cue; accumulate+hold, mid==end. 1 smoke fix (Cue01 assign arrowheads overlapped string labels + cramped chips -> assign_arrow lands on string, gap 0.72, smaller chips); -ql clean. cue02 end frame re-extracted via ffmpeg (render-script end-grab missed the segment's last chunk).",
+  "frames": [
+    {
+      "cue": 0,
+      "kind": "start",
+      "path": "lesson_11/68/cue00_start.png",
+      "verdict": "pass",
+      "notes": "[start reveal] PIMA chips p(amber)/i(blue)/m(green)/a(violet) + four legends 'p = pulgar (thumb)', 'i = índice (index)', 'm = medio (middle)', 'a = anular (ring)'; 'four letters — the alphabet of fingerpicking'. Spanish names correct, legible."
+    },
+    {
+      "cue": 0,
+      "kind": "mid",
+      "path": "lesson_11/68/cue00_mid.png",
+      "verdict": "pass",
+      "notes": "[mid, full] PIMA chips p(amber)/i(blue)/m(green)/a(violet) + four legends 'p = pulgar (thumb)', 'i = índice (index)', 'm = medio (middle)', 'a = anular (ring)'; 'four letters — the alphabet of fingerpicking'. Spanish names correct, legible."
+    },
+    {
+      "cue": 0,
+      "kind": "end",
+      "path": "lesson_11/68/cue00_end.png",
+      "verdict": "pass",
+      "notes": "[end, held] PIMA chips p(amber)/i(blue)/m(green)/a(violet) + four legends 'p = pulgar (thumb)', 'i = índice (index)', 'm = medio (middle)', 'a = anular (ring)'; 'four letters — the alphabet of fingerpicking'. Spanish names correct, legible."
+    },
+    {
+      "cue": 1,
+      "kind": "start",
+      "path": "lesson_11/68/cue01_start.png",
+      "verdict": "pass",
+      "notes": "[start reveal] 6-string set with PIMA chips at left, assign arrows a->string1, m->string2, i->string3, p->bass region (brace over 6/5/4); 'p covers the wound bass strings; i·m·a take the treble'. Arrowheads land on strings clear of labels after fix."
+    },
+    {
+      "cue": 1,
+      "kind": "mid",
+      "path": "lesson_11/68/cue01_mid.png",
+      "verdict": "pass",
+      "notes": "[mid, full] 6-string set with PIMA chips at left, assign arrows a->string1, m->string2, i->string3, p->bass region (brace over 6/5/4); 'p covers the wound bass strings; i·m·a take the treble'. Arrowheads land on strings clear of labels after fix."
+    },
+    {
+      "cue": 1,
+      "kind": "end",
+      "path": "lesson_11/68/cue01_end.png",
+      "verdict": "pass",
+      "notes": "[end, held] 6-string set with PIMA chips at left, assign arrows a->string1, m->string2, i->string3, p->bass region (brace over 6/5/4); 'p covers the wound bass strings; i·m·a take the treble'. Arrowheads land on strings clear of labels after fix."
+    },
+    {
+      "cue": 2,
+      "kind": "start",
+      "path": "lesson_11/68/cue02_start.png",
+      "verdict": "pass",
+      "notes": "[start reveal] bass region amber brace 'thumb: the foundation' ('strongest digit · reaches the wound bass strings') vs treble blue brace 'fingers: the melody' ('three light fingers sit naturally above the treble'); 'the assignment is not arbitrary — it fits the hand'."
+    },
+    {
+      "cue": 2,
+      "kind": "mid",
+      "path": "lesson_11/68/cue02_mid.png",
+      "verdict": "pass",
+      "notes": "[mid, full] bass region amber brace 'thumb: the foundation' ('strongest digit · reaches the wound bass strings') vs treble blue brace 'fingers: the melody' ('three light fingers sit naturally above the treble'); 'the assignment is not arbitrary — it fits the hand'."
+    },
+    {
+      "cue": 2,
+      "kind": "end",
+      "path": "lesson_11/68/cue02_end.png",
+      "verdict": "pass",
+      "notes": "[end, held] bass region amber brace 'thumb: the foundation' ('strongest digit · reaches the wound bass strings') vs treble blue brace 'fingers: the melody' ('three light fingers sit naturally above the treble'); 'the assignment is not arbitrary — it fits the hand'."
+    }
+  ]
+}

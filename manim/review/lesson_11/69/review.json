@@ -1,0 +1,74 @@
+{
+  "lesson_id": 11,
+  "activity_id": 69,
+  "reviewed_at": "2026-07-09T04:15:00Z",
+  "iterations": 2,
+  "frames_reviewed": 9,
+  "quality": "ql",
+  "notes": "L11 Part 3 (act 69) 'Your First Arpeggio: The p-i-m-a Pattern', 337.13s, 3 cues. Uses guitar.py (StringSet, pluck, time_axis). READ start/mid/end each cue; accumulate+hold, mid==end. 1 smoke fix (Cue01 'A root' label struck through by string line -> shifted up above the line); -ql clean.",
+  "frames": [
+    {
+      "cue": 0,
+      "kind": "start",
+      "path": "lesson_11/69/cue00_start.png",
+      "verdict": "pass",
+      "notes": "[start reveal] stacked chord (4 dots at one x, 'a chord / all at once') -> arrow -> unfolded sequence (4 colored dots along a time-> axis, 'unfolded, one at a time'); 'arpeggio — from Italian arpeggiare, to play as a harp'. Clear all-at-once vs sequential contrast."
+    },
+    {
+      "cue": 0,
+      "kind": "mid",
+      "path": "lesson_11/69/cue00_mid.png",
+      "verdict": "pass",
+      "notes": "[mid, full] stacked chord (4 dots at one x, 'a chord / all at once') -> arrow -> unfolded sequence (4 colored dots along a time-> axis, 'unfolded, one at a time'); 'arpeggio — from Italian arpeggiare, to play as a harp'. Clear all-at-once vs sequential contrast."
+    },
+    {
+      "cue": 0,
+      "kind": "end",
+      "path": "lesson_11/69/cue00_end.png",
+      "verdict": "pass",
+      "notes": "[end, held] stacked chord (4 dots at one x, 'a chord / all at once') -> arrow -> unfolded sequence (4 colored dots along a time-> axis, 'unfolded, one at a time'); 'arpeggio — from Italian arpeggiare, to play as a harp'. Clear all-at-once vs sequential contrast."
+    },
+    {
+      "cue": 1,
+      "kind": "start",
+      "path": "lesson_11/69/cue01_start.png",
+      "verdict": "pass",
+      "notes": "[start reveal] Am chord held on 6-string set; p on string5 (A root, numbered 1), i on string3 (2), m on string2 (3), a on string1 (4), spread left->right in sequence; 'p -> i -> m -> a', 'four notes · one cycle · repeat'. Root correct (A = string 5 in Am). 'A root' label above the line after fix."
+    },
+    {
+      "cue": 1,
+      "kind": "mid",
+      "path": "lesson_11/69/cue01_mid.png",
+      "verdict": "pass",
+      "notes": "[mid, full] Am chord held on 6-string set; p on string5 (A root, numbered 1), i on string3 (2), m on string2 (3), a on string1 (4), spread left->right in sequence; 'p -> i -> m -> a', 'four notes · one cycle · repeat'. Root correct (A = string 5 in Am). 'A root' label above the line after fix."
+    },
+    {
+      "cue": 1,
+      "kind": "end",
+      "path": "lesson_11/69/cue01_end.png",
+      "verdict": "pass",
+      "notes": "[end, held] Am chord held on 6-string set; p on string5 (A root, numbered 1), i on string3 (2), m on string2 (3), a on string1 (4), spread left->right in sequence; 'p -> i -> m -> a', 'four notes · one cycle · repeat'. Root correct (A = string 5 in Am). 'A root' label above the line after fix."
+    },
+    {
+      "cue": 2,
+      "kind": "start",
+      "path": "lesson_11/69/cue02_start.png",
+      "verdict": "pass",
+      "notes": "[start reveal] thumb moves (amber filled p dots alternating strings 5/4) under brace 'thumb moves' vs fingers stay home (hollow rings a/m/i at a fixed x on treble 1/2/3) under brace 'fingers stay home'; 'the motions don't interfere — musical, not mechanical'."
+    },
+    {
+      "cue": 2,
+      "kind": "mid",
+      "path": "lesson_11/69/cue02_mid.png",
+      "verdict": "pass",
+      "notes": "[mid, full] thumb moves (amber filled p dots alternating strings 5/4) under brace 'thumb moves' vs fingers stay home (hollow rings a/m/i at a fixed x on treble 1/2/3) under brace 'fingers stay home'; 'the motions don't interfere — musical, not mechanical'."
+    },
+    {
+      "cue": 2,
+      "kind": "end",
+      "path": "lesson_11/69/cue02_end.png",
+      "verdict": "pass",
+      "notes": "[end, held] thumb moves (amber filled p dots alternating strings 5/4) under brace 'thumb moves' vs fingers stay home (hollow rings a/m/i at a fixed x on treble 1/2/3) under brace 'fingers stay home'; 'the motions don't interfere — musical, not mechanical'."
+    }
+  ]
+}

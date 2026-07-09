@@ -1,0 +1,56 @@
+{
+  "lesson_id": 11,
+  "activity_id": 69,
+  "activity_type": "lesson_part",
+  "title": "Your First Arpeggio: The p-i-m-a Pattern",
+  "audio": {
+    "file_path": "runtime_artifacts/audio/lesson_11_activity_69_audio.mp3",
+    "duration_sec": 337.13
+  },
+  "audio_source": "artifact",
+  "cue_source": "audio.synced_visual.cues",
+  "cues": [
+    {
+      "index": 0,
+      "start": 0,
+      "end": 112,
+      "duration": 112,
+      "label": "What an arpeggio is",
+      "headline": "A chord played one note at a time",
+      "narration": "An arpeggio is a chord played in sequence, its notes unfolded one at a time instead of together. The word comes from the Italian arpeggiare, to play as a harp.",
+      "active_elements": [
+        "chord",
+        "unfolded in sequence"
+      ]
+    },
+    {
+      "index": 1,
+      "start": 112,
+      "end": 225,
+      "duration": 113,
+      "label": "The p-i-m-a cycle on Am",
+      "headline": "Thumb root, then i-m-a on 3-2-1",
+      "narration": "Hold A minor. The thumb, p, plucks string five, the A root; then i plucks string three, m plucks string two, and a plucks string one. Four notes, one cycle, then repeat.",
+      "active_elements": [
+        "p: string 5 root",
+        "i:3 m:2 a:1"
+      ]
+    },
+    {
+      "index": 2,
+      "start": 225,
+      "end": 337,
+      "duration": 112,
+      "label": "Keep the thumb independent",
+      "headline": "Bass reaches while fingers stay home",
+      "narration": "While the thumb reaches down for the bass string, i, m and a stay lightly on their treble strings. The motions do not interfere, and that independence is what makes the pattern musical instead of mechanical.",
+      "active_elements": [
+        "thumb independent",
+        "fingers steady"
+      ]
+    }
+  ],
+  "cue_span_sec": 337,
+  "formulas": [],
+  "exported_at": "2026-07-09T03:57:45.589Z"
+}
