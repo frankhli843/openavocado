@@ -7,6 +7,8 @@ private hostnames, or internal task-system details.
 
 REPO = "https://github.com/frankhli843/openavocado"
 PAGES = "https://frankhli843.github.io/openavocado/"
+# Hosted production demo (the live Open Avocado app the "View the demo" CTA opens).
+DEMO = "https://avocadocore.178-105-119-249.nip.io/"
 
 # ── Landing page ─────────────────────────────────────────────────────────────
 HERO_BODY = f"""
@@ -18,7 +20,7 @@ HERO_BODY = f"""
   evidence of what you actually know, then generates the single next lesson — with narration,
   interactive visuals, code, and quizzes — to move you from familiarity to mastery.</p>
   <div class="btn-row">
-    <a class="btn btn-primary" href="#demo">View the demo</a>
+    <a class="btn btn-primary" href="{DEMO}" target="_blank" rel="noopener">View the demo</a>
     <a class="btn btn-secondary" href="quickstart.html">Read the docs</a>
     <a class="btn btn-secondary" href="#run">Run locally</a>
     <a class="btn btn-ghost" href="{REPO}" target="_blank" rel="noopener">View on GitHub</a>
