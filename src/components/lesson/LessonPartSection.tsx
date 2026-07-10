@@ -333,13 +333,11 @@ export function AudioSyncedLessonVisual({
             />
           </div>
         ) : (
-          <div
-            role="alert"
-            className="border-l-2 border-red-400 bg-red-50 px-3 py-3 text-sm leading-6 text-red-800"
-          >
-            Audio-synced visual is missing a DB-backed bespoke artifact slug. Regenerate or backfill this
-            lesson part with an approved visual_artifacts row instead of using built-in panel templates.
-          </div>
+          // Strategy B: no bespoke artifact was authored for this cue. The
+          // authored scene (stepper / pipeline cards / narration above on
+          // desktop, rendered directly on mobile) is the intended, complete
+          // visual — render it cleanly with no "being prepared" note.
+          <CueSceneFallback cue={cue} intended={false} />
         )}
       </div>
 
@@ -450,12 +448,26 @@ function normalizeVisualCues(
 }
 
 /**
- * Rendered inside the audio-synced visual when the cue's bespoke artifact is
- * not yet available (missing / not qa_approved). Shows the authored scene
- * content so the segment reads as a clean, self-contained visual instead of a
- * red error box. Mobile-friendly: no fixed widths, wraps naturally.
+ * Rendered inside the audio-synced visual when the cue has no live bespoke
+ * artifact. Shows the authored scene content so the segment reads as a clean,
+ * self-contained visual instead of a red error box. Mobile-friendly: no fixed
+ * widths, wraps naturally.
+ *
+ * `intended` distinguishes the two reasons an artifact is absent:
+ *   - intended=true (default): a real artifact_slug was authored but the bundle
+ *     is not yet available (missing / building / not qa_approved). We note a
+ *     richer visualization "is being prepared" on desktop.
+ *   - intended=false: no bespoke artifact was ever authored for this cue
+ *     (Strategy B self-contained scene). The authored scene IS the final
+ *     content, so we do not imply anything else is coming.
  */
-export function CueSceneFallback({ cue }: { cue: NormalizedAudioCue }) {
+export function CueSceneFallback({
+  cue,
+  intended = true,
+}: {
+  cue: NormalizedAudioCue;
+  intended?: boolean;
+}) {
   return (
     <>
       {/*
@@ -477,13 +489,16 @@ export function CueSceneFallback({ cue }: { cue: NormalizedAudioCue }) {
       </div>
       {/*
         Desktop: the stepper, pipeline cards, and narration above already show
-        this scene, so avoid duplicating them — just note the richer animated
-        visualization is not yet available.
+        this scene. When a richer artifact was authored but is not yet available,
+        note that it is being prepared; otherwise stay silent — the authored
+        scene above is the intended, complete visual.
       */}
-      <div className="hidden rounded-lg border border-dashed border-gray-200 bg-gray-50/60 px-4 py-3 text-xs leading-5 text-gray-500 sm:block">
-        A richer animated visualization for this segment is being prepared. The steps and
-        narration above summarize this scene in the meantime.
-      </div>
+      {intended && (
+        <div className="hidden rounded-lg border border-dashed border-gray-200 bg-gray-50/60 px-4 py-3 text-xs leading-5 text-gray-500 sm:block">
+          A richer animated visualization for this segment is being prepared. The steps and
+          narration above summarize this scene in the meantime.
+        </div>
+      )}
     </>
   );
 }
