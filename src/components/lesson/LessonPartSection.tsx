@@ -329,6 +329,7 @@ export function AudioSyncedLessonVisual({
               artifactSlug={activeArtifactSlug}
               initialState={artifactState}
               minHeight={360}
+              fallback={<CueSceneFallback cue={cue} />}
             />
           </div>
         ) : (
@@ -446,6 +447,45 @@ function normalizeVisualCues(
       };
     })
     .sort((a, b) => a.start - b.start);
+}
+
+/**
+ * Rendered inside the audio-synced visual when the cue's bespoke artifact is
+ * not yet available (missing / not qa_approved). Shows the authored scene
+ * content so the segment reads as a clean, self-contained visual instead of a
+ * red error box. Mobile-friendly: no fixed widths, wraps naturally.
+ */
+export function CueSceneFallback({ cue }: { cue: NormalizedAudioCue }) {
+  return (
+    <>
+      {/*
+        Mobile: the parent scaffolding (stepper / pipeline cards / narration) is
+        hidden below sm, so render the authored scene content here.
+      */}
+      <div className="w-full min-w-0 max-w-full space-y-3 rounded-lg border border-blue-100 bg-blue-50/40 px-4 py-4 sm:hidden">
+        {cue.headline && (
+          <div className="min-w-0 break-words text-sm font-semibold text-gray-900">{cue.headline}</div>
+        )}
+        {cue.narration && (
+          <p className="min-w-0 break-words text-sm leading-6 text-gray-700">{cue.narration}</p>
+        )}
+        <div className="grid gap-2">
+          <PipelineCard label="Receives" text={cue.receive ?? "prior visual state"} tone="gray" />
+          <PipelineCard label="Current operation" text={cue.transform ?? cue.headline} tone="blue" />
+          <PipelineCard label="Passes forward" text={cue.pass ?? "updated visual state"} tone="green" />
+        </div>
+      </div>
+      {/*
+        Desktop: the stepper, pipeline cards, and narration above already show
+        this scene, so avoid duplicating them — just note the richer animated
+        visualization is not yet available.
+      */}
+      <div className="hidden rounded-lg border border-dashed border-gray-200 bg-gray-50/60 px-4 py-3 text-xs leading-5 text-gray-500 sm:block">
+        A richer animated visualization for this segment is being prepared. The steps and
+        narration above summarize this scene in the meantime.
+      </div>
+    </>
+  );
 }
 
 function PipelineCard({
