@@ -11,9 +11,8 @@
 import type Database from "better-sqlite3";
 import { createHash } from "crypto";
 import fs from "fs";
-import path from "path";
 
-import { activityAudioRelPath, lessonAudioRelPath } from "./runtime-storage";
+import { activityAudioRelPath, lessonAudioRelPath, resolveRuntimeFile } from "./runtime-storage";
 import { synthesizeSpeech, type TtsProvider } from "./tts";
 
 export interface GenerateResult {
@@ -92,7 +91,16 @@ async function generateActivityAudio(
     activity.activity_type === "audio"
       ? lessonAudioRelPath(lessonId)
       : activityAudioRelPath(lessonId, activity.id);
-  const absPath = path.join(process.cwd(), relPath);
+  // Resolve the write path through the same resolver the `/runtime/[...path]`
+  // serving route uses, so generated audio honors AVOCADOCORE_RUNTIME_ROOT (set
+  // on frank-dev to /var/prodavo/runtime_artifacts) and never drifts from the
+  // served location. Falls back to <cwd>/runtime_artifacts when unset (local).
+  const absPath = resolveRuntimeFile(relPath);
+  if (!absPath) {
+    throw new Error(
+      `generate-lesson-audio: refusing unsafe/unresolvable runtime path "${relPath}"`
+    );
+  }
   const version = scriptVersion(script);
 
   // Idempotency: skip if a file exists and the recorded script_version matches.

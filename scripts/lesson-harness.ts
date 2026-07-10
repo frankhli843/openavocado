@@ -30,7 +30,9 @@ import fs from "fs";
 import { getDb, closeDb } from "../src/db/connection";
 import { generateInitialAssessment } from "../src/lib/lesson-generator/initial-assessment";
 import { generateLessonAudio } from "../src/lib/audio/generate-lesson-audio";
+import { sanitizeDraftVisualRefs } from "../src/lib/lessons/visual-artifact-guard";
 import { COMPREHENSIVE_LESSON_PLAN_TEMPLATE } from "../src/lib/lesson-generator/plan-template";
+import { validateLessonProductionReadiness } from "../src/lib/lesson-generator/readiness";
 import type Database from "better-sqlite3";
 import type {
   SubjectCreatedEvent,
@@ -184,6 +186,28 @@ interface DiagnosticQuestion {
   hint: string;
 }
 
+interface HarnessReadinessActivityRow {
+  id: number;
+  activity_type: string;
+  title: string | null;
+  content: string | null;
+}
+
+interface HarnessGeneratedArtifactRow {
+  activity_id: number | null;
+  artifact_type: string;
+  file_path: string | null;
+}
+
+interface HarnessVisualArtifactRow {
+  slug: string;
+  build_status: string;
+  approved_at: string | null;
+  compiled_asset_path: string | null;
+  qa_notes: string | null;
+  qa_screenshot_ref: string | null;
+}
+
 // ─── Progress tracking ────────────────────────────────────────────────────────
 
 function updateJobProgress(
@@ -220,6 +244,67 @@ function updateJobProgress(
     ).run(stage, JSON.stringify(events), job.id);
   } catch {
     // Progress updates are best-effort — never fail the harness over them
+  }
+}
+
+function validatePersistedLessonReadiness(
+  db: Database.Database,
+  lessonId: number
+): { ok: true } | { ok: false; error: string } {
+  const activities = db
+    .prepare("SELECT id, activity_type, title, content FROM lesson_activities WHERE lesson_id = ? ORDER BY sequence_order, id")
+    .all(lessonId) as HarnessReadinessActivityRow[];
+  const generatedArtifacts = db
+    .prepare(
+      `SELECT activity_id, artifact_type, file_path
+       FROM generated_artifacts
+       WHERE lesson_id = ?`
+    )
+    .all(lessonId) as HarnessGeneratedArtifactRow[];
+  const visualArtifacts = db
+    .prepare(
+      `SELECT slug, build_status, approved_at, compiled_asset_path, qa_notes, qa_screenshot_ref
+       FROM visual_artifacts`
+    )
+    .all() as HarnessVisualArtifactRow[];
+
+  const errors: string[] = [];
+  const readiness = validateLessonProductionReadiness({
+    activities: activities.map((activity) => ({
+      id: activity.id,
+      activity_type: activity.activity_type,
+      title: activity.title,
+      content: parseActivityContent(activity, errors),
+    })),
+    generatedArtifacts,
+    visualArtifacts,
+    options: {
+      runtimeRoot: process.env.AVOCADOCORE_RUNTIME_ROOT,
+      checkFiles: Boolean(process.env.AVOCADOCORE_RUNTIME_ROOT),
+    },
+  });
+  errors.push(...readiness.errors);
+
+  if (errors.length > 0) {
+    return {
+      ok: false,
+      error: `Lesson ${lessonId} is blocked by production readiness checks: ${errors.slice(0, 6).join(" | ")}`,
+    };
+  }
+  return { ok: true };
+}
+
+function parseActivityContent(activity: HarnessReadinessActivityRow, errors: string[]): Record<string, unknown> {
+  if (!activity.content) return {};
+  try {
+    return JSON.parse(activity.content) as Record<string, unknown>;
+  } catch (error) {
+    errors.push(
+      `activity ${activity.id} (${activity.title ?? activity.activity_type}) content is not valid JSON: ${
+        error instanceof Error ? error.message : String(error)
+      }`
+    );
+    return {};
   }
 }
 
@@ -586,14 +671,14 @@ Generate a high-quality adaptive lesson for this learner. The lesson must:
 ${COMPREHENSIVE_LESSON_PLAN_TEMPLATE}
 
 Non-negotiable lesson-depth rules:
-- VISUALS MUST BE DB-BACKED BESPOKE ARTIFACTS. Do not author lesson visuals as registered widgets, generic declarative widgets, local panel JSON, or any precreated component. The production path is: generate a self-contained React visual artifact for this exact lesson/audio segment, store it in visual_artifacts, build it, open the sandbox URL with Chrome MCP, take desktop and mobile screenshots, record QA evidence, approve it, then reference it from lesson JSON as widget_type "bespoke-artifact" with params.artifact_slug. For audio-synced visuals, also store that approved slug in orientation_visual.artifact_slug or audio.synced_visual.artifact_slug; cue metadata coordinates the artifact but does not replace generated component code.
+- AUDIO-SYNCED VISUALS MUST BE FULLY SELF-CONTAINED AUTHORED SCENES. Every orientation_visual and audio.synced_visual you author must stand entirely on its own using authored cue content: each cue needs a "label", "headline", "narration", and the "receive"/"transform"/"pass" pipeline fields, plus "start"/"end" timing that covers the audio. The renderer draws these scenes directly — it does not need any external component to be complete. Do NOT depend on a bespoke React artifact being generated for the audio-synced visual to work. You MUST NOT invent an "artifact_slug" for an orientation_visual or audio.synced_visual (top-level or per-cue) that does not already exist as an approved row in the visual_artifacts table: any artifact_slug that has no matching visual_artifacts row is a DANGLING REFERENCE and will be stripped by the generation-time guard before the lesson is surfaced, so authoring one buys nothing and only risks a "being prepared" placeholder. Only set an audio-synced artifact_slug when you are certain a matching approved visual_artifacts row exists; otherwise omit the field entirely and let the authored cue scene render. (Standalone interactive widgets in lesson parts may still use widget_type "bespoke-artifact" with params.artifact_slug when a real approved artifact exists; that is a separate path from audio-synced scenes.)
 - EVERY AUDIO SEGMENT NEEDS A TRANSCRIPT AND TIMED VISUAL SCENE. Treat audio_script as a learner-visible transcript. For lesson parts, include a synced visual plan whose cues cover the audio duration and change the scene as playback advances. The cues must show what the section receives, what changes during the narration, and what is passed forward.
 - TOP-LEVEL OVERVIEW AUDIO MINIMUM. The first audio_script is not a short intro or page tour. It must be at least 2,700 words and must target 15+ minutes of substantive stand-alone teaching. It must be a single coherent authored transcript, written all at once as a developing conversation rather than padded by repeated passes. Use a two-host podcast transcript with male/female turns, for example "Leo:" and "Maya:" at the start of each turn. Never put a second speaker label inside another speaker's paragraph. Use a calm, conversational long-form interview / NotebookLM-style back-and-forth without imitating any specific living person. Leo teaches the mechanism in plain language. Maya is a curious skeptical student who challenges vague terms, asks why the concept matters, asks how the actual object changes, asks how that change helps the next prediction/decision/action, and asks 3-4 layer follow-up chains such as "why does that matter?", "what changed inside the object?", "how does that change affect the next score or decision?", and "what evidence would prove it?". After the high-level frame, go deeper into each major concept individually instead of looping over the same summary. The audio must not mention lesson parts, exercises, practice, assessments, or page structure. Do not compress this to a table of contents. Do not leak authoring instructions or meta-planning language into the script: avoid phrases like "the learner should", "the lesson should", "the overview should", "the audio should", or "the transcript should". Speak directly to the learner with "you", "we", and natural host questions.
 - LESSON-PART AUDIO MUST BE SELF-CONTAINED TEACHING. Every lesson_part audio transcript must use the same natural two-host standard as the overview, scaled to the part length: Leo explains the exact mechanism in plain language, and Maya acts as a curious skeptical student who asks follow-up questions about why the mechanism exists, what object changes, how the change affects the next score/decision/action, and what evidence would prove the explanation. The transcript must teach the part even if the learner is not looking at the screen. It must not refer to page structure, upcoming exercises, assessments, "this section", or "this lesson part" as the point of the audio. Do not write outline scaffolding into the spoken script. Forbidden spoken phrases include "start Socratically", "first layer", "second layer", "third layer", "go one layer deeper", "the learner should", "the lesson should", "the audio should", and generic study-coaching like "do not try to memorize". After a high-level frame, go deeper into the specific concept instead of repeating the same summary from a different angle.
 - SPOKEN FORMULAS MUST BE AUDIO-FRIENDLY. Keep formal formulas in reading blocks with LaTeX, but in audio describe notation in words before explaining meaning. For example, say "Q times K transpose, divided by the square root of d sub k" rather than reading raw text like "QK^T / √d_k".
 - FORMULA-SYNCED VISUALS. When audio explains a formula, the synced visual must include a formula panel (kind "formula") that displays the formula and highlights the specific symbols or subexpressions named by the current cue. For attention, show the expression and highlight Q, K, the score matrix, softmax, and V as each is discussed. Do not narrate a formula while showing only an unrelated pipeline or generic cards.
 - KATEX-COMPATIBLE FORMULAS ONLY. Formula strings must be clean KaTeX-compatible LaTeX. Do not include presentation wrappers such as \\colorbox, \\fcolorbox, \\bbox, raw HTML, or CSS in formula values. Put highlighting intent in synced visual active_elements; the renderer applies safe highlighting.
-- EVERY AUDIO SYNCED VISUAL NEEDS APPROVED ARTIFACTS. Do not rely on registered widgets, regex-selected scenes, repeated receive/transform/pass cards, or generated panel JSON. Each orientation_visual and audio.synced_visual must include either a unique fallback artifact_slug pointing to an approved DB-backed bespoke React artifact, or separate cue.artifact_slug values so different audio beats mount different generated components. For dense transformer, formula, matrix, or code-trace audio, prefer separate cue artifacts: QK dot product, score matrix, softmax, value mixing, residual add, and MLP handoff should be different generated components when they are distinct teaching moments.
+- EVERY AUDIO SYNCED VISUAL NEEDS DISTINCT, MEANINGFUL AUTHORED CUES. Do not rely on registered widgets, regex-selected scenes, or a single repeated receive/transform/pass card copied across every cue. Each cue must describe a genuinely different beat of the segment: what that beat receives, what it transforms, and what it passes forward, with a headline and narration specific to that moment. For dense transformer, formula, matrix, or code-trace audio, give each teaching moment its own cue — QK dot product, score matrix, softmax, value mixing, residual add, and MLP handoff should be separate cues with distinct headlines/narration/pipeline text so the scene visibly advances as the audio plays. Authored cue variety, not an external artifact, is what makes the synced visual rich.
 - AUDIO + INTERACTIVE SIDE-BY-SIDE FOR ORIENTATION. The top-level audio activity must include orientation_visual using the same timed cue scene pattern as lesson parts, and every lesson_part audio segment must include audio.synced_visual. The learner should see the paired visual beside the audio on desktop and immediately below it on mobile. Do not make the learner listen to a long orientation before they can see the moving object, pipeline, matrix, or state transition being described.
 - FORMAL MATH REQUIREMENT. Whenever you use mathematical notation or formulas, include a reading block of type "formula" with these EXACT field names: "type" must be "formula", "latex" must be a LaTeX string, "plain_english" must be a clear English explanation of at least 20 characters, and "variables" must be an array of objects where each object has "symbol" (the LaTeX symbol string), "meaning" (what it represents in plain English, at least 8 characters), and an optional "shape" field (a string describing matrix dimension or data type). Do NOT use "variable_definitions", "description", or "unit" as field names. Example: { "type": "formula", "latex": "y = Wx + b", "plain_english": "A linear transformation applies a weight matrix W and bias b to input x to produce output y.", "variables": [{ "symbol": "W", "meaning": "weight matrix of learned parameters", "shape": "d_out × d_in" }, { "symbol": "x", "meaning": "input vector", "shape": "d_in" }, { "symbol": "b", "meaning": "bias vector", "shape": "d_out" }, { "symbol": "y", "meaning": "output vector after linear transformation", "shape": "d_out" }] }
 - AUDIO-ADJACENT VISUALS MUST BE SCOPED TO THE CURRENT AUDIO. The visual beside an audio player should show only the object, stage, state transition, formula, or tiny example that the audio is currently narrating, with minimal before/after handoff context. The step rail may show nearby beats, but the main synced visual should show only the currently relevant generated panel, not every panel in the scene at once. Do not put a broad whole-lesson map, all-step simulator, or later exploratory interactive beside the audio if most of it is unrelated to the spoken segment. Use a dedicated focused orientation artifact or timed synced scene for the audio, then place the broader exploratory interactive later in its own lesson activity.
@@ -625,7 +710,6 @@ Return ONLY a valid JSON object matching this exact schema (no markdown, no pros
   "audio_script": "Full stand-alone top-level audio lesson script (minimum 2,700 words, targets at least 15 minutes with margin, two-host podcast transcript with clear male/female labels such as Leo: and Maya:, Leo explains mechanisms in plain language, Maya is a curious skeptical student who drills into why, how the object changes, and how the change helps the next prediction/decision/action; do not mention lesson parts, exercises, practice, assessments, or page structure; do not include outline scaffolding such as first layer, second layer, start Socratically, or go one layer deeper)",
   "orientation_visual": {
     "strategy": "timeline",
-    "artifact_slug": "focused-audio-orientation-scene-slug",
     "scene": {
       "scene_id": "unique-generated-scene-id-for-this-audio",
       "title": "Scene title specific to this audio",
@@ -647,7 +731,6 @@ Return ONLY a valid JSON object matching this exact schema (no markdown, no pros
       {
         "start": 0,
         "end": 8,
-        "artifact_slug": "optional-per-cue-approved-artifact-slug",
         "label": "Current beat",
         "headline": "What the audio is saying now",
         "narration": "Short transcript-aligned visual note",
@@ -714,7 +797,6 @@ Return ONLY a valid JSON object matching this exact schema (no markdown, no pros
             {
               "start": 0,
               "end": 5,
-              "artifact_slug": "optional-per-cue-approved-artifact-slug",
               "label": "Receives",
               "headline": "What arrives from the prior step",
               "narration": "Name the object and show it visually.",
@@ -979,6 +1061,34 @@ function insertGeneratedLesson(
   learnerId: number,
   eventType: string
 ): number {
+  // Guard against dangling audio-synced visual references before persisting.
+  // Strategy B: authored cue scenes are the reliable base; a bespoke
+  // artifact_slug is optional enrichment that must resolve to a real
+  // visual_artifacts row. Any dangling slug is stripped in place so the renderer
+  // falls back to the clean authored scene instead of a "being prepared"
+  // placeholder. See knowledge/projects/avocadocore_dev.md (Strategy B).
+  const guard = sanitizeDraftVisualRefs(
+    db as unknown as Parameters<typeof sanitizeDraftVisualRefs>[0],
+    draft as unknown as Parameters<typeof sanitizeDraftVisualRefs>[1]
+  );
+  if (guard.strippedSlugs.length > 0) {
+    console.warn(
+      `[harness] visual-artifact guard stripped ${guard.strippedSlugs.length} dangling audio-synced artifact_slug ref(s) from "${draft.title}" (no matching visual_artifacts row): ` +
+        guard.strippedSlugs.map((r) => `${r.location}=${r.slug}`).join(", ")
+    );
+  }
+  if (guard.keptSlugs.length > 0) {
+    console.log(
+      `[harness] visual-artifact guard kept ${guard.keptSlugs.length} resolvable audio-synced artifact_slug ref(s) for "${draft.title}".`
+    );
+  }
+  if (guard.danglingWidgetSlugs.length > 0) {
+    console.warn(
+      `[harness] visual-artifact guard: ${guard.danglingWidgetSlugs.length} interactive-widget artifact_slug ref(s) in "${draft.title}" have no visual_artifacts row (widget will not render until built/approved): ` +
+        guard.danglingWidgetSlugs.map((r) => `${r.location}=${r.slug}`).join(", ")
+    );
+  }
+
   const maxSeq = db
     .prepare("SELECT COALESCE(MAX(sequence_number), 0) AS max_seq FROM lessons WHERE subject_id = ?")
     .get(subjectId) as { max_seq: number };
@@ -1477,6 +1587,20 @@ async function handleLessonCompleted(
     }
   }
 
+  updateJobProgress(db, subjectId, triggerEvent, "media_readiness", "Checking generated videos and approved visual artifacts");
+  const readiness = validatePersistedLessonReadiness(db, lessonId);
+  if (!readiness.ok) {
+    console.error(`[lesson-harness] ${readiness.error}`);
+    updateJobProgress(db, subjectId, triggerEvent, "media_review_blocked", readiness.error.slice(0, 400));
+    return {
+      ok: false,
+      error: readiness.error.slice(0, 500),
+      lesson_id: lessonId,
+      provider_used: getGeneratorId(modelUsed),
+      stage_reached: "media_review_blocked",
+    };
+  }
+
   updateJobProgress(db, subjectId, triggerEvent, "finalizing", `Lesson "${draft.title}" ready (id ${lessonId})`);
 
   return {
@@ -1573,6 +1697,20 @@ async function handleLessonDiscarded(
       const msg = audioErr instanceof Error ? audioErr.message : String(audioErr);
       console.error(`[lesson-harness] Audio generation failed for lesson ${lessonId}: ${msg}`);
     }
+  }
+
+  updateJobProgress(db, subjectId, triggerEvent, "media_readiness", "Checking replacement lesson videos and approved visual artifacts");
+  const readiness = validatePersistedLessonReadiness(db, lessonId);
+  if (!readiness.ok) {
+    console.error(`[lesson-harness] ${readiness.error}`);
+    updateJobProgress(db, subjectId, triggerEvent, "media_review_blocked", readiness.error.slice(0, 400));
+    return {
+      ok: false,
+      error: readiness.error.slice(0, 500),
+      lesson_id: lessonId,
+      provider_used: getGeneratorId(modelUsed),
+      stage_reached: "media_review_blocked",
+    };
   }
 
   updateJobProgress(db, subjectId, triggerEvent, "finalizing", `Replacement lesson "${draft.title}" ready (id ${lessonId})`);

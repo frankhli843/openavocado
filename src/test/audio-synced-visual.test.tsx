@@ -1,7 +1,27 @@
 // @vitest-environment jsdom
 import "@testing-library/jest-dom/vitest";
-import { fireEvent, render, screen } from "@testing-library/react";
-import { describe, expect, it, vi } from "vitest";
+import { fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { afterEach, describe, expect, it, vi } from "vitest";
+
+/**
+ * BespokeArtifactRenderer probes `/api/visual-artifacts/<slug>` and only mounts
+ * the sandbox iframe when build_status is qa_approved. In jsdom there is no
+ * server, so stub fetch to report the artifact approved for the "renders the
+ * approved artifact" case.
+ */
+function stubApprovedArtifactFetch() {
+  vi.stubGlobal(
+    "fetch",
+    vi.fn(async () => ({
+      ok: true,
+      json: async () => ({ artifact: { build_status: "qa_approved" } }),
+    })) as unknown as typeof fetch
+  );
+}
+
+afterEach(() => {
+  vi.unstubAllGlobals();
+});
 import { AudioSyncedLessonVisual } from "@/components/lesson/LessonPartSection";
 import type { AudioSyncedVisualContent } from "@/lib/lesson-content/schema";
 
@@ -69,7 +89,8 @@ function withoutCueArtifacts(source: AudioSyncedVisualContent): AudioSyncedVisua
 }
 
 describe("AudioSyncedLessonVisual", () => {
-  it("renders only the active cue's approved DB-backed artifact for the main synced visual", () => {
+  it("renders only the active cue's approved DB-backed artifact for the main synced visual", async () => {
+    stubApprovedArtifactFetch();
     const { container } = render(<AudioSyncedLessonVisual visual={visual} currentTime={12} duration={30} onSeek={vi.fn()} />);
 
     expect(screen.getAllByText("Context vector leaves attention").length).toBeGreaterThan(0);
@@ -81,8 +102,12 @@ describe("AudioSyncedLessonVisual", () => {
       gridTemplateColumns: "repeat(auto-fit, minmax(min(8rem, 100%), 1fr))",
     });
     expect(container.querySelector('[data-audio-synced-artifact="attention-score-grid-artifact"]')).toBeInTheDocument();
-    const iframe = container.querySelector("iframe") as HTMLIFrameElement;
-    expect(iframe).toBeInTheDocument();
+    // The iframe mounts only after the availability probe confirms qa_approved.
+    const iframe = await waitFor(() => {
+      const el = container.querySelector("iframe") as HTMLIFrameElement | null;
+      expect(el).toBeInTheDocument();
+      return el as HTMLIFrameElement;
+    });
     expect(iframe.getAttribute("src")).toBe("/api/visual-artifacts/attention-score-grid-artifact/sandbox");
     expect(iframe.className).toContain("max-w-full");
 
@@ -142,7 +167,7 @@ describe("AudioSyncedLessonVisual", () => {
     expect(mobileToggle).toHaveTextContent("Hide");
   });
 
-  it("fails loudly instead of drawing a generic panel when artifact_slug is missing", () => {
+  it("renders the clean self-contained authored scene when no artifact_slug is present (Strategy B)", () => {
     const missingArtifact = {
       ...visual,
       artifact_slug: undefined,
@@ -150,9 +175,15 @@ describe("AudioSyncedLessonVisual", () => {
     } as AudioSyncedVisualContent;
     render(<AudioSyncedLessonVisual visual={missingArtifact} currentTime={12} duration={30} onSeek={vi.fn()} />);
 
-    const alert = screen.getByRole("alert");
-    expect(alert).toHaveTextContent(/missing a DB-backed bespoke artifact slug/i);
+    // Strategy B: no bespoke artifact was authored, so the authored cue scene is
+    // the intended, complete visual. No red error box, no iframe, and no
+    // "being prepared" note implying a richer visual is coming.
+    expect(screen.queryByRole("alert")).toBeNull();
     expect(document.querySelector("iframe")).toBeNull();
+    expect(screen.queryByText(/being prepared/i)).toBeNull();
+    // The authored narration/pipeline content still renders as the scene.
+    expect(screen.getAllByText("The approved artifact should receive cueIndex 1 for this beat.").length).toBeGreaterThan(0);
+    expect(screen.getAllByText("Current operation").length).toBeGreaterThan(0);
   });
 });
 

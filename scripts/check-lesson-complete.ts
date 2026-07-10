@@ -1,6 +1,7 @@
 import path from "node:path";
 import Database from "better-sqlite3";
 import { validateGeneratedContent } from "../src/lib/lesson-generator/contract";
+import { validateLessonProductionReadiness } from "../src/lib/lesson-generator/readiness";
 import type { ActivityType, GeneratedLessonContent } from "../src/types";
 
 interface LessonRow {
@@ -25,6 +26,21 @@ interface ActivityRow {
   sequence_order: number;
   title: string | null;
   content: string | null;
+}
+
+interface GeneratedArtifactRow {
+  activity_id: number | null;
+  artifact_type: string;
+  file_path: string | null;
+}
+
+interface VisualArtifactRow {
+  slug: string;
+  build_status: string;
+  approved_at: string | null;
+  compiled_asset_path: string | null;
+  qa_notes: string | null;
+  qa_screenshot_ref: string | null;
 }
 
 function parseJson<T>(value: string | null | undefined, fallback: T, label: string, errors: string[]): T {
@@ -93,6 +109,39 @@ function main() {
 
   const result = validateGeneratedContent(generated);
   errors.push(...result.errors);
+
+  const generatedArtifacts = db
+    .prepare(
+      `SELECT activity_id, artifact_type, file_path
+       FROM generated_artifacts
+       WHERE lesson_id = ?`
+    )
+    .all(lessonId) as GeneratedArtifactRow[];
+  const visualArtifacts = db
+    .prepare(
+      `SELECT slug, build_status, approved_at, compiled_asset_path, qa_notes, qa_screenshot_ref
+       FROM visual_artifacts`
+    )
+    .all() as VisualArtifactRow[];
+  const runtimeRoot = process.env.AVOCADOCORE_RUNTIME_ROOT ?? path.join(process.cwd(), "runtime_artifacts");
+  const readiness = validateLessonProductionReadiness({
+    activities: activities.map((activity) => ({
+      id: activity.id,
+      activity_type: activity.activity_type,
+      title: activity.title,
+      content: parseJson<Record<string, unknown>>(
+        activity.content,
+        {},
+        `activity ${activity.id} (${activity.title ?? activity.activity_type}).content`,
+        errors
+      ),
+    })),
+    generatedArtifacts,
+    visualArtifacts,
+    options: { runtimeRoot, checkFiles: true },
+  });
+  errors.push(...readiness.errors);
+  result.warnings.push(...readiness.warnings);
 
   if (errors.length > 0) {
     console.error(`Lesson ${lessonId} is incomplete (${errors.length} error${errors.length === 1 ? "" : "s"}):`);

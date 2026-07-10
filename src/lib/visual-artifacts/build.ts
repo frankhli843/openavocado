@@ -22,13 +22,18 @@ import * as os from "os";
 import type { ArtifactManifest, BuildResult } from "./types";
 import { findBlockedImports } from "./manifest";
 import { validateArtifactSource } from "./source-validation";
+import { resolveRuntimeFile } from "../audio/runtime-storage";
 
 /**
  * Runtime artifacts base directory.
  * Resolved relative to process.cwd() so it works in Next.js dev and production.
  */
 function getRuntimeArtifactsDir(): string {
-  return path.join(process.cwd(), "runtime_artifacts");
+  const root = resolveRuntimeFile("runtime_artifacts");
+  if (!root) {
+    throw new Error("Unable to resolve runtime_artifacts root");
+  }
+  return root;
 }
 
 /** Directory where compiled artifact bundles are stored. */
@@ -46,7 +51,11 @@ export function compiledAssetPath(slug: string, sourceHash: string): string {
 
 /** Absolute path to a compiled bundle. */
 export function compiledAssetAbsPath(slug: string, sourceHash: string): string {
-  return path.join(process.cwd(), compiledAssetPath(slug, sourceHash));
+  const abs = resolveRuntimeFile(compiledAssetPath(slug, sourceHash));
+  if (!abs) {
+    throw new Error(`Unable to resolve compiled visual artifact path for ${slug}`);
+  }
+  return abs;
 }
 
 /** SHA-256 hex digest of a string. */
