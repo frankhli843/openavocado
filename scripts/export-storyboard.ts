@@ -100,6 +100,39 @@ function normalizeCues(raw: unknown[]): Cue[] {
     .filter((c) => c.end > c.start);
 }
 
+function rescaleCuesToAudio(cues: Cue[], audioDur: number | null): { cues: Cue[]; scaled: boolean } {
+  if (!Number.isFinite(audioDur) || audioDur == null || audioDur <= 0 || cues.length === 0) {
+    return { cues, scaled: false };
+  }
+  const firstStart = cues[0].start;
+  const lastEnd = cues[cues.length - 1].end;
+  const span = lastEnd - firstStart;
+  if (!Number.isFinite(span) || span <= 0) return { cues, scaled: false };
+
+  const drift = Math.abs(span - audioDur);
+  if (drift <= 2) return { cues, scaled: false };
+
+  const scale = audioDur / span;
+  let cursor = 0;
+  const scaled = cues.map((cue, index) => {
+    const originalDuration = Math.max(0, cue.end - cue.start);
+    const duration =
+      index === cues.length - 1 ? Math.max(0, audioDur - cursor) : Number((originalDuration * scale).toFixed(3));
+    const start = Number(cursor.toFixed(3));
+    const end = Number((cursor + duration).toFixed(3));
+    cursor = end;
+    return {
+      ...cue,
+      index,
+      start,
+      end,
+      duration: Number((end - start).toFixed(3)),
+    };
+  });
+
+  return { cues: scaled, scaled: true };
+}
+
 function extractFormulas(content: Record<string, unknown>): string[] {
   const out = new Set<string>();
   const reading = content.reading as Record<string, unknown> | undefined;
@@ -168,6 +201,9 @@ for (const act of activities) {
     continue;
   }
 
+  const rescaled = rescaleCuesToAudio(cues, audioDur);
+  cues = rescaled.cues;
+
   const cueSpan = cues[cues.length - 1].end - cues[0].start;
   const seg: Segment = {
     lesson_id: lessonId,
@@ -189,7 +225,12 @@ for (const act of activities) {
 
   // Cue-timing sanity check (acceptance: last cue end ≈ MP3 duration).
   const drift = audioDur != null ? Math.abs(seg.cue_span_sec - audioDur) : null;
-  const driftFlag = drift != null && drift > 2 ? `  ⚠ DRIFT ${drift.toFixed(1)}s vs audio` : "";
+  const driftFlag =
+    drift != null && drift > 2
+      ? `  ⚠ DRIFT ${drift.toFixed(1)}s vs audio`
+      : rescaled.scaled
+        ? "  rescaled cues to audio"
+        : "";
   console.log(
     `  ✓ activity ${act.id} (${act.activity_type}): ${cues.length} cues, span ${seg.cue_span_sec}s, ` +
       `audio ${audioDur ?? "?"}s [${audioSourceKind}], ${seg.formulas.length} formulas${driftFlag}`

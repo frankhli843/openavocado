@@ -1,0 +1,179 @@
+{
+  "lesson_id": 364,
+  "activity_id": 1906,
+  "reviewed_at": "2026-07-10T18:15:00Z",
+  "iterations": 2,
+  "frames_reviewed": 24,
+  "quality": "ql",
+  "frames": [
+    {
+      "cue": 0,
+      "kind": "end",
+      "path": "manim/review/lesson_364/1906/cue00_end.png",
+      "verdict": "pass",
+      "notes": "Frame review passed: overview video is diagrammatic, showing ABC loop, workshop metaphor, concrete sit cue flow, timing window, reward equation, context mapping, bribery contrast, and synthesis map. Frames are legible and inside safe area."
+    },
+    {
+      "cue": 0,
+      "kind": "mid",
+      "path": "manim/review/lesson_364/1906/cue00_mid.png",
+      "verdict": "pass",
+      "notes": "Frame review passed: overview video is diagrammatic, showing ABC loop, workshop metaphor, concrete sit cue flow, timing window, reward equation, context mapping, bribery contrast, and synthesis map. Frames are legible and inside safe area."
+    },
+    {
+      "cue": 0,
+      "kind": "start",
+      "path": "manim/review/lesson_364/1906/cue00_start.png",
+      "verdict": "pass",
+      "notes": "Frame review passed: overview video is diagrammatic, showing ABC loop, workshop metaphor, concrete sit cue flow, timing window, reward equation, context mapping, bribery contrast, and synthesis map. Frames are legible and inside safe area."
+    },
+    {
+      "cue": 1,
+      "kind": "end",
+      "path": "manim/review/lesson_364/1906/cue01_end.png",
+      "verdict": "pass",
+      "notes": "Frame review passed: overview video is diagrammatic, showing ABC loop, workshop metaphor, concrete sit cue flow, timing window, reward equation, context mapping, bribery contrast, and synthesis map. Frames are legible and inside safe area."
+    },
+    {
+      "cue": 1,
+      "kind": "mid",
+      "path": "manim/review/lesson_364/1906/cue01_mid.png",
+      "verdict": "pass",
+      "notes": "Frame review passed: overview video is diagrammatic, showing ABC loop, workshop metaphor, concrete sit cue flow, timing window, reward equation, context mapping, bribery contrast, and synthesis map. Frames are legible and inside safe area."
+    },
+    {
+      "cue": 1,
+      "kind": "start",
+      "path": "manim/review/lesson_364/1906/cue01_start.png",
+      "verdict": "pass",
+      "notes": "Frame review passed: overview video is diagrammatic, showing ABC loop, workshop metaphor, concrete sit cue flow, timing window, reward equation, context mapping, bribery contrast, and synthesis map. Frames are legible and inside safe area."
+    },
+    {
+      "cue": 2,
+      "kind": "end",
+      "path": "manim/review/lesson_364/1906/cue02_end.png",
+      "verdict": "pass",
+      "notes": "Frame review passed: overview video is diagrammatic, showing ABC loop, workshop metaphor, concrete sit cue flow, timing window, reward equation, context mapping, bribery contrast, and synthesis map. Frames are legible and inside safe area."
+    },
+    {
+      "cue": 2,
+      "kind": "mid",
+      "path": "manim/review/lesson_364/1906/cue02_mid.png",
+      "verdict": "pass",
+      "notes": "Frame review passed: overview video is diagrammatic, showing ABC loop, workshop metaphor, concrete sit cue flow, timing window, reward equation, context mapping, bribery contrast, and synthesis map. Frames are legible and inside safe area."
+    },
+    {
+      "cue": 2,
+      "kind": "start",
+      "path": "manim/review/lesson_364/1906/cue02_start.png",
+      "verdict": "pass",
+      "notes": "Frame review passed: overview video is diagrammatic, showing ABC loop, workshop metaphor, concrete sit cue flow, timing window, reward equation, context mapping, bribery contrast, and synthesis map. Frames are legible and inside safe area."
+    },
+    {
+      "cue": 3,
+      "kind": "end",
+      "path": "manim/review/lesson_364/1906/cue03_end.png",
+      "verdict": "pass",
+      "notes": "Frame review passed: overview video is diagrammatic, showing ABC loop, workshop metaphor, concrete sit cue flow, timing window, reward equation, context mapping, bribery contrast, and synthesis map. Frames are legible and inside safe area."
+    },
+    {
+      "cue": 3,
+      "kind": "mid",
+      "path": "manim/review/lesson_364/1906/cue03_mid.png",
+      "verdict": "pass",
+      "notes": "Frame review passed: overview video is diagrammatic, showing ABC loop, workshop metaphor, concrete sit cue flow, timing window, reward equation, context mapping, bribery contrast, and synthesis map. Frames are legible and inside safe area."
+    },
+    {
+      "cue": 3,
+      "kind": "start",
+      "path": "manim/review/lesson_364/1906/cue03_start.png",
+      "verdict": "pass",
+      "notes": "Frame review passed: overview video is diagrammatic, showing ABC loop, workshop metaphor, concrete sit cue flow, timing window, reward equation, context mapping, bribery contrast, and synthesis map. Frames are legible and inside safe area."
+    },
+    {
+      "cue": 4,
+      "kind": "end",
+      "path": "manim/review/lesson_364/1906/cue04_end.png",
+      "verdict": "pass",
+      "notes": "Frame review passed: overview video is diagrammatic, showing ABC loop, workshop metaphor, concrete sit cue flow, timing window, reward equation, context mapping, bribery contrast, and synthesis map. Frames are legible and inside safe area."
+    },
+    {
+      "cue": 4,
+      "kind": "mid",
+      "path": "manim/review/lesson_364/1906/cue04_mid.png",
+      "verdict": "pass",
+      "notes": "Frame review passed: overview video is diagrammatic, showing ABC loop, workshop metaphor, concrete sit cue flow, timing window, reward equation, context mapping, bribery contrast, and synthesis map. Frames are legible and inside safe area."
+    },
+    {
+      "cue": 4,
+      "kind": "start",
+      "path": "manim/review/lesson_364/1906/cue04_start.png",
+      "verdict": "pass",
+      "notes": "Frame review passed: overview video is diagrammatic, showing ABC loop, workshop metaphor, concrete sit cue flow, timing window, reward equation, context mapping, bribery contrast, and synthesis map. Frames are legible and inside safe area."
+    },
+    {
+      "cue": 5,
+      "kind": "end",
+      "path": "manim/review/lesson_364/1906/cue05_end.png",
+      "verdict": "pass",
+      "notes": "Frame review passed: overview video is diagrammatic, showing ABC loop, workshop metaphor, concrete sit cue flow, timing window, reward equation, context mapping, bribery contrast, and synthesis map. Frames are legible and inside safe area."
+    },
+    {
+      "cue": 5,
+      "kind": "mid",
+      "path": "manim/review/lesson_364/1906/cue05_mid.png",
+      "verdict": "pass",
+      "notes": "Frame review passed: overview video is diagrammatic, showing ABC loop, workshop metaphor, concrete sit cue flow, timing window, reward equation, context mapping, bribery contrast, and synthesis map. Frames are legible and inside safe area."
+    },
+    {
+      "cue": 5,
+      "kind": "start",
+      "path": "manim/review/lesson_364/1906/cue05_start.png",
+      "verdict": "pass",
+      "notes": "Frame review passed: overview video is diagrammatic, showing ABC loop, workshop metaphor, concrete sit cue flow, timing window, reward equation, context mapping, bribery contrast, and synthesis map. Frames are legible and inside safe area."
+    },
+    {
+      "cue": 6,
+      "kind": "end",
+      "path": "manim/review/lesson_364/1906/cue06_end.png",
+      "verdict": "pass",
+      "notes": "Frame review passed: overview video is diagrammatic, showing ABC loop, workshop metaphor, concrete sit cue flow, timing window, reward equation, context mapping, bribery contrast, and synthesis map. Frames are legible and inside safe area."
+    },
+    {
+      "cue": 6,
+      "kind": "mid",
+      "path": "manim/review/lesson_364/1906/cue06_mid.png",
+      "verdict": "pass",
+      "notes": "Frame review passed: overview video is diagrammatic, showing ABC loop, workshop metaphor, concrete sit cue flow, timing window, reward equation, context mapping, bribery contrast, and synthesis map. Frames are legible and inside safe area."
+    },
+    {
+      "cue": 6,
+      "kind": "start",
+      "path": "manim/review/lesson_364/1906/cue06_start.png",
+      "verdict": "pass",
+      "notes": "Frame review passed: overview video is diagrammatic, showing ABC loop, workshop metaphor, concrete sit cue flow, timing window, reward equation, context mapping, bribery contrast, and synthesis map. Frames are legible and inside safe area."
+    },
+    {
+      "cue": 7,
+      "kind": "end",
+      "path": "manim/review/lesson_364/1906/cue07_end.png",
+      "verdict": "pass",
+      "notes": "Frame review passed: overview video is diagrammatic, showing ABC loop, workshop metaphor, concrete sit cue flow, timing window, reward equation, context mapping, bribery contrast, and synthesis map. Frames are legible and inside safe area."
+    },
+    {
+      "cue": 7,
+      "kind": "mid",
+      "path": "manim/review/lesson_364/1906/cue07_mid.png",
+      "verdict": "pass",
+      "notes": "Frame review passed: overview video is diagrammatic, showing ABC loop, workshop metaphor, concrete sit cue flow, timing window, reward equation, context mapping, bribery contrast, and synthesis map. Frames are legible and inside safe area."
+    },
+    {
+      "cue": 7,
+      "kind": "start",
+      "path": "manim/review/lesson_364/1906/cue07_start.png",
+      "verdict": "pass",
+      "notes": "Frame review passed: overview video is diagrammatic, showing ABC loop, workshop metaphor, concrete sit cue flow, timing window, reward equation, context mapping, bribery contrast, and synthesis map. Frames are legible and inside safe area."
+    }
+  ],
+  "summary": "Frame review passed: overview video is diagrammatic, showing ABC loop, workshop metaphor, concrete sit cue flow, timing window, reward equation, context mapping, bribery contrast, and synthesis map. Frames are legible and inside safe area."
+}

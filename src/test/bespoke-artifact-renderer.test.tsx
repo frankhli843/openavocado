@@ -14,7 +14,7 @@
  */
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import "@testing-library/jest-dom/vitest";
-import { render, screen, act } from "@testing-library/react";
+import { render, screen, act, waitFor } from "@testing-library/react";
 import { BespokeArtifactRenderer } from "../components/lesson/widgets/BespokeArtifactRenderer";
 
 /**
@@ -29,56 +29,73 @@ function postFromIframe(data: unknown) {
   });
 }
 
+async function getIframe() {
+  await waitFor(() => {
+    expect(document.querySelector("iframe")).toBeTruthy();
+  });
+  return document.querySelector("iframe") as HTMLIFrameElement;
+}
+
 describe("BespokeArtifactRenderer", () => {
   beforeEach(() => {
     // jsdom does not navigate iframes; we only assert on attributes + messaging.
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async () => ({
+        ok: true,
+        json: async () => ({ artifact: { build_status: "qa_approved" } }),
+      }))
+    );
   });
 
   afterEach(() => {
     vi.useRealTimers();
+    vi.unstubAllGlobals();
   });
 
-  it("renders an iframe pointed at the approval-gated sandbox route for the slug", () => {
+  it("renders an iframe pointed at the approval-gated sandbox route for the slug", async () => {
     render(<BespokeArtifactRenderer artifactSlug="math-explorer-test" />);
-    const iframe = document.querySelector("iframe") as HTMLIFrameElement;
-    expect(iframe).toBeTruthy();
+    const iframe = await getIframe();
     expect(iframe.getAttribute("src")).toBe(
       "/api/visual-artifacts/math-explorer-test/sandbox"
     );
   });
 
-  it("encodes the slug in the sandbox URL", () => {
+  it("encodes the slug in the sandbox URL", async () => {
     render(<BespokeArtifactRenderer artifactSlug="a b/c" />);
-    const iframe = document.querySelector("iframe") as HTMLIFrameElement;
+    const iframe = await getIframe();
     expect(iframe.getAttribute("src")).toBe(
       `/api/visual-artifacts/${encodeURIComponent("a b/c")}/sandbox`
     );
   });
 
-  it("restricts the iframe sandbox to scripts + same-origin only", () => {
+  it("restricts the iframe sandbox to scripts + same-origin only", async () => {
     render(<BespokeArtifactRenderer artifactSlug="demo" />);
-    const iframe = document.querySelector("iframe") as HTMLIFrameElement;
+    const iframe = await getIframe();
     expect(iframe.getAttribute("sandbox")).toBe("allow-scripts allow-same-origin");
   });
 
-  it("shows a loading state until the iframe posts READY", () => {
+  it("shows a loading state until the iframe posts READY", async () => {
     render(<BespokeArtifactRenderer artifactSlug="demo" />);
     expect(screen.getByText(/Loading visualization/i)).toBeInTheDocument();
+    await getIframe();
 
     postFromIframe({ type: "READY" });
     expect(screen.queryByText(/Loading visualization/i)).not.toBeInTheDocument();
   });
 
-  it("forwards STATE_CHANGE messages to onStateChange", () => {
+  it("forwards STATE_CHANGE messages to onStateChange", async () => {
     const onStateChange = vi.fn();
     render(<BespokeArtifactRenderer artifactSlug="demo" onStateChange={onStateChange} />);
+    await getIframe();
 
     postFromIframe({ type: "STATE_CHANGE", state: { controls: { temperature: 3 } } });
     expect(onStateChange).toHaveBeenCalledWith({ controls: { temperature: 3 } });
   });
 
-  it("surfaces an ERROR message as a visible failure state and drops the iframe", () => {
+  it("surfaces an ERROR message as a visible failure state and drops the iframe", async () => {
     render(<BespokeArtifactRenderer artifactSlug="demo" />);
+    await getIframe();
     postFromIframe({ type: "ERROR", message: "ReferenceError: foo is not defined" });
 
     const alert = screen.getByRole("alert");
@@ -88,11 +105,16 @@ describe("BespokeArtifactRenderer", () => {
     expect(document.querySelector("iframe")).toBeNull();
   });
 
-  it("times out instead of showing the loading state forever when READY never arrives", () => {
+  it("times out instead of showing the loading state forever when READY never arrives", async () => {
     vi.useFakeTimers();
     render(<BespokeArtifactRenderer artifactSlug="stuck-visual" />);
 
     expect(screen.getByText(/Loading visualization/i)).toBeInTheDocument();
+    await act(async () => {
+      await Promise.resolve();
+      await Promise.resolve();
+    });
+    expect(document.querySelector("iframe")).toBeTruthy();
 
     act(() => {
       vi.advanceTimersByTime(7000);
@@ -105,9 +127,10 @@ describe("BespokeArtifactRenderer", () => {
     expect(screen.queryByText(/Loading visualization/i)).not.toBeInTheDocument();
   });
 
-  it("ignores messages whose source is not the artifact iframe", () => {
+  it("ignores messages whose source is not the artifact iframe", async () => {
     const onStateChange = vi.fn();
     render(<BespokeArtifactRenderer artifactSlug="demo" onStateChange={onStateChange} />);
+    await getIframe();
 
     // source defaults to null (not the iframe contentWindow) → must be ignored.
     act(() => {
