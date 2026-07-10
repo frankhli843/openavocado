@@ -102,16 +102,25 @@ render_chunk() {
   local diff; diff="$("$VENV_PY" -c "print(round($actual-$cue_dur,3))")"
   local absdiff; absdiff="$("$VENV_PY" -c "print(round(abs($actual-$cue_dur),3))")"
   local short; short="$("$VENV_PY" -c "print(1 if $actual < $cue_dur else 0)")"
+  local within_frame; within_frame="$(echo "$absdiff <= 0.05" | bc -l)"
+  local pad_ok; pad_ok="$(echo "$absdiff <= 0.25" | bc -l)"
+  local too_long; too_long="$(echo "$absdiff > 0.25" | bc -l)"
 
-  if (( $(echo "$absdiff <= 0.05" | bc -l) )); then
+  if [[ "$within_frame" == "1" ]]; then
     cp "$raw" "$pinned"
     echo "  cue ${ii}: ok (${actual}s, Δ${diff}s)"
-  elif [[ "$short" == "1" && $(echo "$absdiff <= 0.25" | bc -l) == 1 ]]; then
+  elif [[ "$short" == "1" && "$pad_ok" == "1" ]]; then
     # short by <=0.25s → pad by cloning the last frame (tpad).
     ffmpeg -y -v error -i "$raw" -vf "tpad=stop_mode=clone:stop_duration=${absdiff}" \
       -r "$FPS" -c:v libx264 -pix_fmt yuv420p -preset medium -crf 18 "$pinned"
     echo "  cue ${ii}: padded +${absdiff}s (was ${actual}s → ${cue_dur}s)"
-  elif [[ "$short" == "0" && $(echo "$absdiff > 0.25" | bc -l) == 1 ]]; then
+  elif [[ "$short" == "0" && "$pad_ok" == "1" ]]; then
+    # long by <=0.25s → trim to the cue boundary. This usually comes from frame
+    # quantization, not author error.
+    ffmpeg -y -v error -i "$raw" -t "$cue_dur" -r "$FPS" -c:v libx264 -pix_fmt yuv420p \
+      -preset medium -crf 18 "$pinned"
+    echo "  cue ${ii}: trimmed -${absdiff}s (was ${actual}s → ${cue_dur}s)"
+  elif [[ "$short" == "0" && "$too_long" == "1" ]]; then
     echo "  cue ${ii}: TOO LONG by ${diff}s (>0.25s) — reduce animation run_times in Cue${ii}" >&2
     exit 1
   else
@@ -172,8 +181,8 @@ if [[ "$QUALITY" == "ql" ]]; then
     s="$(read_json "d['cues'][$i]['start']")"
     e="$(read_json "d['cues'][$i]['end']")"
     m="$("$VENV_PY" -c "print(round(($s+$e)/2,2))")"
-    sp="$("$VENV_PY" -c "print(round($s+0.15,2))")"
-    ep="$("$VENV_PY" -c "print(round($e-0.15,2))")"
+    sp="$("$VENV_PY" -c "dur=$e-$s; print(round(min($s+1.2, $s+max(0.15, dur/4)),2))")"
+    ep="$("$VENV_PY" -c "dur=$e-$s; print(round(max($s+0.15, $e-min(0.3, dur/10)),2))")"
     extract_frame "$sp" "$REVIEW_DIR/cue${ii}_start.png"
     extract_frame "$m"  "$REVIEW_DIR/cue${ii}_mid.png"
     extract_frame "$ep" "$REVIEW_DIR/cue${ii}_end.png"

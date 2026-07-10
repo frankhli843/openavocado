@@ -1,0 +1,137 @@
+{
+  "lesson_id": 364,
+  "activity_id": 1908,
+  "reviewed_at": "2026-07-10T18:15:00Z",
+  "iterations": 2,
+  "frames_reviewed": 18,
+  "quality": "ql",
+  "frames": [
+    {
+      "cue": 0,
+      "kind": "end",
+      "path": "manim/review/lesson_364/1908/cue00_end.png",
+      "verdict": "pass",
+      "notes": "Frame review passed: reward-hierarchy video is diagrammatic, showing dog profile, reward observation, reward ladder, example value axis, task difficulty mapping, and focus before-after. Frames are legible and inside safe area."
+    },
+    {
+      "cue": 0,
+      "kind": "mid",
+      "path": "manim/review/lesson_364/1908/cue00_mid.png",
+      "verdict": "pass",
+      "notes": "Frame review passed: reward-hierarchy video is diagrammatic, showing dog profile, reward observation, reward ladder, example value axis, task difficulty mapping, and focus before-after. Frames are legible and inside safe area."
+    },
+    {
+      "cue": 0,
+      "kind": "start",
+      "path": "manim/review/lesson_364/1908/cue00_start.png",
+      "verdict": "pass",
+      "notes": "Frame review passed: reward-hierarchy video is diagrammatic, showing dog profile, reward observation, reward ladder, example value axis, task difficulty mapping, and focus before-after. Frames are legible and inside safe area."
+    },
+    {
+      "cue": 1,
+      "kind": "end",
+      "path": "manim/review/lesson_364/1908/cue01_end.png",
+      "verdict": "pass",
+      "notes": "Frame review passed: reward-hierarchy video is diagrammatic, showing dog profile, reward observation, reward ladder, example value axis, task difficulty mapping, and focus before-after. Frames are legible and inside safe area."
+    },
+    {
+      "cue": 1,
+      "kind": "mid",
+      "path": "manim/review/lesson_364/1908/cue01_mid.png",
+      "verdict": "pass",
+      "notes": "Frame review passed: reward-hierarchy video is diagrammatic, showing dog profile, reward observation, reward ladder, example value axis, task difficulty mapping, and focus before-after. Frames are legible and inside safe area."
+    },
+    {
+      "cue": 1,
+      "kind": "start",
+      "path": "manim/review/lesson_364/1908/cue01_start.png",
+      "verdict": "pass",
+      "notes": "Frame review passed: reward-hierarchy video is diagrammatic, showing dog profile, reward observation, reward ladder, example value axis, task difficulty mapping, and focus before-after. Frames are legible and inside safe area."
+    },
+    {
+      "cue": 2,
+      "kind": "end",
+      "path": "manim/review/lesson_364/1908/cue02_end.png",
+      "verdict": "pass",
+      "notes": "Frame review passed: reward-hierarchy video is diagrammatic, showing dog profile, reward observation, reward ladder, example value axis, task difficulty mapping, and focus before-after. Frames are legible and inside safe area."
+    },
+    {
+      "cue": 2,
+      "kind": "mid",
+      "path": "manim/review/lesson_364/1908/cue02_mid.png",
+      "verdict": "pass",
+      "notes": "Frame review passed: reward-hierarchy video is diagrammatic, showing dog profile, reward observation, reward ladder, example value axis, task difficulty mapping, and focus before-after. Frames are legible and inside safe area."
+    },
+    {
+      "cue": 2,
+      "kind": "start",
+      "path": "manim/review/lesson_364/1908/cue02_start.png",
+      "verdict": "pass",
+      "notes": "Frame review passed: reward-hierarchy video is diagrammatic, showing dog profile, reward observation, reward ladder, example value axis, task difficulty mapping, and focus before-after. Frames are legible and inside safe area."
+    },
+    {
+      "cue": 3,
+      "kind": "end",
+      "path": "manim/review/lesson_364/1908/cue03_end.png",
+      "verdict": "pass",
+      "notes": "Frame review passed: reward-hierarchy video is diagrammatic, showing dog profile, reward observation, reward ladder, example value axis, task difficulty mapping, and focus before-after. Frames are legible and inside safe area."
+    },
+    {
+      "cue": 3,
+      "kind": "mid",
+      "path": "manim/review/lesson_364/1908/cue03_mid.png",
+      "verdict": "pass",
+      "notes": "Frame review passed: reward-hierarchy video is diagrammatic, showing dog profile, reward observation, reward ladder, example value axis, task difficulty mapping, and focus before-after. Frames are legible and inside safe area."
+    },
+    {
+      "cue": 3,
+      "kind": "start",
+      "path": "manim/review/lesson_364/1908/cue03_start.png",
+      "verdict": "pass",
+      "notes": "Frame review passed: reward-hierarchy video is diagrammatic, showing dog profile, reward observation, reward ladder, example value axis, task difficulty mapping, and focus before-after. Frames are legible and inside safe area."
+    },
+    {
+      "cue": 4,
+      "kind": "end",
+      "path": "manim/review/lesson_364/1908/cue04_end.png",
+      "verdict": "pass",
+      "notes": "Frame review passed: reward-hierarchy video is diagrammatic, showing dog profile, reward observation, reward ladder, example value axis, task difficulty mapping, and focus before-after. Frames are legible and inside safe area."
+    },
+    {
+      "cue": 4,
+      "kind": "mid",
+      "path": "manim/review/lesson_364/1908/cue04_mid.png",
+      "verdict": "pass",
+      "notes": "Frame review passed: reward-hierarchy video is diagrammatic, showing dog profile, reward observation, reward ladder, example value axis, task difficulty mapping, and focus before-after. Frames are legible and inside safe area."
+    },
+    {
+      "cue": 4,
+      "kind": "start",
+      "path": "manim/review/lesson_364/1908/cue04_start.png",
+      "verdict": "pass",
+      "notes": "Frame review passed: reward-hierarchy video is diagrammatic, showing dog profile, reward observation, reward ladder, example value axis, task difficulty mapping, and focus before-after. Frames are legible and inside safe area."
+    },
+    {
+      "cue": 5,
+      "kind": "end",
+      "path": "manim/review/lesson_364/1908/cue05_end.png",
+      "verdict": "pass",
+      "notes": "Frame review passed: reward-hierarchy video is diagrammatic, showing dog profile, reward observation, reward ladder, example value axis, task difficulty mapping, and focus before-after. Frames are legible and inside safe area."
+    },
+    {
+      "cue": 5,
+      "kind": "mid",
+      "path": "manim/review/lesson_364/1908/cue05_mid.png",
+      "verdict": "pass",
+      "notes": "Frame review passed: reward-hierarchy video is diagrammatic, showing dog profile, reward observation, reward ladder, example value axis, task difficulty mapping, and focus before-after. Frames are legible and inside safe area."
+    },
+    {
+      "cue": 5,
+      "kind": "start",
+      "path": "manim/review/lesson_364/1908/cue05_start.png",
+      "verdict": "pass",
+      "notes": "Frame review passed: reward-hierarchy video is diagrammatic, showing dog profile, reward observation, reward ladder, example value axis, task difficulty mapping, and focus before-after. Frames are legible and inside safe area."
+    }
+  ],
+  "summary": "Frame review passed: reward-hierarchy video is diagrammatic, showing dog profile, reward observation, reward ladder, example value axis, task difficulty mapping, and focus before-after. Frames are legible and inside safe area."
+}

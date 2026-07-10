@@ -26,6 +26,7 @@ exports/
 
 # Runtime and tooling
 node_modules/
+node_modules
 .venv/
 venv/
 __pycache__/
@@ -56,3 +57,5 @@ out/
 # runtime_artifacts/ above and *.mp3 elsewhere in this file.
 runtime_artifacts/
 /audio/
+manim/media/
+manim/**/__pycache__/

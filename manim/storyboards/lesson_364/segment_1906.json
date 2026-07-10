@@ -1,0 +1,116 @@
+{
+  "lesson_id": 364,
+  "activity_id": 1906,
+  "activity_type": "audio",
+  "title": "Audio: The Foundation of Positive Reinforcement: Understanding Motivation and Rewards",
+  "audio": {
+    "file_path": "runtime_artifacts/audio/lesson_364_audio.mp3",
+    "duration_sec": 1045.75
+  },
+  "audio_source": "artifact",
+  "cue_source": "orientation_visual.cues",
+  "cues": [
+    {
+      "index": 0,
+      "start": 0,
+      "end": 131.3,
+      "duration": 131.3,
+      "label": "High-level map",
+      "headline": "Locate the lesson before details",
+      "narration": "Locate the lesson before details for The Foundation of Positive Reinforcement: Understanding Motivation and Rewards.",
+      "active_elements": [
+        "You say 'Sit'"
+      ]
+    },
+    {
+      "index": 1,
+      "start": 131.3,
+      "end": 261.438,
+      "duration": 130.138,
+      "label": "Analogy",
+      "headline": "Translate the idea into a workshop metaphor",
+      "narration": "Translate the idea into a workshop metaphor for The Foundation of Positive Reinforcement: Understanding Motivation and Rewards.",
+      "active_elements": [
+        "Dog sits"
+      ]
+    },
+    {
+      "index": 2,
+      "start": 261.438,
+      "end": 392.738,
+      "duration": 131.3,
+      "label": "Tiny example",
+      "headline": "Follow one concrete object",
+      "narration": "Follow one concrete object for The Foundation of Positive Reinforcement: Understanding Motivation and Rewards.",
+      "active_elements": [
+        "Treat given"
+      ]
+    },
+    {
+      "index": 3,
+      "start": 392.738,
+      "end": 522.876,
+      "duration": 130.138,
+      "label": "Mechanism",
+      "headline": "Expose what changes and why",
+      "narration": "Expose what changes and why for The Foundation of Positive Reinforcement: Understanding Motivation and Rewards.",
+      "active_elements": [
+        "Antecedent",
+        "Behavior"
+      ]
+    },
+    {
+      "index": 4,
+      "start": 522.876,
+      "end": 654.176,
+      "duration": 131.3,
+      "label": "Formula 1",
+      "headline": "Follow the formula and highlight P(behavior repeats), Reward value, Timing clarity, Consistency",
+      "narration": "Watch the displayed equation while the hosts connect P(behavior repeats), Reward value, Timing clarity, Consistency to the part being discussed. The highlighted terms are the pieces to follow right now.",
+      "active_elements": [
+        "P(behavior repeats)",
+        "Reward value",
+        "Timing clarity"
+      ]
+    },
+    {
+      "index": 5,
+      "start": 654.176,
+      "end": 784.314,
+      "duration": 130.138,
+      "label": "Implementation",
+      "headline": "Connect to code and tests",
+      "narration": "Connect to code and tests for The Foundation of Positive Reinforcement: Understanding Motivation and Rewards.",
+      "active_elements": [
+        "You say 'Sit'"
+      ]
+    },
+    {
+      "index": 6,
+      "start": 784.314,
+      "end": 915.614,
+      "duration": 131.3,
+      "label": "Misconception",
+      "headline": "Separate nearby ideas",
+      "narration": "Separate nearby ideas for The Foundation of Positive Reinforcement: Understanding Motivation and Rewards.",
+      "active_elements": [
+        "Dog sits"
+      ]
+    },
+    {
+      "index": 7,
+      "start": 915.614,
+      "end": 1045.75,
+      "duration": 130.136,
+      "label": "Synthesis",
+      "headline": "Restate the mechanism from multiple angles",
+      "narration": "Restate the mechanism from multiple angles for The Foundation of Positive Reinforcement: Understanding Motivation and Rewards.",
+      "active_elements": [
+        "Treat given"
+      ]
+    }
+  ],
+  "cue_span_sec": 1045.75,
+  "formulas": [],
+  "exported_at": "2026-07-10T17:56:08.461Z"
+}
