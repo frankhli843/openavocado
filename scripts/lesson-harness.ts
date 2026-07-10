@@ -32,6 +32,7 @@ import { generateInitialAssessment } from "../src/lib/lesson-generator/initial-a
 import { generateLessonAudio } from "../src/lib/audio/generate-lesson-audio";
 import { sanitizeDraftVisualRefs } from "../src/lib/lessons/visual-artifact-guard";
 import { COMPREHENSIVE_LESSON_PLAN_TEMPLATE } from "../src/lib/lesson-generator/plan-template";
+import { validateLessonProductionReadiness } from "../src/lib/lesson-generator/readiness";
 import type Database from "better-sqlite3";
 import type {
   SubjectCreatedEvent,
@@ -185,6 +186,28 @@ interface DiagnosticQuestion {
   hint: string;
 }
 
+interface HarnessReadinessActivityRow {
+  id: number;
+  activity_type: string;
+  title: string | null;
+  content: string | null;
+}
+
+interface HarnessGeneratedArtifactRow {
+  activity_id: number | null;
+  artifact_type: string;
+  file_path: string | null;
+}
+
+interface HarnessVisualArtifactRow {
+  slug: string;
+  build_status: string;
+  approved_at: string | null;
+  compiled_asset_path: string | null;
+  qa_notes: string | null;
+  qa_screenshot_ref: string | null;
+}
+
 // ─── Progress tracking ────────────────────────────────────────────────────────
 
 function updateJobProgress(
@@ -221,6 +244,67 @@ function updateJobProgress(
     ).run(stage, JSON.stringify(events), job.id);
   } catch {
     // Progress updates are best-effort — never fail the harness over them
+  }
+}
+
+function validatePersistedLessonReadiness(
+  db: Database.Database,
+  lessonId: number
+): { ok: true } | { ok: false; error: string } {
+  const activities = db
+    .prepare("SELECT id, activity_type, title, content FROM lesson_activities WHERE lesson_id = ? ORDER BY sequence_order, id")
+    .all(lessonId) as HarnessReadinessActivityRow[];
+  const generatedArtifacts = db
+    .prepare(
+      `SELECT activity_id, artifact_type, file_path
+       FROM generated_artifacts
+       WHERE lesson_id = ?`
+    )
+    .all(lessonId) as HarnessGeneratedArtifactRow[];
+  const visualArtifacts = db
+    .prepare(
+      `SELECT slug, build_status, approved_at, compiled_asset_path, qa_notes, qa_screenshot_ref
+       FROM visual_artifacts`
+    )
+    .all() as HarnessVisualArtifactRow[];
+
+  const errors: string[] = [];
+  const readiness = validateLessonProductionReadiness({
+    activities: activities.map((activity) => ({
+      id: activity.id,
+      activity_type: activity.activity_type,
+      title: activity.title,
+      content: parseActivityContent(activity, errors),
+    })),
+    generatedArtifacts,
+    visualArtifacts,
+    options: {
+      runtimeRoot: process.env.AVOCADOCORE_RUNTIME_ROOT,
+      checkFiles: Boolean(process.env.AVOCADOCORE_RUNTIME_ROOT),
+    },
+  });
+  errors.push(...readiness.errors);
+
+  if (errors.length > 0) {
+    return {
+      ok: false,
+      error: `Lesson ${lessonId} is blocked by production readiness checks: ${errors.slice(0, 6).join(" | ")}`,
+    };
+  }
+  return { ok: true };
+}
+
+function parseActivityContent(activity: HarnessReadinessActivityRow, errors: string[]): Record<string, unknown> {
+  if (!activity.content) return {};
+  try {
+    return JSON.parse(activity.content) as Record<string, unknown>;
+  } catch (error) {
+    errors.push(
+      `activity ${activity.id} (${activity.title ?? activity.activity_type}) content is not valid JSON: ${
+        error instanceof Error ? error.message : String(error)
+      }`
+    );
+    return {};
   }
 }
 
@@ -1503,6 +1587,20 @@ async function handleLessonCompleted(
     }
   }
 
+  updateJobProgress(db, subjectId, triggerEvent, "media_readiness", "Checking generated videos and approved visual artifacts");
+  const readiness = validatePersistedLessonReadiness(db, lessonId);
+  if (!readiness.ok) {
+    console.error(`[lesson-harness] ${readiness.error}`);
+    updateJobProgress(db, subjectId, triggerEvent, "media_review_blocked", readiness.error.slice(0, 400));
+    return {
+      ok: false,
+      error: readiness.error.slice(0, 500),
+      lesson_id: lessonId,
+      provider_used: getGeneratorId(modelUsed),
+      stage_reached: "media_review_blocked",
+    };
+  }
+
   updateJobProgress(db, subjectId, triggerEvent, "finalizing", `Lesson "${draft.title}" ready (id ${lessonId})`);
 
   return {
@@ -1599,6 +1697,20 @@ async function handleLessonDiscarded(
       const msg = audioErr instanceof Error ? audioErr.message : String(audioErr);
       console.error(`[lesson-harness] Audio generation failed for lesson ${lessonId}: ${msg}`);
     }
+  }
+
+  updateJobProgress(db, subjectId, triggerEvent, "media_readiness", "Checking replacement lesson videos and approved visual artifacts");
+  const readiness = validatePersistedLessonReadiness(db, lessonId);
+  if (!readiness.ok) {
+    console.error(`[lesson-harness] ${readiness.error}`);
+    updateJobProgress(db, subjectId, triggerEvent, "media_review_blocked", readiness.error.slice(0, 400));
+    return {
+      ok: false,
+      error: readiness.error.slice(0, 500),
+      lesson_id: lessonId,
+      provider_used: getGeneratorId(modelUsed),
+      stage_reached: "media_review_blocked",
+    };
   }
 
   updateJobProgress(db, subjectId, triggerEvent, "finalizing", `Replacement lesson "${draft.title}" ready (id ${lessonId})`);
