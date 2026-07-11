@@ -33,6 +33,7 @@ import fs from "fs";
 import path from "path";
 import { execFileSync } from "child_process";
 import Database from "better-sqlite3";
+import { resolveRuntimeFile } from "../src/lib/audio/runtime-storage";
 
 type SegmentRow = {
   activity_id: number;
@@ -162,7 +163,13 @@ for (const seg of segments) {
   }
 
   const filePath = videoRow.file_path || contentVideoPath || "";
-  const absMp4 = path.isAbsolute(filePath) ? filePath : path.join(runtimeRoot, filePath);
+  // Resolve through the same module as the /runtime serving route so the audit
+  // can never drift from what the app actually serves. Stored paths begin with
+  // `runtime_artifacts/`; AVOCADOCORE_RUNTIME_ROOT (e.g. /var/prodavo/runtime_artifacts
+  // on prod) points AT the artifacts root, so a naive join would double the prefix.
+  const absMp4 = path.isAbsolute(filePath)
+    ? filePath
+    : resolveRuntimeFile(filePath) ?? path.join(runtimeRoot, filePath);
 
   // 3. file exists
   if (!fs.existsSync(absMp4)) {
@@ -181,9 +188,26 @@ for (const seg of segments) {
     if (!fs.existsSync(vtt)) errors.push("captions .vtt missing");
   }
 
-  // 5. review.json
-  const reviewPath = path.join(reviewRoot, "manim", "review", `lesson_${seg.lesson_id}`, String(seg.activity_id), "review.json");
-  if (!fs.existsSync(reviewPath)) {
+  // 5. review.json — the frame-review proof belongs to the RENDER, not the DB
+  // row. A registration cloned from a reviewed source video (file path
+  // videos/lesson_<src>/activity_<src>.mp4 registered onto another lesson's
+  // segment) is proven by the source segment's review, so fall back to the
+  // review dir derived from the mp4 path when the target has none of its own.
+  const reviewCandidates: { lesson: number; activity: number }[] = [
+    { lesson: seg.lesson_id, activity: seg.activity_id },
+  ];
+  const srcMatch = /videos\/lesson_(\d+)\/activity_(\d+)\.mp4$/.exec(filePath);
+  if (srcMatch) {
+    const src = { lesson: Number(srcMatch[1]), activity: Number(srcMatch[2]) };
+    if (src.lesson !== seg.lesson_id || src.activity !== seg.activity_id) reviewCandidates.push(src);
+  }
+  const reviewOwner = reviewCandidates.find((c) =>
+    fs.existsSync(path.join(reviewRoot, "manim", "review", `lesson_${c.lesson}`, String(c.activity), "review.json"))
+  );
+  const reviewPath = reviewOwner
+    ? path.join(reviewRoot, "manim", "review", `lesson_${reviewOwner.lesson}`, String(reviewOwner.activity), "review.json")
+    : null;
+  if (!reviewPath) {
     errors.push("review.json missing (no proof of frame review)");
   } else {
     try {
@@ -194,7 +218,10 @@ for (const seg of segments) {
       if (frames.length === 0) errors.push("review.json has no frames");
       const unresolved = frames.filter((f: any) => String(f.verdict ?? "").toLowerCase().includes("fix")).length;
       if (unresolved > 0) errors.push(`review.json has ${unresolved} unresolved fix verdicts`);
-      const cues = storyboardCueCount(seg.lesson_id, seg.activity_id);
+      // Frames were reviewed against the render's own storyboard, so when the
+      // review proof came from a source segment, validate against that
+      // segment's storyboard rather than the clone's.
+      const cues = storyboardCueCount(reviewOwner!.lesson, reviewOwner!.activity);
       if (cues != null) {
         // Proof of per-cue review: every storyboard cue must have at least one
         // reviewed frame, plus a thoroughness floor (~2-3 frames per cue). The
