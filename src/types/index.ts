@@ -43,6 +43,7 @@ export type {
 
 export type LevelName = "familiarity" | "competence" | "mastery" | "post_mastery";
 export type SubjectStatus = "active" | "paused" | "completed" | "archived";
+export type SubjectLessonType = "course" | "one_off";
 export type LessonStatus = "queued" | "in_progress" | "completed" | "skipped" | "discarded";
 
 export type ActivityType =
@@ -142,13 +143,35 @@ export interface Subject {
   title: string;
   description: string | null;
   status: SubjectStatus;
+  lesson_type?: SubjectLessonType;
+  target_lesson_count?: number | null;
   goals: string | null;
   /** Learner notes for lesson-generation agents: preferred style, constraints, context, emphasis. */
   criteria: string | null;
+  /** JSON array of uploaded source materials, extracted text snippets, and context links. */
+  source_materials: string | null;
   current_level: LevelName;
   archived_at: string | null;
   created_at: string;
   updated_at: string;
+}
+
+export type SourceMaterialType = "link" | "text" | "file";
+export type SourceMaterialExtractStatus = "ok" | "empty" | "unsupported" | "failed" | "too_large";
+
+export interface SourceMaterial {
+  id: string;
+  type: SourceMaterialType;
+  title: string;
+  url?: string;
+  file_name?: string;
+  mime_type?: string;
+  file_size?: number;
+  stored_path?: string;
+  extracted_text?: string;
+  extract_status?: SourceMaterialExtractStatus;
+  extract_error?: string;
+  created_at: string;
 }
 
 /** Persistent AI workpad per subject+learner — stored in DB, never committed. */
@@ -700,8 +723,11 @@ export interface SubjectCreatedEvent {
   subject_id: number;
   subject_title: string;
   subject_description: string | null;
+  lesson_type?: SubjectLessonType;
+  target_lesson_count?: number | null;
   subject_goals: string | null;
   subject_criteria: string | null;
+  source_materials?: SourceMaterial[];
   current_level: LevelName;
   workpad_summary: string | null;
   learner_profile_config: Record<string, unknown> | null;

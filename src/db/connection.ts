@@ -96,6 +96,15 @@ function applyAdditiveMigrations(db: Database.Database): void {
   if (!hasColumn("subjects", "criteria")) {
     db.exec("ALTER TABLE subjects ADD COLUMN criteria TEXT");
   }
+  if (!hasColumn("subjects", "lesson_type")) {
+    db.exec("ALTER TABLE subjects ADD COLUMN lesson_type TEXT NOT NULL DEFAULT 'course'");
+  }
+  if (!hasColumn("subjects", "target_lesson_count")) {
+    db.exec("ALTER TABLE subjects ADD COLUMN target_lesson_count INTEGER");
+  }
+  if (!hasColumn("subjects", "source_materials")) {
+    db.exec("ALTER TABLE subjects ADD COLUMN source_materials TEXT");
+  }
 
   // Allow the adaptive model to move beyond mastery into current-paper study.
   // SQLite cannot ALTER CHECK constraints, so rebuild older subject tables that

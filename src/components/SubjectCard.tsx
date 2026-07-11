@@ -40,11 +40,18 @@ export function SubjectCard({ subject, onArchiveToggle, busy }: SubjectCardProps
           <h3 className="min-w-0 break-words font-semibold text-gray-900 text-base leading-snug group-hover:text-blue-700 transition-colors">
             {subject.title}
           </h3>
-          <span
-            className={`shrink-0 inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium border ${LEVEL_COLORS[subject.current_level]}`}
-          >
-            {subject.current_level}
-          </span>
+          <div className="flex shrink-0 flex-col items-end gap-1">
+            {subject.lesson_type === "one_off" && (
+              <span className="inline-flex items-center rounded-full border border-amber-100 bg-amber-50 px-2 py-0.5 text-xs font-medium text-amber-700">
+                1 off
+              </span>
+            )}
+            <span
+              className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium border ${LEVEL_COLORS[subject.current_level]}`}
+            >
+              {subject.current_level}
+            </span>
+          </div>
         </div>
 
         {/* Description */}
@@ -86,6 +93,11 @@ export function SubjectCard({ subject, onArchiveToggle, busy }: SubjectCardProps
             <span className="font-medium text-gray-700">{subject.completed_count}</span>
             /{subject.lesson_count} lessons
           </span>
+          {subject.target_lesson_count != null && (
+            <span>
+              target <span className="font-medium text-gray-700">{subject.target_lesson_count}</span>
+            </span>
+          )}
           {subject.queued_count > 0 && (
             <span>
               <span className="font-medium text-gray-700">{subject.queued_count}</span> queued

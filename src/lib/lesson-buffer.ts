@@ -22,7 +22,7 @@ export function buildLessonBufferPlan(
     targetReadyCount?: number;
   }
 ): LessonBufferPlan {
-  const target = params.targetReadyCount ?? READY_LESSON_BUFFER_TARGET;
+  const target = params.targetReadyCount ?? resolveReadyTargetForSubject(db, params.subjectId);
   const readyRows = loadReadyLessons(db, params.subjectId);
   const completedLessonId = typeof params.completedLessonId === "number" ? params.completedLessonId : null;
   const enrichmentTargets = completedLessonId
@@ -47,6 +47,29 @@ export function buildLessonBufferPlan(
     })),
     enrichment_required_for_lesson_ids: enrichmentTargets,
   };
+}
+
+function resolveReadyTargetForSubject(db: Database.Database, subjectId: number): number {
+  const row = db
+    .prepare(
+      `SELECT lesson_type, target_lesson_count
+       FROM subjects
+       WHERE id = ?`
+    )
+    .get(subjectId) as { lesson_type: string | null; target_lesson_count: number | null } | undefined;
+  if (!row?.target_lesson_count) return READY_LESSON_BUFFER_TARGET;
+
+  const completedTeaching = db
+    .prepare(
+      `SELECT COUNT(*) AS count
+       FROM lessons
+       WHERE subject_id = ?
+         AND status = 'completed'
+         AND sequence_number > 0`
+    )
+    .get(subjectId) as { count: number };
+  const remaining = Math.max(0, row.target_lesson_count - completedTeaching.count);
+  return Math.min(READY_LESSON_BUFFER_TARGET, remaining);
 }
 
 export function enrichQueuedLessonsFromCompletion(

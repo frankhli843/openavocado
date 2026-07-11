@@ -62,6 +62,10 @@ async function dispatchToAgentHarness(event: HarnessEvent): Promise<HarnessComma
         event.event === "lesson.completed"
           ? "Maintain two queued ready lessons. Enrich existing queued lessons from the completed lesson before generating missing lessons."
           : undefined,
+      one_off_policy:
+        event.event === "subject.created" && event.lesson_type === "one_off"
+          ? "Generate exactly one pure teaching lesson from the subject context and source materials. Do not create a separate initial assessment lesson."
+          : undefined,
     },
   };
 

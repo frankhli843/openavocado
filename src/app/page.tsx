@@ -164,10 +164,12 @@ function DashboardContent() {
 
   const learnerName = subjects[0]?.learner_display_name ?? "Learner";
 
-  const activeSubjects = subjects.filter((s) => s.status !== "archived");
+  const activeSubjects = subjects.filter((s) => s.status !== "archived" && s.lesson_type !== "one_off");
+  const oneOffSubjects = subjects.filter((s) => s.status !== "archived" && s.lesson_type === "one_off");
   const archivedSubjects = subjects.filter((s) => s.status === "archived");
-  const hasPersonalActiveSubject = activeSubjects.some((s) => !isBuiltInDemoSubjectTitle(s.title));
-  const shouldShowCreateSubjectCallout = !loading && !error && activeSubjects.length > 0 && !hasPersonalActiveSubject;
+  const visibleActiveSubjects = [...activeSubjects, ...oneOffSubjects];
+  const hasPersonalActiveSubject = visibleActiveSubjects.some((s) => !isBuiltInDemoSubjectTitle(s.title));
+  const shouldShowCreateSubjectCallout = !loading && !error && visibleActiveSubjects.length > 0 && !hasPersonalActiveSubject;
 
   return (
     <div className="min-h-screen bg-white">
@@ -239,6 +241,19 @@ function DashboardContent() {
                   >
                     Create subject
                   </button>
+                </div>
+              </section>
+            )}
+
+            {oneOffSubjects.length > 0 && (
+              <section id="one-off-subjects" className="mb-10 scroll-mt-24">
+                <h2 className="text-sm font-semibold text-gray-500 uppercase tracking-wider mb-4">
+                  1 offs
+                </h2>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {oneOffSubjects.map((s) => (
+                    <SubjectCard key={s.id} subject={s} onArchiveToggle={handleArchiveToggle} busy={busyId === s.id} />
+                  ))}
                 </div>
               </section>
             )}
