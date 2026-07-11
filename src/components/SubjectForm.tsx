@@ -233,7 +233,7 @@ export function SubjectForm({ initial, learnerId, onSave, onCancel }: SubjectFor
         <textarea
           value={sourceText}
           onChange={(e) => setSourceText(e.target.value)}
-          placeholder="Notes or context, for example: Meeting with Sara about Gemma contribution path..."
+          placeholder="Notes or context, for example: Meeting notes from the team sync about the Q3 roadmap..."
           rows={4}
           className="mb-2 w-full px-3 py-2.5 text-sm border border-gray-200 rounded-lg resize-y focus:outline-none focus:ring-2 focus:ring-blue-200 focus:border-blue-400 transition-colors leading-relaxed"
         />

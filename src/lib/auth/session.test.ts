@@ -197,7 +197,7 @@ describe("ensureActiveLearnerProfile", () => {
       "The LLM Lifecycle: From Raw Text to Running Model",
       "Inside the Transformer: From Token IDs to Next-Token Logits",
       "Inside the Attention Block: Q, K, V, MLP, and the Residual Stream",
-      "Private Sara Gemma Planning Lesson",
+      "Private Placeholder Planning Lesson",
     ].entries()) {
       const lessonId = insertLesson.run(
         canonicalSubjectId,
@@ -211,7 +211,7 @@ describe("ensureActiveLearnerProfile", () => {
         "test"
       ).lastInsertRowid as number;
       db.prepare("UPDATE lessons SET source_context = ? WHERE id = ?").run(
-        JSON.stringify({ private_note: "Sara private Gemma discussion, do not copy" }),
+        JSON.stringify({ private_note: "Private placeholder discussion, do not copy" }),
         lessonId
       );
       insertActivity.run(
@@ -224,10 +224,10 @@ describe("ensureActiveLearnerProfile", () => {
     }
     db.prepare(
       "INSERT INTO subject_workpads (subject_id, learner_id, content) VALUES (?, ?, ?)"
-    ).run(canonicalSubjectId, canonicalLearnerId, "Private Sara Gemma workpad");
+    ).run(canonicalSubjectId, canonicalLearnerId, "Private Placeholder workpad");
     db.prepare(
       "INSERT INTO subject_journal_entries (subject_id, learner_id, title, content) VALUES (?, ?, ?, ?)"
-    ).run(canonicalSubjectId, canonicalLearnerId, "Private journal", "Private Sara Gemma journal");
+    ).run(canonicalSubjectId, canonicalLearnerId, "Private journal", "Private Placeholder journal");
     vi.stubEnv("AVOCADOCORE_DEMO_SOURCE_SUBJECT_ID", String(canonicalSubjectId));
 
     const userId = db
@@ -280,7 +280,7 @@ describe("ensureActiveLearnerProfile", () => {
            JOIN subjects s ON s.id = l.subject_id
           WHERE s.learner_id = ?
             AND s.title = 'Demo Lesson: Build your own LLM AI'
-            AND l.title LIKE '%Private Sara%'`
+            AND l.title LIKE '%Private Placeholder%'`
       )
       .get(repaired.active_learner_id) as { count: number };
     expect(privateLessonCount.count).toBe(0);
@@ -324,7 +324,7 @@ describe("ensureActiveLearnerProfile", () => {
        VALUES (?, ?, ?, 'queued', 0, ?, ?, ?)`
     ).run(
       canonicalSubjectId,
-      "Private Sara Gemma Planning Lesson",
+      "Private Placeholder Planning Lesson",
       "Private",
       JSON.stringify(["goal"]),
       JSON.stringify(["tag"]),
@@ -349,7 +349,7 @@ describe("ensureActiveLearnerProfile", () => {
       .prepare(
         `SELECT COUNT(l.id) AS lesson_count,
                 GROUP_CONCAT(l.sequence_number, ',') AS sequences,
-                SUM(CASE WHEN l.title LIKE '%Private Sara%' THEN 1 ELSE 0 END) AS private_count
+                SUM(CASE WHEN l.title LIKE '%Private Placeholder%' THEN 1 ELSE 0 END) AS private_count
          FROM subjects s
          JOIN lessons l ON l.subject_id = s.id
          WHERE s.learner_id = ? AND s.title = 'Demo Lesson: Build your own LLM AI'`
