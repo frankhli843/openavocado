@@ -3,6 +3,7 @@ import { getDb } from "@/db/connection";
 import { computeSubjectMastery } from "@/lib/mastery";
 import { evaluateSubjectLevelProgression } from "@/lib/level-progression";
 import { reconcileMaterializedLessonJobs } from "@/lib/lesson-jobs/reconcile";
+import { reapStalledLessonJobs } from "@/lib/lesson-jobs/reaper";
 import {
   buildSourceMaterialsFromFormData,
   buildSourceMaterialsFromJson,
@@ -21,6 +22,7 @@ export async function GET(
     const db = getDb();
     const subjectId = Number(id);
     reconcileMaterializedLessonJobs(db, { subjectId });
+    reapStalledLessonJobs(db, { subjectId });
 
     const subject = db
       .prepare("SELECT * FROM subjects WHERE id = ?")

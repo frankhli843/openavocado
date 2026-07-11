@@ -5,6 +5,7 @@ import { getSubjectCreatedDispatcher } from "@/lib/adapters";
 import { computeSubjectMastery } from "@/lib/mastery";
 import { getSessionUser } from "@/lib/auth/session";
 import { reconcileMaterializedLessonJobs } from "@/lib/lesson-jobs/reconcile";
+import { reapStalledLessonJobs } from "@/lib/lesson-jobs/reaper";
 import {
   buildSourceMaterialsFromFormData,
   buildSourceMaterialsFromJson,
@@ -221,6 +222,7 @@ export async function GET(request: Request) {
     // explicit query param (for backwards-compatible API use) or learner 1.
     const learnerId = sessionUser?.active_learner_id ?? Number(searchParams.get("learner_id") || 1);
     reconcileMaterializedLessonJobs(db, { learnerId });
+    reapStalledLessonJobs(db, { learnerId });
 
     const subjects = db
       .prepare(
