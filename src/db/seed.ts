@@ -92,7 +92,7 @@ export function seedDatabase(): void {
       .run(
         learnerId,
         "GDM Image Preprocessor",
-        "A focused learning track for becoming fluent in model-building foundations and expert-level vision preprocessing for multimodal models, aimed at Sara follow-up preparation.",
+        "A focused learning track for becoming fluent in model-building foundations and expert-level vision preprocessing for multimodal models.",
         "Understand the full image preprocessing pipeline from raw pixel data to model-ready tensors. Reach competence-level understanding of transforms, normalization, tokenization, and batching as applied to multimodal architectures like Gemma.",
         "Code-first approach using Python/PIL/NumPy. Implement each preprocessing step from scratch before using library abstractions. Connect each transform to why the model architecture requires it. Focus on Gemma 4 multimodal input contracts.",
         "familiarity"

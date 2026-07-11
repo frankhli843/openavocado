@@ -58,8 +58,8 @@ enforced by `validateGeneratedContent`; the rest is a hard authoring rule.
   recorded in task notes / lesson metadata.
 - **Planning stage before authoring.** Before writing lesson content, do a
   deliberate planning pass over the whole lesson. For active technical domains
-  such as model building, inference, quantization, GGUF conversion, Hugging Face
-  releases, and Gemma contribution practice, perform comprehensive current
+  such as model building, inference, quantization, GGUF conversion, and Hugging Face
+  releases, perform comprehensive current
   research from reliable sources first. Record source-backed findings, what has
   changed since the previous plan, and any uncertainty. Update the subject
   workpad and long-term plan before generating the lesson itself.

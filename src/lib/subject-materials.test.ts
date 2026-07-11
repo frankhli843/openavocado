@@ -4,8 +4,8 @@ import { buildSourceMaterialsFromJson, sourceMaterialsToPrompt } from "./subject
 describe("subject materials", () => {
   it("normalizes links and inline context into prompt-ready source material", () => {
     const materials = buildSourceMaterialsFromJson({
-      source_links: "https://example.com/sara-meeting\nhttps://example.com/gemma-plan",
-      source_text: "Meeting with Sara: focus on Gemma contribution path, benchmark evidence, and model release workflow.",
+      source_links: "https://example.com/team-meeting\nhttps://example.com/roadmap-plan",
+      source_text: "Meeting notes: focus on the model release workflow, benchmark evidence, and next steps.",
     });
 
     expect(materials).toHaveLength(3);
@@ -13,8 +13,8 @@ describe("subject materials", () => {
     expect(materials[2].type).toBe("text");
 
     const prompt = sourceMaterialsToPrompt(materials);
-    expect(prompt).toContain("https://example.com/sara-meeting");
-    expect(prompt).toContain("Meeting with Sara");
-    expect(prompt).toContain("Gemma contribution path");
+    expect(prompt).toContain("https://example.com/team-meeting");
+    expect(prompt).toContain("Meeting notes");
+    expect(prompt).toContain("model release workflow");
   });
 });
