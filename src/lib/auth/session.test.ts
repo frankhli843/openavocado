@@ -172,11 +172,32 @@ describe("ensureActiveLearnerProfile", () => {
       `INSERT INTO lesson_activities (lesson_id, activity_type, is_core, sequence_order, title, content)
        VALUES (?, ?, 1, ?, ?, ?)`
     );
+    db.exec(`
+      CREATE TABLE IF NOT EXISTS subject_workpads (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        subject_id INTEGER NOT NULL,
+        learner_id INTEGER NOT NULL,
+        content TEXT NOT NULL,
+        created_at TEXT NOT NULL DEFAULT (datetime('now')),
+        updated_at TEXT NOT NULL DEFAULT (datetime('now'))
+      );
+      CREATE TABLE IF NOT EXISTS subject_journal_entries (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        subject_id INTEGER NOT NULL,
+        learner_id INTEGER NOT NULL,
+        entry_type TEXT NOT NULL DEFAULT 'planning',
+        content TEXT NOT NULL,
+        created_at TEXT NOT NULL DEFAULT (datetime('now')),
+        updated_at TEXT NOT NULL DEFAULT (datetime('now'))
+      );
+    `);
+
     for (const [index, title] of [
       "Initial Assessment: Model Building and Inference",
       "The LLM Lifecycle: From Raw Text to Running Model",
       "Inside the Transformer: From Token IDs to Next-Token Logits",
       "Inside the Attention Block: Q, K, V, MLP, and the Residual Stream",
+      "Private Sara Gemma Planning Lesson",
     ].entries()) {
       const lessonId = insertLesson.run(
         canonicalSubjectId,
@@ -189,6 +210,10 @@ describe("ensureActiveLearnerProfile", () => {
         "canonical-source-test",
         "test"
       ).lastInsertRowid as number;
+      db.prepare("UPDATE lessons SET source_context = ? WHERE id = ?").run(
+        JSON.stringify({ private_note: "Sara private Gemma discussion, do not copy" }),
+        lessonId
+      );
       insertActivity.run(
         lessonId,
         index === 0 ? "assessment" : "reading",
@@ -197,6 +222,12 @@ describe("ensureActiveLearnerProfile", () => {
         JSON.stringify({ text: `activity ${index}` })
       );
     }
+    db.prepare(
+      "INSERT INTO subject_workpads (subject_id, learner_id, content) VALUES (?, ?, ?)"
+    ).run(canonicalSubjectId, canonicalLearnerId, "Private Sara Gemma workpad");
+    db.prepare(
+      "INSERT INTO subject_journal_entries (subject_id, learner_id, title, content) VALUES (?, ?, ?, ?)"
+    ).run(canonicalSubjectId, canonicalLearnerId, "Private journal", "Private Sara Gemma journal");
     vi.stubEnv("AVOCADOCORE_DEMO_SOURCE_SUBJECT_ID", String(canonicalSubjectId));
 
     const userId = db
@@ -216,7 +247,8 @@ describe("ensureActiveLearnerProfile", () => {
         `SELECT s.title, s.description, COUNT(l.id) AS lesson_count,
                 GROUP_CONCAT(l.sequence_number, ',') AS sequences,
                 GROUP_CONCAT(l.status, ',') AS statuses,
-                GROUP_CONCAT(l.generated_by, ',') AS generators
+                GROUP_CONCAT(l.generated_by, ',') AS generators,
+                SUM(CASE WHEN l.source_context IS NULL THEN 1 ELSE 0 END) AS null_source_contexts
          FROM subjects s
          JOIN lessons l ON l.subject_id = s.id
          WHERE s.learner_id = ? AND s.title = 'Demo Lesson: Build your own LLM AI'
@@ -229,15 +261,104 @@ describe("ensureActiveLearnerProfile", () => {
         sequences: string;
         statuses: string;
         generators: string;
+        null_source_contexts: number;
       };
 
     expect(demo.title).toBe("Demo Lesson: Build your own LLM AI");
-    expect(demo.description).toBe("Rich canonical demo subject.");
+    expect(demo.description).toContain("built-in demo track");
     expect(demo.lesson_count).toBe(4);
     expect(demo.sequences).toBe("0,1,2,3");
     expect(demo.statuses).toBe("queued,queued,queued,queued");
     expect(demo.generators).toBe(
       Array.from({ length: 4 }, () => CANONICAL_DEMO_GENERATOR).join(",")
     );
+    expect(demo.null_source_contexts).toBe(4);
+    const privateLessonCount = db
+      .prepare(
+        `SELECT COUNT(*) AS count
+           FROM lessons l
+           JOIN subjects s ON s.id = l.subject_id
+          WHERE s.learner_id = ?
+            AND s.title = 'Demo Lesson: Build your own LLM AI'
+            AND l.title LIKE '%Private Sara%'`
+      )
+      .get(repaired.active_learner_id) as { count: number };
+    expect(privateLessonCount.count).toBe(0);
+    const copiedWorkpadCount = db
+      .prepare("SELECT COUNT(*) AS count FROM subject_workpads WHERE learner_id = ?")
+      .get(repaired.active_learner_id) as { count: number };
+    const copiedJournalCount = db
+      .prepare("SELECT COUNT(*) AS count FROM subject_journal_entries WHERE learner_id = ?")
+      .get(repaired.active_learner_id) as { count: number };
+    expect(copiedWorkpadCount.count).toBe(0);
+    expect(copiedJournalCount.count).toBe(0);
+  });
+
+  it("ignores canonical demo cloning in production", async () => {
+    const { getDb } = await import("@/db/connection");
+    const { ensureActiveLearnerProfile } = await import("./session");
+    const db = getDb();
+
+    const canonicalUserId = db
+      .prepare("INSERT INTO users (username, display_name) VALUES (?, ?)")
+      .run("prod-canonical-user", "Canonical User").lastInsertRowid as number;
+    const canonicalLearnerId = db
+      .prepare("INSERT INTO learner_profiles (user_id, display_name) VALUES (?, ?)")
+      .run(canonicalUserId, "Canonical").lastInsertRowid as number;
+    const canonicalSubjectId = db
+      .prepare(
+        `INSERT INTO subjects (learner_id, title, description, goals, criteria, current_level)
+         VALUES (?, ?, ?, ?, ?, ?)`
+      )
+      .run(
+        canonicalLearnerId,
+        "Private Model Building",
+        "Private canonical source.",
+        "Private goal.",
+        "Private criteria.",
+        "familiarity"
+      ).lastInsertRowid as number;
+    db.prepare(
+      `INSERT INTO lessons
+         (subject_id, title, description, status, sequence_number, goals, tags, generated_by)
+       VALUES (?, ?, ?, 'queued', 0, ?, ?, ?)`
+    ).run(
+      canonicalSubjectId,
+      "Private Sara Gemma Planning Lesson",
+      "Private",
+      JSON.stringify(["goal"]),
+      JSON.stringify(["tag"]),
+      "canonical-source-test"
+    );
+    vi.stubEnv("AVOCADOCORE_DEMO_SOURCE_SUBJECT_ID", String(canonicalSubjectId));
+    vi.stubEnv("NODE_ENV", "production");
+
+    const userId = db
+      .prepare("INSERT INTO users (username, display_name, is_guest) VALUES (?, ?, 1)")
+      .run("guest-prod-canonical", "Guest learner").lastInsertRowid as number;
+    const repaired = ensureActiveLearnerProfile({
+      id: userId,
+      username: "guest-prod-canonical",
+      display_name: "Guest learner",
+      email: null,
+      active_learner_id: null,
+      is_guest: true,
+    });
+
+    const demo = db
+      .prepare(
+        `SELECT COUNT(l.id) AS lesson_count,
+                GROUP_CONCAT(l.sequence_number, ',') AS sequences,
+                SUM(CASE WHEN l.title LIKE '%Private Sara%' THEN 1 ELSE 0 END) AS private_count
+         FROM subjects s
+         JOIN lessons l ON l.subject_id = s.id
+         WHERE s.learner_id = ? AND s.title = 'Demo Lesson: Build your own LLM AI'`
+      )
+      .get(repaired.active_learner_id) as {
+        lesson_count: number;
+        sequences: string;
+        private_count: number;
+      };
+    expect(demo).toEqual({ lesson_count: 3, sequences: "1,2,3", private_count: 0 });
   });
 });

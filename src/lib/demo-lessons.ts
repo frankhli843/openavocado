@@ -5,6 +5,7 @@ import { DEMO_SUBJECT_TITLE } from "@/lib/demo-subject";
 
 export const DEMO_GENERATOR = "prodavo-demo-seed/v1";
 export const CANONICAL_DEMO_GENERATOR = "prodavo-demo-canonical-clone/v1";
+const CANONICAL_DEMO_LESSON_LIMIT = 4;
 
 interface LessonSeed {
   title: string;
@@ -68,6 +69,7 @@ export function ensureDemoLessonsForLearner(db: Database.Database, learnerId: nu
 }
 
 function configuredCanonicalDemoSourceSubjectId(): number | null {
+  if (process.env.NODE_ENV === "production") return null;
   const raw = process.env.AVOCADOCORE_DEMO_SOURCE_SUBJECT_ID;
   if (!raw) return null;
   const parsed = Number(raw);
@@ -89,13 +91,14 @@ function ensureCanonicalDemoLessonsForSubject(
     .prepare("SELECT * FROM lessons WHERE subject_id = ? ORDER BY sequence_number ASC, id ASC")
     .all(opts.sourceSubjectId) as Array<Record<string, unknown>>;
   if (sourceLessons.length === 0) return false;
+  const publicSourceLessons = sourceLessons.slice(0, CANONICAL_DEMO_LESSON_LIMIT);
 
   const existingLessons = db
     .prepare("SELECT id, status, generated_by FROM lessons WHERE subject_id = ? ORDER BY sequence_number ASC, id ASC")
     .all(opts.subjectId) as Array<{ id: number; status: string; generated_by: string | null }>;
 
   const alreadyCanonical =
-    existingLessons.length === sourceLessons.length &&
+    existingLessons.length === publicSourceLessons.length &&
     existingLessons.every((lesson) => lesson.generated_by === CANONICAL_DEMO_GENERATOR);
   if (alreadyCanonical) return true;
 
@@ -112,7 +115,7 @@ function ensureCanonicalDemoLessonsForSubject(
       learnerId: opts.learnerId,
       sourceSubjectId: opts.sourceSubjectId,
       sourceSubject,
-      sourceLessons,
+      sourceLessons: publicSourceLessons,
     });
   });
   tx();
@@ -133,31 +136,24 @@ function replaceSubjectLessonsFromCanonical(
 
   db.prepare(
     `UPDATE subjects
-       SET description = ?,
-           goals = ?,
-           criteria = ?,
-           current_level = ?,
+       SET description = COALESCE(description, ?),
+           goals = COALESCE(goals, ?),
+           criteria = COALESCE(criteria, ?),
+           current_level = 'familiarity',
            status = 'active',
            archived_at = NULL,
            updated_at = datetime('now')
      WHERE id = ?`
   ).run(
-    nullableText(opts.sourceSubject.description),
-    nullableText(opts.sourceSubject.goals),
-    nullableText(opts.sourceSubject.criteria),
-    nullableText(opts.sourceSubject.current_level) ?? "familiarity",
+    "A public demo track that shows how AvocadoCore teaches AI concepts with audio, visuals, practice, and assessment.",
+    "Understand the public demo path from text to tokens, transformer predictions, and efficient inference.",
+    "Keep the public demo hands-on and visual. Do not include private learner notes, private meetings, private source context, or internal planning content.",
     opts.subjectId
   );
 
   const lessonColumns = tableColumns(db, "lessons").filter((column) => column !== "id");
   const activityColumns = tableColumns(db, "lesson_activities").filter((column) => column !== "id");
   const generatedColumns = tableColumns(db, "generated_artifacts").filter((column) => column !== "id");
-  const workpadColumns = tableExists(db, "subject_workpads")
-    ? tableColumns(db, "subject_workpads").filter((column) => column !== "id")
-    : [];
-  const journalColumns = tableExists(db, "subject_journal_entries")
-    ? tableColumns(db, "subject_journal_entries").filter((column) => column !== "id")
-    : [];
 
   const lessonMap = new Map<number, number>();
   const activityMap = new Map<number, number>();
@@ -168,6 +164,11 @@ function replaceSubjectLessonsFromCanonical(
     lesson.status = "queued";
     lesson.generated_by = CANONICAL_DEMO_GENERATOR;
     if ("generator_version" in lesson) lesson.generator_version = `source-subject-${opts.sourceSubjectId}`;
+    if ("source_context" in lesson) lesson.source_context = null;
+    if ("started_at" in lesson) lesson.started_at = null;
+    if ("completed_at" in lesson) lesson.completed_at = null;
+    if ("discarded_at" in lesson) lesson.discarded_at = null;
+    if ("discard_reason" in lesson) lesson.discard_reason = null;
     if ("created_at" in lesson) lesson.created_at = nowSql();
     if ("updated_at" in lesson) lesson.updated_at = nowSql();
 
@@ -189,15 +190,6 @@ function replaceSubjectLessonsFromCanonical(
 
   copyGeneratedArtifacts(db, opts.sourceSubjectId, generatedColumns, lessonMap, activityMap);
   copySubjectTags(db, opts.sourceSubjectId, opts.subjectId, lessonMap);
-  copySubjectWorkpadRows(db, "subject_workpads", workpadColumns, opts.sourceSubjectId, opts.subjectId, opts.learnerId);
-  copySubjectWorkpadRows(
-    db,
-    "subject_journal_entries",
-    journalColumns,
-    opts.sourceSubjectId,
-    opts.subjectId,
-    opts.learnerId
-  );
 }
 
 function resetSubjectLearningState(db: Database.Database, subjectId: number): void {
@@ -312,28 +304,6 @@ function copySubjectTags(
   }
 }
 
-function copySubjectWorkpadRows(
-  db: Database.Database,
-  table: string,
-  columns: string[],
-  sourceSubjectId: number,
-  targetSubjectId: number,
-  targetLearnerId: number
-): void {
-  if (columns.length === 0) return;
-  const rows = db.prepare(`SELECT * FROM ${table} WHERE subject_id = ? ORDER BY id ASC`).all(
-    sourceSubjectId
-  ) as Array<Record<string, unknown>>;
-  for (const row of rows) {
-    const copy = pickColumns(row, columns);
-    copy.subject_id = targetSubjectId;
-    if ("learner_id" in copy) copy.learner_id = targetLearnerId;
-    if ("created_at" in copy) copy.created_at = nowSql();
-    if ("updated_at" in copy) copy.updated_at = nowSql();
-    insertDynamic(db, table, copy);
-  }
-}
-
 function tableExists(db: Database.Database, table: string): boolean {
   const row = db
     .prepare("SELECT 1 FROM sqlite_master WHERE type = 'table' AND name = ?")
@@ -366,10 +336,6 @@ function deleteWhere(db: Database.Database, table: string, where: string, values
 
 function placeholders(count: number): string {
   return Array.from({ length: count }, () => "?").join(", ");
-}
-
-function nullableText(value: unknown): string | null {
-  return typeof value === "string" && value.trim() ? value : null;
 }
 
 function nowSql(): string {
