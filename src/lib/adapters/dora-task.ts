@@ -258,12 +258,28 @@ export const doraTaskAdapter: CompletionHookAdapter = {
     const fmtDiagnostics = event.next_lesson_diagnostics.length
       ? event.next_lesson_diagnostics.map((d) => `  - Q: ${d.prompt}\n    A: ${d.answer}`).join("\n")
       : "  (no diagnostics answered)";
+    const buffer = event.lesson_buffer;
+    const fmtExistingReady = buffer?.existing_ready_lessons.length
+      ? buffer.existing_ready_lessons
+          .map((lesson) => `  - lesson ${lesson.id}, seq ${lesson.sequence_number}, ${lesson.status}: ${lesson.title}`)
+          .join("\n")
+      : "  (none)";
 
     const acceptance = [
       `Read ${AVOCADOCORE_LESSON_AUTHORING_SKILL} before doing any lesson work.`,
       "",
-      `Generate the next lesson for subject "${event.subject_title}" (learner ${event.learner_id}).`,
+      `Maintain the next-lesson buffer for subject "${event.subject_title}" (learner ${event.learner_id}).`,
       "Be adaptive to the evidence below. Do not produce a generic next chapter.",
+      "",
+      "=== TWO-READY-LESSON BUFFER CONTRACT ===",
+      `Target ready queued lessons after this work: ${buffer?.target_ready_count ?? 2}.`,
+      `Queued ready lessons seen at completion time: ${buffer?.ready_count ?? 0}.`,
+      `New lessons to generate: ${buffer?.lessons_to_generate ?? 1}.`,
+      `Existing queued lessons requiring enrichment from the just-finished lesson: ${buffer?.enrichment_required_for_lesson_ids.join(", ") || "none"}.`,
+      "Existing queued lessons:",
+      fmtExistingReady,
+      "If any queued lesson already exists, do not blindly create the next chapter. First inspect and repair the existing queued lesson in light of the just-completed lesson, the new mastery evidence, and the learner's diagnostic answers. You may retitle it, rewrite sections, change activities, add review, resequence it, regenerate media, or replace stale content. The immediate next lesson must learn from the completed lesson before the learner opens it. Only after existing queued lessons are enriched should you create enough additional queued lessons to maintain two ready lessons for this subject.",
+      "Completion requires the subject to have two queued lessons that pass the full lesson readiness bar, including audio, approved interactives, and reviewed Manim segment videos. If media generation or browser QA is not finished, keep the task open or blocked rather than representing the lessons as ready.",
       "",
       "=== PEDAGOGICAL GOAL ===",
       "Find foundational weaknesses and bridge them as fast as possible with the least learner effort. Advance the curriculum only where the foundation is already solid. Prioritise subject-specific evidence first. Use profile config and cross-subject history only if they speed up mastery. Do not assume domain facts unless they are documented in AvocadoCore, present in SQLite evidence, or verified and recorded in the lesson/task notes.",
@@ -326,7 +342,7 @@ export const doraTaskAdapter: CompletionHookAdapter = {
     return createDoraTask(
       {
         project,
-        title: `Generate next lesson: ${event.subject_title} (after "${event.lesson_title}")`,
+        title: `Maintain two ready lessons: ${event.subject_title} (after "${event.lesson_title}")`,
         acceptance,
         metadata: { lesson_completed_event: event },
       },

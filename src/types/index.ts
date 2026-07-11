@@ -483,6 +483,25 @@ export interface NextLessonJob {
   qa_completed_at: string | null;
 }
 
+export interface UpcomingLessonSnapshot {
+  id: number;
+  title: string;
+  status: "queued" | "in_progress";
+  sequence_number: number;
+  planning_rationale: string | null;
+  generated_by: string | null;
+  updated_at: string;
+}
+
+export interface LessonBufferPlan {
+  policy_version: "two-ready-lessons/v1";
+  target_ready_count: number;
+  ready_count: number;
+  lessons_to_generate: number;
+  existing_ready_lessons: UpcomingLessonSnapshot[];
+  enrichment_required_for_lesson_ids: number[];
+}
+
 // ─── View / Aggregate types ───────────────────────────────────────────────────
 
 export interface SubjectSummary extends Subject {
@@ -647,6 +666,12 @@ export interface LessonCompletedEvent {
   learner_profile_config: Record<string, unknown> | null;
   /** Cross-subject mastery snapshots — used only when they speed up mastery. */
   cross_subject_history: Array<{ subject_title: string; mastery_score: number | null }>;
+  /**
+   * Two-ready-lesson buffer contract. On completion, workers must enrich any
+   * existing queued next lesson from the just-finished evidence, then create
+   * enough additional ready lessons so the subject has two queued lessons.
+   */
+  lesson_buffer?: LessonBufferPlan;
   completed_at: string;
 }
 

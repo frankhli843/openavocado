@@ -9,6 +9,7 @@ import { getDb } from "@/db/connection";
 import { generateInitialAssessment } from "@/lib/lesson-generator/initial-assessment";
 import { generateNextLesson } from "@/lib/lesson-generator/next-lesson";
 import { generateLessonAudio } from "@/lib/audio/generate-lesson-audio";
+import { buildLessonBufferPlan, enrichQueuedLessonsFromCompletion } from "@/lib/lesson-buffer";
 
 /**
  * Local-queue adapter — writes the lesson.completed event to the
@@ -20,16 +21,34 @@ export const localQueueAdapter: CompletionHookAdapter = {
   async dispatch(event: LessonCompletedEvent) {
     try {
       const db = getDb();
-      const result = generateNextLesson(db, event);
-      if (process.env.AVOCADOCORE_LOCAL_QUEUE_AUDIO !== "skip") {
-        await generateLessonAudio(db, result.lesson_id);
+      const plan = event.lesson_buffer ?? buildLessonBufferPlan(db, {
+        subjectId: event.subject_id,
+        completedLessonId: event.lesson_id,
+      });
+      const enrichedLessonIds = enrichQueuedLessonsFromCompletion(db, event);
+      const generatedLessonIds: number[] = [];
+      let firstGeneratedTitle: string | null = null;
+
+      for (let i = 0; i < plan.lessons_to_generate; i += 1) {
+        const result = generateNextLesson(db, event);
+        generatedLessonIds.push(result.lesson_id);
+        firstGeneratedTitle ??= result.lesson_title;
       }
 
-      const ref = `local-queue-lesson-${result.lesson_id}`;
+      if (process.env.AVOCADOCORE_LOCAL_QUEUE_AUDIO !== "skip") {
+        for (const lessonId of generatedLessonIds) {
+          await generateLessonAudio(db, lessonId);
+        }
+      }
+
+      const primaryLessonId = generatedLessonIds[0] ?? plan.existing_ready_lessons[0]?.id;
+      const ref = `local-queue-buffer-${[...enrichedLessonIds, ...generatedLessonIds].join("-") || "unchanged"}`;
       console.log(
-        `[completion:local-queue] Generated ${ref} for subject ${event.subject_id}`
+        `[completion:local-queue] Maintained two-ready buffer for subject ${event.subject_id}: ` +
+          `enriched ${enrichedLessonIds.length}, generated ${generatedLessonIds.length}` +
+          (firstGeneratedTitle ? `, first new lesson "${firstGeneratedTitle}"` : "")
       );
-      return { ok: true, ref, lesson_id: result.lesson_id };
+      return { ok: true, ref, lesson_id: primaryLessonId };
     } catch (err) {
       const msg = err instanceof Error ? err.message : String(err);
       return { ok: false, error: msg };

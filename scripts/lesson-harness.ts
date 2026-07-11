@@ -33,6 +33,7 @@ import { generateLessonAudio } from "../src/lib/audio/generate-lesson-audio";
 import { sanitizeDraftVisualRefs } from "../src/lib/lessons/visual-artifact-guard";
 import { COMPREHENSIVE_LESSON_PLAN_TEMPLATE } from "../src/lib/lesson-generator/plan-template";
 import { validateLessonProductionReadiness } from "../src/lib/lesson-generator/readiness";
+import { buildLessonBufferPlan, enrichQueuedLessonsFromCompletion } from "../src/lib/lesson-buffer";
 import type Database from "better-sqlite3";
 import type {
   SubjectCreatedEvent,
@@ -51,6 +52,7 @@ interface HarnessPayload {
     expected_output: string;
     chrome_mcp_required: boolean;
     local_queue_fallback_allowed: boolean;
+    lesson_buffer_policy?: string;
   };
 }
 
@@ -560,6 +562,20 @@ function buildLearnerContext(
     )
     .all(subjectId) as Array<{ title: string; description: string | null; sequence_number: number }>;
 
+  const queuedLessons = db
+    .prepare(
+      `SELECT id, title, description, sequence_number, planning_rationale
+       FROM lessons WHERE subject_id = ? AND status = 'queued'
+       ORDER BY sequence_number ASC, id ASC LIMIT 5`
+    )
+    .all(subjectId) as Array<{
+      id: number;
+      title: string;
+      description: string | null;
+      sequence_number: number;
+      planning_rationale: string | null;
+    }>;
+
   const masterySignals = db
     .prepare(
       `SELECT ms.signal_type, ms.confidence, ms.difficulty, COALESCE(t.name, ms.concept) AS concept
@@ -611,6 +627,11 @@ function buildLearnerContext(
       (l) => `  [${l.sequence_number}] ${l.title}`
     ),
     "",
+    `QUEUED READY LESSONS (${queuedLessons.length}):`,
+    ...queuedLessons.map(
+      (l) => `  [${l.sequence_number}] lesson ${l.id}: ${l.title}${l.planning_rationale ? ` | rationale: ${l.planning_rationale.slice(0, 180)}` : ""}`
+    ),
+    "",
     `MASTERY SIGNALS (recent, ${masterySignals.length}):`,
     ...masterySignals.slice(0, 10).map(
       (m) =>
@@ -652,6 +673,8 @@ ${trigger}
 Generate a high-quality adaptive lesson for this learner. The lesson must:
 - Be pedagogically grounded in the learner's actual evidence (mastery signals, assessment results, completed lessons)
 - Include a clear planning_rationale explaining WHY this lesson is the right next step NOW
+- Maintain the two-ready-lesson buffer: when queued ready lessons already exist in the context, repair and enrich those lessons from the just-completed evidence before creating missing lessons. The immediate queued lesson must reflect the learner's latest weak spots, diagnostic answers, and ready-to-advance concepts before the learner opens it.
+- If the event asks for multiple missing buffer slots, generate each missing lesson as a distinct step in the near-term plan, not duplicate copies of the same chapter. The first generated lesson should be the next immediate lesson after any enriched queued lessons; the second generated lesson should be the following ready lesson.
 - Before authoring the lesson, update the evolving comprehensive subject plan using the required template below. The JSON response must include that full plan in comprehensive_lesson_plan, not only the short planning_rationale.
 - Start from a concept audit: list the major nouns and mechanisms the lesson will rely on, treat a concept as known only when assessment answers, mastery signals, completed lesson content, or profile criteria prove it, and define every unproven prerequisite before using it
 - Have a rich top-level overview audio script of at least 2,700 words, targeting at least 15 minutes of spoken audio with margin. This overview is a stand-alone audio lesson, not an intro to the page, and must be useful even if the learner is not looking at the screen. Write it as a two-host podcast transcript with clear male/female speaker labels such as "Leo:" and "Maya:". Use a calm, conversational long-form interview / NotebookLM-style back-and-forth without imitating any specific living person. Leo teaches the mechanism in plain language. Maya is a curious skeptical student who challenges vague terms, asks why the concept matters, asks how the actual object changes, asks how that change helps the next prediction/decision/action, and keeps drilling until the causal chain is clear. Do not mention lesson parts, exercises, practice, assessments, or page structure in the audio.
@@ -1485,6 +1508,109 @@ async function handleLessonCompleted(
   db: Database.Database,
   event: LessonCompletedEvent
 ): Promise<HarnessResult> {
+  const { subject_id: subjectId } = event;
+  const triggerEvent = "lesson.completed";
+  const plan = event.lesson_buffer ?? buildLessonBufferPlan(db, {
+    subjectId,
+    completedLessonId: event.lesson_id,
+  });
+
+  updateJobProgress(
+    db,
+    subjectId,
+    triggerEvent,
+    "lesson_buffer.planning",
+    `Target ${plan.target_ready_count} queued lessons; found ${plan.ready_count}, enriching ${plan.enrichment_required_for_lesson_ids.length}, generating ${plan.lessons_to_generate}`
+  );
+
+  const enrichedIds = enrichQueuedLessonsFromCompletion(db, event);
+  if (enrichedIds.length > 0) {
+    updateJobProgress(
+      db,
+      subjectId,
+      triggerEvent,
+      "lesson_buffer.enriched",
+      `Enriched queued lesson(s) ${enrichedIds.join(", ")} from completed lesson ${event.lesson_id}`
+    );
+  }
+
+  if (plan.lessons_to_generate <= 0) {
+    updateJobProgress(
+      db,
+      subjectId,
+      triggerEvent,
+      "finalizing",
+      `Two-ready buffer already satisfied after enriching ${enrichedIds.length} queued lesson(s)`
+    );
+    return {
+      ok: true,
+      ref: `agent-harness-buffer-existing-${enrichedIds.join("-") || "unchanged"}`,
+      lesson_id: plan.existing_ready_lessons[0]?.id,
+      provider_used: "lesson-buffer",
+      stage_reached: "finalizing",
+    };
+  }
+
+  const generatedIds: number[] = [];
+  const blockedErrors: string[] = [];
+  let providerUsed = "unknown";
+
+  for (let slot = 0; slot < plan.lessons_to_generate; slot += 1) {
+    updateJobProgress(
+      db,
+      subjectId,
+      triggerEvent,
+      "lesson_buffer.generating",
+      `Generating buffer lesson ${slot + 1} of ${plan.lessons_to_generate}`
+    );
+    const result = await generateOneAdaptiveLessonForCompletion(db, event, slot, plan.lessons_to_generate);
+    if (result.provider_used) providerUsed = result.provider_used;
+    if (result.lesson_id) generatedIds.push(result.lesson_id);
+
+    if (!result.ok) {
+      if (result.stage_reached === "media_review_blocked" && result.lesson_id) {
+        blockedErrors.push(`lesson ${result.lesson_id}: ${result.error ?? "media review blocked"}`);
+        continue;
+      }
+      return result;
+    }
+  }
+
+  if (blockedErrors.length > 0) {
+    const error = `Generated ${generatedIds.length} buffer lesson(s), but media review is still required before they are ready: ${blockedErrors.join(" | ")}`;
+    updateJobProgress(db, subjectId, triggerEvent, "media_review_blocked", error.slice(0, 400));
+    return {
+      ok: false,
+      error: error.slice(0, 500),
+      lesson_id: generatedIds[0],
+      provider_used: providerUsed,
+      stage_reached: "media_review_blocked",
+    };
+  }
+
+  updateJobProgress(
+    db,
+    subjectId,
+    triggerEvent,
+    "finalizing",
+    `Two-ready buffer maintained with generated lesson(s) ${generatedIds.join(", ")}`
+  );
+
+  return {
+    ok: true,
+    ref: `agent-harness-buffer-${generatedIds.join("-")}`,
+    lesson_id: generatedIds[0],
+    provider_used: providerUsed,
+    stage_reached: "finalizing",
+  };
+}
+
+async function generateOneAdaptiveLessonForCompletion(
+  db: Database.Database,
+  event: LessonCompletedEvent,
+  slotIndex: number,
+  totalSlots: number
+): Promise<HarnessResult> {
   const { subject_id: subjectId, learner_id: learnerId } = event;
   const triggerEvent = "lesson.completed";
 
@@ -1500,7 +1626,15 @@ async function handleLessonCompleted(
   const context = buildLearnerContext(db, subjectId, learnerId);
 
   // Call Gemini (with automatic retry + fallback model on transient failures)
-  updateJobProgress(db, subjectId, triggerEvent, "authoring", "Calling Gemini to generate adaptive lesson content");
+  updateJobProgress(
+    db,
+    subjectId,
+    triggerEvent,
+    "authoring",
+    totalSlots > 1
+      ? `Calling Gemini to generate adaptive buffer lesson ${slotIndex + 1} of ${totalSlots}`
+      : "Calling Gemini to generate adaptive lesson content"
+  );
   const prompt = buildLessonPrompt(context, event.event);
   let raw: string;
   let modelUsed: string;
@@ -1601,14 +1735,14 @@ async function handleLessonCompleted(
     };
   }
 
-  updateJobProgress(db, subjectId, triggerEvent, "finalizing", `Lesson "${draft.title}" ready (id ${lessonId})`);
+  updateJobProgress(db, subjectId, triggerEvent, "lesson.generated", `Lesson "${draft.title}" ready (id ${lessonId})`);
 
   return {
     ok: true,
     ref: `agent-harness-lesson-${lessonId}`,
     lesson_id: lessonId,
     provider_used: getGeneratorId(modelUsed),
-    stage_reached: "finalizing",
+    stage_reached: "lesson.generated",
   };
 }
 

@@ -20,7 +20,8 @@
     "backfill:lessons": "tsx scripts/backfill-live-lessons.ts",
     "backfill:demo-lessons": "tsx scripts/backfill-demo-lessons.ts",
     "seed:demo-artifacts": "tsx scripts/seed-demo-visual-artifacts.ts",
-    "audit:videos": "tsx scripts/audit-videos.ts"
+    "audit:videos": "tsx scripts/audit-videos.ts",
+    "backfill:lesson-buffer": "tsx scripts/backfill-two-ready-lessons.ts"
   },
   "dependencies": {
     "@codemirror/lang-python": "^6.2.1",
