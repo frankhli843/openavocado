@@ -21,7 +21,9 @@
     "backfill:demo-lessons": "tsx scripts/backfill-demo-lessons.ts",
     "seed:demo-artifacts": "tsx scripts/seed-demo-visual-artifacts.ts",
     "audit:videos": "tsx scripts/audit-videos.ts",
-    "backfill:lesson-buffer": "tsx scripts/backfill-two-ready-lessons.ts"
+    "backfill:lesson-buffer": "tsx scripts/backfill-two-ready-lessons.ts",
+    "backfill:videos": "tsx scripts/backfill-videos.ts",
+    "backfill:video-status": "tsx scripts/backfill-video-status.ts"
   },
   "dependencies": {
     "@codemirror/lang-python": "^6.2.1",

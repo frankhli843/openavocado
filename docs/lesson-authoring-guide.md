@@ -378,6 +378,23 @@ enforced by `validateGeneratedContent`; the rest is a hard authoring rule.
   production bar: generated audio, approved interactives, reviewed Manim segment
   videos, `pnpm audit:videos --lesson <id>` passing, and browser QA evidence.
   Use `pnpm backfill:lesson-buffer -- --write` to repair existing subjects.
+- **Video-first state machine (`lessons.video_status`, hard gate).** Segment
+  videos are REQUIRED, not a preferred post-pass. Every generation path stamps
+  an explicit state: `ready` (every audio/lesson_part segment has a registered,
+  reviewed video), `pending_video` (generated but blocked on the Manim pass —
+  not learner-ready, not buffer-ready, the lesson page shows a production
+  notice instead of the lesson body), or `legacy` (pre-directive historical
+  lesson kept viewable only as a temporary fallback while backfill completes).
+  A `pending_video` lesson keeps its `next_lesson_jobs` row pending
+  (`harness_stage='pending_video'`, `harness_status='waiting'`) and carries a
+  structured manifest in `source_context.pending_video` (uncovered segments,
+  narration audio paths, cue counts, and the exact pipeline commands) so a
+  capable worker can finish the video pass. This is also the failure-mode
+  contract: slow Manim renders, a failed frame review, missing `ffmpeg` or
+  LaTeX, failed captions, or a storage-path mismatch all surface as the lesson
+  staying `pending_video` with `pnpm audit:videos --lesson <id>` failing —
+  never as a silent release of an audio-only lesson. Promote existing covered
+  lessons with `pnpm backfill:video-status -- --apply`.
 - **One-off subjects skip the separate initial assessment.** When
   `subjects.lesson_type = 'one_off'`, generate a pure teaching lesson directly
   from the subject title, goals, learner preferences, links, uploaded documents,

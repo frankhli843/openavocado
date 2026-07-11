@@ -134,6 +134,9 @@ export async function POST(request: Request) {
       .run(subject.id, adapterName, JSON.stringify(event), JSON.stringify(progressEvents));
 
     const dispatchResult = await dispatcher(event);
+    // Video-first gate: a generated lesson blocked on the Manim pass keeps the
+    // job pending instead of failing or completing.
+    const pendingVideo = !dispatchResult.ok && dispatchResult.pending_video === true;
     progressEvents.push(
       dispatchResult.ok && dispatchResult.lesson_id
         ? {
@@ -147,6 +150,14 @@ export async function POST(request: Request) {
             stage: "planning",
             message: "Lesson request accepted by the worker",
           }
+        : pendingVideo
+        ? {
+            ts: new Date().toISOString(),
+            stage: "pending_video",
+            message:
+              dispatchResult.error ??
+              "Lesson generated; reviewed Manim segment videos are still being produced before release",
+          }
         : {
             ts: new Date().toISOString(),
             stage: "failed",
@@ -156,10 +167,13 @@ export async function POST(request: Request) {
 
     // Status semantics:
     //   "completed"  — synchronous dispatch finished and produced a lesson_id (e.g. local-queue)
-    //   "dispatched" — async dispatch accepted but work happens later (e.g. dora-task, webhook)
+    //   "dispatched" — async dispatch accepted but work happens later (e.g. dora-task, webhook),
+    //                  or the lesson exists but is pending_video on the Manim pass
     //   "failed"     — dispatch returned an error
     const jobStatus = !dispatchResult.ok
-      ? "failed"
+      ? pendingVideo
+        ? "dispatched"
+        : "failed"
       : dispatchResult.lesson_id
       ? "completed"
       : "dispatched";
@@ -182,8 +196,8 @@ export async function POST(request: Request) {
       dispatchResult.error ?? null,
       dispatchResult.lesson_id ?? null,
       dispatchResult.ok && dispatchResult.lesson_id ? new Date().toISOString() : null,
-      dispatchResult.ok && dispatchResult.lesson_id ? "done" : dispatchResult.ok ? "waiting" : "failed",
-      dispatchResult.ok && dispatchResult.lesson_id ? "lesson.generated" : dispatchResult.ok ? "planning" : "failed",
+      dispatchResult.ok && dispatchResult.lesson_id ? "done" : dispatchResult.ok || pendingVideo ? "waiting" : "failed",
+      dispatchResult.ok && dispatchResult.lesson_id ? "lesson.generated" : pendingVideo ? "pending_video" : dispatchResult.ok ? "planning" : "failed",
       JSON.stringify(progressEvents),
       jobResult.lastInsertRowid
     );

@@ -402,6 +402,9 @@ export async function POST(request: Request) {
     const nextLessonJobId = jobResult.lastInsertRowid as number;
 
     const dispatchResult = await adapter.dispatch(event);
+    // Video-first gate: a generated lesson without reviewed segment videos
+    // keeps the job pending on the Manim pass — not completed, not failed.
+    const pendingVideo = !dispatchResult.ok && dispatchResult.pending_video === true;
     progressEvents.push(
       dispatchResult.ok && dispatchResult.lesson_id
         ? {
@@ -414,6 +417,14 @@ export async function POST(request: Request) {
             ts: new Date().toISOString(),
             stage: "planning",
             message: "Generation request accepted by the lesson worker",
+          }
+        : pendingVideo
+        ? {
+            ts: new Date().toISOString(),
+            stage: "pending_video",
+            message:
+              dispatchResult.error ??
+              "Lesson generated; reviewed Manim segment videos are still being produced before release",
           }
         : {
             ts: new Date().toISOString(),
@@ -435,13 +446,13 @@ export async function POST(request: Request) {
            updated_at = datetime('now')
        WHERE id = ?`
     ).run(
-      dispatchResult.ok && dispatchResult.lesson_id ? "completed" : dispatchResult.ok ? "dispatched" : "failed",
+      dispatchResult.ok && dispatchResult.lesson_id ? "completed" : dispatchResult.ok || pendingVideo ? "dispatched" : "failed",
       dispatchResult.ref ?? null,
       dispatchResult.error ?? null,
       dispatchResult.lesson_id ?? null,
       dispatchResult.ok && dispatchResult.lesson_id ? new Date().toISOString() : null,
-      dispatchResult.ok && dispatchResult.lesson_id ? "done" : dispatchResult.ok ? "waiting" : "failed",
-      dispatchResult.ok && dispatchResult.lesson_id ? "lesson.generated" : dispatchResult.ok ? "planning" : "failed",
+      dispatchResult.ok && dispatchResult.lesson_id ? "done" : dispatchResult.ok || pendingVideo ? "waiting" : "failed",
+      dispatchResult.ok && dispatchResult.lesson_id ? "lesson.generated" : pendingVideo ? "pending_video" : dispatchResult.ok ? "planning" : "failed",
       JSON.stringify(progressEvents),
       nextLessonJobId
     );

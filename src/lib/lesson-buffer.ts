@@ -12,6 +12,7 @@ interface ReadyLessonRow {
   generated_by: string | null;
   updated_at: string;
   source_context: string | null;
+  video_status: "legacy" | "pending_video" | "ready";
 }
 
 export function buildLessonBufferPlan(
@@ -31,10 +32,21 @@ export function buildLessonBufferPlan(
         .map((lesson) => lesson.id)
     : [];
 
+  // Video-first (2026-07-11): only queued lessons whose video pass is complete
+  // ('ready') — or pre-directive 'legacy' lessons kept as a temporary fallback
+  // — count as buffer-ready for the learner. pending_video lessons still count
+  // toward generation dedup (lessons_to_generate) so the buffer does not pile
+  // up duplicate audio-only lessons while the Manim pass is outstanding.
+  const pendingVideoIds = readyRows
+    .filter((lesson) => lesson.video_status === "pending_video")
+    .map((lesson) => lesson.id);
+
   return {
-    policy_version: "two-ready-lessons/v1",
+    policy_version: "two-ready-lessons/v2",
     target_ready_count: target,
     ready_count: readyRows.length,
+    video_ready_count: readyRows.length - pendingVideoIds.length,
+    pending_video_lesson_ids: pendingVideoIds,
     lessons_to_generate: Math.max(0, target - readyRows.length),
     existing_ready_lessons: readyRows.map((lesson) => ({
       id: lesson.id,
@@ -44,6 +56,7 @@ export function buildLessonBufferPlan(
       planning_rationale: lesson.planning_rationale,
       generated_by: lesson.generated_by,
       updated_at: lesson.updated_at,
+      video_status: lesson.video_status,
     })),
     enrichment_required_for_lesson_ids: enrichmentTargets,
   };
@@ -159,7 +172,8 @@ export function needsLessonBufferBackfill(
 function loadReadyLessons(db: Database.Database, subjectId: number): ReadyLessonRow[] {
   return db
     .prepare(
-      `SELECT id, title, status, sequence_number, planning_rationale, generated_by, updated_at, source_context
+      `SELECT id, title, status, sequence_number, planning_rationale, generated_by, updated_at, source_context,
+              COALESCE(video_status, 'legacy') AS video_status
        FROM lessons
        WHERE subject_id = ?
          AND status = 'queued'
@@ -217,6 +231,9 @@ function appendWorkpadBufferNote(
     `Completed lesson: ${event.lesson_title} (id ${event.lesson_id})`,
     `Ready lesson target: ${plan.target_ready_count}`,
     `Ready lessons before generation: ${plan.ready_count}`,
+    plan.pending_video_lesson_ids.length
+      ? `Queued lessons awaiting Manim videos (not learner-ready): ${plan.pending_video_lesson_ids.join(", ")}`
+      : "Queued lessons awaiting Manim videos: none",
     enrichedLessonIds.length
       ? `Enriched existing queued lessons: ${enrichedLessonIds.join(", ")}`
       : "Enriched existing queued lessons: none",

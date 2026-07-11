@@ -61,8 +61,11 @@ export async function GET(
       )
       .all(lesson.subject_id);
 
-    // Mark lesson as in_progress when first fetched (if queued)
-    if (lesson.status === "queued") {
+    // Mark lesson as in_progress when first fetched (if queued).
+    // Video-first gate: a queued pending_video lesson is not learner-ready —
+    // it stays queued (viewable metadata only; the lesson page shows the
+    // video-production state instead of starting the lesson).
+    if (lesson.status === "queued" && lesson.video_status !== "pending_video") {
       db.prepare(
         "UPDATE lessons SET status = 'in_progress', started_at = datetime('now'), updated_at = datetime('now') WHERE id = ?"
       ).run(lessonId);

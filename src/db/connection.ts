@@ -119,6 +119,16 @@ function applyAdditiveMigrations(db: Database.Database): void {
     db.exec("ALTER TABLE lessons ADD COLUMN discard_reason TEXT");
   }
 
+  // Video-first readiness (2026-07-11 directive). Pre-migration rows default
+  // to 'legacy' (historical fallback); generators set 'pending_video'/'ready'
+  // explicitly for every new lesson. scripts/backfill-video-status.ts promotes
+  // legacy rows to 'ready' where full segment-video coverage already exists.
+  if (!hasColumn("lessons", "video_status")) {
+    db.exec(
+      "ALTER TABLE lessons ADD COLUMN video_status TEXT NOT NULL DEFAULT 'legacy' CHECK (video_status IN ('legacy', 'pending_video', 'ready'))"
+    );
+  }
+
   // Discard trigger for next_lesson_jobs and the discarded lesson reference.
   if (!hasColumn("next_lesson_jobs", "trigger_event")) {
     db.exec(

@@ -46,6 +46,21 @@ export type SubjectStatus = "active" | "paused" | "completed" | "archived";
 export type SubjectLessonType = "course" | "one_off";
 export type LessonStatus = "queued" | "in_progress" | "completed" | "skipped" | "discarded";
 
+/**
+ * Video-first readiness state of a lesson (2026-07-11 directive: the
+ * learner-facing completed format is a reviewed Manim segment video per
+ * audio/lesson_part segment).
+ *
+ * - "ready": every audio/lesson_part segment has a registered, reviewed video.
+ * - "pending_video": generated (structure/narration/audio exist) but the Manim
+ *   video pass has not completed. Must NOT be served as a new learner-ready
+ *   lesson and must NOT count as video-ready in the lesson buffer.
+ * - "legacy": pre-directive historical lesson kept viewable as a temporary
+ *   compatibility fallback while backfill is underway. Distinguishes historical
+ *   compatibility from current lesson quality.
+ */
+export type LessonVideoStatus = "legacy" | "pending_video" | "ready";
+
 export type ActivityType =
   | "audio"
   | "reading"
@@ -270,6 +285,8 @@ export interface Lesson {
   generated_by: string | null;
   generator_version: string | null;
   source_context: string | null; // JSON string
+  /** Video-first readiness: 'ready' | 'pending_video' | 'legacy'. */
+  video_status: LessonVideoStatus;
   created_at: string;
   updated_at: string;
 }
@@ -514,12 +531,26 @@ export interface UpcomingLessonSnapshot {
   planning_rationale: string | null;
   generated_by: string | null;
   updated_at: string;
+  /** Video-first readiness of this queued lesson. */
+  video_status?: LessonVideoStatus;
 }
 
 export interface LessonBufferPlan {
-  policy_version: "two-ready-lessons/v1";
+  policy_version: "two-ready-lessons/v1" | "two-ready-lessons/v2";
   target_ready_count: number;
+  /**
+   * Queued lessons for the subject, regardless of video state. Used for
+   * generation dedup so pending_video lessons are not regenerated.
+   */
   ready_count: number;
+  /**
+   * Queued lessons whose video_status is 'ready' or 'legacy' — the only
+   * lessons that may be presented to the learner as ready. A lesson stuck in
+   * 'pending_video' is generated but NOT buffer-ready (2026-07-11 directive).
+   */
+  video_ready_count: number;
+  /** Queued lessons blocked on the Manim video pass. */
+  pending_video_lesson_ids: number[];
   lessons_to_generate: number;
   existing_ready_lessons: UpcomingLessonSnapshot[];
   enrichment_required_for_lesson_ids: number[];
@@ -709,6 +740,12 @@ export interface CompletionHookAdapter {
     ref?: string;
     lesson_id?: number;
     error?: string;
+    /**
+     * True when a lesson row was generated but is blocked on the Manim video
+     * pass. Callers must keep the job pending (harness_stage 'pending_video',
+     * harness_status 'waiting') instead of marking it failed or completed.
+     */
+    pending_video?: boolean;
   }>;
 }
 
@@ -784,7 +821,10 @@ export interface RegenerationHookAdapter {
   dispatch(event: LessonDiscardedEvent, config?: Record<string, unknown>): Promise<{
     ok: boolean;
     ref?: string;
+    lesson_id?: number;
     error?: string;
+    /** Replacement lesson generated but blocked on the Manim video pass. */
+    pending_video?: boolean;
   }>;
 }
 
@@ -796,4 +836,4 @@ export interface RegenerationHookAdapter {
 export type SubjectCreatedDispatcher = (
   event: SubjectCreatedEvent,
   providerConfig?: UserProviderConfig | null
-) => Promise<{ ok: boolean; ref?: string; lesson_id?: number; error?: string }>;
+) => Promise<{ ok: boolean; ref?: string; lesson_id?: number; error?: string; pending_video?: boolean }>;

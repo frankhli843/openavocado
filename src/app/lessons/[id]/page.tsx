@@ -406,6 +406,34 @@ export default function LessonPage({ params }: { params: Promise<{ id: string }>
   const activeLearnerId = learnerId;
   const { lesson, activities, artifacts, tags: lessonTags, subjectTags } = data;
 
+  // Video-first gate: a queued lesson still waiting on its reviewed Manim
+  // segment videos is not learner-ready. Show the production state instead of
+  // the lesson body so the old audio+cue experience is never presented as the
+  // finished format for a new lesson.
+  if (lesson.status === "queued" && lesson.video_status === "pending_video") {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center px-4">
+        <div className="max-w-md w-full bg-white rounded-xl border border-gray-200 p-8 text-center">
+          <span className="inline-block w-3 h-3 rounded-full bg-violet-400 animate-pulse mb-4" />
+          <h1 className="text-lg font-semibold text-gray-900 mb-2">{lesson.title}</h1>
+          <p className="text-sm text-gray-600 leading-relaxed mb-4">
+            This lesson is written and narrated, and its video walkthroughs are now being
+            produced. It unlocks once every segment has a reviewed video.
+          </p>
+          {lesson.description && (
+            <p className="text-xs text-gray-400 leading-relaxed mb-6">{lesson.description}</p>
+          )}
+          <Link
+            href={`/subjects/${lesson.subject_id}?tab=lessons`}
+            className="text-sm text-blue-600 hover:underline"
+          >
+            Back to subject
+          </Link>
+        </div>
+      </div>
+    );
+  }
+
   // Parse authored knowledge graph orientation (optional — falls back to tag-derived view)
   const knowledgeGraphData: KnowledgeGraphData | null = (() => {
     if (!lesson.knowledge_graph_data) return null;
