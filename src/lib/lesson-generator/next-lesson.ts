@@ -19,10 +19,11 @@ export function generateNextLesson(
   event: LessonCompletedEvent
 ): NextLessonResult {
   const subject = db
-    .prepare("SELECT title, goals, criteria, current_level FROM subjects WHERE id = ?")
+    .prepare("SELECT title, lesson_type, goals, criteria, current_level FROM subjects WHERE id = ?")
     .get(event.subject_id) as
     | {
         title: string;
+        lesson_type: string | null;
         goals: string | null;
         criteria: string | null;
         current_level: string;
@@ -33,7 +34,7 @@ export function generateNextLesson(
   const maxSeq = db
     .prepare("SELECT COALESCE(MAX(sequence_number), -1) AS max_seq FROM lessons WHERE subject_id = ?")
     .get(event.subject_id) as { max_seq: number };
-  const sequenceNumber = Number(maxSeq.max_seq) + 1;
+  const sequenceNumber = subject.lesson_type === "one_off" ? Math.max(1, Number(maxSeq.max_seq) + 1) : Number(maxSeq.max_seq) + 1;
   const subjectTitle = subject.title || event.subject_title;
   const theme = chooseTheme(sequenceNumber);
   const title = `${theme.title}: ${subjectTitle}`;

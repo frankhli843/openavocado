@@ -5,6 +5,12 @@ import { getSubjectCreatedDispatcher } from "@/lib/adapters";
 import { computeSubjectMastery } from "@/lib/mastery";
 import { getSessionUser } from "@/lib/auth/session";
 import { reconcileMaterializedLessonJobs } from "@/lib/lesson-jobs/reconcile";
+import {
+  buildSourceMaterialsFromFormData,
+  buildSourceMaterialsFromJson,
+  normalizeLessonType,
+  normalizeTargetLessonCount,
+} from "@/lib/subject-materials";
 import type { LearnerProfile, NextLessonJob, Subject, SubjectCreatedEvent, SubjectSummary } from "@/types";
 
 /** POST /api/subjects — create a new subject for a learner */
@@ -12,11 +18,15 @@ export async function POST(request: Request) {
   try {
     const db = getDb();
     const sessionUser = await getSessionUser();
-    const body = (await request.json()) as Partial<Subject & { learner_id: number }>;
+    const contentType = request.headers.get("content-type") ?? "";
+    const formData = contentType.includes("multipart/form-data") ? await request.formData() : null;
+    const body = formData
+      ? Object.fromEntries(formData.entries())
+      : ((await request.json()) as Partial<Subject & { learner_id: number; source_links?: string; source_text?: string }>);
 
     // Use session learner when not explicitly provided to prevent cross-user writes.
     const learnerId = Number(body.learner_id || sessionUser?.active_learner_id || 1);
-    const title = (body.title || "").trim();
+    const title = String(body.title || "").trim();
     if (!title) {
       return NextResponse.json({ error: "title is required" }, { status: 400 });
     }
@@ -32,7 +42,9 @@ export async function POST(request: Request) {
     const description = typeof body.description === "string" ? body.description.trim() || null : null;
     const goals = typeof body.goals === "string" ? body.goals.trim() || null : null;
     const criteria = typeof body.criteria === "string" ? body.criteria.trim() || null : null;
-    const currentLevel = body.current_level || "familiarity";
+    const lessonType = normalizeLessonType(body.lesson_type);
+    const targetLessonCount = normalizeTargetLessonCount(body.target_lesson_count, lessonType);
+    const currentLevel = String(body.current_level || "familiarity");
 
     const validLevels = ["familiarity", "competence", "mastery", "post_mastery"];
     if (!validLevels.includes(currentLevel)) {
@@ -41,14 +53,24 @@ export async function POST(request: Request) {
 
     const result = db
       .prepare(
-        `INSERT INTO subjects (learner_id, title, description, goals, criteria, current_level)
-         VALUES (?, ?, ?, ?, ?, ?)`
+        `INSERT INTO subjects
+           (learner_id, title, description, lesson_type, target_lesson_count, goals, criteria, source_materials, current_level)
+         VALUES (?, ?, ?, ?, ?, ?, ?, NULL, ?)`
       )
-      .run(learnerId, title, description, goals, criteria, currentLevel);
+      .run(learnerId, title, description, lessonType, targetLessonCount, goals, criteria, currentLevel);
+
+    const subjectId = Number(result.lastInsertRowid);
+    const sourceMaterials = formData
+      ? await buildSourceMaterialsFromFormData(formData, subjectId)
+      : buildSourceMaterialsFromJson(body);
+    if (sourceMaterials.length > 0) {
+      db.prepare("UPDATE subjects SET source_materials = ?, updated_at = datetime('now') WHERE id = ?")
+        .run(JSON.stringify(sourceMaterials), subjectId);
+    }
 
     const subject = db
       .prepare("SELECT * FROM subjects WHERE id = ?")
-      .get(result.lastInsertRowid) as Subject;
+      .get(subjectId) as Subject;
 
     let learnerProfileConfig: Record<string, unknown> | null = null;
     if (learner.config) {
@@ -65,8 +87,11 @@ export async function POST(request: Request) {
       subject_id: subject.id,
       subject_title: subject.title,
       subject_description: subject.description,
+      lesson_type: subject.lesson_type ?? lessonType,
+      target_lesson_count: subject.target_lesson_count ?? targetLessonCount,
       subject_goals: subject.goals,
       subject_criteria: subject.criteria,
+      source_materials: sourceMaterials,
       current_level: subject.current_level,
       workpad_summary: null,
       learner_profile_config: learnerProfileConfig,
@@ -84,15 +109,19 @@ export async function POST(request: Request) {
       {
         ts: new Date().toISOString(),
         stage: "planning",
-        message: "Planning the first lesson from your goals",
+        message: lessonType === "one_off" ? "Planning the one-off lesson from your materials" : "Planning the first lesson from your goals",
       },
       {
         ts: new Date().toISOString(),
         stage: adapterName === "local-queue" ? "local.fixture" : "generating_lesson",
         message:
           adapterName === "local-queue"
-            ? "Generating the first lesson with the deterministic local fixture"
-            : "Generating the first lesson",
+            ? lessonType === "one_off"
+              ? "Generating the one-off lesson with the local adapter"
+              : "Generating the first lesson with the deterministic local fixture"
+            : lessonType === "one_off"
+              ? "Generating the one-off lesson"
+              : "Generating the first lesson",
       },
     ];
     const jobResult = db

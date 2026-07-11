@@ -34,6 +34,7 @@ import { sanitizeDraftVisualRefs } from "../src/lib/lessons/visual-artifact-guar
 import { COMPREHENSIVE_LESSON_PLAN_TEMPLATE } from "../src/lib/lesson-generator/plan-template";
 import { validateLessonProductionReadiness } from "../src/lib/lesson-generator/readiness";
 import { buildLessonBufferPlan, enrichQueuedLessonsFromCompletion } from "../src/lib/lesson-buffer";
+import { sourceMaterialsToPrompt } from "../src/lib/subject-materials";
 import type Database from "better-sqlite3";
 import type {
   SubjectCreatedEvent,
@@ -53,6 +54,7 @@ interface HarnessPayload {
     chrome_mcp_required: boolean;
     local_queue_fallback_allowed: boolean;
     lesson_buffer_policy?: string;
+    one_off_policy?: string;
   };
 }
 
@@ -543,12 +545,15 @@ function buildLearnerContext(
   learnerId: number
 ): string {
   const subject = db
-    .prepare("SELECT title, description, goals, criteria, current_level FROM subjects WHERE id = ?")
+    .prepare("SELECT title, description, lesson_type, target_lesson_count, goals, criteria, source_materials, current_level FROM subjects WHERE id = ?")
     .get(subjectId) as {
       title: string;
       description: string | null;
+      lesson_type: string | null;
+      target_lesson_count: number | null;
       goals: string | null;
       criteria: string | null;
+      source_materials: string | null;
       current_level: string;
     } | undefined;
 
@@ -617,8 +622,11 @@ function buildLearnerContext(
   const lines: string[] = [
     `SUBJECT: ${subject.title}`,
     subject.description ? `Description: ${subject.description}` : "",
+    `Lesson type: ${subject.lesson_type ?? "course"}`,
+    subject.target_lesson_count ? `Target lesson count: ${subject.target_lesson_count}` : "Target lesson count: open-ended",
     subject.goals ? `Goals: ${subject.goals}` : "",
     subject.criteria ? `Success criteria: ${subject.criteria}` : "",
+    `Source materials:\n${sourceMaterialsToPrompt(subject.source_materials)}`,
     `Current level: ${subject.current_level}`,
     `Next lesson sequence number: ${nextSeq.next_seq}`,
     "",
@@ -657,9 +665,12 @@ function buildLessonPrompt(
   eventType: string,
   discardedLessonTitle?: string
 ): string {
+  const isOneOff = /\bLesson type:\s*one_off\b/.test(context);
   const trigger =
     eventType === "lesson.discarded"
       ? `The previous lesson "${discardedLessonTitle ?? "unknown"}" was discarded. Generate a replacement that takes a different approach.`
+      : isOneOff
+      ? "Generate the one-off teaching lesson directly from the subject context and source materials. Do not generate or rely on a separate initial assessment."
       : "Generate the next adaptive teaching lesson based on the learner evidence above.";
 
   return `You are an expert adaptive learning designer for AvocadoCore, an adaptive learning system.
@@ -673,6 +684,8 @@ ${trigger}
 Generate a high-quality adaptive lesson for this learner. The lesson must:
 - Be pedagogically grounded in the learner's actual evidence (mastery signals, assessment results, completed lessons)
 - Include a clear planning_rationale explaining WHY this lesson is the right next step NOW
+- For one-off subjects, cover the full requested scope inside this one lesson when the target lesson count is 1. Do not defer critical concepts to a future lesson unless the configured target lesson count is greater than 1.
+- For one-off subjects, infer what the learner likely knows from profile evidence, source materials, and the request itself. Do not create a separate calibration or initial assessment lesson before teaching.
 - Maintain the two-ready-lesson buffer: when queued ready lessons already exist in the context, repair and enrich those lessons from the just-completed evidence before creating missing lessons. The immediate queued lesson must reflect the learner's latest weak spots, diagnostic answers, and ready-to-advance concepts before the learner opens it.
 - If the event asks for multiple missing buffer slots, generate each missing lesson as a distinct step in the near-term plan, not duplicate copies of the same chapter. The first generated lesson should be the next immediate lesson after any enriched queued lessons; the second generated lesson should be the following ready lesson.
 - Before authoring the lesson, update the evolving comprehensive subject plan using the required template below. The JSON response must include that full plan in comprehensive_lesson_plan, not only the short planning_rationale.
@@ -1463,6 +1476,71 @@ function upsertWorkpad(
   }
 }
 
+function buildOneOffSeedEvent(event: SubjectCreatedEvent): LessonCompletedEvent {
+  const level = event.current_level;
+  return {
+    event: "lesson.completed",
+    learner_id: event.learner_id,
+    subject_id: event.subject_id,
+    subject_title: event.subject_title,
+    subject_goals: event.subject_goals,
+    subject_criteria: event.subject_criteria,
+    current_level: level,
+    level_progression: {
+      previous_level: level,
+      current_level: level,
+      recommended_level: level,
+      next_level: null,
+      graduated: false,
+      progress_percent: 0,
+      reason: "One-off lesson starts directly from the provided context and source materials.",
+      frontier_mode: false,
+      evidence: {
+        completed_lessons: 0,
+        total_lessons: event.target_lesson_count ?? 1,
+        mastery_score: null,
+        assessment_total: 0,
+        assessment_accuracy: null,
+        hard_assessment_total: 0,
+        hard_assessment_accuracy: null,
+        positive_signals: 0,
+        review_signals: 0,
+        passed_code_submissions: 0,
+        total_code_submissions: 0,
+      },
+      gates: [],
+      phases: [{ level, label: level, status: "current", summary: "Direct one-off teaching lesson." }],
+    },
+    lesson_id: 0,
+    lesson_title: "One-off source context",
+    lesson_goals: [],
+    activities_completed: [],
+    assessment_qa: [],
+    code_attempts: [],
+    mastery_signals: [],
+    concepts_to_review: [event.subject_title],
+    concepts_ready_to_advance: [event.subject_title],
+    next_lesson_diagnostics: [],
+    quiz_result: null,
+    tag_difficulty_performance: [],
+    recent_misconceptions: [],
+    completed_lessons: [],
+    discarded_lessons: [],
+    workpad_summary: event.workpad_summary,
+    learner_profile_config: event.learner_profile_config,
+    cross_subject_history: [],
+    lesson_buffer: {
+      policy_version: "two-ready-lessons/v1",
+      target_ready_count: 0,
+      ready_count: 0,
+      lessons_to_generate: 0,
+      existing_ready_lessons: [],
+      enrichment_required_for_lesson_ids: [],
+    },
+    completed_at: new Date().toISOString(),
+  };
+}
+
 // ─── Event handlers ───────────────────────────────────────────────────────────
 
 async function handleSubjectCreated(
@@ -1470,6 +1548,30 @@ async function handleSubjectCreated(
   event: SubjectCreatedEvent
 ): Promise<HarnessResult> {
   const { subject_id: subjectId, learner_id: learnerId } = event;
+
+  if (event.lesson_type === "one_off") {
+    updateJobProgress(db, subjectId, "subject.created", "provider.check", "Checking for existing one-off lesson");
+    const existing = db
+      .prepare("SELECT id, title FROM lessons WHERE subject_id = ? AND sequence_number = 1 LIMIT 1")
+      .get(subjectId) as { id: number; title: string } | undefined;
+    if (existing) {
+      updateJobProgress(db, subjectId, "subject.created", "lesson.generated", `Existing one-off lesson found (lesson ${existing.id})`);
+      return {
+        ok: true,
+        ref: `agent-harness-one-off-existing-${existing.id}`,
+        lesson_id: existing.id,
+        provider_used: "existing",
+        stage_reached: "lesson.generated",
+      };
+    }
+
+    updateJobProgress(db, subjectId, "subject.created", "authoring", "Generating one-off teaching lesson from source materials");
+    const result = await generateOneAdaptiveLessonForCompletion(db, buildOneOffSeedEvent(event), 0, 1);
+    if (result.ok && result.lesson_id) {
+      updateJobProgress(db, subjectId, "subject.created", "lesson.generated", `One-off lesson ready (lesson ${result.lesson_id})`);
+    }
+    return result;
+  }
 
   // Stage: check for existing initial assessment (idempotency)
   updateJobProgress(db, subjectId, "subject.created", "provider.check", "Checking for existing initial assessment");

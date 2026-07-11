@@ -161,4 +161,29 @@ describe("generateNextLesson", () => {
     expect(workpad?.content).toContain("Long-Term Horizon");
     expect(workpad?.content).toContain("Milestone E, post-mastery frontier papers");
   });
+
+  it("starts one-off teaching lessons at sequence 1 instead of the assessment slot", () => {
+    const db = makeDb();
+    const { learnerId, subjectId } = seedSubject(db);
+    db.prepare("UPDATE subjects SET lesson_type = 'one_off', target_lesson_count = 1 WHERE id = ?").run(subjectId);
+
+    const next = generateNextLesson(
+      db,
+      lessonCompletedEvent(learnerId, subjectId, 0)
+    );
+
+    expect(next.sequence_number).toBe(1);
+    const lesson = db
+      .prepare("SELECT title, sequence_number FROM lessons WHERE id = ?")
+      .get(next.lesson_id) as { title: string; sequence_number: number };
+    expect(lesson.sequence_number).toBe(1);
+    expect(lesson.title).not.toMatch(/^Initial Assessment:/);
+
+    const assessmentSlotCount = (
+      db
+        .prepare("SELECT COUNT(*) AS count FROM lessons WHERE subject_id = ? AND sequence_number = 0")
+        .get(subjectId) as { count: number }
+    ).count;
+    expect(assessmentSlotCount).toBe(0);
+  });
 });

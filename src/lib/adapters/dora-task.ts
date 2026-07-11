@@ -13,6 +13,7 @@ import type {
 } from "@/types";
 import { LESSON_QUALITY_BAR_PROMPT } from "@/lib/lesson-generator/contract";
 import { COMPREHENSIVE_LESSON_PLAN_TEMPLATE } from "@/lib/lesson-generator/plan-template";
+import { sourceMaterialsToPrompt } from "@/lib/subject-materials";
 
 const execFileAsync = promisify(execFile);
 
@@ -185,13 +186,18 @@ function fmtChannelInstruction(channel?: string): string {
 }
 
 function buildFirstLessonAcceptance(event: SubjectCreatedEvent, channel?: string): string {
+  const lessonType = event.lesson_type ?? "course";
+  const targetLessonCount = event.target_lesson_count ?? (lessonType === "one_off" ? 1 : null);
   const subjectSnapshot = [
     `Title: ${event.subject_title}`,
     event.subject_description ? `Description: ${event.subject_description}` : "Description: (none set)",
+    `Lesson type: ${lessonType}`,
+    targetLessonCount ? `Target lesson count: ${targetLessonCount}` : "Target lesson count: open-ended",
     event.subject_goals ? `Goals:\n${event.subject_goals}` : "Goals: (none set)",
     event.subject_criteria
       ? `Learner preferences:\n${event.subject_criteria}`
       : "Learner preferences: (none set)",
+    `Source materials:\n${sourceMaterialsToPrompt(event.source_materials ?? [])}`,
     `Current level: ${event.current_level}`,
     event.workpad_summary ? `Current workpad:\n${event.workpad_summary}` : "Current workpad: (none yet)",
     `Learner profile config: ${event.learner_profile_config ? JSON.stringify(event.learner_profile_config) : "(none)"}`,
@@ -200,8 +206,12 @@ function buildFirstLessonAcceptance(event: SubjectCreatedEvent, channel?: string
   return [
     `Read ${AVOCADOCORE_LESSON_AUTHORING_SKILL} before doing any lesson work.`,
     "",
-    `Generate the FIRST lesson for new subject "${event.subject_title}" (subject ${event.subject_id}, learner ${event.learner_id}).`,
-    "This is the initial lesson, so the worker must not assume a pre-existing curriculum or hidden mastery state. Start by inspecting the local AvocadoCore SQLite database for this subject, learner profile, related subjects, prior cross-subject mastery, and any existing workpad. If the subject has no lessons yet, create lesson 1. If a lesson was already added while this task was waiting, verify it against the quality bar and either repair it or record that no new lesson is needed.",
+    lessonType === "one_off"
+      ? `Generate the ONE-OFF lesson for new subject "${event.subject_title}" (subject ${event.subject_id}, learner ${event.learner_id}).`
+      : `Generate the FIRST lesson for new subject "${event.subject_title}" (subject ${event.subject_id}, learner ${event.learner_id}).`,
+    lessonType === "one_off"
+      ? "This is a one-off learning request. Do not create an initial assessment lesson. Create exactly one pure teaching lesson that covers the important things to learn from the provided context, links, and uploaded materials. Infer the user's likely starting point from the learner profile, subject text, goals, preferences, and materials. The lesson should be comprehensive enough to stand alone, with rich audio, visuals, practice, and assessments inside the lesson itself. If a queued lesson already exists for this subject, repair it against this contract instead of creating a duplicate."
+      : "This is the initial lesson, so the worker must not assume a pre-existing curriculum or hidden mastery state. Start by inspecting the local AvocadoCore SQLite database for this subject, learner profile, related subjects, prior cross-subject mastery, and any existing workpad. If the subject has no lessons yet, create lesson 1. If a lesson was already added while this task was waiting, verify it against the quality bar and either repair it or record that no new lesson is needed.",
     "",
     "=== SUBJECT SNAPSHOT ===",
     subjectSnapshot,
@@ -209,8 +219,10 @@ function buildFirstLessonAcceptance(event: SubjectCreatedEvent, channel?: string
     "=== REQUIRED PLANNING STAGE ===",
     "Before authoring content, do a deliberate planning pass. Read the subject goals and criteria, inspect SQLite evidence, update or create the subject workpad, and identify the highest-value first slice of the subject. For technical subjects, especially model building, inference, quantization, GGUF conversion, Hugging Face release workflows, or Gemma contribution practice, do comprehensive current research before choosing examples or package APIs. Record the source-backed findings in task notes or lesson metadata. Do not guess the current syntax, package names, keyword arguments, flags, or release workflows for external libraries or tools. If the lesson uses an external Python library, CLI, or model package, include enough documentation in code comments and teaching text that the learner can understand the relevant parameters and keywords without already knowing that package.",
     "",
-    "=== FIRST LESSON DESIGN GOAL ===",
-    "The first lesson should orient the learner to the big picture before diving into details. Explain why the subject matters, what problem the first concept solves, what breaks without it, and how it connects to the learner's long-term goal. Avoid broad survey fluff. Pick a concrete, learnable step that creates useful mental scaffolding and gives the model enough evidence to plan lesson 2.",
+    lessonType === "one_off" ? "=== ONE-OFF LESSON DESIGN GOAL ===" : "=== FIRST LESSON DESIGN GOAL ===",
+    lessonType === "one_off"
+      ? "The one-off lesson should synthesize the source material into the single highest-value learning experience. For a request like 'I have a meeting with Sara and want one lesson on the important things to learn from this,' identify the important concepts, explain what they mean, why they matter, and how to apply them. Do not ask the learner to complete a separate calibration assessment first. Do not split the material across future lessons unless the configured target lesson count is greater than one."
+      : "The first lesson should orient the learner to the big picture before diving into details. Explain why the subject matters, what problem the first concept solves, what breaks without it, and how it connects to the learner's long-term goal. Avoid broad survey fluff. Pick a concrete, learnable step that creates useful mental scaffolding and gives the model enough evidence to plan lesson 2.",
     "Phase behavior: familiarity lessons focus on high-level concepts, vocabulary, and how pieces relate. Competence lessons move into important details, mechanisms, edge cases, and practice. Mastery lessons emphasize transfer and integration. Post-mastery lessons are paper-driven and must center a recent, relevant, well-cited or frontier paper with clear citations.",
     "",
     "For the requested model-building and inference track, the first lesson should help the learner understand the lifecycle from data and tokenizer choices through training, inference, quantization, packaging, and release, while still teaching one concrete part deeply enough to practice. The end goal is competence to help the Google Gemma team, so the lesson should point toward real workflows and vocabulary without pretending the learner already knows them.",
@@ -452,7 +464,7 @@ export async function dispatchSubjectCreatedLessonTask(
   return createDoraTask(
     {
       project,
-      title: `Generate first lesson: ${event.subject_title}`,
+      title: `${event.lesson_type === "one_off" ? "Generate one-off lesson" : "Generate first lesson"}: ${event.subject_title}`,
       acceptance: buildFirstLessonAcceptance(event, channel),
       metadata: { subject_created_event: event },
     },

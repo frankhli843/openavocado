@@ -378,6 +378,19 @@ enforced by `validateGeneratedContent`; the rest is a hard authoring rule.
   production bar: generated audio, approved interactives, reviewed Manim segment
   videos, `pnpm audit:videos --lesson <id>` passing, and browser QA evidence.
   Use `pnpm backfill:lesson-buffer -- --write` to repair existing subjects.
+- **One-off subjects skip the separate initial assessment.** When
+  `subjects.lesson_type = 'one_off'`, generate a pure teaching lesson directly
+  from the subject title, goals, learner preferences, links, uploaded documents,
+  and inline source text. If `target_lesson_count = 1`, the lesson must cover
+  the full requested scope in that single lesson and must not defer required
+  concepts into a future lesson. It may still include in-lesson practice,
+  quizzes, and reflection questions, but it must not create a separate sequence
+  0 calibration lesson. Store the teaching lesson at sequence 1.
+- **Finish-by lesson count controls the buffer.** `target_lesson_count`
+  describes how many teaching lessons the subject should finish by. The
+  two-ready buffer must never generate beyond the remaining configured teaching
+  lessons. For a one-off subject with target 1, once the single lesson is
+  completed, the buffer target is zero.
 - **Explicit preview wording for high-level concepts.** If a lesson intentionally
   introduces a concept only at a high level, the **audio script and the written
   text must say so explicitly** — name it a preview and state it will be explored
@@ -798,9 +811,10 @@ examples, wrong difficulty calibration, audio that sounds robotic or truncated).
 ### Required steps
 
 1. **Create a Dora task** before generation starts. Title: `Maintain two ready
-   lessons for <subject> — <learner>` when triggered by lesson completion, or
-   `Generate lesson N for <subject> — <learner>` for first-lesson and manual
-   one-off generation. The task acceptance criteria must start with
+   lessons for <subject>, <learner>` when triggered by lesson completion, or
+   `Generate lesson N for <subject>, <learner>` for first-lesson generation,
+   or `Generate one-off lesson for <subject>, <learner>` for a one-off
+   subject. The task acceptance criteria must start with
    `Read skills/avocadocore-lesson-authoring/SKILL.md before doing any lesson
    work`, then reference this authoring guide and the `validateGeneratedContent`
    contract. This applies to first lessons after a new subject is added,

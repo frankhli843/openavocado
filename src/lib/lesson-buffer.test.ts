@@ -139,4 +139,18 @@ describe("lesson buffer", () => {
     expect(plan.lessons_to_generate).toBe(0);
     expect(plan.enrichment_required_for_lesson_ids).toHaveLength(2);
   });
+
+  it("caps the ready buffer by remaining target lesson count for one-off subjects", () => {
+    const db = makeDb();
+    const { subjectId } = seedSubject(db);
+    db.prepare("UPDATE subjects SET lesson_type = 'one_off', target_lesson_count = 1 WHERE id = ?").run(subjectId);
+    const completedId = insertLesson(db, subjectId, "completed", 1, "Meeting synthesis");
+
+    const plan = buildLessonBufferPlan(db, { subjectId, completedLessonId: completedId });
+
+    expect(plan.target_ready_count).toBe(0);
+    expect(plan.ready_count).toBe(0);
+    expect(plan.lessons_to_generate).toBe(0);
+    expect(plan.enrichment_required_for_lesson_ids).toEqual([]);
+  });
 });

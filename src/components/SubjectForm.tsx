@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import type { LevelName, Subject } from "@/types";
+import type { LevelName, Subject, SubjectLessonType } from "@/types";
 
 export interface SubjectFormValues {
   title: string;
@@ -9,6 +9,8 @@ export interface SubjectFormValues {
   goals: string;
   criteria: string;
   current_level: LevelName;
+  lesson_type: SubjectLessonType;
+  target_lesson_count: number | null;
 }
 
 interface SubjectFormProps {
@@ -34,6 +36,11 @@ export function SubjectForm({ initial, learnerId, onSave, onCancel }: SubjectFor
   const [goals, setGoals] = useState(initial?.goals ?? "");
   const [criteria, setCriteria] = useState(initial?.criteria ?? "");
   const [level, setLevel] = useState<LevelName>(initial?.current_level ?? "familiarity");
+  const [lessonType, setLessonType] = useState<SubjectLessonType>(initial?.lesson_type ?? "course");
+  const [targetLessonCount, setTargetLessonCount] = useState(String(initial?.target_lesson_count ?? (initial?.lesson_type === "one_off" ? 1 : 6)));
+  const [sourceLinks, setSourceLinks] = useState("");
+  const [sourceText, setSourceText] = useState("");
+  const [sourceFiles, setSourceFiles] = useState<FileList | null>(null);
   const [saving, setSaving] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
 
@@ -41,6 +48,10 @@ export function SubjectForm({ initial, learnerId, onSave, onCancel }: SubjectFor
     const errs: Record<string, string> = {};
     if (!title.trim()) errs.title = "Subject name is required.";
     if (title.trim().length > 120) errs.title = "Keep the subject name under 120 characters.";
+    const parsedTarget = Number(targetLessonCount);
+    if (!Number.isFinite(parsedTarget) || parsedTarget < 1 || parsedTarget > 100) {
+      errs.target_lesson_count = "Choose a finish-by count from 1 to 100.";
+    }
     setErrors(errs);
     return Object.keys(errs).length === 0;
   }
@@ -52,27 +63,34 @@ export function SubjectForm({ initial, learnerId, onSave, onCancel }: SubjectFor
     setErrors({});
 
     try {
-      const payload = {
-        title: title.trim(),
-        description: description.trim() || null,
-        goals: goals.trim() || null,
-        criteria: criteria.trim() || null,
-        current_level: level,
-        learner_id: learnerId,
-      };
+      const payload = new FormData();
+      payload.set("title", title.trim());
+      payload.set("description", description.trim());
+      payload.set("goals", goals.trim());
+      payload.set("criteria", criteria.trim());
+      payload.set("current_level", level);
+      payload.set("lesson_type", lessonType);
+      payload.set("target_lesson_count", String(Math.max(1, Math.floor(Number(targetLessonCount)))));
+      payload.set("learner_id", String(learnerId));
+      payload.set("source_links", sourceLinks.trim());
+      payload.set("source_text", sourceText.trim());
+      if (isEdit && initial?.source_materials && !sourceLinks.trim() && !sourceText.trim() && !sourceFiles?.length) {
+        payload.set("source_materials", initial.source_materials);
+      }
+      if (sourceFiles) {
+        Array.from(sourceFiles).forEach((file) => payload.append("source_files", file));
+      }
 
       let res: Response;
       if (isEdit && initial?.id) {
         res = await fetch(`/api/subjects/${initial.id}`, {
           method: "PATCH",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(payload),
+          body: payload,
         });
       } else {
         res = await fetch("/api/subjects", {
           method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(payload),
+          body: payload,
         });
       }
 
@@ -124,7 +142,7 @@ export function SubjectForm({ initial, learnerId, onSave, onCancel }: SubjectFor
         <textarea
           value={description}
           onChange={(e) => setDescription(e.target.value)}
-          placeholder="A brief description to remind yourself what this subject covers — topics, scope, context."
+          placeholder="A brief description to remind yourself what this subject covers: topics, scope, context."
           rows={2}
           className="w-full px-3 py-2.5 text-sm border border-gray-200 rounded-lg resize-y focus:outline-none focus:ring-2 focus:ring-blue-200 focus:border-blue-400 transition-colors leading-relaxed"
         />
@@ -147,6 +165,92 @@ export function SubjectForm({ initial, learnerId, onSave, onCancel }: SubjectFor
         />
       </div>
 
+      <div>
+        <label className="block text-sm font-medium text-gray-700 mb-2">
+          Lesson plan
+        </label>
+        <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+          {[
+            { value: "course" as const, label: "Course", hint: "Adaptive sequence with calibration and follow-up lessons" },
+            { value: "one_off" as const, label: "One-off", hint: "A focused lesson from context, links, and documents" },
+          ].map((opt) => (
+            <label
+              key={opt.value}
+              className={`cursor-pointer rounded-lg border p-3 transition-colors ${
+                lessonType === opt.value ? "border-blue-400 bg-blue-50" : "border-gray-200 hover:border-gray-300"
+              }`}
+            >
+              <input
+                type="radio"
+                name="lesson_type"
+                value={opt.value}
+                checked={lessonType === opt.value}
+                onChange={() => {
+                  setLessonType(opt.value);
+                  if (opt.value === "one_off") setTargetLessonCount("1");
+                }}
+                className="sr-only"
+              />
+              <span className="block text-sm font-semibold text-gray-900">{opt.label}</span>
+              <span className="mt-1 block text-xs leading-relaxed text-gray-500">{opt.hint}</span>
+            </label>
+          ))}
+        </div>
+        <div className="mt-3">
+          <label className="block text-xs font-medium text-gray-600 mb-1.5">
+            Finish by lesson count
+          </label>
+          <input
+            type="number"
+            min={1}
+            max={100}
+            value={targetLessonCount}
+            onChange={(e) => setTargetLessonCount(e.target.value)}
+            className={`w-32 px-3 py-2 text-sm border rounded-lg focus:outline-none focus:ring-2 ${
+              errors.target_lesson_count
+                ? "border-red-300 focus:ring-red-200"
+                : "border-gray-200 focus:ring-blue-200 focus:border-blue-400"
+            }`}
+          />
+          {errors.target_lesson_count && <p className="mt-1.5 text-xs text-red-600">{errors.target_lesson_count}</p>}
+        </div>
+      </div>
+
+      <div>
+        <label className="block text-sm font-medium text-gray-700 mb-1.5">
+          Source context
+        </label>
+        <p className="text-xs text-gray-500 mb-2">
+          Add meeting notes, links, PDFs, TXT, Markdown, or DOCX files. One-off lessons use these as the main teaching context.
+        </p>
+        <textarea
+          value={sourceLinks}
+          onChange={(e) => setSourceLinks(e.target.value)}
+          placeholder="Links, one per line"
+          rows={2}
+          className="mb-2 w-full px-3 py-2.5 text-sm border border-gray-200 rounded-lg resize-y focus:outline-none focus:ring-2 focus:ring-blue-200 focus:border-blue-400 transition-colors leading-relaxed"
+        />
+        <textarea
+          value={sourceText}
+          onChange={(e) => setSourceText(e.target.value)}
+          placeholder="Notes or context, for example: Meeting with Sara about Gemma contribution path..."
+          rows={4}
+          className="mb-2 w-full px-3 py-2.5 text-sm border border-gray-200 rounded-lg resize-y focus:outline-none focus:ring-2 focus:ring-blue-200 focus:border-blue-400 transition-colors leading-relaxed"
+        />
+        <input
+          type="file"
+          multiple
+          accept=".pdf,.txt,.md,.markdown,.doc,.docx,text/plain,text/markdown,application/pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+          onChange={(e) => setSourceFiles(e.target.files)}
+          className="block w-full text-sm text-gray-600 file:mr-3 file:rounded-lg file:border-0 file:bg-gray-100 file:px-3 file:py-2 file:text-sm file:font-medium file:text-gray-700 hover:file:bg-gray-200"
+        />
+        {initial?.source_materials && isEdit && (
+          <p className="mt-1.5 text-xs text-gray-400">
+            Existing source materials are preserved unless you add new source context here.
+          </p>
+        )}
+      </div>
+
       {/* Preferences */}
       <div>
         <label className="block text-sm font-medium text-gray-700 mb-1.5">
@@ -162,7 +266,7 @@ export function SubjectForm({ initial, learnerId, onSave, onCancel }: SubjectFor
           onChange={(e) => setCriteria(e.target.value)}
           placeholder={[
             "Examples:",
-            "• I find formula derivations less useful than seeing examples first — start concrete.",
+            "• I find formula derivations less useful than seeing examples first, start concrete.",
             "• I'm preparing for a job interview in ML, so prioritize practical skills over theory.",
             "• I've found that code exercises help me retain concepts much better than reading alone.",
             "• Avoid heavy notation until I've seen the intuition in a simple case.",

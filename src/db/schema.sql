@@ -45,8 +45,11 @@ CREATE TABLE IF NOT EXISTS subjects (
   title           TEXT    NOT NULL,
   description     TEXT,
   status          TEXT    NOT NULL DEFAULT 'active' CHECK (status IN ('active', 'paused', 'completed', 'archived')),
+  lesson_type     TEXT    NOT NULL DEFAULT 'course' CHECK (lesson_type IN ('course', 'one_off')),
+  target_lesson_count INTEGER, -- optional finish-by count; one_off defaults to 1
   goals           TEXT,   -- editable long-form goals text
   criteria        TEXT,   -- learner notes for the lesson generator: what to optimize for, preferred style, constraints, context
+  source_materials TEXT,  -- JSON array of uploaded files, extracted text snippets, and context links
   current_level   TEXT    NOT NULL DEFAULT 'familiarity' CHECK (current_level IN ('familiarity', 'competence', 'mastery', 'post_mastery')),
   archived_at     TEXT,   -- set when a subject is archived (reversible); NULL when active
   created_at      TEXT    NOT NULL DEFAULT (datetime('now')),

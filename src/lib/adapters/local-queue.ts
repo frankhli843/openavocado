@@ -10,6 +10,7 @@ import { generateInitialAssessment } from "@/lib/lesson-generator/initial-assess
 import { generateNextLesson } from "@/lib/lesson-generator/next-lesson";
 import { generateLessonAudio } from "@/lib/audio/generate-lesson-audio";
 import { buildLessonBufferPlan, enrichQueuedLessonsFromCompletion } from "@/lib/lesson-buffer";
+import type { LevelProgression } from "@/types";
 
 /**
  * Local-queue adapter — writes the lesson.completed event to the
@@ -96,6 +97,21 @@ export const localQueueRegenerationAdapter: RegenerationHookAdapter = {
 export const localQueueSubjectCreatedDispatcher: SubjectCreatedDispatcher = async (event) => {
   try {
     const db = getDb();
+    if (event.lesson_type === "one_off") {
+      const existing = db
+        .prepare("SELECT id, title FROM lessons WHERE subject_id = ? AND sequence_number = 1 LIMIT 1")
+        .get(event.subject_id) as { id: number; title: string } | undefined;
+      if (existing) {
+        console.log(`[subject.created:local-queue] One-off lesson already exists (lesson ${existing.id}) for subject ${event.subject_id}.`);
+        return { ok: true, ref: `local-queue-one-off-existing-${existing.id}`, lesson_id: existing.id };
+      }
+      const result = generateNextLesson(db, buildOneOffSeedEvent(event));
+      if (process.env.AVOCADOCORE_LOCAL_QUEUE_AUDIO !== "skip") {
+        await generateLessonAudio(db, result.lesson_id);
+      }
+      console.log(`[subject.created:local-queue] Created one-off lesson "${result.lesson_title}" (lesson ${result.lesson_id}).`);
+      return { ok: true, ref: `local-queue-one-off-${result.lesson_id}`, lesson_id: result.lesson_id };
+    }
 
     // Idempotency check: skip if an initial assessment already exists
     const existing = db
@@ -129,3 +145,70 @@ export const localQueueSubjectCreatedDispatcher: SubjectCreatedDispatcher = asyn
     return { ok: false, error: msg };
   }
 };
+
+function buildOneOffSeedEvent(event: Parameters<SubjectCreatedDispatcher>[0]): LessonCompletedEvent {
+  const level = event.current_level;
+  const levelProgression: LevelProgression = {
+    previous_level: level,
+    current_level: level,
+    recommended_level: level,
+    next_level: null,
+    graduated: false,
+    progress_percent: 0,
+    reason: "One-off subject starts from provided context without a separate initial assessment.",
+    frontier_mode: false,
+    evidence: {
+      completed_lessons: 0,
+      total_lessons: 1,
+      mastery_score: null,
+      assessment_total: 0,
+      assessment_accuracy: null,
+      hard_assessment_total: 0,
+      hard_assessment_accuracy: null,
+      positive_signals: 0,
+      review_signals: 0,
+      passed_code_submissions: 0,
+      total_code_submissions: 0,
+    },
+    gates: [],
+    phases: [{ level, label: level, status: "current", summary: "One-off lesson generated directly from source materials." }],
+  };
+
+  return {
+    event: "lesson.completed",
+    learner_id: event.learner_id,
+    subject_id: event.subject_id,
+    subject_title: event.subject_title,
+    subject_goals: event.subject_goals,
+    subject_criteria: event.subject_criteria,
+    current_level: level,
+    level_progression: levelProgression,
+    lesson_id: 0,
+    lesson_title: "One-off source context",
+    lesson_goals: [],
+    activities_completed: [],
+    assessment_qa: [],
+    code_attempts: [],
+    mastery_signals: [],
+    concepts_to_review: [event.subject_title],
+    concepts_ready_to_advance: [event.subject_title],
+    next_lesson_diagnostics: [],
+    quiz_result: null,
+    tag_difficulty_performance: [],
+    recent_misconceptions: [],
+    completed_lessons: [],
+    discarded_lessons: [],
+    workpad_summary: event.workpad_summary,
+    learner_profile_config: event.learner_profile_config,
+    cross_subject_history: [],
+    lesson_buffer: {
+      policy_version: "two-ready-lessons/v1",
+      target_ready_count: 0,
+      ready_count: 0,
+      lessons_to_generate: 0,
+      existing_ready_lessons: [],
+      enrichment_required_for_lesson_ids: [],
+    },
+    completed_at: new Date().toISOString(),
+  };
+}

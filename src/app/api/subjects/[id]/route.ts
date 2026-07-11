@@ -3,6 +3,12 @@ import { getDb } from "@/db/connection";
 import { computeSubjectMastery } from "@/lib/mastery";
 import { evaluateSubjectLevelProgression } from "@/lib/level-progression";
 import { reconcileMaterializedLessonJobs } from "@/lib/lesson-jobs/reconcile";
+import {
+  buildSourceMaterialsFromFormData,
+  buildSourceMaterialsFromJson,
+  normalizeLessonType,
+  normalizeTargetLessonCount,
+} from "@/lib/subject-materials";
 import type { Subject, Lesson, MasterySignal, ProgressPoint } from "@/types";
 
 /** GET /api/subjects/:id — full subject detail with lessons, mastery, progress */
@@ -126,8 +132,12 @@ export async function PATCH(
   try {
     const { id } = await params;
     const db = getDb();
-    const body = (await request.json()) as Partial<Subject>;
     const subjectId = Number(id);
+    const contentType = request.headers.get("content-type") ?? "";
+    const formData = contentType.includes("multipart/form-data") ? await request.formData() : null;
+    const body = formData
+      ? Object.fromEntries(formData.entries())
+      : ((await request.json()) as Partial<Subject & { source_links?: string; source_text?: string }>);
 
     const allowed = ["goals", "criteria", "status", "title", "description", "current_level"] as const;
     const updates: string[] = [];
@@ -138,6 +148,33 @@ export async function PATCH(
         updates.push(`${key} = ?`);
         values.push(body[key]);
       }
+    }
+
+    if ("lesson_type" in body || "target_lesson_count" in body) {
+      const existing = db.prepare("SELECT lesson_type FROM subjects WHERE id = ?").get(subjectId) as
+        | { lesson_type: string }
+        | undefined;
+      const lessonType = "lesson_type" in body ? normalizeLessonType(body.lesson_type) : normalizeLessonType(existing?.lesson_type);
+      updates.push("lesson_type = ?");
+      values.push(lessonType);
+      if ("target_lesson_count" in body) {
+        updates.push("target_lesson_count = ?");
+        values.push(normalizeTargetLessonCount(body.target_lesson_count, lessonType));
+      } else if (lessonType === "one_off") {
+        updates.push("target_lesson_count = COALESCE(target_lesson_count, 1)");
+      }
+    }
+
+    if (formData) {
+      const sourceMaterials = await buildSourceMaterialsFromFormData(formData, subjectId);
+      if (sourceMaterials.length > 0 || formData.has("source_materials") || formData.has("source_links") || formData.has("source_text")) {
+        updates.push("source_materials = ?");
+        values.push(JSON.stringify(sourceMaterials));
+      }
+    } else if ("source_materials" in body || "source_links" in body || "source_text" in body) {
+      const sourceMaterials = buildSourceMaterialsFromJson(body);
+      updates.push("source_materials = ?");
+      values.push(JSON.stringify(sourceMaterials));
     }
 
     // Keep archived_at in sync with status. Archiving is reversible and never
