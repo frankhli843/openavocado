@@ -1,3 +1,5 @@
+import fs from "node:fs";
+import path from "node:path";
 import type Database from "better-sqlite3";
 import { generateLessonAudio } from "@/lib/audio/generate-lesson-audio";
 import type { TtsProvider } from "@/lib/audio/tts";
@@ -7,6 +9,67 @@ import { promoteLessonVideoStatusIfReady } from "@/lib/lesson-generator/video-st
 export const DEMO_GENERATOR = "prodavo-demo-seed/v1";
 export const CANONICAL_DEMO_GENERATOR = "prodavo-demo-canonical-clone/v1";
 const CANONICAL_DEMO_LESSON_LIMIT = 4;
+
+/**
+ * Reviewed Manim orientation videos for the demo seed lessons (video-first,
+ * 2026-07-11). Keyed by seed sequenceNumber; registered at materialization
+ * when the MP4 exists under the runtime root, so fresh learners get the
+ * video-first demo experience instead of the legacy audio+cue fallback. The
+ * assets are the reviewed source-lesson renders shared by all demo copies.
+ */
+const DEMO_SEGMENT_VIDEOS: Record<
+  number,
+  { video: Record<string, unknown>; duration_sec: number; content_hash: string }
+> = {
+  1: {
+    duration_sec: 1225.469,
+    content_hash: "c1b85674d63aa5f9b7c67388fffe9f02f6da0dc8ce3424ea8a4fc52423a8e72a",
+    video: {
+      file_path: "runtime_artifacts/videos/lesson_12/activity_72.mp4",
+      poster_path: "runtime_artifacts/videos/lesson_12/activity_72.poster.png",
+      captions_path: "runtime_artifacts/videos/lesson_12/activity_72.vtt",
+      duration_sec: 1225.469,
+      width: 1920,
+      height: 1080,
+      source: { tool: "manim-ce", version: "manim-ce/0.19.1", scene_module: "manim/scenes/lesson_12/activity_72.py" },
+      review: { reviewed_at: "2026-07-08T04:42:00Z", frames_reviewed: 20, iterations: 2 },
+    },
+  },
+  2: {
+    duration_sec: 1039.738,
+    content_hash: "27fca0c4e40f8e30392aa3d73916493772ad5f46459ca42cd74b70bdcf56e7ff",
+    video: {
+      file_path: "runtime_artifacts/videos/lesson_13/activity_76.mp4",
+      poster_path: "runtime_artifacts/videos/lesson_13/activity_76.poster.png",
+      captions_path: "runtime_artifacts/videos/lesson_13/activity_76.vtt",
+      duration_sec: 1039.738,
+      width: 1920,
+      height: 1080,
+      source: { tool: "manim-ce", version: "manim-ce/0.19.1", scene_module: "manim/scenes/lesson_13/activity_76.py" },
+      review: { reviewed_at: "2026-07-08T06:44:00Z", frames_reviewed: 21, iterations: 2 },
+    },
+  },
+  3: {
+    duration_sec: 1004.738,
+    content_hash: "93c9b1144e2bfb342e3bf7325c2da0e2dc0c0b6cb14d6af1436978cca0e6f801",
+    video: {
+      file_path: "runtime_artifacts/videos/lesson_14/activity_80.mp4",
+      poster_path: "runtime_artifacts/videos/lesson_14/activity_80.poster.png",
+      captions_path: "runtime_artifacts/videos/lesson_14/activity_80.vtt",
+      duration_sec: 1004.738,
+      width: 1920,
+      height: 1080,
+      source: { tool: "manim-ce", version: "manim-ce/0.19.1", scene_module: "manim/scenes/lesson_14/activity_80.py" },
+      review: { reviewed_at: "2026-07-08T08:24:00Z", frames_reviewed: 21, iterations: 2 },
+    },
+  },
+};
+
+function resolveRuntimeAsset(relPath: string): string {
+  const root = process.env.AVOCADOCORE_RUNTIME_ROOT;
+  if (root) return path.join(root, relPath.replace(/^runtime_artifacts\//, ""));
+  return path.join(process.cwd(), relPath);
+}
 
 interface LessonSeed {
   title: string;
@@ -381,8 +444,14 @@ export async function ensureDemoLessonAudioForLearner(
 
 function ensureLesson(db: Database.Database, subjectId: number, lesson: LessonSeed): void {
   const existing = db
-    .prepare("SELECT id FROM lessons WHERE subject_id = ? AND sequence_number = ?")
-    .get(subjectId, lesson.sequenceNumber) as { id: number } | undefined;
+    .prepare("SELECT id, generated_by FROM lessons WHERE subject_id = ? AND sequence_number = ?")
+    .get(subjectId, lesson.sequenceNumber) as { id: number; generated_by: string | null } | undefined;
+
+  // Never overwrite a lesson this seed did not create. With canonical demo
+  // cloning disabled in production, existing guest subjects may hold
+  // canonical-clone (or other) lessons at the same sequence numbers; the seed
+  // loop must leave those and their registered videos untouched.
+  if (existing && existing.generated_by !== DEMO_GENERATOR) return;
 
   const lessonId =
     existing?.id ??
@@ -491,17 +560,57 @@ function ensureLesson(db: Database.Database, subjectId: number, lesson: LessonSe
   };
 
   const overviewScript = longDemoOverviewScript(lesson);
+  const seedVideo = DEMO_SEGMENT_VIDEOS[lesson.sequenceNumber];
+  const seedVideoAvailable =
+    seedVideo && fs.existsSync(resolveRuntimeAsset(seedVideo.video.file_path as string));
   upsertActivity("audio", 1, lesson.audioTitle, {
     script: overviewScript,
     transcript: overviewScript,
     duration_hint: 900,
     orientation_visual: lesson.orientationVisual,
+    ...(seedVideoAvailable ? { orientation_video: seedVideo.video } : {}),
   });
+  if (seedVideoAvailable) {
+    const audioActivity = findActivity.get(lessonId, "audio") as { id: number } | undefined;
+    if (audioActivity) {
+      const hasVideoRow = db
+        .prepare(
+          "SELECT COUNT(*) AS count FROM generated_artifacts WHERE activity_id = ? AND artifact_type = 'video'"
+        )
+        .get(audioActivity.id) as { count: number };
+      if (hasVideoRow.count === 0) {
+        db.prepare(
+          `INSERT INTO generated_artifacts
+             (lesson_id, activity_id, artifact_type, provider, duration_sec, content_hash, file_path, source_script, script_version, generated_at)
+           VALUES (?, ?, 'video', 'manim-ce', ?, ?, ?, ?, 'manim-ce/0.19.1', datetime('now'))`
+        ).run(
+          lessonId,
+          audioActivity.id,
+          seedVideo.duration_sec,
+          seedVideo.content_hash,
+          seedVideo.video.file_path,
+          JSON.stringify({
+            width: 1920,
+            height: 1080,
+            scene_module: (seedVideo.video.source as Record<string, unknown>).scene_module,
+            poster: seedVideo.video.poster_path,
+            captions: seedVideo.video.captions_path,
+            seeded_by: DEMO_GENERATOR,
+          })
+        );
+      }
+    }
+  }
   upsertActivity("reading", 2, lesson.readingTitle, lesson.reading);
   upsertActivity("interactive", 3, lesson.interactiveTitle, lesson.interactive, { matchSequence: true });
   upsertActivity("interactive", 4, lesson.secondaryInteractiveTitle, lesson.secondaryInteractive, { matchSequence: true });
   upsertActivity("practice_code", 5, lesson.codeTitle, lesson.code);
   upsertActivity("assessment", 6, lesson.assessmentTitle, lesson.assessment);
+
+  // Video-first: a demo lesson whose orientation segment now carries a
+  // registered reviewed video should be video_status='ready'; one without a
+  // seed video stays 'legacy' (historical fallback), never 'pending_video'.
+  promoteLessonVideoStatusIfReady(db, lessonId);
 }
 
 function bespokeArtifact(slug: string, title: string, instructions: string) {
