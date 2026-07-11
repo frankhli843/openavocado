@@ -35,7 +35,7 @@ function seedSubject(db: Database.Database, learnerId: number, level: LevelName)
     )
     .run(
       learnerId,
-      "Understand LLMs well enough to contribute to Gemma work.",
+      "Understand LLMs well enough to contribute to real open-source model work.",
       "Prefer audio-first, visual mechanisms, and code reinforcement.",
       level
     ).lastInsertRowid as number;
