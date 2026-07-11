@@ -1,10 +1,8 @@
+import fs from "node:fs";
+import path from "node:path";
 import type Database from "better-sqlite3";
 import type { LessonVideoStatus } from "@/types";
-import {
-  validateLessonProductionReadiness,
-  type GeneratedArtifactRow,
-  type StoredLessonActivity,
-} from "./readiness";
+import { validateLessonSegmentVideo } from "../lesson-content/schema";
 
 /**
  * Video-first gate (2026-07-11 directive).
@@ -27,6 +25,13 @@ export interface SegmentVideoCoverage {
   activity_type: "audio" | "lesson_part";
   title: string | null;
   has_video: boolean;
+  /**
+   * Whether this segment needs a video. Mirrors the audit:videos rule: a
+   * segment with no cue timeline is not a video candidate (nothing to
+   * animate); every segment WITH cues requires a registered reviewed video.
+   * New harness lessons always author cues, so the gate applies to them.
+   */
+  video_required: boolean;
   /** Path of the narration audio artifact, if generated — the mux source. */
   audio_file_path: string | null;
   audio_duration_sec: number | null;
@@ -74,40 +79,30 @@ export function evaluateLessonVideoCoverage(
       "SELECT activity_id, artifact_type, file_path, duration_sec FROM generated_artifacts WHERE lesson_id = ?"
     )
     .all(lessonId) as ArtifactRow[];
-
-  const parsed: StoredLessonActivity[] = activities.map((activity) => ({
-    id: activity.id,
-    activity_type: activity.activity_type,
-    title: activity.title,
-    content: parseJson(activity.content),
-  }));
-
-  const readiness = validateLessonProductionReadiness({
-    activities: parsed,
-    generatedArtifacts: artifacts as GeneratedArtifactRow[],
-    visualArtifacts: [],
-    options: {
-      requireSegmentVideos: true,
-      requireApprovedVisualArtifacts: false,
-      runtimeRoot: options?.runtimeRoot,
-      checkFiles: options?.checkFiles ?? Boolean(options?.runtimeRoot),
-    },
-  });
+  const checkFiles = options?.checkFiles ?? Boolean(options?.runtimeRoot);
 
   const audioByActivity = new Map<number, ArtifactRow>();
-  const videoActivityIds = new Set<number>();
+  const videoRowsByActivity = new Map<number, ArtifactRow[]>();
   for (const artifact of artifacts) {
     if (typeof artifact.activity_id !== "number") continue;
     if (artifact.artifact_type === "audio" && !audioByActivity.has(artifact.activity_id)) {
       audioByActivity.set(artifact.activity_id, artifact);
     }
-    if (artifact.artifact_type === "video") videoActivityIds.add(artifact.activity_id);
+    if (artifact.artifact_type === "video") {
+      const rows = videoRowsByActivity.get(artifact.activity_id) ?? [];
+      rows.push(artifact);
+      videoRowsByActivity.set(artifact.activity_id, rows);
+    }
   }
 
+  const errors: string[] = [];
   const segments: SegmentVideoCoverage[] = [];
-  for (const activity of parsed) {
+  for (const activity of activities) {
     if (activity.activity_type !== "audio" && activity.activity_type !== "lesson_part") continue;
-    const content = asRecord(activity.content);
+    const label = `activity ${activity.id} (${activity.activity_type})${activity.title ? ` ${JSON.stringify(activity.title)}` : ""}`;
+    const content = asRecord(parseJson(activity.content));
+    if (activity.content && !content) errors.push(`${label} content is not valid JSON`);
+
     const videoObject =
       activity.activity_type === "audio"
         ? content?.orientation_video
@@ -116,19 +111,57 @@ export function evaluateLessonVideoCoverage(
       activity.activity_type === "audio"
         ? asRecord(content?.orientation_visual)?.cues
         : asRecord(asRecord(content?.audio)?.synced_visual)?.cues;
+    const cueCount = Array.isArray(cues) ? cues.length : 0;
+    // Mirrors audit:videos: cue-less segments are not video candidates
+    // (declarative/interactive widget, no per-cue timeline to animate).
+    const videoRequired = cueCount > 0;
+    const videoRows = videoRowsByActivity.get(activity.id) ?? [];
+    const hasVideo = Boolean(videoObject) && videoRows.length > 0;
+
+    if (videoRequired) {
+      if (videoObject === undefined || videoObject === null) {
+        errors.push(`${label} is missing a registered segment video`);
+      } else {
+        const result = validateLessonSegmentVideo(videoObject);
+        for (const error of result.errors) errors.push(`${label} video: ${error}`);
+        if (videoRows.length === 0) {
+          errors.push(`${label} has no generated_artifacts video row`);
+        }
+        const videoRecord = asRecord(videoObject);
+        const expectedPath =
+          typeof videoRecord?.file_path === "string" ? videoRecord.file_path : null;
+        if (
+          expectedPath &&
+          videoRows.length > 0 &&
+          !videoRows.some((row) => row.file_path === expectedPath)
+        ) {
+          errors.push(
+            `${label} video file_path ${expectedPath} is not registered in generated_artifacts`
+          );
+        }
+        if (checkFiles && options?.runtimeRoot && expectedPath) {
+          const abs = runtimePath(options.runtimeRoot, expectedPath);
+          if (!fs.existsSync(abs)) {
+            errors.push(`${label} video file is missing on disk at ${abs}`);
+          }
+        }
+      }
+    }
+
     const audioArtifact = audioByActivity.get(activity.id) ?? null;
     segments.push({
       activity_id: activity.id,
       activity_type: activity.activity_type,
       title: activity.title ?? null,
-      has_video: Boolean(videoObject) && videoActivityIds.has(activity.id),
+      has_video: hasVideo,
+      video_required: videoRequired,
       audio_file_path: audioArtifact?.file_path ?? null,
       audio_duration_sec: audioArtifact?.duration_sec ?? null,
-      cue_count: Array.isArray(cues) ? cues.length : 0,
+      cue_count: cueCount,
     });
   }
 
-  return { ready: readiness.valid, errors: readiness.errors, segments };
+  return { ready: errors.length === 0, errors, segments };
 }
 
 export interface PendingVideoManifest {
@@ -176,7 +209,7 @@ export function markLessonVideoState(
   const manifest: PendingVideoManifest = {
     policy: "video-first/v1",
     marked_at: new Date().toISOString(),
-    segments: coverage.segments.filter((segment) => !segment.has_video),
+    segments: coverage.segments.filter((segment) => segment.video_required && !segment.has_video),
     next_steps: [
       `tsx scripts/export-storyboard.ts ${lessonId}`,
       `author manim/scenes/lesson_${lessonId}/activity_<id>.py (one AvoScene per cue, pace_to timing)`,
@@ -231,6 +264,10 @@ function clearPendingVideoManifest(db: Database.Database, lessonId: number): voi
   db.prepare(
     "UPDATE lessons SET source_context = ?, updated_at = datetime('now') WHERE id = ?"
   ).run(JSON.stringify(source), lessonId);
+}
+
+function runtimePath(runtimeRoot: string, relPath: string): string {
+  return path.join(runtimeRoot, relPath.replace(/^runtime_artifacts\//, ""));
 }
 
 function parseJson(value: string | null): unknown {

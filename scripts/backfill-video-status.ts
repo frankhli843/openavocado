@@ -85,6 +85,7 @@ for (const lesson of lessons) {
 
   for (const segment of coverage.segments) {
     const missing: string[] = [];
+    if (!segment.video_required) continue;
     if (!segment.has_video) {
       missing.push("video");
     } else {
