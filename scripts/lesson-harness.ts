@@ -33,6 +33,7 @@ import { generateLessonAudio } from "../src/lib/audio/generate-lesson-audio";
 import { sanitizeDraftVisualRefs } from "../src/lib/lessons/visual-artifact-guard";
 import { COMPREHENSIVE_LESSON_PLAN_TEMPLATE } from "../src/lib/lesson-generator/plan-template";
 import { validateLessonProductionReadiness } from "../src/lib/lesson-generator/readiness";
+import { markLessonVideoState } from "../src/lib/lesson-generator/video-status";
 import { buildLessonBufferPlan, enrichQueuedLessonsFromCompletion } from "../src/lib/lesson-buffer";
 import { sourceMaterialsToPrompt } from "../src/lib/subject-materials";
 import type Database from "better-sqlite3";
@@ -65,6 +66,13 @@ interface HarnessResult {
   error?: string;
   provider_used?: string;
   stage_reached?: string;
+  /**
+   * Video-first gate: the lesson row exists (structure/narration/audio) but is
+   * blocked on the reviewed Manim segment-video pass. The dispatching route
+   * must keep the job pending (harness_stage 'pending_video') — never mark it
+   * completed, and never surface the lesson as learner-ready.
+   */
+  pending_video?: boolean;
 }
 
 interface GeminiLessonDraft {
@@ -1151,8 +1159,8 @@ function insertGeneratedLesson(
     .prepare(
       `INSERT INTO lessons
          (subject_id, title, description, status, sequence_number, goals, tags,
-          generated_by, generator_version, source_context, planning_rationale)
-       VALUES (?, ?, ?, 'queued', ?, ?, ?, ?, '1.0.0', ?, ?)`
+          generated_by, generator_version, source_context, planning_rationale, video_status)
+       VALUES (?, ?, ?, 'queued', ?, ?, ?, ?, '1.0.0', ?, ?, 'pending_video')`
     )
     .run(
       subjectId,
@@ -1530,9 +1538,11 @@ function buildOneOffSeedEvent(event: SubjectCreatedEvent): LessonCompletedEvent 
     learner_profile_config: event.learner_profile_config,
     cross_subject_history: [],
     lesson_buffer: {
-      policy_version: "two-ready-lessons/v1",
+      policy_version: "two-ready-lessons/v2",
       target_ready_count: 0,
       ready_count: 0,
+      video_ready_count: 0,
+      pending_video_lesson_ids: [],
       lessons_to_generate: 0,
       existing_ready_lessons: [],
       enrichment_required_for_lesson_ids: [],
@@ -1595,6 +1605,14 @@ async function handleSubjectCreated(
 
   const result = generateInitialAssessment(db, event);
 
+  // Assessment-only lessons carry no audio/lesson_part segments, so the
+  // video-first evaluation resolves to 'ready' — but run it so every
+  // generation path stamps an explicit video_status.
+  markLessonVideoState(db, result.lesson_id, {
+    runtimeRoot: process.env.AVOCADOCORE_RUNTIME_ROOT,
+    checkFiles: Boolean(process.env.AVOCADOCORE_RUNTIME_ROOT),
+  });
+
   updateJobProgress(db, subjectId, "subject.created", "lesson.generated", `Initial assessment ready (lesson ${result.lesson_id}, ${result.question_count} questions)`);
 
   return {
@@ -1655,6 +1673,7 @@ async function handleLessonCompleted(
 
   const generatedIds: number[] = [];
   const blockedErrors: string[] = [];
+  const pendingVideoErrors: string[] = [];
   let providerUsed = "unknown";
 
   for (let slot = 0; slot < plan.lessons_to_generate; slot += 1) {
@@ -1670,6 +1689,10 @@ async function handleLessonCompleted(
     if (result.lesson_id) generatedIds.push(result.lesson_id);
 
     if (!result.ok) {
+      if (result.stage_reached === "pending_video" && result.lesson_id) {
+        pendingVideoErrors.push(`lesson ${result.lesson_id}: ${result.error ?? "awaiting Manim segment videos"}`);
+        continue;
+      }
       if (result.stage_reached === "media_review_blocked" && result.lesson_id) {
         blockedErrors.push(`lesson ${result.lesson_id}: ${result.error ?? "media review blocked"}`);
         continue;
@@ -1687,6 +1710,19 @@ async function handleLessonCompleted(
       lesson_id: generatedIds[0],
       provider_used: providerUsed,
       stage_reached: "media_review_blocked",
+    };
+  }
+
+  if (pendingVideoErrors.length > 0) {
+    const error = `Generated ${generatedIds.length} buffer lesson(s); ${pendingVideoErrors.length} remain pending_video until the Manim pass completes: ${pendingVideoErrors.join(" | ")}`;
+    updateJobProgress(db, subjectId, triggerEvent, "pending_video", error.slice(0, 400));
+    return {
+      ok: false,
+      pending_video: true,
+      error: error.slice(0, 500),
+      lesson_id: generatedIds[0],
+      provider_used: providerUsed,
+      stage_reached: "pending_video",
     };
   }
 
@@ -1824,6 +1860,29 @@ async function generateOneAdaptiveLessonForCompletion(
   }
 
   updateJobProgress(db, subjectId, triggerEvent, "media_readiness", "Checking generated videos and approved visual artifacts");
+
+  // Video-first gate: the harness cannot run the Manim render/review loop, so
+  // a lesson without reviewed segment videos stays pending_video with a
+  // structured manifest for the authoring worker — it is never learner-ready.
+  const videoState = markLessonVideoState(db, lessonId, {
+    runtimeRoot: process.env.AVOCADOCORE_RUNTIME_ROOT,
+    checkFiles: Boolean(process.env.AVOCADOCORE_RUNTIME_ROOT),
+  });
+  if (videoState.status === "pending_video") {
+    const missing = videoState.manifest?.segments.length ?? 0;
+    const error = `Lesson ${lessonId} is pending_video: ${missing} segment(s) await reviewed Manim videos: ${videoState.coverage.errors.slice(0, 4).join(" | ")}`;
+    console.error(`[lesson-harness] ${error}`);
+    updateJobProgress(db, subjectId, triggerEvent, "pending_video", error.slice(0, 400));
+    return {
+      ok: false,
+      pending_video: true,
+      error: error.slice(0, 500),
+      lesson_id: lessonId,
+      provider_used: getGeneratorId(modelUsed),
+      stage_reached: "pending_video",
+    };
+  }
+
   const readiness = validatePersistedLessonReadiness(db, lessonId);
   if (!readiness.ok) {
     console.error(`[lesson-harness] ${readiness.error}`);
@@ -1936,6 +1995,26 @@ async function handleLessonDiscarded(
   }
 
   updateJobProgress(db, subjectId, triggerEvent, "media_readiness", "Checking replacement lesson videos and approved visual artifacts");
+
+  const videoState = markLessonVideoState(db, lessonId, {
+    runtimeRoot: process.env.AVOCADOCORE_RUNTIME_ROOT,
+    checkFiles: Boolean(process.env.AVOCADOCORE_RUNTIME_ROOT),
+  });
+  if (videoState.status === "pending_video") {
+    const missing = videoState.manifest?.segments.length ?? 0;
+    const error = `Replacement lesson ${lessonId} is pending_video: ${missing} segment(s) await reviewed Manim videos: ${videoState.coverage.errors.slice(0, 4).join(" | ")}`;
+    console.error(`[lesson-harness] ${error}`);
+    updateJobProgress(db, subjectId, triggerEvent, "pending_video", error.slice(0, 400));
+    return {
+      ok: false,
+      pending_video: true,
+      error: error.slice(0, 500),
+      lesson_id: lessonId,
+      provider_used: getGeneratorId(modelUsed),
+      stage_reached: "pending_video",
+    };
+  }
+
   const readiness = validatePersistedLessonReadiness(db, lessonId);
   if (!readiness.ok) {
     console.error(`[lesson-harness] ${readiness.error}`);

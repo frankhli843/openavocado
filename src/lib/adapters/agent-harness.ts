@@ -16,6 +16,8 @@ interface HarnessCommandResult {
   ref?: string;
   lesson_id?: number;
   error?: string;
+  /** Lesson generated but blocked on the Manim video pass — keep the job pending. */
+  pending_video?: boolean;
 }
 
 export const agentHarnessAdapter: CompletionHookAdapter = {
@@ -55,7 +57,7 @@ async function dispatchToAgentHarness(event: HarnessEvent): Promise<HarnessComma
     provider_status: providerStatus,
     contract: {
       expected_output:
-        "JSON object with { ok: boolean, ref?: string, lesson_id?: number, error?: string }. The harness must create/validate lessons itself and never print secrets.",
+        "JSON object with { ok: boolean, ref?: string, lesson_id?: number, error?: string, pending_video?: boolean }. The harness must create/validate lessons itself and never print secrets. A lesson without reviewed Manim segment videos is pending_video, never ready.",
       chrome_mcp_required: true,
       local_queue_fallback_allowed: false,
       lesson_buffer_policy:
@@ -141,6 +143,7 @@ function parseHarnessResult(stdout: string): HarnessCommandResult {
       ref: typeof parsed.ref === "string" ? parsed.ref : undefined,
       lesson_id: typeof parsed.lesson_id === "number" ? parsed.lesson_id : undefined,
       error: typeof parsed.error === "string" ? sanitizeHarnessText(parsed.error) : undefined,
+      pending_video: parsed.pending_video === true ? true : undefined,
     };
   } catch (err) {
     const msg = err instanceof Error ? err.message : String(err);

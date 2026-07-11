@@ -162,12 +162,23 @@ export async function POST(
       .run(subject.id, lessonId, adapter.name, JSON.stringify(event), JSON.stringify(progressEvents));
 
     const adapterResult = await adapter.dispatch(event);
+    // Video-first gate: a replacement lesson blocked on the Manim pass keeps
+    // the job pending instead of failing.
+    const pendingVideo = !adapterResult.ok && adapterResult.pending_video === true;
     progressEvents.push(
       adapterResult.ok
         ? {
             ts: new Date().toISOString(),
             stage: "planning",
             message: "Replacement lesson request accepted",
+          }
+        : pendingVideo
+        ? {
+            ts: new Date().toISOString(),
+            stage: "pending_video",
+            message:
+              adapterResult.error ??
+              "Replacement lesson generated; reviewed Manim segment videos are still being produced before release",
           }
         : {
             ts: new Date().toISOString(),
@@ -182,6 +193,7 @@ export async function POST(
          SET status = ?,
              adapter_ref = ?,
              error = ?,
+             output_lesson_id = COALESCE(?, output_lesson_id),
              harness_status = ?,
              harness_stage = ?,
              progress_events = ?,
@@ -189,11 +201,12 @@ export async function POST(
          WHERE id = ?`
       )
       .run(
-        adapterResult.ok ? "dispatched" : "failed",
+        adapterResult.ok || pendingVideo ? "dispatched" : "failed",
         adapterResult.ref || null,
         adapterResult.error || null,
-        adapterResult.ok ? "waiting" : "failed",
-        adapterResult.ok ? "planning" : "failed",
+        adapterResult.lesson_id ?? null,
+        adapterResult.ok || pendingVideo ? "waiting" : "failed",
+        adapterResult.ok ? "planning" : pendingVideo ? "pending_video" : "failed",
         JSON.stringify(progressEvents),
         jobResult.lastInsertRowid
       );

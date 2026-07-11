@@ -69,6 +69,7 @@ function Section({ title, children }: { title: string; children: React.ReactNode
 function LessonRow({ lesson }: { lesson: Lesson }) {
   const goals: string[] = lesson.goals ? JSON.parse(lesson.goals) : [];
   const tags: string[] = lesson.tags ? JSON.parse(lesson.tags) : [];
+  const pendingVideo = lesson.status === "queued" && lesson.video_status === "pending_video";
 
   const statusDot: Record<string, string> = {
     completed: "bg-green-500",
@@ -86,7 +87,11 @@ function LessonRow({ lesson }: { lesson: Lesson }) {
     >
       {/* Status indicator */}
       <div className="mt-1.5 shrink-0">
-        <span className={`block w-2 h-2 rounded-full ${statusDot[lesson.status] ?? "bg-gray-300"}`} />
+        <span
+          className={`block w-2 h-2 rounded-full ${
+            pendingVideo ? "bg-violet-400 animate-pulse" : statusDot[lesson.status] ?? "bg-gray-300"
+          }`}
+        />
       </div>
 
       <div className="min-w-0 flex-1">
@@ -96,6 +101,11 @@ function LessonRow({ lesson }: { lesson: Lesson }) {
             {lesson.sequence_number ? `${lesson.sequence_number}. ` : ""}
             {lesson.title}
           </h4>
+          {pendingVideo && (
+            <span className="shrink-0 px-1.5 py-0.5 text-xs bg-violet-50 text-violet-600 border border-violet-100 rounded">
+              Preparing videos
+            </span>
+          )}
           {lesson.completed_at && (
             <span className="shrink-0 text-xs text-gray-400">
               {new Date(lesson.completed_at).toLocaleDateString()}

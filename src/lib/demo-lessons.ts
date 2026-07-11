@@ -2,6 +2,7 @@ import type Database from "better-sqlite3";
 import { generateLessonAudio } from "@/lib/audio/generate-lesson-audio";
 import type { TtsProvider } from "@/lib/audio/tts";
 import { DEMO_SUBJECT_TITLE } from "@/lib/demo-subject";
+import { promoteLessonVideoStatusIfReady } from "@/lib/lesson-generator/video-status";
 
 export const DEMO_GENERATOR = "prodavo-demo-seed/v1";
 export const CANONICAL_DEMO_GENERATOR = "prodavo-demo-canonical-clone/v1";
@@ -64,6 +65,16 @@ export function ensureDemoLessonsForLearner(db: Database.Database, learnerId: nu
     for (const lesson of DEMO_LESSONS) ensureLesson(db, subjectId, lesson);
   });
   tx();
+
+  // Video-first: demo seed lessons default to 'legacy' (reviewed historical
+  // fallback). Promote to 'ready' where registered segment videos already
+  // cover the lesson (e.g. re-materialization preserved orientation_video).
+  const demoLessonIds = db
+    .prepare("SELECT id FROM lessons WHERE subject_id = ?")
+    .all(subjectId) as Array<{ id: number }>;
+  for (const row of demoLessonIds) {
+    promoteLessonVideoStatusIfReady(db, row.id);
+  }
 
   return subjectId;
 }

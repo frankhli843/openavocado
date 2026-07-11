@@ -61,8 +61,8 @@ export function generateNextLesson(
     .prepare(
       `INSERT INTO lessons
          (subject_id, title, description, status, sequence_number, goals, tags,
-          next_lesson_diagnostics, generated_by, generator_version, source_context, planning_rationale)
-       VALUES (?, ?, ?, 'queued', ?, ?, ?, ?, 'prodavo-local-queue/v1', '1.0.0', ?, ?)`
+          next_lesson_diagnostics, generated_by, generator_version, source_context, planning_rationale, video_status)
+       VALUES (?, ?, ?, 'queued', ?, ?, ?, ?, 'prodavo-local-queue/v1', '1.0.0', ?, ?, 'pending_video')`
     )
     .run(
       event.subject_id,

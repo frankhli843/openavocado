@@ -10,7 +10,15 @@ import { generateInitialAssessment } from "@/lib/lesson-generator/initial-assess
 import { generateNextLesson } from "@/lib/lesson-generator/next-lesson";
 import { generateLessonAudio } from "@/lib/audio/generate-lesson-audio";
 import { buildLessonBufferPlan, enrichQueuedLessonsFromCompletion } from "@/lib/lesson-buffer";
+import { markLessonVideoState } from "@/lib/lesson-generator/video-status";
 import type { LevelProgression } from "@/types";
+
+function videoStateOptions() {
+  return {
+    runtimeRoot: process.env.AVOCADOCORE_RUNTIME_ROOT,
+    checkFiles: Boolean(process.env.AVOCADOCORE_RUNTIME_ROOT),
+  };
+}
 
 /**
  * Local-queue adapter — writes the lesson.completed event to the
@@ -42,13 +50,30 @@ export const localQueueAdapter: CompletionHookAdapter = {
         }
       }
 
+      // Video-first gate: local-queue cannot run the Manim pass, so any new
+      // lesson without registered reviewed videos stays pending_video and the
+      // job must remain pending — never report an audio-only lesson as done.
+      const pendingVideoIds = generatedLessonIds.filter(
+        (lessonId) => markLessonVideoState(db, lessonId, videoStateOptions()).status === "pending_video"
+      );
+
       const primaryLessonId = generatedLessonIds[0] ?? plan.existing_ready_lessons[0]?.id;
       const ref = `local-queue-buffer-${[...enrichedLessonIds, ...generatedLessonIds].join("-") || "unchanged"}`;
       console.log(
         `[completion:local-queue] Maintained two-ready buffer for subject ${event.subject_id}: ` +
           `enriched ${enrichedLessonIds.length}, generated ${generatedLessonIds.length}` +
-          (firstGeneratedTitle ? `, first new lesson "${firstGeneratedTitle}"` : "")
+          (firstGeneratedTitle ? `, first new lesson "${firstGeneratedTitle}"` : "") +
+          (pendingVideoIds.length ? `, pending Manim videos: ${pendingVideoIds.join(", ")}` : "")
       );
+      if (pendingVideoIds.length > 0) {
+        return {
+          ok: false,
+          pending_video: true,
+          ref,
+          lesson_id: primaryLessonId,
+          error: `Generated lesson(s) ${pendingVideoIds.join(", ")} await reviewed Manim segment videos before release`,
+        };
+      }
       return { ok: true, ref, lesson_id: primaryLessonId };
     } catch (err) {
       const msg = err instanceof Error ? err.message : String(err);
@@ -110,6 +135,16 @@ export const localQueueSubjectCreatedDispatcher: SubjectCreatedDispatcher = asyn
         await generateLessonAudio(db, result.lesson_id);
       }
       console.log(`[subject.created:local-queue] Created one-off lesson "${result.lesson_title}" (lesson ${result.lesson_id}).`);
+      const videoState = markLessonVideoState(db, result.lesson_id, videoStateOptions());
+      if (videoState.status === "pending_video") {
+        return {
+          ok: false,
+          pending_video: true,
+          ref: `local-queue-one-off-${result.lesson_id}`,
+          lesson_id: result.lesson_id,
+          error: `One-off lesson ${result.lesson_id} awaits reviewed Manim segment videos before release`,
+        };
+      }
       return { ok: true, ref: `local-queue-one-off-${result.lesson_id}`, lesson_id: result.lesson_id };
     }
 
@@ -133,6 +168,9 @@ export const localQueueSubjectCreatedDispatcher: SubjectCreatedDispatcher = asyn
     }
 
     const result = generateInitialAssessment(db, event);
+    // Assessment-only lessons carry no audio/lesson_part segments, so this
+    // stamps video_status='ready' — every generation path sets it explicitly.
+    markLessonVideoState(db, result.lesson_id, videoStateOptions());
     const ref = `local-queue-assessment-${result.lesson_id}`;
     console.log(
       `[subject.created:local-queue] Created initial assessment "${result.lesson_title}" ` +
@@ -202,9 +240,11 @@ function buildOneOffSeedEvent(event: Parameters<SubjectCreatedDispatcher>[0]): L
     learner_profile_config: event.learner_profile_config,
     cross_subject_history: [],
     lesson_buffer: {
-      policy_version: "two-ready-lessons/v1",
+      policy_version: "two-ready-lessons/v2",
       target_ready_count: 0,
       ready_count: 0,
+      video_ready_count: 0,
+      pending_video_lesson_ids: [],
       lessons_to_generate: 0,
       existing_ready_lessons: [],
       enrichment_required_for_lesson_ids: [],

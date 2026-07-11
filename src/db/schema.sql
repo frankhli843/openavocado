@@ -93,6 +93,14 @@ CREATE TABLE IF NOT EXISTS lessons (
   generator_version TEXT,
   source_context  TEXT,   -- JSON: what signals triggered this lesson
   planning_rationale TEXT, -- learner-visible reason this lesson was selected now
+  -- Video-first readiness (2026-07-11 directive). 'ready' = every audio /
+  -- lesson_part segment has a registered reviewed Manim video. 'pending_video'
+  -- = generated but blocked on the video pass (not learner-ready, not
+  -- buffer-ready). 'legacy' = pre-directive historical lesson kept viewable as
+  -- a temporary fallback while backfill completes. The column default stays
+  -- 'legacy' so pre-migration rows classify as historical; generators set the
+  -- value explicitly for every new lesson.
+  video_status    TEXT    NOT NULL DEFAULT 'legacy' CHECK (video_status IN ('legacy', 'pending_video', 'ready')),
   created_at      TEXT    NOT NULL DEFAULT (datetime('now')),
   updated_at      TEXT    NOT NULL DEFAULT (datetime('now'))
 );
