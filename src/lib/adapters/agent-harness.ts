@@ -58,6 +58,10 @@ async function dispatchToAgentHarness(event: HarnessEvent): Promise<HarnessComma
         "JSON object with { ok: boolean, ref?: string, lesson_id?: number, error?: string }. The harness must create/validate lessons itself and never print secrets.",
       chrome_mcp_required: true,
       local_queue_fallback_allowed: false,
+      lesson_buffer_policy:
+        event.event === "lesson.completed"
+          ? "Maintain two queued ready lessons. Enrich existing queued lessons from the completed lesson before generating missing lessons."
+          : undefined,
     },
   };
 

@@ -369,6 +369,15 @@ enforced by `validateGeneratedContent`; the rest is a hard authoring rule.
   what still feels unclear, which direction would help most, and what the
   learner wants to be able to do next. Do not reuse generic boilerplate prompts
   when a lesson-specific question would be more useful.
+- **Two queued ready lessons after every completion.** Completing a lesson must
+  leave the subject with two queued lessons ready for the learner. If a queued
+  next lesson already exists, repair and enrich it from the just-completed
+  lesson before creating another lesson. If two queued lessons already exist,
+  enrich stale queued lessons from the latest completion and avoid creating a
+  third unless the existing lessons cannot be adapted. "Ready" means the full
+  production bar: generated audio, approved interactives, reviewed Manim segment
+  videos, `pnpm audit:videos --lesson <id>` passing, and browser QA evidence.
+  Use `pnpm backfill:lesson-buffer -- --write` to repair existing subjects.
 - **Explicit preview wording for high-level concepts.** If a lesson intentionally
   introduces a concept only at a high level, the **audio script and the written
   text must say so explicitly** — name it a preview and state it will be explored
@@ -788,8 +797,10 @@ examples, wrong difficulty calibration, audio that sounds robotic or truncated).
 
 ### Required steps
 
-1. **Create a Dora task** before generation starts. Title: `Generate lesson N
-   for <subject> — <learner>`. The task acceptance criteria must start with
+1. **Create a Dora task** before generation starts. Title: `Maintain two ready
+   lessons for <subject> — <learner>` when triggered by lesson completion, or
+   `Generate lesson N for <subject> — <learner>` for first-lesson and manual
+   one-off generation. The task acceptance criteria must start with
    `Read skills/avocadocore-lesson-authoring/SKILL.md before doing any lesson
    work`, then reference this authoring guide and the `validateGeneratedContent`
    contract. This applies to first lessons after a new subject is added,
@@ -797,12 +808,17 @@ examples, wrong difficulty calibration, audio that sounds robotic or truncated).
    and manual backfills. Do not generate ad hoc without a task; the task is the
    audit trail.
 
-2. **Generate.** Use the deployment's `LessonGeneratorAdapter` (e.g. the
+2. **Maintain the buffer, then generate.** Use the deployment's
+   `LessonGeneratorAdapter` (e.g. the
    `dora-task` adapter dispatched from `CompletionHookAdapter` on lesson
    completion). The generator receives the enriched `LessonCompletedEvent` and
-   LESSON_QUALITY_BAR_PROMPT. For a new-subject first lesson, use equivalent
-   subject + learner-profile evidence and create the same style of Dora task;
-   do not invent a separate, weaker prompt.
+   LESSON_QUALITY_BAR_PROMPT. On completion events, first inspect any queued
+   lessons listed in `lesson_buffer.existing_ready_lessons`; enrich stale ones
+   using the just-finished evidence, then create
+   `lesson_buffer.lessons_to_generate` additional lessons so two queued lessons
+   are ready. For a new-subject first lesson, use equivalent subject +
+   learner-profile evidence and create the same style of Dora task; do not
+   invent a separate, weaker prompt.
 
 3. **Run the machine checks** before QA:
    ```

@@ -6,6 +6,7 @@ import { loadSubjectTags, persistAssessment } from "@/lib/assessment-store";
 import { deserializeQuizState } from "@/lib/quiz-state";
 import { createSubjectJournalEntry } from "@/lib/subject-journal";
 import { evaluateSubjectLevelProgressionWithAi } from "@/lib/level-progression";
+import { buildLessonBufferPlan } from "@/lib/lesson-buffer";
 import type { Difficulty, LessonCompletedEvent, SignalType } from "@/types";
 
 /**
@@ -317,6 +318,11 @@ export async function POST(request: Request) {
     });
 
     const goals: string[] = lesson.goals ? JSON.parse(lesson.goals) : [];
+    const lesson_buffer = buildLessonBufferPlan(db, {
+      subjectId: lesson.subject_id,
+      completedLessonId: lesson_id,
+    });
+
     const event: LessonCompletedEvent = {
       event: "lesson.completed",
       learner_id,
@@ -344,6 +350,7 @@ export async function POST(request: Request) {
       workpad_summary,
       learner_profile_config,
       cross_subject_history,
+      lesson_buffer,
       completed_at: new Date().toISOString(),
     };
 
@@ -368,7 +375,14 @@ export async function POST(request: Request) {
         message:
           adapter.name === "local-queue"
             ? "Generating the next lesson with the deterministic local fixture"
-            : "Generating the next lesson from your latest progress",
+            : "Maintaining a two-lesson ready buffer from your latest progress",
+      },
+      {
+        ts: new Date().toISOString(),
+        stage: "lesson_buffer.planned",
+        message: lesson_buffer.existing_ready_lessons.length
+          ? `Will enrich ${lesson_buffer.enrichment_required_for_lesson_ids.length} queued lesson(s) and create ${lesson_buffer.lessons_to_generate} more to keep ${lesson_buffer.target_ready_count} ready.`
+          : `No queued lessons are ready, creating ${lesson_buffer.lessons_to_generate} lesson(s) to keep ${lesson_buffer.target_ready_count} ready.`,
       },
     ];
     const jobResult = db
@@ -507,6 +521,14 @@ function buildCompletionJournalContent(
   const dispatchText = dispatch.dispatch_ok
     ? `Next-lesson task dispatched through ${dispatch.adapter}${dispatch.adapter_ref ? `, ref ${dispatch.adapter_ref}` : ""}.`
     : `Next-lesson dispatch failed through ${dispatch.adapter}: ${dispatch.error ?? "unknown error"}.`;
+  const bufferText = event.lesson_buffer
+    ? [
+        `Target ready lessons: ${event.lesson_buffer.target_ready_count}.`,
+        `Queued ready lessons found: ${event.lesson_buffer.ready_count}.`,
+        `Queued lessons requiring enrichment: ${event.lesson_buffer.enrichment_required_for_lesson_ids.join(", ") || "none"}.`,
+        `New lessons to generate: ${event.lesson_buffer.lessons_to_generate}.`,
+      ].join("\n")
+    : "Target ready lessons: legacy event without buffer plan.";
 
   return [
     `Lesson completed at ${event.completed_at}.`,
@@ -522,6 +544,9 @@ function buildCompletionJournalContent(
     "",
     "Tag and difficulty evidence:",
     tagText,
+    "",
+    "Two-ready lesson buffer:",
+    bufferText,
     "",
     event.workpad_summary
       ? `Current workpad excerpt before next generation:\n${event.workpad_summary}`
