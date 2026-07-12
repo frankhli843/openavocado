@@ -1,0 +1,1175 @@
+"use client";
+
+import { useCallback, useEffect, useRef, useState } from "react";
+import dynamic from "next/dynamic";
+import { BookOpen, Keyboard, Maximize2, Minimize2 } from "lucide-react";
+import type { LessonActivity, PracticeCodeContent, CodeTest } from "@/types";
+import { createPyodideExecutor, stubExecutor, type PythonExecutor } from "@/lib/python-sandbox";
+import { MarkdownText } from "@/components/MarkdownText";
+
+// CodeMirror is client-only (uses DOM APIs). Dynamically import to skip SSR.
+const CodeMirrorEditor = dynamic(() => import("./PythonEditor"), { ssr: false, loading: () => null });
+
+interface PythonSectionProps {
+  activity: LessonActivity;
+  learnerId: number;
+  initialCode: string;
+  initialOutput: string;
+  initialTests: Record<string, string>;
+  onChange: (code: string, output: string, tests: Record<string, string>) => void;
+  reserveChatRail?: boolean;
+  embedded?: boolean;
+  lessonTitle?: string;
+  lessonDescription?: string | null;
+}
+
+type PreviewMode = "attempt" | "learn";
+
+type LearnQuestionItem = {
+  eyebrow: string;
+  typeLabel: string;
+  prompt: string;
+  code?: string;
+  options: string[];
+  answer: string;
+};
+
+/**
+ * Scaffolded code exercise with a real submission workflow.
+ *
+ * The learner gets a task prompt, constraints, guided steps, progressive hints,
+ * starter code, and visible public tests. Running checks the public tests;
+ * submitting also runs hidden tests (whose assertions are never shown).
+ * Progressive hints may eventually reveal the answer path, but the learner
+ * still writes and submits code that passes. Drafts, output, and test results
+ * autosave; passing tests is recorded as a mastery signal but never
+ * auto-completes the lesson.
+ *
+ * The editor uses CodeMirror (via @uiw/react-codemirror) for Python syntax
+ * highlighting, auto-indentation, bracket matching, and fullscreen/focus mode.
+ */
+export function PythonSection({
+  activity,
+  learnerId,
+  initialCode,
+  initialOutput,
+  initialTests,
+  onChange,
+  reserveChatRail = false,
+  embedded = false,
+  lessonTitle = "Untitled lesson",
+  lessonDescription = null,
+}: PythonSectionProps) {
+  const content: PracticeCodeContent = activity.content ? JSON.parse(activity.content) : {};
+
+  const starterCode = content.starter_code ?? "# Write your Python code here\n";
+  const publicTests: CodeTest[] = content.tests ?? [];
+  const hiddenTests: CodeTest[] = content.hidden_tests ?? [];
+  const hints = content.hints ?? [];
+  const constraints = content.constraints ?? [];
+  const guidedSteps = content.guided_steps ?? [];
+
+  const [code, setCode] = useState(initialCode || starterCode);
+  const [output, setOutput] = useState(initialOutput);
+  const [testResults, setTestResults] = useState<Record<string, string>>(initialTests);
+  const [running, setRunning] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
+  const [submitted, setSubmitted] = useState(false);
+  const [hintsShown, setHintsShown] = useState(0);
+  const [executor, setExecutor] = useState<PythonExecutor>(stubExecutor);
+  const [pyStatus, setPyStatus] = useState<"loading" | "ready" | "unavailable">("loading");
+  const [isFullscreen, setIsFullscreen] = useState(false);
+  const [previewMode, setPreviewMode] = useState<PreviewMode>("attempt");
+  const [learnQuestionIndex, setLearnQuestionIndex] = useState(0);
+  const [codeFeedback, setCodeFeedback] = useState<string | null>(null);
+  const [codeFeedbackLoading, setCodeFeedbackLoading] = useState(false);
+  const executorRef = useRef(executor);
+  const isLearnPreview = previewMode === "learn" && !isFullscreen;
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    let cancelled = false;
+    async function loadPy() {
+      try {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        type PyodideModule = { loadPyodide: (opts: { indexURL: string }) => Promise<any> };
+        // eslint-disable-next-line no-new-func
+        const dynamicImport = new Function("url", "return import(url)") as (url: string) => Promise<PyodideModule>;
+        const pyodideModule = await dynamicImport(
+          "https://cdn.jsdelivr.net/pyodide/v0.27.0/full/pyodide.mjs"
+        );
+        if (cancelled) return;
+        const pyodide = await pyodideModule.loadPyodide({
+          indexURL: "https://cdn.jsdelivr.net/pyodide/v0.27.0/full/",
+        });
+        if (cancelled) return;
+        const exec = createPyodideExecutor(pyodide);
+        setExecutor(exec);
+        executorRef.current = exec;
+        setPyStatus("ready");
+      } catch (e) {
+        console.warn("[PythonSection] Pyodide load failed:", e);
+        if (!cancelled) setPyStatus("unavailable");
+      }
+    }
+    loadPy();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  // Close fullscreen on Escape
+  useEffect(() => {
+    if (!isFullscreen) return;
+    const handler = (e: KeyboardEvent) => {
+      if (e.key === "Escape") setIsFullscreen(false);
+    };
+    window.addEventListener("keydown", handler);
+    return () => window.removeEventListener("keydown", handler);
+  }, [isFullscreen]);
+
+  const handleCodeChange = useCallback(
+    (value: string) => {
+      setCode(value);
+      onChange(value, output, testResults);
+    },
+    [output, testResults, onChange]
+  );
+
+  async function runTests(tests: CodeTest[]): Promise<{ output: string; results: Record<string, string> }> {
+    const result = await executorRef.current.run({ code, tests });
+    const outLines = [
+      result.stdout || "(no output)",
+      result.stderr ? `\nSTDERR:\n${result.stderr}` : "",
+      result.error ? `\nERROR:\n${result.error}` : "",
+    ]
+      .filter(Boolean)
+      .join("");
+    const results: Record<string, string> = {};
+    for (const t of result.test_results) {
+      results[t.id] = t.passed ? "pass" : "fail";
+    }
+    return { output: outLines.trim(), results };
+  }
+
+  async function handleRun() {
+    setRunning(true);
+    try {
+      const { output: newOutput, results } = await runTests(publicTests);
+      const merged = { ...testResults, ...results };
+      setOutput(newOutput);
+      setTestResults(merged);
+      onChange(code, newOutput, merged);
+    } finally {
+      setRunning(false);
+    }
+  }
+
+  async function handleSubmit() {
+    setSubmitting(true);
+    setCodeFeedback(null);
+    try {
+      const { output: newOutput, results } = await runTests([...publicTests, ...hiddenTests]);
+      const merged = { ...testResults, ...results };
+      setOutput(newOutput);
+      setTestResults(merged);
+      setSubmitted(true);
+      onChange(code, newOutput, merged);
+      // Record the submission as a mastery signal if all tests pass. This never
+      // auto-completes the lesson — manual completion remains the only trigger.
+      const all = [...publicTests, ...hiddenTests];
+      const passed = all.length > 0 && all.every((t) => results[t.id] === "pass");
+      try {
+        await fetch("/api/code-submission", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            activity_id: activity.id,
+            learner_id: learnerId,
+            passed,
+            code,
+            run_output: newOutput,
+            test_results: results,
+            prompt: content.prompt ?? activity.title ?? "Code exercise",
+          }),
+        });
+      } catch {
+        /* submission signal is best-effort */
+      }
+      setCodeFeedbackLoading(true);
+      try {
+        const response = await fetch("/api/code-feedback", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            lesson_title: lessonTitle,
+            lesson_description: lessonDescription,
+            exercise_title: activity.title ?? "Code exercise",
+            exercise_prompt: content.prompt ?? activity.title ?? "Code exercise",
+            starter_code: starterCode,
+            learner_code: code,
+            interpreter_output: newOutput,
+            public_test_results: publicTests.map((test) => ({
+              id: test.id,
+              description: test.description,
+              status: results[test.id] === "pass" ? "pass" : results[test.id] === "fail" ? "fail" : "not_run",
+            })),
+            hidden_test_summary: hiddenTests.length > 0
+              ? { total: hiddenTests.length, passed: hiddenTests.filter((test) => results[test.id] === "pass").length }
+              : null,
+            all_passed: passed,
+          }),
+        });
+        const json = (await response.json()) as { enabled?: boolean; feedback?: string | null };
+        if (json.enabled && json.feedback) setCodeFeedback(json.feedback);
+      } catch {
+        setCodeFeedback("I could not generate AI feedback for this submission. Use the visible output and test results to pick the next edit.");
+      } finally {
+        setCodeFeedbackLoading(false);
+      }
+    } finally {
+      setSubmitting(false);
+    }
+  }
+
+  function handleReset() {
+    setCode(starterCode);
+    setOutput("");
+    setTestResults({});
+    setSubmitted(false);
+    onChange(starterCode, "", {});
+  }
+
+  const publicPassed = publicTests.length > 0 && publicTests.every((t) => testResults[t.id] === "pass");
+  const hiddenPassedCount = hiddenTests.filter((t) => testResults[t.id] === "pass").length;
+  const allPassed =
+    [...publicTests, ...hiddenTests].length > 0 &&
+    [...publicTests, ...hiddenTests].every((t) => testResults[t.id] === "pass");
+  const fullscreenClass = reserveChatRail
+    ? "fixed inset-y-0 left-0 right-0 z-50 bg-white text-gray-900 flex flex-col xl:right-[28rem]"
+    : "fixed inset-0 z-50 bg-white text-gray-900 flex flex-col";
+
+  const codeFeedbackPanel = (codeFeedbackLoading || codeFeedback) ? (
+    <div className="border-l-2 border-blue-400 bg-blue-50/60 px-3 py-3 text-sm text-blue-950">
+      <div className="mb-1 text-xs font-semibold uppercase tracking-wider text-blue-700">AI code feedback</div>
+      {codeFeedbackLoading ? (
+        <p>Reading your code and test output...</p>
+      ) : codeFeedback ? (
+        <MarkdownText text={codeFeedback} />
+      ) : null}
+    </div>
+  ) : null;
+
+  const optionalNotice = (
+    <div className="border-l-2 border-sky-300 bg-sky-50/70 px-3 py-3 text-sm leading-6 text-sky-950">
+      <strong className="font-semibold">Optional coding reinforcement.</strong>{" "}
+      This section is meant to deepen the lesson if you already have some coding experience. You can skip it and still complete the lesson.
+    </div>
+  );
+
+  const walkthroughPanel = content.walkthrough?.steps?.length ? (
+    <div className="border-t border-gray-100 pt-3">
+      <div className="pb-3">
+        <div className="text-xs font-semibold uppercase tracking-wider text-gray-400">Walkthrough</div>
+        <h3 className="mt-0.5 text-sm font-semibold text-gray-800">
+          {content.walkthrough.title ?? "How to think about this exercise"}
+        </h3>
+      </div>
+      <div className="divide-y divide-gray-100">
+        {content.walkthrough.steps.map((step, index) => (
+          <div key={`${step.title}-${index}`} className="grid gap-3 py-3 sm:grid-cols-[1.3fr_1fr]">
+            <div>
+              <div className="text-sm font-semibold text-gray-800">
+                {index + 1}. {step.title}
+              </div>
+              <p className="mt-1 text-sm leading-6 text-gray-600">{step.detail}</p>
+            </div>
+            {(step.input || step.output || step.visual) && (
+              <div className="border-l-2 border-gray-200 bg-gray-50/70 px-3 py-2 text-xs leading-5 text-gray-600">
+                {step.visual && <div className="mb-2 font-medium text-gray-700">{step.visual}</div>}
+                {step.input && (
+                  <div className="grid grid-cols-[4.5rem_1fr] gap-2">
+                    <span className="font-semibold uppercase tracking-wide text-gray-400">Input</span>
+                    <code className="font-mono text-gray-700">{step.input}</code>
+                  </div>
+                )}
+                {step.output && (
+                  <div className="mt-1 grid grid-cols-[4.5rem_1fr] gap-2">
+                    <span className="font-semibold uppercase tracking-wide text-gray-400">Output</span>
+                    <code className="font-mono text-gray-700">{step.output}</code>
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+        ))}
+      </div>
+    </div>
+  ) : null;
+
+  const ioExamplesPanel = content.io_examples?.length ? (
+    <div className="border-t border-emerald-100 bg-emerald-50/30 pt-3">
+      <div className="pb-3">
+        <div className="text-xs font-semibold uppercase tracking-wider text-emerald-700">Expected inputs and outputs</div>
+        <p className="mt-1 text-sm leading-6 text-emerald-950">
+          Use these examples to check the behavior before thinking about syntax.
+        </p>
+      </div>
+      <div className="grid min-w-0 gap-3 pb-3 sm:grid-cols-2">
+        {content.io_examples.map((example) => (
+          <div key={example.label} className="min-w-0 border-l-2 border-emerald-300 bg-white/70 px-3 py-2">
+            <div className="break-words text-sm font-semibold text-gray-800">{example.label}</div>
+            <div className="mt-2 grid min-w-0 gap-2 text-xs">
+              <div className="min-w-0">
+                <div className="mb-1 font-semibold uppercase tracking-wide text-gray-400">Input</div>
+                <pre className="overflow-x-auto whitespace-pre-wrap break-words bg-gray-50 px-3 py-2 font-mono text-gray-700">{example.input}</pre>
+              </div>
+              <div className="min-w-0">
+                <div className="mb-1 font-semibold uppercase tracking-wide text-gray-400">Expected output</div>
+                <pre className="overflow-x-auto whitespace-pre-wrap break-words bg-emerald-50 px-3 py-2 font-mono text-emerald-900">{example.expected_output}</pre>
+              </div>
+            </div>
+            {example.explanation && <p className="mt-2 break-words text-xs leading-5 text-gray-500">{example.explanation}</p>}
+          </div>
+        ))}
+      </div>
+    </div>
+  ) : null;
+
+  const visualizationPanel = content.visualization?.items?.length ? (
+    <div className="border-t border-indigo-100 bg-indigo-50/30 px-0 py-3">
+      <div className="text-xs font-semibold uppercase tracking-wider text-indigo-700">Code behavior map</div>
+      <h3 className="mt-0.5 text-sm font-semibold text-gray-800">{content.visualization.title}</h3>
+      {content.visualization.description && (
+        <p className="mt-1 text-sm leading-6 text-gray-600">{content.visualization.description}</p>
+      )}
+      <div className="mt-3 grid min-w-0 gap-2 sm:grid-cols-3">
+        {content.visualization.items.map((item, index) => (
+          <div key={`${item.label}-${index}`} className="relative min-w-0 border-l-2 border-indigo-300 bg-white/70 px-3 py-2">
+            <div className={`mb-2 inline-flex px-2 py-0.5 text-[11px] font-semibold uppercase tracking-wide ${
+              item.role === "input"
+                ? "bg-blue-50 text-blue-700"
+                : item.role === "output"
+                  ? "bg-emerald-50 text-emerald-700"
+                  : "bg-amber-50 text-amber-700"
+            }`}>
+              {item.role ?? "step"}
+            </div>
+            <div className="break-words text-sm font-semibold text-gray-800">{item.label}</div>
+            <code className="mt-1 block break-words font-mono text-xs leading-5 text-gray-700">{item.value}</code>
+            {item.note && <p className="mt-2 break-words text-xs leading-5 text-gray-500">{item.note}</p>}
+          </div>
+        ))}
+      </div>
+    </div>
+  ) : null;
+
+  const conciseExample = content.worked_examples?.find((example) => example.label === "concise")
+    ?? content.worked_examples?.[content.worked_examples.length - 1];
+  const basicExample = content.worked_examples?.find((example) => example.label === "basic")
+    ?? content.worked_examples?.[0];
+  const conciseLines = (conciseExample?.code ?? starterCode)
+    .split("\n")
+    .map((line) => line.trimEnd())
+    .filter((line) => line.trim().length > 0)
+    .slice(0, 8);
+  const functionNames = Array.from(
+    new Set(
+      (basicExample?.code ?? starterCode)
+        .match(/def\s+([A-Za-z_][A-Za-z0-9_]*)\s*\(/g)
+        ?.map((match) => match.replace(/def\s+|\s*\(/g, "")) ?? []
+    )
+  );
+  const dataTypeHints = Array.from(
+    new Set(
+      [
+        ...(content.io_examples ?? []).flatMap((example) => [example.input, example.expected_output]),
+        basicExample?.code ?? "",
+        conciseExample?.code ?? "",
+      ]
+        .join("\n")
+        .match(/\b(list|dict|tuple|set|string|int|float|bool|array|matrix|token|row|vector)\b/gi)
+        ?.map((item) => item.toLowerCase()) ?? []
+    )
+  ).slice(0, 6);
+  const primaryIoExample = content.io_examples?.[0] ?? null;
+  const reasoningSteps = guidedSteps.length >= 3
+    ? guidedSteps.slice(0, 5)
+    : [
+        "Read the prompt and examples before thinking about syntax.",
+        "Name the input object and the output object.",
+        "Trace one concrete example by hand.",
+        "Connect each code line to that trace.",
+        "Only then compare against tests.",
+      ];
+  const functionStudyCards = functionNames.length ? functionNames.slice(0, 4) : ["the helper function"];
+  const dataTypeStudyCards = dataTypeHints.length ? dataTypeHints : ["input value", "intermediate value", "return value"];
+
+  const workedExamples = content.worked_examples && content.worked_examples.length > 0 ? (
+    <div className="space-y-3">
+      <div className="text-xs font-semibold uppercase tracking-wider text-gray-400">
+        {isLearnPreview ? "Reference answers" : "Full code examples"}
+      </div>
+      <div className={`grid min-w-0 gap-3 ${isLearnPreview ? "grid-cols-1" : "lg:grid-cols-2"}`}>
+        {content.worked_examples.map((example) => (
+          <details
+            key={example.label}
+            open={isLearnPreview}
+            className="min-w-0 border-l-2 border-gray-200 bg-gray-50/50"
+          >
+            <summary className="cursor-pointer select-none break-words px-3 py-2 text-sm font-semibold text-gray-700">
+              {example.title ?? (example.label === "concise" ? "Best concise version" : "Basic readable version")}
+            </summary>
+            {example.explanation && (
+              <p className="break-words border-t border-gray-100 px-3 py-2 text-xs leading-5 text-gray-500">
+                {example.explanation}
+              </p>
+            )}
+            <pre className="max-h-[28rem] overflow-auto border-t border-gray-100 bg-white px-3 py-3 text-xs leading-5 text-gray-700">
+              <code>{example.code}</code>
+            </pre>
+          </details>
+        ))}
+      </div>
+    </div>
+  ) : null;
+
+  const learnQuestions: LearnQuestionItem[] = [
+    {
+      eyebrow: "1. Algorithm",
+      typeLabel: "Multiple choice",
+      prompt: "Before looking at syntax, what is the coding exercise mainly asking this helper to do?",
+      options: [
+        content.prompt ?? "Match the described input to the expected output.",
+        primaryIoExample
+          ? `Make ${primaryIoExample.input} produce ${primaryIoExample.expected_output}.`
+          : "Make the shown input produce the shown expected output.",
+        "Choose the shortest possible Python syntax before understanding the behavior.",
+        "Hard-code one visible example and ignore the rest of the contract.",
+      ],
+      answer: "Start with behavior: what input arrives, what output must leave, and which transformation connects them. Syntax is only useful after that route is clear.",
+    },
+    ...(primaryIoExample ? [{
+      eyebrow: "2. Example trace",
+      typeLabel: "Multiple choice",
+      prompt: "Use the first example as a tiny trace. What must stay connected?",
+      code: `${primaryIoExample.input}\n=> ${primaryIoExample.expected_output}`,
+      options: [
+        "The concrete input shape, the transformation step, and the expected output.",
+        "Only the exact visible value, even if a later test changes it.",
+        "Only the variable names in the reference answer.",
+        "The output format, because tests usually compare structure as well as meaning.",
+      ],
+      answer: "The useful trace connects the input shape, transformation, and output format. Do not memorize only one visible value.",
+    }] : []),
+    {
+      eyebrow: primaryIoExample ? "3. Concise syntax" : "2. Concise syntax",
+      typeLabel: "Select all that apply",
+      prompt: "Look at the concise reference code. What should you understand before copying this syntax?",
+      code: conciseExample?.code ?? conciseLines.join("\n") ?? starterCode,
+      options: [
+        "Which function boundary or expression the rest of the exercise depends on.",
+        "Which values enter the algorithm and which value leaves.",
+        "That short syntax replaces the need to understand the examples.",
+        "How the line maps back to an input/output example.",
+      ],
+      answer: "Correct: concise syntax is useful only after you can name the operation, the incoming values, the returned object, and the example it satisfies. Short code should not hide the data movement.",
+    },
+    {
+      eyebrow: primaryIoExample ? "4. Reasoning order" : "3. Reasoning order",
+      typeLabel: "Order",
+      prompt: `Put the work inside ${functionNames[0] ? `${functionNames[0]}()` : "the helper function"} in the order you should reason about it.`,
+      options: reasoningSteps,
+      answer: "The safest order is behavior first, concrete trace second, code-line mapping third, then tests. This prevents syntax from hiding a wrong model.",
+    },
+    ...conciseLines.slice(0, 5).map((line, index) => ({
+      eyebrow: `Line ${index + 1}`,
+      typeLabel: "Select all that apply",
+      prompt: "What job does this concise-code line do?",
+      code: line,
+      options: [
+        describeCodeLine(line),
+        "Connect this line back to one concrete input/output example.",
+        "Check whether this line creates, transforms, filters, or returns a value.",
+        "Treat this line as magic and skip the data movement.",
+      ],
+      answer: "Correct answers should name the line's job, connect it to an example, and identify the data movement. The wrong move is treating concise syntax as magic.",
+    })),
+    ...functionStudyCards.map((name, index) => ({
+      eyebrow: `Function ${index + 1}`,
+      typeLabel: "Select all that apply",
+      prompt: `What should you understand about ${name}${name.endsWith("function") ? "" : "()"} before typing?`,
+      options: [
+        "What inputs it receives, what output it promises, and what examples prove that promise.",
+        "The shortest possible implementation, even if the output contract is unclear.",
+        "Which intermediate value would make the transformation easy to inspect.",
+        "Which tests would fail if the function hard-coded one example.",
+      ],
+      answer: "For each function, understand the input contract, output contract, inspectable intermediate value, and failure mode for hard-coding.",
+    })),
+    {
+      eyebrow: "Data movement",
+      typeLabel: "Select all that apply",
+      prompt: "Which data objects matter for understanding this code?",
+      options: [
+        ...dataTypeStudyCards.map((item) => `${item}: track where it enters, how it changes, and whether it is returned`),
+        "hidden test: a private check, not a value your function should hard-code",
+      ].slice(0, 6),
+      answer: "Focus on the objects that move through the function: inputs, intermediate containers, rows/vectors/tokens when present, and the returned output. Hidden tests are checks, not values to hard-code.",
+    },
+  ];
+  const boundedLearnQuestionIndex = Math.min(learnQuestionIndex, Math.max(learnQuestions.length - 1, 0));
+  const activeLearnQuestion = learnQuestions[boundedLearnQuestionIndex];
+
+  const learnQuestionsPanel = (
+    <div className="space-y-4" data-code-learn-path="true">
+      <div className="border-l-2 border-blue-400 bg-blue-50/60 px-3 py-3">
+        <div className="text-xs font-semibold uppercase tracking-wider text-blue-700">Learn path</div>
+        <p className="mt-1 text-sm leading-6 text-blue-950">
+          Work through the idea without typing code. The questions move from the algorithm, to the concise syntax, to function order, to the data types the code moves around.
+        </p>
+      </div>
+
+      <div className="min-w-0 border border-blue-100 bg-white">
+        <div className="flex flex-wrap items-center justify-between gap-2 border-b border-blue-100 px-3 py-2">
+          <div className="text-xs font-semibold uppercase tracking-wider text-blue-700">
+            Question {boundedLearnQuestionIndex + 1} of {learnQuestions.length}
+          </div>
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              onClick={() => setLearnQuestionIndex((index) => Math.max(0, index - 1))}
+              disabled={boundedLearnQuestionIndex === 0}
+              className="border border-gray-200 bg-gray-50 px-2.5 py-1 text-xs font-semibold text-gray-600 disabled:opacity-40"
+            >
+              Previous
+            </button>
+            <button
+              type="button"
+              onClick={() => setLearnQuestionIndex((index) => Math.min(learnQuestions.length - 1, index + 1))}
+              disabled={boundedLearnQuestionIndex >= learnQuestions.length - 1}
+              className="border border-blue-200 bg-blue-50 px-2.5 py-1 text-xs font-semibold text-blue-700 disabled:opacity-40"
+            >
+              Next
+            </button>
+          </div>
+        </div>
+        {activeLearnQuestion && (
+          <LearnQuestion
+            key={`${activeLearnQuestion.eyebrow}-${boundedLearnQuestionIndex}`}
+            {...activeLearnQuestion}
+          />
+        )}
+      </div>
+    </div>
+  );
+
+  // Shared editor area rendered both inline and in fullscreen overlay
+  const editorArea = (
+    <div className={`flex h-full flex-col ${isLearnPreview ? "min-h-[360px]" : ""}`}>
+      <div
+        className={`mb-1.5 font-mono text-gray-400 ${
+          isLearnPreview ? "flex flex-col gap-0.5 text-[11px] leading-4" : "flex items-center gap-2 text-xs"
+        }`}
+      >
+        <span>Python 3 (Pyodide/WASM)</span>
+        {!isLearnPreview && <span className="text-gray-300">·</span>}
+        <span className="text-gray-500 text-xs">syntax highlighting · auto-indent · Tab=4 spaces</span>
+      </div>
+      <div className="flex-1 min-h-0 rounded-lg overflow-hidden border border-gray-200 bg-white focus-within:ring-2 focus-within:ring-blue-200">
+        <CodeMirrorEditor
+          value={code}
+          onChange={handleCodeChange}
+          height={isFullscreen ? "100%" : isLearnPreview ? "360px" : "208px"}
+          fullscreen={isFullscreen}
+        />
+      </div>
+    </div>
+  );
+
+  const actionBar = (
+    <div className={`flex flex-wrap items-center gap-2 ${isLearnPreview ? "items-stretch" : ""}`}>
+      <button
+        onClick={handleRun}
+        disabled={running || submitting || pyStatus !== "ready"}
+        className={`flex items-center justify-center gap-1.5 rounded-lg border border-gray-300 bg-white px-3 py-1.5 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50 disabled:opacity-40 ${
+          isLearnPreview ? "flex-1" : ""
+        }`}
+      >
+        {running ? "Running..." : "Run tests"}
+      </button>
+      <button
+        onClick={handleSubmit}
+        disabled={running || submitting || pyStatus !== "ready"}
+        className={`flex items-center justify-center gap-1.5 rounded-lg bg-blue-600 px-4 py-1.5 text-sm font-medium text-white transition-colors hover:bg-blue-700 disabled:opacity-40 ${
+          isLearnPreview ? "flex-1" : ""
+        }`}
+      >
+        {submitting ? "Submitting..." : "Submit"}
+      </button>
+      <button
+        onClick={handleReset}
+        disabled={running || submitting}
+        className="px-3 py-1.5 text-sm font-medium text-gray-500 transition-colors hover:text-gray-700 disabled:opacity-40"
+      >
+        Reset
+      </button>
+      <button
+        onClick={() => setIsFullscreen((v) => !v)}
+        title={isFullscreen ? "Exit fullscreen (Esc)" : "Fullscreen focus mode"}
+        aria-label={isFullscreen ? "Exit fullscreen" : "Enter fullscreen"}
+        className={`rounded-lg border border-gray-200 bg-gray-100 px-3 py-1.5 text-sm font-medium text-gray-500 transition-colors hover:bg-gray-200 ${
+          isLearnPreview ? "" : "ml-auto"
+        }`}
+      >
+        {isFullscreen ? (
+          <>
+            <Minimize2 className="inline h-3.5 w-3.5 mr-1.5 align-[-2px]" aria-hidden="true" />
+            Exit focus
+          </>
+        ) : (
+          <>
+            <Maximize2 className="inline h-3.5 w-3.5 mr-1.5 align-[-2px]" aria-hidden="true" />
+            Focus
+          </>
+        )}
+      </button>
+      {hints.length > 0 && (
+        <button
+          onClick={() => setHintsShown((n) => Math.min(n + 1, hints.length))}
+          disabled={hintsShown >= hints.length}
+          className={`rounded-lg border border-amber-100 bg-amber-50 px-3 py-1.5 text-sm font-medium text-amber-700 transition-colors hover:bg-amber-100 disabled:opacity-40 ${
+            isLearnPreview ? "w-full" : ""
+          }`}
+        >
+          {hintsShown >= hints.length ? "All hints shown" : `Show hint (${hintsShown}/${hints.length})`}
+        </button>
+      )}
+    </div>
+  );
+
+  return (
+    <>
+      {/* Fullscreen overlay */}
+      {isFullscreen && (
+        <div
+          className={fullscreenClass}
+          role="dialog"
+          aria-modal={!reserveChatRail}
+          aria-label="Python code editor fullscreen"
+        >
+          {/* Fullscreen header */}
+          <div className="flex items-center gap-3 px-6 py-3 bg-white border-b border-gray-200 shrink-0">
+            <span className="text-xl" aria-hidden="true">&#128187;</span>
+            <div className="flex-1 min-w-0">
+              <span className="text-sm font-semibold text-gray-800">{activity.title ?? "Code Exercise"}</span>
+            </div>
+            <span
+              className={`inline-flex items-center gap-1 text-xs px-2 py-0.5 rounded-full shrink-0 ${
+                pyStatus === "ready"
+                  ? "bg-green-50 text-green-700"
+                  : pyStatus === "loading"
+                  ? "bg-yellow-50 text-yellow-700"
+                  : "bg-red-50 text-red-700"
+              }`}
+            >
+              <span
+                className={`w-1.5 h-1.5 rounded-full ${
+                  pyStatus === "ready" ? "bg-green-400" : pyStatus === "loading" ? "bg-yellow-400 animate-pulse" : "bg-red-400"
+                }`}
+              />
+              {pyStatus === "ready" ? "Pyodide ready" : pyStatus === "loading" ? "Loading Python..." : "Python unavailable"}
+            </span>
+          </div>
+          {/* Fullscreen body: side-by-side on wide screens, stacked on narrow */}
+          <div className="flex-1 min-h-0 flex flex-col lg:flex-row gap-0 overflow-hidden">
+            {/* Left: editor */}
+            <div className="flex-1 min-h-0 flex flex-col p-4 gap-3">
+              {optionalNotice}
+              {content.prompt && (
+                <div className="rounded-lg bg-blue-50/60 border border-blue-100 px-4 py-3 shrink-0">
+                  <div className="text-xs font-semibold text-blue-700 uppercase tracking-wider mb-1">Your task</div>
+                  <p className="text-sm text-gray-700 leading-relaxed whitespace-pre-wrap">{content.prompt}</p>
+                </div>
+              )}
+              <div className="flex-1 min-h-0 flex flex-col">
+                {editorArea}
+              </div>
+              <div className="shrink-0">{actionBar}</div>
+            </div>
+            {/* Right: output + tests */}
+            <div className="lg:w-96 shrink-0 border-t lg:border-t-0 lg:border-l border-gray-200 bg-gray-50/40 flex flex-col gap-3 p-4 overflow-y-auto">
+              {hintsShown > 0 && (
+                <div className="space-y-1.5">
+                  {hints.slice(0, hintsShown).map((h, i) => (
+                    <div key={i} className="border-l-2 border-amber-300 bg-amber-50 px-3 py-2 text-sm text-amber-900">
+                      <span className="font-semibold mr-1.5">Hint {h.level ?? i + 1}:</span>
+                      {h.text}
+                    </div>
+                  ))}
+                </div>
+              )}
+              {(output || running || submitting) && (
+                <div>
+                  <div className="text-xs text-gray-400 mb-1.5 font-mono">Output</div>
+                  <pre className="w-full min-h-12 border-l-2 border-gray-200 bg-white px-3 py-3 text-xs font-mono text-gray-700 overflow-x-auto whitespace-pre-wrap">
+                    {running || submitting ? "Running..." : output}
+                  </pre>
+                </div>
+              )}
+              {publicTests.length > 0 && (
+                <div>
+                  <div className="flex items-center gap-2 mb-2">
+                    <div className="text-xs text-gray-400 font-mono">Tests</div>
+                    {publicPassed && <span className="text-xs text-green-600 font-medium">All public tests passed</span>}
+                  </div>
+                  <div className="space-y-1.5">
+                    {publicTests.map((test) => {
+                      const result = testResults[test.id];
+                      return (
+                        <div
+                          key={test.id}
+                          className={`flex items-center gap-2 px-3 py-2 rounded-lg text-sm ${
+                            result === "pass"
+                              ? "bg-green-50 border border-green-100 text-green-700"
+                              : result === "fail"
+                              ? "bg-red-50 border border-red-100 text-red-700"
+                              : "bg-white border border-gray-200 text-gray-500"
+                          }`}
+                        >
+                          <span>{result === "pass" ? "✓" : result === "fail" ? "✗" : "○"}</span>
+                          <span>{test.description}</span>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
+              {hiddenTests.length > 0 && (
+                <div
+                  className={`flex items-center justify-between gap-2 px-3 py-2 rounded-lg text-sm border ${
+                    submitted
+                      ? hiddenPassedCount === hiddenTests.length
+                        ? "bg-green-50 border-green-100 text-green-700"
+                        : "bg-red-50 border-red-100 text-red-700"
+                      : "bg-white border-gray-200 text-gray-500"
+                  }`}
+                >
+                  <span className="flex items-center gap-2">
+                    <span aria-hidden="true">&#128274;</span>
+                    {hiddenTests.length} hidden test{hiddenTests.length > 1 ? "s" : ""}
+                  </span>
+                  <span className="font-medium">
+                    {submitted ? `${hiddenPassedCount}/${hiddenTests.length} passed` : "run on submit"}
+                  </span>
+                </div>
+              )}
+              {submitted && (
+                <div
+                  className={`rounded-lg px-4 py-3 text-sm border ${
+                    allPassed
+                      ? "bg-green-50 border-green-200 text-green-800"
+                      : "bg-amber-50 border-amber-200 text-amber-900"
+                  }`}
+                >
+                  {allPassed ? (
+                    <span><strong>Solution accepted.</strong> All public and hidden tests pass.</span>
+                  ) : (
+                    <span><strong>Not passing yet.</strong> Some tests fail. Use the hints, adjust your code, and submit again.</span>
+                  )}
+                </div>
+              )}
+              {codeFeedbackPanel}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Inline card (always rendered, editor area hidden when fullscreen so CodeMirror doesn't double-mount) */}
+      <div
+        className={previewMode === "learn" ? "mx-auto w-full max-w-[390px] pb-20" : "w-full"}
+        data-preview-mode={previewMode}
+      >
+      <div
+        data-code-section-shell={embedded ? "embedded" : "standalone"}
+        className={embedded ? "border-t border-gray-100 px-3 py-3" : "bg-white rounded-xl border border-gray-200 overflow-hidden"}
+      >
+        {/* Header */}
+        <div className={`flex flex-col gap-3 border-b border-gray-100 sm:flex-row sm:items-center ${
+          embedded ? "bg-transparent pb-3" : "bg-gray-50/50 px-4 py-4 sm:px-6"
+        }`}>
+          <div className="flex items-center gap-3 min-w-0">
+            <span className="text-xl" aria-hidden="true">&#128187;</span>
+            <div className="flex-1 min-w-0">
+              <div className="text-xs font-semibold text-gray-400 uppercase tracking-wider">Code Exercise</div>
+              <h2 className="text-sm font-semibold text-gray-800 mt-0.5">
+                {activity.title ?? "Code Exercise"}
+              </h2>
+            </div>
+          </div>
+          <div className="flex flex-wrap items-center gap-2 sm:ml-auto">
+            <PreviewModeToggle mode={previewMode} onChange={setPreviewMode} />
+            {!isLearnPreview && (
+              <span
+                className={`inline-flex items-center gap-1 text-xs px-2 py-0.5 rounded-full shrink-0 ${
+                  pyStatus === "ready"
+                    ? "bg-green-50 text-green-700"
+                    : pyStatus === "loading"
+                    ? "bg-yellow-50 text-yellow-700"
+                    : "bg-red-50 text-red-700"
+                }`}
+              >
+                <span
+                  className={`w-1.5 h-1.5 rounded-full ${
+                    pyStatus === "ready" ? "bg-green-500" : pyStatus === "loading" ? "bg-yellow-400 animate-pulse" : "bg-red-400"
+                  }`}
+                />
+                {pyStatus === "ready" ? "Pyodide ready" : pyStatus === "loading" ? "Loading Python..." : "Python unavailable"}
+              </span>
+            )}
+          </div>
+        </div>
+
+        <div className={`space-y-4 ${
+          isLearnPreview
+            ? embedded ? "pt-3 text-[15px]" : "p-3 text-[15px]"
+            : embedded ? "pt-3" : "p-4 sm:p-6"
+        }`}>
+          {optionalNotice}
+
+          {/* Task prompt */}
+          {content.prompt && (
+            <div className="border-l-2 border-blue-400 bg-blue-50/60 px-3 py-3">
+              <div className="text-xs font-semibold text-blue-700 uppercase tracking-wider mb-1">Your task</div>
+              <p className="text-sm text-gray-700 leading-relaxed whitespace-pre-wrap">{content.prompt}</p>
+            </div>
+          )}
+
+          {/* Constraints */}
+          {constraints.length > 0 && (
+            <div>
+              <div className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-1.5">Constraints</div>
+              <ul className="list-disc pl-5 space-y-1 text-sm text-gray-600">
+                {constraints.map((c, i) => <li key={i}>{c}</li>)}
+              </ul>
+            </div>
+          )}
+
+          {/* Guided steps */}
+          {guidedSteps.length > 0 && (
+            <details className="border-t border-gray-100 bg-gray-50/40 py-2.5">
+              <summary className="text-sm font-medium text-gray-700 cursor-pointer select-none">
+                Guided steps
+              </summary>
+              <ol className="list-decimal pl-5 mt-2 space-y-1 text-sm text-gray-600">
+                {guidedSteps.map((s, i) => <li key={i}>{s}</li>)}
+              </ol>
+            </details>
+          )}
+
+          {walkthroughPanel}
+          {ioExamplesPanel}
+          {visualizationPanel}
+          {isLearnPreview && learnQuestionsPanel}
+          {isLearnPreview && workedExamples}
+          {isLearnPreview && !workedExamples && (
+            <div className="border-l-2 border-amber-300 bg-amber-50 px-3 py-3 text-sm leading-6 text-amber-900">
+              Reference answers have not been generated for this older coding exercise yet.
+            </div>
+          )}
+
+          {/* Editor — hidden in Learn mode and when fullscreen so CodeMirror doesn't double-mount */}
+          {!isFullscreen && !isLearnPreview && (
+            <div className="space-y-2">
+              {editorArea}
+            </div>
+          )}
+          {isFullscreen && !isLearnPreview && (
+            <div className="border-l-2 border-gray-200 bg-gray-50 px-3 py-3 text-sm text-gray-500 text-center">
+              Editor open in focus mode &mdash; press <kbd className="bg-white border border-gray-200 text-gray-600 px-1 rounded text-xs">Esc</kbd> or click <strong>⊠ Exit focus</strong> to return.
+            </div>
+          )}
+
+          {/* Actions */}
+          {!isFullscreen && !isLearnPreview && actionBar}
+
+          {!isFullscreen && !isLearnPreview && workedExamples}
+
+          {/* Focus mode button when fullscreen not active (also in actionBar, but easy to find here) */}
+
+          {/* Progressive hints */}
+          {!isFullscreen && !isLearnPreview && hintsShown > 0 && (
+            <div className="space-y-1.5">
+              {hints.slice(0, hintsShown).map((h, i) => (
+                <div key={i} className="border-l-2 border-amber-300 bg-amber-50 px-3 py-2 text-sm text-amber-900">
+                  <span className="font-semibold mr-1.5">Hint {h.level ?? i + 1}:</span>
+                  {h.text}
+                </div>
+              ))}
+            </div>
+          )}
+
+          {/* Output */}
+          {!isFullscreen && !isLearnPreview && (output || running || submitting) && (
+            <div>
+              <div className="text-xs text-gray-400 mb-1.5 font-mono">Output</div>
+              <pre className="w-full min-h-12 border-l-2 border-gray-200 bg-gray-50 px-3 py-3 text-xs font-mono text-gray-700 overflow-x-auto whitespace-pre-wrap">
+                {running || submitting ? "Running..." : output}
+              </pre>
+            </div>
+          )}
+
+          {/* Public tests */}
+          {!isFullscreen && !isLearnPreview && publicTests.length > 0 && (
+            <div>
+              <div className="flex items-center gap-2 mb-2">
+                <div className="text-xs text-gray-400 font-mono">Tests</div>
+                {publicPassed && <span className="text-xs text-green-600 font-medium">All public tests passed</span>}
+              </div>
+              <div className="space-y-1.5">
+                {publicTests.map((test) => {
+                  const result = testResults[test.id];
+                  return (
+                    <div
+                      key={test.id}
+                      className={`flex items-center gap-2 px-3 py-2 rounded-lg text-sm ${
+                        result === "pass"
+                          ? "bg-green-50 border border-green-100 text-green-700"
+                          : result === "fail"
+                          ? "bg-red-50 border border-red-100 text-red-700"
+                          : "bg-gray-50 border border-gray-100 text-gray-500"
+                      }`}
+                    >
+                      <span>{result === "pass" ? "✓" : result === "fail" ? "✗" : "○"}</span>
+                      <span>{test.description}</span>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          )}
+
+          {/* Hidden tests — count only, assertions never shown */}
+          {!isFullscreen && !isLearnPreview && hiddenTests.length > 0 && (
+            <div
+              className={`flex items-center justify-between gap-2 px-3 py-2 rounded-lg text-sm border ${
+                submitted
+                  ? hiddenPassedCount === hiddenTests.length
+                    ? "bg-green-50 border-green-100 text-green-700"
+                    : "bg-red-50 border-red-100 text-red-700"
+                  : "bg-gray-50 border-gray-100 text-gray-500"
+              }`}
+            >
+              <span className="flex items-center gap-2">
+                <span aria-hidden="true">&#128274;</span>
+                {hiddenTests.length} hidden test{hiddenTests.length > 1 ? "s" : ""}
+              </span>
+              <span className="font-medium">
+                {submitted ? `${hiddenPassedCount}/${hiddenTests.length} passed` : "run on submit"}
+              </span>
+            </div>
+          )}
+
+          {/* Submission feedback */}
+          {!isFullscreen && !isLearnPreview && submitted && (
+            <div
+              className={`rounded-lg px-4 py-3 text-sm border ${
+                allPassed
+                  ? "bg-green-50 border-green-200 text-green-800"
+                  : "bg-amber-50 border-amber-200 text-amber-900"
+              }`}
+            >
+              {allPassed ? (
+                <span><strong>Solution accepted.</strong> All public and hidden tests pass. You can still revise, then mark the lesson complete when ready.</span>
+              ) : (
+                <span><strong>Not passing yet.</strong> Some tests fail. Open another hint if needed, adjust your code, and submit again.</span>
+              )}
+            </div>
+          )}
+
+          {!isFullscreen && !isLearnPreview && codeFeedbackPanel}
+
+          {!isLearnPreview && <p className="text-xs text-gray-400">
+            Your code, output, and results save automatically. Submitting or passing tests does not complete the lesson — use &quot;Mark Complete&quot; for that.
+          </p>}
+        </div>
+      </div>
+      </div>
+    </>
+  );
+}
+
+function PreviewModeToggle({
+  mode,
+  onChange,
+}: {
+  mode: PreviewMode;
+  onChange: (mode: PreviewMode) => void;
+}) {
+  return (
+    <div
+      className="inline-flex h-8 overflow-hidden rounded-lg border border-gray-200 bg-white p-0.5"
+      role="group"
+      aria-label="Code exercise preview mode"
+    >
+      <button
+        type="button"
+        onClick={() => onChange("attempt")}
+        aria-pressed={mode === "attempt"}
+        title="View attempt mode"
+        className={`inline-flex items-center gap-1.5 rounded-md px-2.5 text-xs font-medium transition-colors ${
+          mode === "attempt" ? "bg-gray-900 text-white" : "text-gray-500 hover:bg-gray-50 hover:text-gray-700"
+        }`}
+      >
+        <Keyboard className="h-3.5 w-3.5" aria-hidden="true" />
+        Attempt
+      </button>
+      <button
+        type="button"
+        onClick={() => onChange("learn")}
+        aria-pressed={mode === "learn"}
+        title="View learn mode"
+        className={`inline-flex items-center gap-1.5 rounded-md px-2.5 text-xs font-medium transition-colors ${
+          mode === "learn" ? "bg-gray-900 text-white" : "text-gray-500 hover:bg-gray-50 hover:text-gray-700"
+        }`}
+      >
+        <BookOpen className="h-3.5 w-3.5" aria-hidden="true" />
+        Learn
+      </button>
+    </div>
+  );
+}
+
+function LearnQuestion({
+  eyebrow,
+  typeLabel,
+  prompt,
+  code,
+  options,
+  answer,
+}: {
+  eyebrow: string;
+  typeLabel: string;
+  prompt: string;
+  code?: string;
+  options: string[];
+  answer: string;
+}) {
+  const questionKind = typeLabel.toLowerCase().includes("order")
+    ? "order"
+    : typeLabel.toLowerCase().includes("select all")
+      ? "multiple"
+      : "single";
+  const [selectedIndexes, setSelectedIndexes] = useState<number[]>([]);
+
+  function toggleOption(index: number) {
+    if (questionKind === "single") {
+      setSelectedIndexes([index]);
+      return;
+    }
+    if (questionKind === "multiple") {
+      setSelectedIndexes((current) =>
+        current.includes(index)
+          ? current.filter((item) => item !== index)
+          : [...current, index]
+      );
+      return;
+    }
+    setSelectedIndexes((current) =>
+      current.includes(index) ? current : [...current, index]
+    );
+  }
+
+  return (
+    <div className="min-w-0 bg-gray-50/70 px-3 py-3">
+      <div className="flex flex-wrap items-center gap-2">
+        <div className="text-[11px] font-semibold uppercase tracking-wider text-gray-500">{eyebrow}</div>
+        <div className="bg-white px-2 py-0.5 text-[11px] font-semibold uppercase tracking-wider text-blue-700">{typeLabel}</div>
+      </div>
+      <div className="mt-2 break-words text-sm font-semibold leading-6 text-gray-800">{prompt}</div>
+      {code && (
+        <pre className="mt-2 overflow-x-auto whitespace-pre-wrap break-words bg-white px-3 py-2 text-xs leading-5 text-gray-700">
+          <code>{code}</code>
+        </pre>
+      )}
+      <div className="mt-2 grid min-w-0 gap-1.5">
+        {options.map((option, index) => (
+          <label
+            key={`${option}-${index}`}
+            className={`flex min-w-0 cursor-pointer gap-2 border px-2 py-1.5 text-sm leading-5 ${
+              selectedIndexes.includes(index)
+                ? "border-blue-300 bg-blue-50 text-blue-950"
+                : "border-gray-100 bg-white text-gray-700"
+            }`}
+          >
+            <input
+              type={questionKind === "single" ? "radio" : "checkbox"}
+              name={`learn-question-${eyebrow}`}
+              checked={selectedIndexes.includes(index)}
+              onChange={() => toggleOption(index)}
+              className="mt-1 h-3.5 w-3.5 shrink-0"
+            />
+            <span className="min-w-0 break-words">
+              <span className="mr-2 font-semibold text-gray-400">{String.fromCharCode(65 + index)}.</span>
+              {option}
+            </span>
+          </label>
+        ))}
+      </div>
+      {questionKind === "order" && (
+        <div className="mt-2 border-l-2 border-blue-300 bg-white px-3 py-2">
+          <div className="mb-1 text-[11px] font-semibold uppercase tracking-wider text-blue-700">Your order</div>
+          {selectedIndexes.length ? (
+            <ol className="space-y-1 text-sm leading-5 text-gray-700">
+              {selectedIndexes.map((index, orderIndex) => (
+                <li key={`${index}-${orderIndex}`} className="break-words">
+                  {orderIndex + 1}. {options[index]}
+                </li>
+              ))}
+            </ol>
+          ) : (
+            <p className="text-sm text-gray-500">Select the steps above in order.</p>
+          )}
+          {selectedIndexes.length > 0 && (
+            <button
+              type="button"
+              onClick={() => setSelectedIndexes([])}
+              className="mt-2 text-xs font-semibold uppercase tracking-wider text-blue-700"
+            >
+              Reset order
+            </button>
+          )}
+        </div>
+      )}
+      <details className="mt-2">
+        <summary className="cursor-pointer select-none text-xs font-semibold uppercase tracking-wider text-blue-700">
+          Check understanding
+        </summary>
+        <p className="mt-2 break-words text-sm leading-6 text-blue-950">{answer}</p>
+      </details>
+    </div>
+  );
+}
+
+function describeCodeLine(line: string): string {
+  const trimmed = line.trim();
+  if (/^def\s+/.test(trimmed)) {
+    return "Defines the function boundary: name, inputs, and where the returned value must come from.";
+  }
+  if (/^return\b/.test(trimmed)) {
+    return "Returns the final object, so it must match the expected output format.";
+  }
+  if (/^for\s+/.test(trimmed)) {
+    return "Loops through input pieces one at a time so the helper can build or update a result.";
+  }
+  if (/^if\s+/.test(trimmed) || /^elif\s+/.test(trimmed) || /^else\b/.test(trimmed)) {
+    return "Chooses a branch, so the learner should ask which cases go down this path.";
+  }
+  if (/\bfor\b.+\bin\b/.test(trimmed) && /[\[{(]/.test(trimmed)) {
+    return "Uses a comprehension or compact loop to transform a collection into another collection.";
+  }
+  if (/=/.test(trimmed)) {
+    return "Creates or updates a named intermediate value that should be traced against the examples.";
+  }
+  return "Performs one step in the input-to-output route and should be tied back to a concrete example.";
+}
