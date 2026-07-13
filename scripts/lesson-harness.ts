@@ -39,6 +39,16 @@ import type {
   LessonDiscardedEvent,
 } from "../src/types";
 
+const MANDATORY_RESEARCH_GATE_PROMPT = [
+  "=== MANDATORY RESEARCH GATE BEFORE AUTHORING ===",
+  "- Do comprehensive current research before writing any substantive lesson material. Meeting notes, uploaded files, learner notes, and prior lessons are context, not enough by themselves for a technical lesson unless the user explicitly asks for a narrow summary of only those materials.",
+  "- For technical subjects, include at least 5 source-backed references in the comprehensive_lesson_plan and source_context. At least 2 should be primary sources when available, such as official docs, model cards, technical reports, academic papers, source repositories, standards, or release notes.",
+  "- If direct courses or tutorials do not exist, search creatively for parallel sources: academic research, implementation docs, benchmark papers, source code, model cards, issue threads, standards, and adjacent domains that teach the same mechanism or evaluation problem.",
+  "- The lesson must teach source-backed ideas beyond what was already said in the meeting or upload. If external sources only confirm the provided material, say that clearly and use them to add mechanisms, examples, failure modes, or future lesson direction.",
+  "- Record a research ledger before authoring. The ledger must name sources, explain what each source contributed, identify any uncertainty or contradiction, and state how the lesson scope changed because of the research.",
+  "- If research tooling is unavailable for a non-fixture production lesson, stop and mark the generation job blocked or retry later. Do not author from memory, stale package syntax, or unsupported guesses.",
+].join("\n");
+
 // ─── Types ────────────────────────────────────────────────────────────────────
 
 interface HarnessPayload {
@@ -564,6 +574,8 @@ ${context}
 
 TASK:
 ${trigger}
+
+${MANDATORY_RESEARCH_GATE_PROMPT}
 
 Generate a high-quality adaptive lesson for this learner. The lesson must:
 - Be pedagogically grounded in the learner's actual evidence (mastery signals, assessment results, completed lessons)

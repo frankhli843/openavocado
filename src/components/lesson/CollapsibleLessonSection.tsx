@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, type ReactNode } from "react";
+import type { ReactNode } from "react";
 
 interface CollapsibleLessonSectionProps {
   id: string;
@@ -8,6 +8,8 @@ interface CollapsibleLessonSectionProps {
   title: string;
   done: boolean;
   onDoneChange: (done: boolean) => void;
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
   children: ReactNode;
 }
 
@@ -17,31 +19,19 @@ export function CollapsibleLessonSection({
   title,
   done,
   onDoneChange,
+  open,
+  onOpenChange,
   children,
 }: CollapsibleLessonSectionProps) {
-  const [open, setOpen] = useState(false);
-
-  useEffect(() => {
-    const syncFromHash = () => {
-      if (window.location.hash === `#${id}`) setOpen(true);
-    };
-    syncFromHash();
-    window.addEventListener("hashchange", syncFromHash);
-    return () => window.removeEventListener("hashchange", syncFromHash);
-  }, [id]);
-
   function toggleDone() {
     const nextDone = !done;
     onDoneChange(nextDone);
-    if (nextDone) setOpen(false);
+    if (nextDone) onOpenChange(false);
   }
 
   function toggleOpen() {
     const nextOpen = !open;
-    setOpen(nextOpen);
-    if (nextOpen && window.location.hash !== `#${id}`) {
-      window.location.hash = id;
-    }
+    onOpenChange(nextOpen);
   }
 
   return (

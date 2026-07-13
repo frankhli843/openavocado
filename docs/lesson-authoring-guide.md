@@ -35,6 +35,18 @@ Before choosing the next lesson, inspect the available evidence:
 
 Do not invent learner weaknesses. If evidence is missing, generate a lesson that includes a diagnostic path rather than pretending certainty.
 
+## Mandatory Research Gate
+
+Before writing substantive lesson material, do research. Learner evidence tells the author what to teach next. Research tells the author how to teach it accurately and deeply.
+
+For technical lessons, the research ledger should include at least five source-backed references, with at least two primary sources when available. Primary sources include official documentation, model cards, technical reports, academic papers, source repositories, standards, release notes, or benchmark methodology pages.
+
+Direct courses are not required. If there is no course for the exact topic, look sideways: academic research, implementation docs, benchmark papers, source code, model cards, issue discussions, standards, and adjacent domains can teach the same mechanism. The author must explain why each parallel source transfers to the lesson.
+
+Meeting notes, uploaded files, and learner context are inputs, not enough by themselves for a technical lesson unless the user explicitly asks for a narrow summary of only those materials. A good lesson adds source-backed mechanisms, examples, edge cases, failure modes, and future direction beyond what the meeting already said.
+
+If a production harness cannot access research tools, it should block or retry later rather than author from memory. Deterministic local fixtures may mark external research unavailable, but production and agent-backed runs should not.
+
 ## Lesson Shape
 
 Use a direct teaching arc:

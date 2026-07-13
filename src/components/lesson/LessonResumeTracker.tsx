@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useMemo } from "react";
-import { buildLessonDeepLink, writeLessonResumeState } from "@/lib/lesson-resume";
+import { buildLessonDeepLink, parseOpenSectionQuery, writeLessonResumeState } from "@/lib/lesson-resume";
 
 interface LessonResumeTrackerProps {
   lessonId: number;
@@ -26,7 +26,8 @@ export function LessonResumeTracker({ lessonId, sectionIds, onActiveSectionChang
     function save(sectionId: string | null) {
       if (sectionId === lastSavedSection) return;
       lastSavedSection = sectionId;
-      const href = buildLessonDeepLink(lessonId, sectionId);
+      const openSectionIds = parseOpenSectionQuery(new URLSearchParams(window.location.search).get("open"));
+      const href = buildLessonDeepLink(lessonId, sectionId, openSectionIds);
       writeLessonResumeState(window.localStorage, {
         href,
         lessonId,

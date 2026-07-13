@@ -3,8 +3,10 @@ import {
   LAST_LESSON_DEEP_LINK_KEY,
   buildLessonDeepLink,
   isSafeLessonDeepLink,
+  parseOpenSectionQuery,
   parseLessonResumeState,
   readLessonResumeState,
+  serializeOpenSectionQuery,
   writeLessonResumeState,
 } from "../lib/lesson-resume";
 
@@ -12,30 +14,49 @@ describe("lesson resume deep links", () => {
   it("builds lesson links with optional section focus", () => {
     expect(buildLessonDeepLink(7)).toBe("/lessons/7");
     expect(buildLessonDeepLink(7, "section-40")).toBe("/lessons/7#section-40");
+    expect(buildLessonDeepLink(7, "section-40", ["section-10", "section-40"])).toBe(
+      "/lessons/7?open=section-10%2Csection-40#section-40"
+    );
     expect(buildLessonDeepLink(7, "bad section")).toBe("/lessons/7");
   });
 
   it("only accepts safe relative lesson deep links", () => {
     expect(isSafeLessonDeepLink("/lessons/7")).toBe(true);
     expect(isSafeLessonDeepLink("/lessons/7#section-40")).toBe(true);
+    expect(isSafeLessonDeepLink("/lessons/7?open=section-10%2Csection-40#section-40")).toBe(true);
     expect(isSafeLessonDeepLink("/subjects/5?tab=lessons")).toBe(false);
     expect(isSafeLessonDeepLink("https://example.com/lessons/7")).toBe(false);
     expect(isSafeLessonDeepLink("//example.com/lessons/7")).toBe(false);
     expect(isSafeLessonDeepLink("/lessons/7?next=https://example.com")).toBe(false);
+    expect(isSafeLessonDeepLink("/lessons/7?open=section-10,bad section")).toBe(false);
     expect(isSafeLessonDeepLink("/lessons/7#bad section")).toBe(false);
+  });
+
+  it("parses and serializes open section query state", () => {
+    expect(parseOpenSectionQuery("section-10,section-40,bad section,section-10")).toEqual([
+      "section-10",
+      "section-40",
+    ]);
+    expect(serializeOpenSectionQuery(["section-40", "bad section", "section-10"])).toBe(
+      "section-40,section-10"
+    );
   });
 
   it("parses current JSON state and legacy plain-link state", () => {
     expect(
       parseLessonResumeState(
         JSON.stringify({
-          href: "/lessons/7#section-40",
+          href: "/lessons/7?open=section-10%2Csection-40#section-40",
           lessonId: 7,
           sectionId: "section-40",
           updatedAt: "2026-06-27T00:00:00.000Z",
         })
       )
-    ).toMatchObject({ href: "/lessons/7#section-40", lessonId: 7, sectionId: "section-40" });
+    ).toMatchObject({
+      href: "/lessons/7?open=section-10%2Csection-40#section-40",
+      lessonId: 7,
+      sectionId: "section-40",
+    });
 
     expect(parseLessonResumeState("/lessons/8#section-diagnostics")).toMatchObject({
       href: "/lessons/8#section-diagnostics",

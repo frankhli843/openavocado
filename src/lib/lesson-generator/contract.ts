@@ -60,6 +60,16 @@ export { WIDGET_SCHEMA_VERSION };
 export const WIDGET_AUTHORING_NOTE =
   "interactive.content for new lessons must be widget_type:'bespoke-artifact' with an approved visual_artifacts slug. No registered/declarative widgets for new generation.";
 
+export const MANDATORY_RESEARCH_GATE_PROMPT = [
+  "=== MANDATORY RESEARCH GATE BEFORE AUTHORING ===",
+  "- Do comprehensive current research before writing any substantive lesson material. Meeting notes, uploaded files, learner notes, and prior lessons are context, not enough by themselves for a technical lesson unless the user explicitly asks for a narrow summary of only those materials.",
+  "- For technical subjects, include at least 5 source-backed references in the comprehensive_lesson_plan and source_context. At least 2 should be primary sources when available, such as official docs, model cards, technical reports, academic papers, source repositories, standards, or release notes.",
+  "- If direct courses or tutorials do not exist, search creatively for parallel sources: academic research, implementation docs, benchmark papers, source code, model cards, issue threads, standards, and adjacent domains that teach the same mechanism or evaluation problem.",
+  "- The lesson must teach source-backed ideas beyond what was already said in the meeting or upload. If external sources only confirm the provided material, say that clearly and use them to add mechanisms, examples, failure modes, or future lesson direction.",
+  "- Record a research ledger before authoring. The ledger must name sources, explain what each source contributed, identify any uncertainty or contradiction, and state how the lesson scope changed because of the research.",
+  "- If research tooling is unavailable for a non-fixture production lesson, stop and mark the generation job blocked or retry later. Do not author from memory, stale package syntax, or unsupported guesses.",
+].join("\n");
+
 /**
  * The enrichment quality bar every generated lesson must meet, formatted for
  * direct inclusion in a lesson-generation task/prompt.
@@ -75,10 +85,11 @@ export const LESSON_QUALITY_BAR_PROMPT = [
   "=== LESSON QUALITY BAR (required for EVERY generated lesson) ===",
   "Before lesson work starts, read docs/lesson-authoring-guide.md and docs/agent-task-harness.md.",
   "Do not ship a thin, audio-only, or high-level-only lesson. Every lesson must include:",
+  MANDATORY_RESEARCH_GATE_PROMPT,
   '- Generated audio AVAILABLE AT CREATION: a substantive spoken script (never a stub or "audio coming soon"); produce the actual audio artifact at creation time and record it as a generated artifact.',
   "- WHY-FIRST TEACHING: before formulas or implementation details, explain the high-level purpose and the causal chain this lesson resolves. Each major step must explain what object changes, how it changes, and why that change improves the next prediction, decision, or action.",
   "- NO UNDOCUMENTED ASSUMPTIONS: do not assume domain facts are true unless they are already documented in Open Avocado context, present in the local SQLite evidence, or verified and recorded in the lesson/task notes.",
-  "- PLANNING STAGE BEFORE AUTHORING: before writing lesson content, do comprehensive current research for the topic, especially when it touches active model-building, inference, quantization, model packaging, or deployment practice. Record source-backed findings, update the subject workpad and long-term plan, then author the lesson from that plan.",
+  "- PLANNING STAGE BEFORE AUTHORING: after the mandatory research gate, update the subject workpad and long-term plan, then author the lesson from that source-backed plan.",
   COMPREHENSIVE_LESSON_PLAN_TEMPLATE,
   "- DYNAMIC, BESPOKE AUTHORING: do not fill a reusable template. Choose the lesson scope, metaphor, examples, visualizations, practice, quiz, and video because they fit this learner, this topic, and the DB evidence.",
   "- PURPOSE-BUILT REACT VISUALS ONLY: every visual must be designed as generated source code for the exact concept block it supports, stored in visual_artifacts, built, Chrome-QAed, approved, and rendered by artifact slug. Treat each dense block like a small custom learning app: identify the real data/artifact/process in the prose, then show its rows, columns, axes, states, transitions, failure points, or before/after values. Do not use registered widgets, declarative widgets, reusable JSON panel schemas, or any precreated component path. Do not execute raw React/JS directly from lesson JSON or SQLite. Generic bars, relabelable flow boxes, and template-looking diagrams fail QA unless the lesson is genuinely about generic quantities, trends, or distributions and has still been implemented as a bespoke artifact.",

@@ -8,13 +8,41 @@ export interface LessonResumeState {
 }
 
 const SECTION_ID_RE = /^section-[A-Za-z0-9_-]+$/;
+const MAX_OPEN_SECTIONS = 12;
 
-export function buildLessonDeepLink(lessonId: number, sectionId?: string | null): string {
+export function parseOpenSectionQuery(value: string | null): string[] {
+  if (!value) return [];
+  const seen = new Set<string>();
+  for (const raw of value.split(",")) {
+    const id = raw.trim();
+    if (!SECTION_ID_RE.test(id)) continue;
+    seen.add(id);
+    if (seen.size >= MAX_OPEN_SECTIONS) break;
+  }
+  return [...seen];
+}
+
+export function serializeOpenSectionQuery(sectionIds: Iterable<string>): string {
+  const safe = new Set<string>();
+  for (const id of sectionIds) {
+    if (!SECTION_ID_RE.test(id)) continue;
+    safe.add(id);
+    if (safe.size >= MAX_OPEN_SECTIONS) break;
+  }
+  return [...safe].join(",");
+}
+
+export function buildLessonDeepLink(
+  lessonId: number,
+  sectionId?: string | null,
+  openSectionIds?: Iterable<string>
+): string {
   const id = Number.isInteger(lessonId) && lessonId > 0 ? lessonId : null;
   if (id == null) throw new Error("lessonId must be a positive integer");
 
   const safeSection = sectionId && SECTION_ID_RE.test(sectionId) ? sectionId : null;
-  return `/lessons/${id}${safeSection ? `#${safeSection}` : ""}`;
+  const openQuery = serializeOpenSectionQuery(openSectionIds ?? []);
+  return `/lessons/${id}${openQuery ? `?open=${encodeURIComponent(openQuery)}` : ""}${safeSection ? `#${safeSection}` : ""}`;
 }
 
 export function isSafeLessonDeepLink(value: string): boolean {
@@ -25,7 +53,13 @@ export function isSafeLessonDeepLink(value: string): boolean {
     const parsed = new URL(value, "https://avocadocore.local");
     if (parsed.origin !== "https://avocadocore.local") return false;
     if (!/^\/lessons\/[1-9]\d*$/.test(parsed.pathname)) return false;
-    if (parsed.search) return false;
+    if (parsed.search) {
+      const params = parsed.searchParams;
+      if ([...params.keys()].some((key) => key !== "open")) return false;
+      if (serializeOpenSectionQuery(parseOpenSectionQuery(params.get("open"))) !== (params.get("open") ?? "")) {
+        return false;
+      }
+    }
     if (parsed.hash && !SECTION_ID_RE.test(parsed.hash.slice(1))) return false;
     return true;
   } catch {

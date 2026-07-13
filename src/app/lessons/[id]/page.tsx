@@ -17,6 +17,7 @@ import { NextLessonDiagnosticsSection } from "@/components/lesson/NextLessonDiag
 import { KnowledgeGraphOrientation } from "@/components/lesson/KnowledgeGraphOrientation";
 import { LessonChatModal } from "@/components/lesson/LessonChatModal";
 import { LessonResumeTracker } from "@/components/lesson/LessonResumeTracker";
+import { parseOpenSectionQuery, serializeOpenSectionQuery } from "@/lib/lesson-resume";
 import { debounce, postAutosave } from "@/lib/autosave";
 import { DiscardLessonModal } from "@/components/DiscardLessonModal";
 import type { NextLessonDiagnostic } from "@/lib/lesson-content/schema";
@@ -74,12 +75,65 @@ export default function LessonPage({ params }: { params: Promise<{ id: string }>
   const [chatMaximized, setChatMaximized] = useState(false);
   const [chatDefaultApplied, setChatDefaultApplied] = useState(false);
   const [activeSectionId, setActiveSectionId] = useState<string | null>(null);
+  const [openSections, setOpenSections] = useState<Set<string>>(() => new Set());
   // Widget state is keyed per interactive activity id so a lesson with several
   // visualizations restores each one independently.
   const [widgetStates, setWidgetStates] = useState<Record<number, Record<string, number>>>({});
 
   const handleActiveSectionChange = useCallback((sectionId: string | null) => {
     setActiveSectionId(sectionId);
+  }, []);
+
+  const syncOpenSectionsToUrl = useCallback((sectionIds: Set<string>, hashTarget?: string | null) => {
+    if (typeof window === "undefined") return;
+    const url = new URL(window.location.href);
+    const openQuery = serializeOpenSectionQuery(sectionIds);
+    if (openQuery) url.searchParams.set("open", openQuery);
+    else url.searchParams.delete("open");
+    if (hashTarget !== undefined) {
+      url.hash = hashTarget ? `#${hashTarget}` : "";
+    }
+    window.history.replaceState(null, "", `${url.pathname}${url.search}${url.hash}`);
+  }, []);
+
+  const handleSectionOpenChange = useCallback((sectionId: string, nextOpen: boolean, focusSection = false) => {
+    setOpenSections((previous) => {
+      const queryOpenSections =
+        typeof window !== "undefined"
+          ? parseOpenSectionQuery(new URLSearchParams(window.location.search).get("open"))
+          : [];
+      const next = new Set([...queryOpenSections, ...previous]);
+      if (nextOpen) next.add(sectionId);
+      else next.delete(sectionId);
+      const hashMatchesClosedSection =
+        typeof window !== "undefined" && window.location.hash === `#${sectionId}` && !nextOpen;
+      syncOpenSectionsToUrl(next, focusSection && nextOpen ? sectionId : hashMatchesClosedSection ? null : undefined);
+      return next;
+    });
+    if (focusSection && nextOpen && typeof window !== "undefined") {
+      window.requestAnimationFrame(() => {
+        document.getElementById(sectionId)?.scrollIntoView({ block: "start" });
+      });
+    }
+  }, [syncOpenSectionsToUrl]);
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const syncFromLocation = () => {
+      const next = new Set(parseOpenSectionQuery(new URLSearchParams(window.location.search).get("open")));
+      const hashId = window.location.hash.replace(/^#/, "");
+      if (/^section-[A-Za-z0-9_-]+$/.test(hashId)) next.add(hashId);
+      setOpenSections(next);
+    };
+    syncFromLocation();
+    const timer = window.setTimeout(syncFromLocation, 0);
+    window.addEventListener("popstate", syncFromLocation);
+    window.addEventListener("hashchange", syncFromLocation);
+    return () => {
+      window.clearTimeout(timer);
+      window.removeEventListener("popstate", syncFromLocation);
+      window.removeEventListener("hashchange", syncFromLocation);
+    };
   }, []);
 
   useEffect(() => {
@@ -459,6 +513,13 @@ export default function LessonPage({ params }: { params: Promise<{ id: string }>
   const activeSection = tocItems.find((item) => item.id === activeSectionId) ?? tocItems[0] ?? null;
   const activeSectionLabel = activeSection ? `${activeSection.kind}: ${activeSection.title}` : null;
 
+  function sectionHref(sectionId: string): string {
+    const next = new Set(openSections);
+    next.add(sectionId);
+    const openQuery = serializeOpenSectionQuery(next);
+    return `/lessons/${lesson.id}${openQuery ? `?open=${encodeURIComponent(openQuery)}` : ""}#${sectionId}`;
+  }
+
   function renderActivity(activity: LessonActivity): ReactNode {
     if (activity.activity_type === "audio") {
       const activityArtifact = artifacts.find((a) => a.artifact_type === "audio" && a.activity_id === activity.id);
@@ -635,7 +696,11 @@ export default function LessonPage({ params }: { params: Promise<{ id: string }>
               {tocItems.map((item) => (
                 <a
                   key={item.id}
-                  href={`#${item.id}`}
+                  href={sectionHref(item.id)}
+                  onClick={(event) => {
+                    event.preventDefault();
+                    handleSectionOpenChange(item.id, true, true);
+                  }}
                   className="flex items-center gap-2 rounded-lg border border-gray-100 px-3 py-2 text-sm text-gray-600 hover:border-blue-200 hover:bg-blue-50/40 hover:text-blue-700 transition-colors"
                 >
                   <span className={item.done ? "text-green-600" : "text-gray-300"} aria-hidden="true">
@@ -663,6 +728,8 @@ export default function LessonPage({ params }: { params: Promise<{ id: string }>
               title={activitySectionTitle(activity)}
               done={!!sectionDone[activity.id]}
               onDoneChange={(done) => triggerSectionDoneAutosave(activity.id, done)}
+              open={openSections.has(activitySectionId(activity))}
+              onOpenChange={(nextOpen) => handleSectionOpenChange(activitySectionId(activity), nextOpen, nextOpen)}
             >
               {body}
             </CollapsibleLessonSection>
@@ -677,6 +744,8 @@ export default function LessonPage({ params }: { params: Promise<{ id: string }>
             title="Help shape your next lesson"
             done={!!sectionDone[DIAGNOSTICS_ACTIVITY_ID]}
             onDoneChange={(done) => triggerSectionDoneAutosave(DIAGNOSTICS_ACTIVITY_ID, done)}
+            open={openSections.has("section-diagnostics")}
+            onOpenChange={(nextOpen) => handleSectionOpenChange("section-diagnostics", nextOpen, nextOpen)}
           >
             <NextLessonDiagnosticsSection
               diagnostics={diagnostics}
