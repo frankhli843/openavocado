@@ -505,7 +505,23 @@ function richLesson(overrides: Partial<GeneratedLessonContent["activities"][numb
         tests: [{ id: "t", description: "d", assert: "x == 1" }],
       },
     },
-    { activity_type: "assessment", is_core: true, sequence_order: 5, title: "s", content: {} },
+    {
+      activity_type: "assessment",
+      is_core: true,
+      sequence_order: 5,
+      title: "s",
+      content: {
+        questions: [
+          {
+            id: "assess-q1",
+            text: "Explain the fixture concept in your own words.",
+            type: "free_text",
+            actual_answer: "Any coherent explanation of the fixture concept.",
+            rubric: "Credit a coherent explanation that names the core idea.",
+          },
+        ],
+      },
+    },
   ];
   for (const o of overrides) {
     activities.push({ activity_type: "reading", is_core: true, sequence_order: 9, title: "x", content: {}, ...o });
@@ -730,7 +746,7 @@ function validLessonPartContent() {
   };
 }
 
-describe("validateGeneratedContent — richer lessons", () => {
+describe("validateGeneratedContent: richer lessons", () => {
   it("passes a complete lesson with audio, reading, interactive, code, assessment", () => {
     const r = validateGeneratedContent(richLesson());
     expect(r.errors).toEqual([]);
@@ -743,6 +759,48 @@ describe("validateGeneratedContent — richer lessons", () => {
     const r = validateGeneratedContent(lesson);
     expect(r.valid).toBe(false);
     expect(r.errors.join(" ")).toMatch(/reading/);
+  });
+
+  it("fails when an assessment freeform question is authored in the quiz shape (no id/text)", () => {
+    // Regression guard for the Lesson 15 placeholder: questions authored as
+    // { question, options, correct } instead of { id, text } are dropped by
+    // AssessmentSection and render the "generated without usable prompts"
+    // placeholder. The contract must reject this before it reaches production.
+    const lesson = richLesson();
+    const assessment = lesson.activities.find((a) => a.activity_type === "assessment")!;
+    assessment.content = {
+      questions: [
+        {
+          type: "select_all",
+          question: "Which statements are true about attention?",
+          options: ["a", "b", "c", "None of the above"],
+          correct: [0, 1],
+        },
+      ],
+    };
+    const r = validateGeneratedContent(lesson);
+    expect(r.valid).toBe(false);
+    expect(r.errors.join(" ")).toMatch(/assessment/);
+    expect(r.errors.join(" ")).toMatch(/missing id/);
+    expect(r.errors.join(" ")).toMatch(/missing text/);
+  });
+
+  it("passes when assessment freeform questions use the valid id + text shape", () => {
+    const lesson = richLesson();
+    const assessment = lesson.activities.find((a) => a.activity_type === "assessment")!;
+    assessment.content = {
+      questions: [
+        {
+          id: "ff1",
+          text: "Explain how attention scores become weights.",
+          type: "free_text",
+          actual_answer: "Dot product of Q and K, scaled, then softmax into weights.",
+          rubric: "Credit naming the dot product, the scaling, and softmax.",
+        },
+      ],
+    };
+    const r = validateGeneratedContent(lesson);
+    expect(r.errors.filter((e) => e.startsWith("assessment "))).toEqual([]);
   });
 
   it("fails when a practice_code activity exposes the final answer", () => {

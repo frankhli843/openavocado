@@ -232,7 +232,7 @@ describe("validateWidgetSpec", () => {
     expect(r.errors.join(" ")).toMatch(/min_height/);
   });
 
-  // bespoke-artifact is validated by its own branch — unknown type list does NOT affect it
+  // bespoke-artifact is validated by its own branch, unknown type list does NOT affect it
   it("bespoke-artifact passes even when knownTypes list is provided without it", () => {
     const r = validateWidgetSpec(
       {
@@ -508,14 +508,30 @@ function baseContent(interactiveContent: Record<string, unknown>): GeneratedLess
           tests: [{ id: "t1", description: "works", assert: "x == 1" }],
         },
       },
-      { activity_type: "assessment", is_core: true, sequence_order: 5, title: "s", content: {} },
+      {
+        activity_type: "assessment",
+        is_core: true,
+        sequence_order: 5,
+        title: "s",
+        content: {
+          questions: [
+            {
+              id: "assess-q1",
+              text: "Explain the fixture concept in your own words.",
+              type: "free_text",
+              actual_answer: "Any coherent explanation of the fixture concept.",
+              rubric: "Credit a coherent explanation that names the core idea.",
+            },
+          ],
+        },
+      },
     ],
     mastery_targets: [],
     metadata: { generator: "t", generator_version: "1", generated_at: "now", source_context_summary: "x" },
   };
 }
 
-describe("validateGeneratedContent — interactive widget", () => {
+describe("validateGeneratedContent: interactive widget", () => {
   it("fails new generation when the interactive uses the legacy declarative path", () => {
     const r = validateGeneratedContent(baseContent(validDeclarative as unknown as Record<string, unknown>));
     expect(r.valid).toBe(false);

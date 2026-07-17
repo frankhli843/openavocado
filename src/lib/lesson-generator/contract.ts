@@ -26,6 +26,7 @@ import {
   validateNextLessonDiagnostics,
   validateLessonPartContent,
   validateAudioSyncedVisualContent,
+  validateAssessmentContent,
 } from "@/lib/lesson-content/schema";
 
 /** Minimum audio script length to count as a real, generation-ready script. */
@@ -399,6 +400,20 @@ export function validateGeneratedContent(
       const result = validateCodeDrillContent(activity.content);
       if (!result.valid) {
         for (const e of result.errors) errors.push(`code_drill ${label}: ${e}`);
+      }
+    }
+
+    // Assessment freeform questions must be renderable. AssessmentSection keeps
+    // only questions with a stable id and non-empty text, so a question authored
+    // in the quiz shape ({ question, options, correct }) instead of the freeform
+    // shape ({ id, text, ... }) is silently dropped and the section shows the
+    // "generated without usable prompts" placeholder to the learner. Validating
+    // with the canonical assessment contract here fails that content before it
+    // ships instead of surfacing it only in the browser.
+    if (activity.activity_type === "assessment") {
+      const result = validateAssessmentContent(activity.content);
+      if (!result.valid) {
+        for (const e of result.errors) errors.push(`assessment ${label}: ${e}`);
       }
     }
   }
