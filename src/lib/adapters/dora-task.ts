@@ -16,8 +16,10 @@ const execFileAsync = promisify(execFile);
 export const AVOCADOCORE_LESSON_AUTHORING_SKILL =
   "docs/lesson-authoring-guide.md";
 
+// The task CLI hard-requires the literal "RELEVANT KNOWLEDGE FILES" heading,
+// so this section must keep that exact phrase for dispatch to pass its gate.
 const KNOWLEDGE_FILES_SECTION = [
-  "RELEVANT PROJECT FILES:",
+  "RELEVANT KNOWLEDGE FILES:",
   "- docs/lesson-authoring-guide.md",
   "- docs/agent-task-harness.md",
 ].join("\n");
@@ -32,6 +34,11 @@ const PURPOSE_BUILT_VISUAL_REQUIREMENT = [
   "=== PURPOSE-BUILT VISUAL REQUIREMENT ===",
   "Every visualization must be designed for the exact concept block it supports, not chosen from a reusable visual template catalog. Treat each dense block like a small custom learning app: identify the real data, artifact, process, or failure mode in the prose, then show its rows, columns, axes, stages, states, transitions, before/after values, or concrete artifacts. If code is needed, prefer bespoke React for that lesson part. The current safe path is to land it as reviewed source code wired through the Open Avocado widget registry or equivalent visual-component manifest, then reference a stable component id/widget type from the lesson. DB-backed visuals may store source, compiled artifact refs, QA screenshots, and approval metadata in SQLite, but raw React/JS must not execute directly from lesson JSON. If a diagram is enough, author a bespoke Mermaid or static diagram tied to the exact paragraph. QA must reject generic bars, relabelable flow boxes, decorative colored blocks, and any visual whose labels could be swapped to fit an unrelated lesson, unless the lesson is genuinely about quantities, trends, or distributions.",
   "Before showing operations on a technical object, ground the object itself. If the lesson says embedding lookup, first show what an embedding is, what the embedding matrix looks like in a tiny concrete form, where it comes from, and how tokenizer IDs address rows. Apply the same rule to tensors, matrices, vectors, logits, priors, gradients, caches, queues, losses, and other dense terms. The learner should never have to infer what the thing is while simultaneously learning an operation on it.",
+].join("\n");
+
+const SEGMENT_VIDEO_REQUIREMENT = [
+  "=== SEGMENT VIDEO REQUIREMENT ===",
+  "Audio-only lessons are not acceptable. Every audio segment (the lesson overview orientation and every lesson part narration) must ship with a registered per-segment video (orientation_video for the overview, audio.video for each part) rendered through the Manim segment pipeline, with a poster image and a captions track, playable in both the normal lesson page and on-the-go mode. A lesson is not done while any audio segment lacks its registered video. Before completing the task, run the video audit and the lesson completeness checker and confirm zero missing segment videos for the generated lesson.",
 ].join("\n");
 
 const LOCAL_MODEL_BOUNDARY_REQUIREMENT = [
@@ -207,6 +214,7 @@ function buildFirstLessonAcceptance(event: SubjectCreatedEvent, channel?: string
     "",
     "Every major step should use a metaphor, at least three simple examples where useful, and a concrete explanation of why the step exists. Visualizations should not be decorative graphs. They should let the learner change something, see a consequence or failure mode, and understand what the step proves. Every visualization must have audio explanation or a per-part audio script explaining what to change, what to notice, and what the visual proves.",
     LOCAL_MODEL_BOUNDARY_REQUIREMENT,
+    SEGMENT_VIDEO_REQUIREMENT,
     PURPOSE_BUILT_VISUAL_REQUIREMENT,
     "",
     "=== CODING PRACTICE AND HINTS ===",
@@ -269,6 +277,7 @@ export const doraTaskAdapter: CompletionHookAdapter = {
         : "Do not jump into frontier-paper study until the stored current phase is post_mastery.",
       "Every generated next lesson still begins with a long-form stand-alone top-level audio lesson: at least 15 minutes, at least 2,700 words, two-host male/female podcast transcript, useful away from the screen, with Leo teaching mechanisms in plain language and Maya acting as a curious skeptical student who drills into why the concept matters, how the actual object changes, and how that change helps the next prediction/decision/action. The audio must not mention lesson parts, exercises, practice, assessments, or page structure. Do not leak meta-authoring language such as 'the learner should', 'the lesson should', 'the overview should', 'the audio should', or 'the transcript should'. Speak directly with 'you' and 'we'. If formulas appear in audio, describe them in words first and keep raw notation for LaTeX reading blocks.",
       LOCAL_MODEL_BOUNDARY_REQUIREMENT,
+      SEGMENT_VIDEO_REQUIREMENT,
       "",
       "=== THIS LESSON ===",
       `Prior lesson: "${event.lesson_title}"  | Goals: ${event.lesson_goals.join(", ")}`,
@@ -372,6 +381,7 @@ export const doraTaskRegenerationAdapter: RegenerationHookAdapter = {
       "Before writing the replacement lesson, review the subject goals, learner criteria, discard reason, current workpad, and mastery evidence. If the learner gave a reason such as too easy, too hard, wrong topic, or bad style, explicitly correct that failure mode. Update the workpad with what you decided and why, then generate a lesson that better fits the learner's goals, criteria, and current level.",
       "The replacement lesson must include a long-form stand-alone top-level audio lesson: at least 15 minutes, at least 2,700 words, written as a two-host male/female podcast transcript, useful away from the screen, with Leo teaching mechanisms in plain language and Maya acting as a curious skeptical student who drills into why the concept matters, how the actual object changes, and how that change helps the next prediction/decision/action. The audio must not mention lesson parts, exercises, practice, assessments, or page structure. Do not leak meta-authoring language such as 'the learner should', 'the lesson should', 'the overview should', 'the audio should', or 'the transcript should'. Speak directly with 'you' and 'we'. If formulas appear in audio, describe them in words first and keep raw notation for LaTeX reading blocks.",
       LOCAL_MODEL_BOUNDARY_REQUIREMENT,
+      SEGMENT_VIDEO_REQUIREMENT,
       "",
       "=== CODING PRACTICE AND HINTS ===",
       "If the replacement lesson includes code, provide progressive, unboxable hints that can be opened until the learner reaches the full answer path. Do not assume package-specific keywords or parameters are known. Document every external Python library in starter-code comments and teaching text.",
