@@ -86,8 +86,8 @@
     ]
   },
   "audio": {
-    "script": "Leo: Last part. How do you design an agentic eval that actually means something?\n\nMaya: Start with the environment, I think.\n\nLeo: Right. You seed a fake environment with a known starting state, trigger the agent, let it call tools, then check the final state against the expected end state. That state check makes pass and fail unambiguous. It ties straight back to Gbench.\n\nMaya: And contamination is the trap.\n\nLeo: Exactly. If the eval leaks into training data, the model just memorizes it and the score is inflated and worthless. So you hold out a test set the model never trained on. A held out eval measures generalization. A contaminated one only measures memorization.\n\nMaya: You also had a privacy eval idea.\n\nLeo: Frank's context disclosure eval. An agent should share a lot with your spouse, less with a friend, less with a colleague, and almost nothing with a stranger. Seed a scenario, ask it to answer each audience, and score whether it respected the disclosure boundary. Sara said it is worth exploring, so treat it as a preview of where we go next.",
-    "transcript": "Leo: Last part. How do you design an agentic eval that actually means something?\n\nMaya: Start with the environment, I think.\n\nLeo: Right. You seed a fake environment with a known starting state, trigger the agent, let it call tools, then check the final state against the expected end state. That state check makes pass and fail unambiguous. It ties straight back to Gbench.\n\nMaya: And contamination is the trap.\n\nLeo: Exactly. If the eval leaks into training data, the model just memorizes it and the score is inflated and worthless. So you hold out a test set the model never trained on. A held out eval measures generalization. A contaminated one only measures memorization.\n\nMaya: You also had a privacy eval idea.\n\nLeo: Frank's context disclosure eval. An agent should share a lot with your spouse, less with a friend, less with a colleague, and almost nothing with a stranger. Seed a scenario, ask it to answer each audience, and score whether it respected the disclosure boundary. Sara said it is worth exploring, so treat it as a preview of where we go next.",
+    "script": "Leo: Last part. How do you design an agentic eval that actually means something instead of a number that just looks nice?\n\nMaya: Where do you even start? Why not just write a list of prompts and grade the answers?\n\nLeo: Because answers lie and worlds do not. Think of it like a chemistry lab. You seed a fake environment with a known starting state, trigger the agent, let it call tools, then check the final state against the expected end state. Take the concrete example of one row, status equals open, and you pass only if it reads resolved at the end.\n\nMaya: How does that state check help more than reading what the agent said? What does that actually catch?\n\nLeo: It catches the bug where the model says it resolved the ticket but never called the tool. The string is confident and the world is unchanged, so only the state comparison fails it. It ties straight back to Gbench.\n\nMaya: So does that mean the real trap is the eval leaking into training?\n\nLeo: Exactly, that is contamination. Why does it wreck a score? If the test leaks into the training data, the model just memorizes the answer and the number is inflated and worthless.\n\nMaya: How exactly do you defend against something the size of the internet? Can you go deeper on held out sets?\n\nLeo: You hold out a test the model never trained on. A held out eval measures generalization. A contaminated one only measures memorization, like grading a student on the exact exam they already saw.\n\nMaya: You had a privacy eval idea too. How would you even score something that human?\n\nLeo: Frank's context disclosure eval. An agent should share a lot with your spouse, less with a friend, less with a colleague, and almost nothing with a stranger. Seed a scenario, ask it to answer each audience, and score whether it respected the disclosure boundary. Sara said it is worth exploring, so treat it as a preview.",
+    "transcript": "Leo: Last part. How do you design an agentic eval that actually means something instead of a number that just looks nice?\n\nMaya: Where do you even start? Why not just write a list of prompts and grade the answers?\n\nLeo: Because answers lie and worlds do not. Think of it like a chemistry lab. You seed a fake environment with a known starting state, trigger the agent, let it call tools, then check the final state against the expected end state. Take the concrete example of one row, status equals open, and you pass only if it reads resolved at the end.\n\nMaya: How does that state check help more than reading what the agent said? What does that actually catch?\n\nLeo: It catches the bug where the model says it resolved the ticket but never called the tool. The string is confident and the world is unchanged, so only the state comparison fails it. It ties straight back to Gbench.\n\nMaya: So does that mean the real trap is the eval leaking into training?\n\nLeo: Exactly, that is contamination. Why does it wreck a score? If the test leaks into the training data, the model just memorizes the answer and the number is inflated and worthless.\n\nMaya: How exactly do you defend against something the size of the internet? Can you go deeper on held out sets?\n\nLeo: You hold out a test the model never trained on. A held out eval measures generalization. A contaminated one only measures memorization, like grading a student on the exact exam they already saw.\n\nMaya: You had a privacy eval idea too. How would you even score something that human?\n\nLeo: Frank's context disclosure eval. An agent should share a lot with your spouse, less with a friend, less with a colleague, and almost nothing with a stranger. Seed a scenario, ask it to answer each audience, and score whether it respected the disclosure boundary. Sara said it is worth exploring, so treat it as a preview.",
     "duration_hint": 95,
     "synced_visual": {
       "strategy": "timeline",
@@ -104,10 +104,26 @@
             "kind": "pipeline",
             "description": "The four stages that turn a seeded environment into an unambiguous pass or fail through a state check.",
             "data": [
-              { "label": "Seed", "value": "known start state", "role": "input" },
-              { "label": "Trigger", "value": "agent calls tools", "role": "process" },
-              { "label": "State check", "value": "actual vs expected end state", "role": "process" },
-              { "label": "Score", "value": "pass or fail", "role": "output" }
+              {
+                "label": "Seed",
+                "value": "known start state",
+                "role": "input"
+              },
+              {
+                "label": "Trigger",
+                "value": "agent calls tools",
+                "role": "process"
+              },
+              {
+                "label": "State check",
+                "value": "actual vs expected end state",
+                "role": "process"
+              },
+              {
+                "label": "Score",
+                "value": "pass or fail",
+                "role": "output"
+              }
             ]
           },
           {
@@ -116,10 +132,26 @@
             "kind": "ledger",
             "description": "The context disclosure policy, showing the maximum allowed disclosure level dropping as the audience gets more distant.",
             "data": [
-              { "label": "Spouse", "value": "share a lot", "role": "input" },
-              { "label": "Friend", "value": "share less", "role": "context" },
-              { "label": "Colleague", "value": "share little", "role": "context" },
-              { "label": "Stranger", "value": "share almost nothing", "role": "output" }
+              {
+                "label": "Spouse",
+                "value": "share a lot",
+                "role": "input"
+              },
+              {
+                "label": "Friend",
+                "value": "share less",
+                "role": "context"
+              },
+              {
+                "label": "Colleague",
+                "value": "share little",
+                "role": "context"
+              },
+              {
+                "label": "Stranger",
+                "value": "share almost nothing",
+                "role": "output"
+              }
             ]
           }
         ]
@@ -238,9 +270,21 @@
       "title": "policy plus scenarios to pass rate",
       "description": "How the disclosure policy and the used levels combine into a per audience boundary decision and a pass rate.",
       "items": [
-        { "label": "policy and scenarios", "value": "allowed max per audience", "role": "input" },
-        { "label": "respected_boundary", "value": "used level within allowed max", "role": "process" },
-        { "label": "pass rate", "value": "fraction respected", "role": "output" }
+        {
+          "label": "policy and scenarios",
+          "value": "allowed max per audience",
+          "role": "input"
+        },
+        {
+          "label": "respected_boundary",
+          "value": "used level within allowed max",
+          "role": "process"
+        },
+        {
+          "label": "pass rate",
+          "value": "fraction respected",
+          "role": "output"
+        }
       ]
     },
     "worked_examples": [
@@ -258,11 +302,26 @@
       }
     ],
     "hints": [
-      { "level": 1, "text": "Look up the allowed max for the audience with policy[audience]." },
-      { "level": 2, "text": "Respecting the boundary means used_level is less than or equal to that allowed max." },
-      { "level": 3, "text": "In pass_rate, count the scenarios where respected_boundary is True." },
-      { "level": 4, "text": "Return 0.0 when scenarios is empty so you never divide by zero." },
-      { "level": 5, "text": "Divide the respected count by len(scenarios) to get the pass rate, then let audit round it." }
+      {
+        "level": 1,
+        "text": "Look up the allowed max for the audience with policy[audience]."
+      },
+      {
+        "level": 2,
+        "text": "Respecting the boundary means used_level is less than or equal to that allowed max."
+      },
+      {
+        "level": 3,
+        "text": "In pass_rate, count the scenarios where respected_boundary is True."
+      },
+      {
+        "level": 4,
+        "text": "Return 0.0 when scenarios is empty so you never divide by zero."
+      },
+      {
+        "level": 5,
+        "text": "Divide the respected count by len(scenarios) to get the pass rate, then let audit round it."
+      }
     ],
     "tests": [
       {
@@ -320,7 +379,11 @@
           "A high score on a contaminated eval proves real capability",
           "A held out eval measures generalization to new cases"
         ],
-        "correct_indices": [0, 1, 3],
+        "correct_indices": [
+          0,
+          1,
+          3
+        ],
         "explanation": "Held out sets measure generalization and contamination inflates scores through memorization. A high contaminated score does not prove capability, it is worthless."
       },
       {
@@ -348,7 +411,11 @@
           "Give each audience a maximum allowed disclosure level",
           "Score whether the agent respected each audience's boundary"
         ],
-        "correct_indices": [0, 1, 2],
+        "correct_indices": [
+          0,
+          1,
+          2
+        ],
         "explanation": "All three are core to the design. You seed private facts, set a per audience disclosure policy, and score whether the agent stayed within each boundary."
       },
       {

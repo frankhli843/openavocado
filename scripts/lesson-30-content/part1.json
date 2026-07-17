@@ -58,8 +58,8 @@
     ]
   },
   "audio": {
-    "script": "Leo: Here is the puzzle. The model aces every single-turn function-calling question, then we ship it as an agent and it falls over. How? Maya: Walk me through what single-turn actually measures. Leo: One prompt in, one response graded in isolation. Everything the model needs is right there in that one turn. Maya: And a real agent task is not like that. Leo: Right. A multi-turn task carries state across turns, and a tool call can span turns. The model asks for a tool on one turn, the result comes back on the next turn, and it has to reuse that result on a later turn. Maya: So the failure only appears once a value has to survive across turns. Leo: Exactly, and a single-turn eval never asks for that. The Berkeley Function Calling Leaderboard V3 added multi-turn categories that check backend state across turns for this reason. And the FunctionGemma docs say single-turn and parallel calls are supported, but multi-turn workflows are not, which is the exact gap. Maya: And nobody caught it because nobody owned that eval. Leo: The post-training team and the evals team disagreed over whether multi-turn was even in scope, so the multi-turn eval had no owner. A green single-turn score shipped a broken agent.",
-    "transcript": "Leo: Here is the puzzle. The model aces every single-turn function-calling question, then we ship it as an agent and it falls over. How? Maya: Walk me through what single-turn actually measures. Leo: One prompt in, one response graded in isolation. Everything the model needs is right there in that one turn. Maya: And a real agent task is not like that. Leo: Right. A multi-turn task carries state across turns, and a tool call can span turns. The model asks for a tool on one turn, the result comes back on the next turn, and it has to reuse that result on a later turn. Maya: So the failure only appears once a value has to survive across turns. Leo: Exactly, and a single-turn eval never asks for that. The Berkeley Function Calling Leaderboard V3 added multi-turn categories that check backend state across turns for this reason. And the FunctionGemma docs say single-turn and parallel calls are supported, but multi-turn workflows are not, which is the exact gap. Maya: And nobody caught it because nobody owned that eval. Leo: The post-training team and the evals team disagreed over whether multi-turn was even in scope, so the multi-turn eval had no owner. A green single-turn score shipped a broken agent.",
+    "script": "Leo: Here is the puzzle. The model aces every single turn function calling question, then we ship it as an agent and it falls over. How does a perfect score hide a broken agent?\n\nMaya: Why does single turn look so clean? Walk me through what it actually measures.\n\nLeo: One prompt in, one response graded in isolation. Everything the model needs sits right there in that one turn, so it is like grading a student on a single flashcard.\n\nMaya: So does that mean a real agent task is different in kind, not just harder?\n\nLeo: Exactly. A multi turn task carries state across turns. Think of it like a relay race where the baton is a value. The model asks for a tool on turn one, the result comes back on turn two, and it has to reuse that same result on turn five.\n\nMaya: How exactly does that break? What changes once a value has to survive across turns?\n\nLeo: The failure only shows up when a token from an earlier turn has to be carried forward. Take the concrete example of a booking id returned on turn two. If the model forgets that row and invents a new id later, the string looks plausible and the world is wrong.\n\nMaya: And why did nobody catch that bug before shipping?\n\nLeo: The Berkeley Function Calling Leaderboard V3 added multi turn categories that check backend state across turns for exactly this reason. But internally the multi turn eval had no owner, so the gap stayed invisible.\n\nMaya: So does that mean the real failure was organizational, not just technical?\n\nLeo: Right. The post training team and the evals team disagreed over whether multi turn was even in scope. A green single turn score shipped a broken agent because the one eval that mattered was nobody's job.",
+    "transcript": "Leo: Here is the puzzle. The model aces every single turn function calling question, then we ship it as an agent and it falls over. How does a perfect score hide a broken agent?\n\nMaya: Why does single turn look so clean? Walk me through what it actually measures.\n\nLeo: One prompt in, one response graded in isolation. Everything the model needs sits right there in that one turn, so it is like grading a student on a single flashcard.\n\nMaya: So does that mean a real agent task is different in kind, not just harder?\n\nLeo: Exactly. A multi turn task carries state across turns. Think of it like a relay race where the baton is a value. The model asks for a tool on turn one, the result comes back on turn two, and it has to reuse that same result on turn five.\n\nMaya: How exactly does that break? What changes once a value has to survive across turns?\n\nLeo: The failure only shows up when a token from an earlier turn has to be carried forward. Take the concrete example of a booking id returned on turn two. If the model forgets that row and invents a new id later, the string looks plausible and the world is wrong.\n\nMaya: And why did nobody catch that bug before shipping?\n\nLeo: The Berkeley Function Calling Leaderboard V3 added multi turn categories that check backend state across turns for exactly this reason. But internally the multi turn eval had no owner, so the gap stayed invisible.\n\nMaya: So does that mean the real failure was organizational, not just technical?\n\nLeo: Right. The post training team and the evals team disagreed over whether multi turn was even in scope. A green single turn score shipped a broken agent because the one eval that mattered was nobody's job.",
     "duration_hint": 95,
     "synced_visual": {
       "strategy": "timeline",
@@ -357,7 +357,11 @@
           "The agent may need to reuse an earlier tool result on a later turn",
           "Every turn is graded fully in isolation from the others"
         ],
-        "correct_indices": [0, 1, 2],
+        "correct_indices": [
+          0,
+          1,
+          2
+        ],
         "explanation": "Multi-turn tasks carry state, let tool calls span turns, and require reusing earlier results. Grading each turn in isolation is the single-turn model, not the multi-turn one."
       },
       {
@@ -371,7 +375,11 @@
           "The FunctionGemma docs state that multi-turn and multi-step workflows are not supported",
           "The FunctionGemma docs state that single-turn and parallel tool calls are supported"
         ],
-        "correct_indices": [0, 1, 2],
+        "correct_indices": [
+          0,
+          1,
+          2
+        ],
         "explanation": "All three are accurate. BFCL V3 added multi-turn state checks, and the FunctionGemma docs support single-turn and parallel calls while explicitly excluding multi-turn workflows."
       },
       {
