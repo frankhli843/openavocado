@@ -1,0 +1,421 @@
+{
+  "part_id": "ae-multiturn-part-1",
+  "reading": {
+    "intro": "Why a green single-turn score can still ship a broken agent, and what the eval missed.",
+    "blocks": [
+      {
+        "type": "heading",
+        "text": "The eval passed, the agent broke: single-turn versus multi-turn"
+      },
+      {
+        "type": "paragraph",
+        "text": "A single-turn eval hands the model one prompt and grades one response in isolation. It is cheap, it is easy to score, and it tells you whether the model can produce the right answer when everything it needs is already in front of it. A multi-turn agentic task is a different animal. The conversation carries state across several turns, and a single tool call can span turns. The model requests a tool on one turn, receives the tool result on the next, and then must use that result correctly on a later turn. The failure only shows up when state has to survive across turns, which is exactly what a single-turn eval never tests."
+      },
+      {
+        "type": "definition",
+        "term": "Single-turn eval",
+        "definition": "A test that gives the model one prompt and grades one response in isolation, with no state carried in from a previous turn and none expected to survive to a later one. It measures whether the model answers well when everything it needs is present at once."
+      },
+      {
+        "type": "definition",
+        "term": "Multi-turn agentic task",
+        "definition": "A task where the conversation runs over several turns and the agent must act, not just answer. State accumulates across turns, and finishing the task depends on the agent using information that arrived on an earlier turn."
+      },
+      {
+        "type": "definition",
+        "term": "Cross-turn state",
+        "definition": "Information produced on one turn that the agent must remember and reuse on a later turn. If the agent drops it, the task fails even when every individual turn looks well formed."
+      },
+      {
+        "type": "definition",
+        "term": "Tool call that spans turns",
+        "definition": "A tool interaction that is not resolved within a single turn. The agent requests the tool on one turn, the tool result comes back on the next turn, and the agent has to carry that result forward to a still later turn to finish the job."
+      },
+      {
+        "type": "example",
+        "title": "Ace the questions, fail the task",
+        "body": "Imagine a model that answers every single-turn function-calling question perfectly. Asked to format one call, it formats it. Asked to fill one argument, it fills it. Ship it as an agent and give it a real job. On turn one it calls a lookup tool. On turn two the tool returns an order id. On turn four it has to pass that same order id into a refund tool, but it never carried the value forward, so it invents a blank. The single-turn score was green. The agent is broken. Nothing in the single-turn eval ever asked the model to hold a value across turns."
+      },
+      {
+        "type": "paragraph",
+        "text": "This is not hypothetical. The Berkeley Function Calling Leaderboard V3 added multi-turn categories precisely because single-turn scores were not predicting agent behavior. Its multi-turn tasks check backend state across turns, so a model only passes when a value produced early is still used correctly later. The FunctionGemma formatting docs make the same gap explicit from the other side. They state that single-turn and parallel tool calls are supported, while multi-turn and multi-step workflows are not. So the format the model was trained to emit covers the case the single-turn eval measures and stops right at the boundary where multi-turn tasks begin."
+      },
+      {
+        "type": "callout",
+        "tone": "warning",
+        "text": "The deeper cause was organizational, not just technical. The post-training team and the evals team disagreed over whether multi-turn was even a supported use case, so no one owned the multi-turn eval. An unowned eval is a blind spot, and a blind spot is where a green score hides a broken agent."
+      }
+    ],
+    "summary": "A single-turn eval grades one response in isolation, so it can be fully green while the agent still fails a multi-turn task where a value must survive across turns and a tool call spans turns. The Berkeley Function Calling Leaderboard V3 added multi-turn categories that check backend state across turns, and the FunctionGemma docs confirm single-turn and parallel calls are supported while multi-turn workflows are not. The organizational root cause was that no team owned the multi-turn eval.",
+    "diagrams": [
+      {
+        "kind": "mermaid",
+        "title": "Where the single-turn eval stops seeing",
+        "mermaid": "flowchart LR\n  A[User asks for a task] --> B[Agent calls a tool]\n  B --> C[Tool result returns next turn]\n  C --> D{Value carried to a later turn?}\n  D -- yes --> E[Task passes]\n  D -- no --> F[Task fails, single-turn eval never saw it]",
+        "takeaway": "The single-turn eval only ever inspects one boxed response, so the carry-forward step where multi-turn agents break is outside what it can observe.",
+        "support_ref": "ae-multiturn"
+      }
+    ]
+  },
+  "audio": {
+    "script": "Leo: Here is the puzzle. The model aces every single-turn function-calling question, then we ship it as an agent and it falls over. How? Maya: Walk me through what single-turn actually measures. Leo: One prompt in, one response graded in isolation. Everything the model needs is right there in that one turn. Maya: And a real agent task is not like that. Leo: Right. A multi-turn task carries state across turns, and a tool call can span turns. The model asks for a tool on one turn, the result comes back on the next turn, and it has to reuse that result on a later turn. Maya: So the failure only appears once a value has to survive across turns. Leo: Exactly, and a single-turn eval never asks for that. The Berkeley Function Calling Leaderboard V3 added multi-turn categories that check backend state across turns for this reason. And the FunctionGemma docs say single-turn and parallel calls are supported, but multi-turn workflows are not, which is the exact gap. Maya: And nobody caught it because nobody owned that eval. Leo: The post-training team and the evals team disagreed over whether multi-turn was even in scope, so the multi-turn eval had no owner. A green single-turn score shipped a broken agent.",
+    "transcript": "Leo: Here is the puzzle. The model aces every single-turn function-calling question, then we ship it as an agent and it falls over. How? Maya: Walk me through what single-turn actually measures. Leo: One prompt in, one response graded in isolation. Everything the model needs is right there in that one turn. Maya: And a real agent task is not like that. Leo: Right. A multi-turn task carries state across turns, and a tool call can span turns. The model asks for a tool on one turn, the result comes back on the next turn, and it has to reuse that result on a later turn. Maya: So the failure only appears once a value has to survive across turns. Leo: Exactly, and a single-turn eval never asks for that. The Berkeley Function Calling Leaderboard V3 added multi-turn categories that check backend state across turns for this reason. And the FunctionGemma docs say single-turn and parallel calls are supported, but multi-turn workflows are not, which is the exact gap. Maya: And nobody caught it because nobody owned that eval. Leo: The post-training team and the evals team disagreed over whether multi-turn was even in scope, so the multi-turn eval had no owner. A green single-turn score shipped a broken agent.",
+    "duration_hint": 95,
+    "synced_visual": {
+      "strategy": "timeline",
+      "artifact_slug": "ae-multiturn",
+      "scene": {
+        "scene_id": "ae-multiturn-scene",
+        "title": "One turn versus many turns",
+        "motif": "isolated-answer-versus-carried-state",
+        "description": "A single boxed response is contrasted with a chain of turns where a tool result must be carried forward, showing exactly where the single-turn eval stops seeing.",
+        "panels": [
+          {
+            "id": "contrast",
+            "title": "What each eval measures",
+            "kind": "cards",
+            "description": "Side by side comparison of the single-turn eval and the multi-turn agentic task and what each one is able to observe.",
+            "data": [
+              {
+                "label": "single-turn eval",
+                "value": "one prompt, one response graded in isolation",
+                "role": "input"
+              },
+              {
+                "label": "multi-turn task",
+                "value": "state carried across several turns",
+                "role": "process"
+              },
+              {
+                "label": "blind spot",
+                "value": "carry-forward step the single-turn eval never sees",
+                "role": "context"
+              }
+            ]
+          },
+          {
+            "id": "chain",
+            "title": "The turn chain where it breaks",
+            "kind": "pipeline",
+            "description": "The ordered turns of an agentic task, from the tool call through the returned result to the later turn where the value must be reused.",
+            "data": [
+              {
+                "label": "turn one",
+                "value": "agent calls the lookup tool",
+                "role": "input"
+              },
+              {
+                "label": "turn two",
+                "value": "tool returns an order id",
+                "role": "process"
+              },
+              {
+                "label": "turn four",
+                "value": "agent must reuse the order id",
+                "role": "output"
+              },
+              {
+                "label": "drop",
+                "value": "value not carried, task fails",
+                "role": "context"
+              }
+            ]
+          }
+        ]
+      },
+      "cues": [
+        {
+          "start": 0,
+          "end": 19,
+          "label": "The puzzle",
+          "headline": "Green score, broken agent",
+          "narration": "The model aces every single-turn question, then falls over the moment it runs as an agent.",
+          "receive": "a passing single-turn score",
+          "transform": "ship it as an agent",
+          "pass": "an unexplained failure"
+        },
+        {
+          "start": 19,
+          "end": 38,
+          "label": "What single-turn measures",
+          "headline": "One prompt, one graded response",
+          "narration": "A single-turn eval grades one response in isolation, with everything the model needs already present.",
+          "receive": "one prompt",
+          "transform": "grade the response alone",
+          "pass": "a score that ignores later turns"
+        },
+        {
+          "start": 38,
+          "end": 57,
+          "label": "The turn chain",
+          "headline": "A tool call spans turns",
+          "narration": "The agent requests a tool on one turn, gets the result on the next, and must reuse it on a later turn.",
+          "receive": "a tool result on turn two",
+          "transform": "carry it across turns",
+          "pass": "the value reused on turn four"
+        },
+        {
+          "start": 57,
+          "end": 76,
+          "label": "The research grounding",
+          "headline": "BFCL V3 checks state across turns",
+          "narration": "The Berkeley leaderboard added multi-turn categories, while the FunctionGemma docs admit multi-turn workflows are not supported.",
+          "receive": "the multi-turn gap",
+          "transform": "test backend state across turns",
+          "pass": "the exact case single-turn missed"
+        },
+        {
+          "start": 76,
+          "end": 95,
+          "label": "The org root cause",
+          "headline": "No one owned the eval",
+          "narration": "Two teams disagreed over whether multi-turn was in scope, so the multi-turn eval had no owner and the gap shipped.",
+          "receive": "a disputed use case",
+          "transform": "leave the eval unowned",
+          "pass": "a blind spot in production"
+        }
+      ]
+    }
+  },
+  "interactive": {
+    "schema_version": "1.0",
+    "widget_type": "bespoke-artifact",
+    "title": "Trace a value across turns",
+    "instructions": "Step through a multi-turn task turn by turn. Watch a tool result appear on one turn and decide whether the agent carries it forward to the later turn that needs it. See the task pass when the value survives and fail when it is dropped, the gap a single-turn eval can never catch.",
+    "params": {
+      "artifact_slug": "ae-multiturn",
+      "min_height": 320
+    }
+  },
+  "code": {
+    "language": "python",
+    "prompt": "Simulate a tiny multi-turn task. You are given an ordered list of turns. Each turn is a dict. A user message looks like {'role': 'user', 'text': '...'}. A tool call looks like {'role': 'tool_call', 'name': 'lookup'}. A tool result looks like {'role': 'tool_result', 'key': 'order_id', 'value': 'A123'}. The agent's action looks like {'role': 'agent', 'carried': {'order_id': 'A123'}}. Write a checker that decides whether the agent correctly carried a required tool result forward to a later turn (pass) or dropped it (fail). Fill the two TODO helpers, then compose them in carried_forward.",
+    "starter_code": "def latest_tool_result(turns, key):\n    # Scan the turns in order. Return the value from the LAST tool_result whose\n    # key matches, or None if no tool_result ever produced that key.\n    # TODO: loop over turns, track the matching value, return it.\n    pass\n\n\ndef agent_used_value(turns, key):\n    # Scan the turns in order. Return what the agent actually carried for key,\n    # taken from the LAST agent turn that carried it, or None if it never did.\n    # TODO: loop over turns, read turn.get('carried', {}), track key, return it.\n    pass\n\n\ndef carried_forward(turns, key):\n    expected = latest_tool_result(turns, key)\n    actual = agent_used_value(turns, key)\n    # The task passes only when a tool result existed AND the agent reused it.\n    return expected is not None and actual == expected\n",
+    "constraints": [
+      "Do not grade any single turn in isolation. The verdict depends on a value produced on one turn and reused on a later turn.",
+      "A pass requires two things at once. A tool result must have existed for the key, and the agent must have carried that exact value forward.",
+      "If the agent carried nothing or carried the wrong value, the result is a fail even when every individual turn looks well formed."
+    ],
+    "walkthrough": {
+      "title": "From an ordered list of turns to a pass or fail",
+      "steps": [
+        {
+          "title": "Find the value the tool produced",
+          "detail": "Walk the turns in order and remember the value from the last tool_result whose key matches. This is the cross-turn state the agent is supposed to reuse later.",
+          "input": "turns list and a key like order_id",
+          "output": "the expected value, or None if no tool result produced it"
+        },
+        {
+          "title": "Find what the agent carried",
+          "detail": "Walk the turns again and read each agent turn's carried dict. Track the value the agent kept for that key so you can compare it against what the tool actually returned.",
+          "input": "the same turns list and key",
+          "output": "the value the agent carried, or None if it dropped it"
+        },
+        {
+          "title": "Compare and decide",
+          "detail": "The task passes only when a tool result existed and the agent carried that exact value forward. Any mismatch or missing value is a fail, which is the multi-turn failure a single-turn eval never probes.",
+          "input": "expected value and carried value",
+          "output": "True on a correct carry forward, False otherwise"
+        }
+      ]
+    },
+    "io_examples": [
+      {
+        "label": "pass",
+        "input": "turns=[{'role': 'tool_call', 'name': 'lookup'}, {'role': 'tool_result', 'key': 'order_id', 'value': 'A123'}, {'role': 'agent', 'carried': {'order_id': 'A123'}}], key='order_id'",
+        "expected_output": "True",
+        "explanation": "The tool returned A123 and the agent carried A123 forward to its later turn, so the value survived and the task passes."
+      },
+      {
+        "label": "fail",
+        "input": "turns=[{'role': 'tool_call', 'name': 'lookup'}, {'role': 'tool_result', 'key': 'order_id', 'value': 'A123'}, {'role': 'agent', 'carried': {}}], key='order_id'",
+        "expected_output": "False",
+        "explanation": "The tool returned A123 but the agent carried nothing, so the value was dropped across turns and the task fails."
+      },
+      {
+        "label": "wrong value",
+        "input": "turns=[{'role': 'tool_result', 'key': 'order_id', 'value': 'A123'}, {'role': 'agent', 'carried': {'order_id': 'Z999'}}], key='order_id'",
+        "expected_output": "False",
+        "explanation": "The agent carried a value forward, but not the one the tool returned, so the carry forward is incorrect and the task fails."
+      }
+    ],
+    "visualization": {
+      "title": "Tool result to carried value to verdict",
+      "description": "How a value produced on one turn is compared against what the agent carried to a later turn.",
+      "items": [
+        {
+          "label": "tool result",
+          "value": "value produced on an earlier turn",
+          "role": "input"
+        },
+        {
+          "label": "carry forward",
+          "value": "agent keeps or drops it across turns",
+          "role": "process"
+        },
+        {
+          "label": "verdict",
+          "value": "carried exact value equals tool value ? pass : fail",
+          "role": "output"
+        }
+      ]
+    },
+    "worked_examples": [
+      {
+        "label": "basic",
+        "title": "Explicit helpers",
+        "code": "def latest_tool_result(turns, key):\n    value = None\n    for turn in turns:\n        if turn.get('role') == 'tool_result' and turn.get('key') == key:\n            value = turn.get('value')\n    return value\n\ndef agent_used_value(turns, key):\n    used = None\n    for turn in turns:\n        if turn.get('role') == 'agent':\n            carried = turn.get('carried', {})\n            if key in carried:\n                used = carried[key]\n    return used\n\ndef carried_forward(turns, key):\n    expected = latest_tool_result(turns, key)\n    actual = agent_used_value(turns, key)\n    return expected is not None and actual == expected",
+        "explanation": "latest_tool_result finds the value the tool produced, agent_used_value finds what the agent carried, and carried_forward passes only when both exist and match."
+      },
+      {
+        "label": "concise",
+        "title": "Inlined checker",
+        "code": "def carried_forward(turns, key):\n    expected = None\n    for turn in turns:\n        if turn.get('role') == 'tool_result' and turn.get('key') == key:\n            expected = turn.get('value')\n    actual = None\n    for turn in turns:\n        if turn.get('role') == 'agent' and key in turn.get('carried', {}):\n            actual = turn.get('carried', {})[key]\n    return expected is not None and actual == expected",
+        "explanation": "The same logic without helper functions. Track the last tool value and the last carried value, then require that both exist and are equal."
+      }
+    ],
+    "hints": [
+      {
+        "level": 1,
+        "text": "The checker never looks at one turn alone. It links a value produced on an earlier turn to what the agent kept for a later turn."
+      },
+      {
+        "level": 2,
+        "text": "For latest_tool_result, loop over turns and update a variable whenever role is tool_result and key matches, so you keep the last one."
+      },
+      {
+        "level": 3,
+        "text": "For agent_used_value, read carried = turn.get('carried', {}) on each agent turn and remember carried[key] when key is present."
+      },
+      {
+        "level": 4,
+        "text": "Use turn.get('role') and turn.get('key') rather than indexing, so a turn missing a field does not raise a KeyError."
+      },
+      {
+        "level": 5,
+        "text": "carried_forward returns expected is not None and actual == expected, so a dropped value or a wrong value both come back False."
+      }
+    ],
+    "tests": [
+      {
+        "id": "t_pass",
+        "description": "value carried forward correctly passes",
+        "assert": "assert carried_forward([{'role': 'tool_result', 'key': 'order_id', 'value': 'A123'}, {'role': 'agent', 'carried': {'order_id': 'A123'}}], 'order_id') == True"
+      },
+      {
+        "id": "t_dropped",
+        "description": "dropped value fails",
+        "assert": "assert carried_forward([{'role': 'tool_result', 'key': 'order_id', 'value': 'A123'}, {'role': 'agent', 'carried': {}}], 'order_id') == False"
+      }
+    ],
+    "hidden_tests": [
+      {
+        "id": "h_wrong",
+        "description": "carrying the wrong value fails",
+        "assert": "assert carried_forward([{'role': 'tool_result', 'key': 'order_id', 'value': 'A123'}, {'role': 'agent', 'carried': {'order_id': 'Z999'}}], 'order_id') == False"
+      },
+      {
+        "id": "h_no_result",
+        "description": "no tool result means nothing to carry",
+        "assert": "assert carried_forward([{'role': 'user', 'text': 'refund my order'}, {'role': 'agent', 'carried': {'order_id': 'A123'}}], 'order_id') == False"
+      },
+      {
+        "id": "h_latest",
+        "description": "the last tool result and last carried value are the ones compared",
+        "assert": "assert carried_forward([{'role': 'tool_result', 'key': 'order_id', 'value': 'A1'}, {'role': 'tool_result', 'key': 'order_id', 'value': 'B2'}, {'role': 'agent', 'carried': {'order_id': 'B2'}}], 'order_id') == True"
+      }
+    ]
+  },
+  "practice": {
+    "written_feedback": "llm_judge",
+    "pass_threshold": 5,
+    "questions": [
+      {
+        "id": "ae-multiturn-q1",
+        "type": "select_one",
+        "prompt": "What does a single-turn eval actually measure?",
+        "concept": "single-turn-eval",
+        "difficulty": "easy",
+        "choices": [
+          "One response to one prompt, graded in isolation with no state carried across turns",
+          "Whether a value produced early is reused correctly many turns later",
+          "The backend state left behind after a long agentic session",
+          "How well two teams agree on the scope of an eval"
+        ],
+        "correct_index": 0,
+        "explanation": "A single-turn eval hands the model one prompt and grades one response in isolation, so it never tests whether state survives across turns."
+      },
+      {
+        "id": "ae-multiturn-q2",
+        "type": "select_all",
+        "prompt": "Which statements about a multi-turn agentic task are true?",
+        "concept": "multi-turn-task",
+        "difficulty": "medium",
+        "choices": [
+          "The conversation carries state across several turns",
+          "A tool call can span turns, with the result arriving on a later turn",
+          "The agent may need to reuse an earlier tool result on a later turn",
+          "Every turn is graded fully in isolation from the others"
+        ],
+        "correct_indices": [0, 1, 2],
+        "explanation": "Multi-turn tasks carry state, let tool calls span turns, and require reusing earlier results. Grading each turn in isolation is the single-turn model, not the multi-turn one."
+      },
+      {
+        "id": "ae-multiturn-q3",
+        "type": "select_all",
+        "prompt": "Which of these are accurate about the research grounding for the single-turn versus multi-turn gap?",
+        "concept": "research-grounding",
+        "difficulty": "medium",
+        "choices": [
+          "The Berkeley Function Calling Leaderboard V3 added multi-turn categories that check backend state across turns",
+          "The FunctionGemma docs state that multi-turn and multi-step workflows are not supported",
+          "The FunctionGemma docs state that single-turn and parallel tool calls are supported"
+        ],
+        "correct_indices": [0, 1, 2],
+        "explanation": "All three are accurate. BFCL V3 added multi-turn state checks, and the FunctionGemma docs support single-turn and parallel calls while explicitly excluding multi-turn workflows."
+      },
+      {
+        "id": "ae-multiturn-q4",
+        "type": "select_all",
+        "prompt": "Which of the following are TRUE of a single-turn eval, as opposed to a multi-turn agentic task?",
+        "concept": "single-turn-vs-multi-turn",
+        "difficulty": "hard",
+        "choices": [
+          "It carries state from an earlier turn into a later turn",
+          "It grades a tool call that spans multiple turns",
+          "It checks that a value produced early is reused correctly later"
+        ],
+        "correct_indices": [],
+        "explanation": "None are true of a single-turn eval. Those are all properties of the multi-turn agentic task. A single-turn eval grades one response in isolation."
+      },
+      {
+        "id": "ae-multiturn-q5",
+        "type": "ordering",
+        "prompt": "Put the turns of the failing multi-turn task in the order they happen.",
+        "concept": "tool-call-spans-turns",
+        "difficulty": "medium",
+        "items": [
+          "The user asks the agent to complete a task",
+          "The agent calls a lookup tool",
+          "The tool returns an order id on a later turn",
+          "The agent must reuse the order id but drops it and fails"
+        ],
+        "correct_order": [
+          "The user asks the agent to complete a task",
+          "The agent calls a lookup tool",
+          "The tool returns an order id on a later turn",
+          "The agent must reuse the order id but drops it and fails"
+        ]
+      },
+      {
+        "id": "ae-multiturn-q6",
+        "type": "written",
+        "prompt": "Explain how a model can pass every single-turn function-calling question and still ship as a broken agent. Include both the technical reason and the organizational reason from the lesson.",
+        "concept": "green-score-broken-agent",
+        "difficulty": "hard",
+        "actual_answer": "Technically, a single-turn eval grades one response in isolation, so it only checks whether the model answers well when everything it needs is already present. A multi-turn agentic task is different because state has to survive across turns and a tool call can span turns. The model requests a tool on one turn, gets the result on the next, and must reuse that result on a later turn. That carry-forward step is exactly what the single-turn eval never exercises, so the model can be perfect on every single-turn question and still drop the value across turns and fail the real task. The Berkeley Function Calling Leaderboard V3 added multi-turn categories that check backend state across turns for this reason, and the FunctionGemma docs confirm single-turn and parallel calls are supported while multi-turn workflows are not. Organizationally, the post-training team and the evals team disagreed over whether multi-turn was even a supported use case, so no one owned the multi-turn eval. An unowned eval left a blind spot, and the green single-turn score shipped a broken agent.",
+        "rubric": "Full credit: names the technical reason (single-turn grades one response in isolation while multi-turn needs a value to survive across turns and a tool call to span turns, so the carry-forward step is untested) AND the organizational reason (two teams disagreed on scope, so no one owned the multi-turn eval). Bonus for citing BFCL V3 or the FunctionGemma docs. Partial credit: gives the technical reason or the organizational reason but not both. Low credit: vague or only restates that the eval passed."
+      }
+    ]
+  }
+}

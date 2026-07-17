@@ -1,0 +1,378 @@
+{
+  "part_id": "ae-part-2-template-trap",
+  "reading": {
+    "intro": "A low tool call pass rate can be a formatting bug wearing the costume of a capability gap.",
+    "blocks": [
+      {
+        "type": "heading",
+        "text": "Ten percent that lied about the model"
+      },
+      {
+        "type": "paragraph",
+        "text": "At the Gemma 4 launch the tool call pass rate came in at about ten percent. The instinct in the room was to blame the model, to assume the weights simply could not call tools well. That read was wrong. The failure was a chat template formatting problem, not a capability gap. The weights were fine. What broke was the layer that turns a conversation into tokens the model was trained to expect."
+      },
+      {
+        "type": "definition",
+        "term": "Chat template",
+        "definition": "The code that serializes a conversation into the exact token sequence a model was trained on. It lays out the roles, the turn delimiters, the thinking tokens, and the special tool tokens in a fixed order. Hugging Face chat templates do exactly this, turning a list of messages into one precise string of tokens."
+      },
+      {
+        "type": "definition",
+        "term": "Control tokens",
+        "definition": "The special tokens that mark structure rather than plain words, such as the start and end of a turn, the role of the speaker, and the boundaries of a tool call or a tool response. In the Google Gemma prompt format these role markers, turn delimiters, thinking tokens, and tool tokens are the runtime contract the model reads."
+      },
+      {
+        "type": "definition",
+        "term": "Tool call format",
+        "definition": "The exact serialized shape a tool request must take so a runtime can parse it and execute the tool. Hugging Face tool use frames this as a loop, a tool schema plus a model request plus execution plus a tool response appended back onto the history. If the request is not in the expected format, the parser cannot read it."
+      },
+      {
+        "type": "definition",
+        "term": "Capability versus protocol",
+        "definition": "Capability lives in the weights and answers whether the model knows how to call the tool. Protocol lives in the template and the control tokens and answers whether the call is formatted so it can be parsed and executed. A protocol bug hides a capable model behind a failing score."
+      },
+      {
+        "type": "definition",
+        "term": "Observed pass rate versus true capability",
+        "definition": "The observed pass rate counts attempts that were both parsed into a valid tool call and correct. The true capability rate counts attempts that would be correct if only they parsed. When the template emits the wrong control tokens, the observed rate collapses while the true capability stays high."
+      },
+      {
+        "type": "example",
+        "title": "How a good model scores a failure",
+        "body": "Picture a single attempt. The model produces the right tool and the right arguments in spirit, so its capability is fine. Then the template wraps that intent in the wrong control tokens or the wrong tool call format. The runtime tries to parse the output, fails to read a valid tool call, and marks the attempt failed. The model knew what to do, but the protocol layer corrupted the message on the way out, so the scoreboard blamed the model."
+      },
+      {
+        "type": "formula",
+        "latex": "\\text{observed pass rate} = \\frac{\\text{parsed and correct}}{\\text{total attempts}}",
+        "plain_english": "The observed pass rate is the number of attempts that both parsed into a valid tool call and were correct, divided by the total number of attempts. The true capability rate uses correct attempts alone in the numerator, ignoring whether the template parsed them.",
+        "variables": [
+          { "symbol": "parsed and correct", "meaning": "attempts the template serialized into a parseable tool call that were also correct" },
+          { "symbol": "total attempts", "meaning": "every tool call attempt in the evaluation batch" }
+        ]
+      },
+      {
+        "type": "callout",
+        "tone": "insight",
+        "text": "A hand tuned template later lifted the pass rate dramatically. Nothing changed in the weights. The team fixed how the conversation was serialized, and the same capable model suddenly scored like the capable model it always was."
+      },
+      {
+        "type": "heading",
+        "text": "Why the benchmark caught it"
+      },
+      {
+        "type": "paragraph",
+        "text": "Frank's agentic benchmark surfaced this template nuance that the academic single turn evals missed. A single turn eval rarely exercises the full tool call round trip, so a serialization bug can stay invisible. An agentic benchmark forces the model to emit a tool call, get it parsed, run the tool, and read the tool response back into history, which is precisely where a wrong control token shows up. That evidence justified the template rollout. The lesson is durable. An observed low pass rate must be diagnosed, never assumed to be a weakness."
+      },
+      {
+        "type": "callout",
+        "tone": "warning",
+        "text": "Before you file a capability regression, check the protocol. Confirm the roles, the turn delimiters, the tool tokens, and the tool response handling match what the model was trained on. A parseable call and a correct call are two different things, and only one of them is about the weights."
+      }
+    ],
+    "summary": "The Gemma 4 launch tool call pass rate of about ten percent looked like a weak model but was a chat template formatting bug. The template serializes roles, turn delimiters, and special tool tokens into the exact sequence the model expects, and wrong control tokens make the output unparseable so it scores as a failure. Capability lives in the weights while protocol lives in the template, so a low pass rate must be diagnosed. A hand tuned template restored the score, and Frank's agentic benchmark caught the nuance that single turn evals missed.",
+    "diagrams": [
+      {
+        "kind": "mermaid",
+        "title": "How a template bug becomes a fake failure",
+        "mermaid": "flowchart TD\n  A[Observed low pass rate] --> B{Diagnose the cause}\n  B --> C[Capability in the weights]\n  B --> D[Protocol in the template]\n  D --> E[Wrong control tokens or tool format]\n  E --> F[Output cannot be parsed as a tool call]\n  F --> G[Scores as failure though the model was capable]",
+        "takeaway": "A low pass rate branches two ways. When the cause is protocol, the template emits the wrong tokens, the call cannot be parsed, and a capable model is scored as a failure.",
+        "support_ref": "ae-template"
+      }
+    ]
+  },
+  "audio": {
+    "script": "Leo: At the Gemma 4 launch the tool call pass rate was about ten percent, and the instinct was to blame the model. Maya: But it was not the weights. Leo: Right. It was a chat template formatting problem. The template serializes the roles, the turn delimiters, and the special tool tokens into the exact sequence the model was trained to expect. Maya: So if the template emits the wrong control tokens, the output cannot be parsed as a valid tool call. Leo: And it scores as a failure even though the model knew exactly what to do. Capability lives in the weights, protocol lives in the template. Maya: And a hand tuned template later lifted the pass rate dramatically. Leo: Which is why a low pass rate must be diagnosed, not assumed to be a weakness. Frank's agentic benchmark surfaced the template nuance that single turn academic evals missed, and it justified the template rollout.",
+    "transcript": "Leo: At the Gemma 4 launch the tool call pass rate was about ten percent, and the instinct was to blame the model. Maya: But it was not the weights. Leo: Right. It was a chat template formatting problem. The template serializes the roles, the turn delimiters, and the special tool tokens into the exact sequence the model was trained to expect. Maya: So if the template emits the wrong control tokens, the output cannot be parsed as a valid tool call. Leo: And it scores as a failure even though the model knew exactly what to do. Capability lives in the weights, protocol lives in the template. Maya: And a hand tuned template later lifted the pass rate dramatically. Leo: Which is why a low pass rate must be diagnosed, not assumed to be a weakness. Frank's agentic benchmark surfaced the template nuance that single turn academic evals missed, and it justified the template rollout.",
+    "duration_hint": 95,
+    "synced_visual": {
+      "strategy": "timeline",
+      "artifact_slug": "ae-template",
+      "scene": {
+        "scene_id": "ae-template-scene",
+        "title": "The template trap",
+        "motif": "capable-model-behind-a-broken-serializer",
+        "description": "A capable model whose tool calls are corrupted by a chat template that emits the wrong control tokens, so the parser fails and the score drops even though the weights are fine.",
+        "panels": [
+          {
+            "id": "decompose",
+            "title": "Capability versus protocol",
+            "kind": "ledger",
+            "description": "Splitting a tool call failure into the two layers it can come from, the weights and the template, so a low score can be attributed correctly.",
+            "data": [
+              { "label": "capability", "value": "lives in the weights, does the model know the tool call", "role": "input" },
+              { "label": "protocol", "value": "lives in the template and control tokens, is the call parseable", "role": "process" },
+              { "label": "protocol bug", "value": "hides a capable model behind a failing score", "role": "output" }
+            ]
+          },
+          {
+            "id": "rates",
+            "title": "Observed versus true rate",
+            "kind": "bar",
+            "description": "The gap between the observed pass rate and the true capability rate is the signature of a template problem rather than a weak model.",
+            "data": [
+              { "label": "observed pass rate", "value": "about ten percent at launch", "role": "input" },
+              { "label": "true capability", "value": "high, the model knew the calls", "role": "context" },
+              { "label": "after template fix", "value": "pass rate rose dramatically", "role": "output" }
+            ]
+          }
+        ]
+      },
+      "cues": [
+        {
+          "start": 0,
+          "end": 20,
+          "label": "Ten percent",
+          "headline": "Blame fell on the model",
+          "narration": "The launch tool call pass rate was about ten percent, and the room assumed the weights were weak.",
+          "receive": "a low observed pass rate",
+          "transform": "notice the instinct to blame the model",
+          "pass": "a suspicion worth testing"
+        },
+        {
+          "start": 20,
+          "end": 40,
+          "label": "The template",
+          "headline": "Serialize the conversation",
+          "narration": "The chat template lays out roles, turn delimiters, and special tool tokens into the exact sequence the model was trained on.",
+          "receive": "a conversation and a tool schema",
+          "transform": "serialize into control tokens",
+          "pass": "the token sequence the model reads"
+        },
+        {
+          "start": 40,
+          "end": 60,
+          "label": "Wrong tokens",
+          "headline": "Unparseable tool call",
+          "narration": "When the template emits the wrong control tokens, the output cannot be parsed as a valid tool call and scores as a failure.",
+          "receive": "the model output",
+          "transform": "fail to parse the tool call",
+          "pass": "a false failure on the scoreboard"
+        },
+        {
+          "start": 60,
+          "end": 80,
+          "label": "Two layers",
+          "headline": "Capability versus protocol",
+          "narration": "Capability lives in the weights and protocol lives in the template, so a protocol bug hides a capable model.",
+          "receive": "a failing score",
+          "transform": "split capability from protocol",
+          "pass": "a correct diagnosis"
+        },
+        {
+          "start": 80,
+          "end": 95,
+          "label": "The fix",
+          "headline": "Diagnose, do not assume",
+          "narration": "A hand tuned template lifted the pass rate, and the agentic benchmark caught the nuance single turn evals missed.",
+          "receive": "the diagnosis",
+          "transform": "retune the template",
+          "pass": "the true capability revealed"
+        }
+      ]
+    }
+  },
+  "interactive": {
+    "schema_version": "1.0",
+    "widget_type": "bespoke-artifact",
+    "title": "Trace a tool call through the template",
+    "instructions": "Flip the template between correct and broken control tokens, send a capable model's tool call through it, and watch the parser either read a valid call or reject it. See how a broken template drops the observed pass rate while the true capability stays high.",
+    "params": {
+      "artifact_slug": "ae-template",
+      "min_height": 320
+    }
+  },
+  "code": {
+    "language": "python",
+    "prompt": "You are given a list of tool call attempts. Each attempt is a dict with two booleans: parsed_ok, whether the chat template produced a call the runtime could parse, and capability_ok, whether the call would be correct if it parsed. Compute the observed pass rate, which needs both parsed_ok and capability_ok, and the true capability rate, which needs capability_ok alone. Round both rates to 2 decimals. Report the gap between them and whether that gap points to a template problem. Return a dict with keys observed_pass_rate, true_capability_rate, gap, and template_problem.",
+    "starter_code": "def analyze_tool_calls(attempts):\n    # attempts is a list of dicts, each with keys 'parsed_ok' and 'capability_ok'.\n    total = len(attempts)\n    # TODO: handle the empty list by returning zeros and template_problem False.\n    # TODO: count attempts that are both parsed_ok and capability_ok (observed).\n    # TODO: count attempts that are capability_ok alone (true capability).\n    # TODO: divide each count by total and round to 2 decimals.\n    # TODO: gap is true capability rate minus observed pass rate, rounded to 2.\n    # TODO: template_problem is True when the gap is greater than 0.2.\n    pass\n",
+    "constraints": [
+      "The observed pass rate needs both parsed_ok and capability_ok to be True.",
+      "The true capability rate needs capability_ok alone, ignoring parsed_ok.",
+      "Round every rate and the gap to 2 decimals, and return zeros for an empty list.",
+      "template_problem is True only when the gap is greater than 0.2."
+    ],
+    "walkthrough": {
+      "title": "From raw attempts to a template verdict",
+      "steps": [
+        {
+          "title": "Count the two numerators",
+          "detail": "Walk the attempts once. Count how many are both parsed_ok and capability_ok for the observed numerator, and how many are capability_ok regardless of parsing for the true capability numerator.",
+          "input": "a list of attempt dicts",
+          "output": "two integer counts"
+        },
+        {
+          "title": "Turn counts into rates",
+          "detail": "Divide each count by the total number of attempts and round to 2 decimals. Guard the empty list first so you never divide by zero.",
+          "input": "two counts and the total",
+          "output": "an observed rate and a true capability rate"
+        },
+        {
+          "title": "Read the gap",
+          "detail": "Subtract the observed rate from the true capability rate and round to 2 decimals. A gap wider than 0.2 means many capable calls are failing only because the template cannot serialize them, which points to a template problem.",
+          "input": "two rates",
+          "output": "a gap and a boolean verdict"
+        }
+      ]
+    },
+    "io_examples": [
+      {
+        "label": "template problem",
+        "input": "attempts=[{'parsed_ok': True, 'capability_ok': True}, {'parsed_ok': False, 'capability_ok': True}, {'parsed_ok': False, 'capability_ok': True}, {'parsed_ok': False, 'capability_ok': True}]",
+        "expected_output": "{'observed_pass_rate': 0.25, 'true_capability_rate': 1.0, 'gap': 0.75, 'template_problem': True}",
+        "explanation": "All four attempts are capable, but only one parsed, so the observed rate is 0.25 while true capability is 1.0. The wide gap points at the template."
+      },
+      {
+        "label": "genuinely weak",
+        "input": "attempts=[{'parsed_ok': True, 'capability_ok': True}, {'parsed_ok': False, 'capability_ok': False}]",
+        "expected_output": "{'observed_pass_rate': 0.5, 'true_capability_rate': 0.5, 'gap': 0.0, 'template_problem': False}",
+        "explanation": "Half the attempts are capable and the parsed one is capable too, so the rates match and the gap is zero. No template problem here."
+      }
+    ],
+    "visualization": {
+      "title": "Attempts to rates to verdict",
+      "description": "How the attempt list becomes two rates and a template verdict.",
+      "items": [
+        { "label": "attempts", "value": "parsed_ok and capability_ok flags", "role": "input" },
+        { "label": "count and divide", "value": "observed needs both, true capability needs capability alone", "role": "process" },
+        { "label": "verdict", "value": "gap over 0.2 flags a template problem", "role": "output" }
+      ]
+    },
+    "worked_examples": [
+      {
+        "label": "basic",
+        "title": "Explicit counting",
+        "code": "def analyze_tool_calls(attempts):\n    total = len(attempts)\n    if total == 0:\n        return {'observed_pass_rate': 0.0, 'true_capability_rate': 0.0, 'gap': 0.0, 'template_problem': False}\n    observed = 0\n    capable = 0\n    for a in attempts:\n        if a['capability_ok']:\n            capable += 1\n            if a['parsed_ok']:\n                observed += 1\n    observed_rate = round(observed / total, 2)\n    capability_rate = round(capable / total, 2)\n    gap = round(capability_rate - observed_rate, 2)\n    return {'observed_pass_rate': observed_rate, 'true_capability_rate': capability_rate, 'gap': gap, 'template_problem': gap > 0.2}",
+        "explanation": "Count the capable attempts and, among them, the ones that also parsed. Divide by the total, round, and flag a template problem when the gap is wide."
+      },
+      {
+        "label": "concise",
+        "title": "Comprehensions",
+        "code": "def analyze_tool_calls(attempts):\n    total = len(attempts)\n    if not total:\n        return {'observed_pass_rate': 0.0, 'true_capability_rate': 0.0, 'gap': 0.0, 'template_problem': False}\n    observed = round(sum(a['parsed_ok'] and a['capability_ok'] for a in attempts) / total, 2)\n    capable = round(sum(a['capability_ok'] for a in attempts) / total, 2)\n    gap = round(capable - observed, 2)\n    return {'observed_pass_rate': observed, 'true_capability_rate': capable, 'gap': gap, 'template_problem': gap > 0.2}",
+        "explanation": "Booleans sum like ones and zeros, so the two numerators drop out of one line each before the same rounding and gap check."
+      }
+    ],
+    "hints": [
+      { "level": 1, "text": "Handle the empty list before anything else so you never divide by zero." },
+      { "level": 2, "text": "Observed counts an attempt only when parsed_ok and capability_ok are both True." },
+      { "level": 3, "text": "True capability counts capability_ok on its own, whether or not it parsed." },
+      { "level": 4, "text": "Divide each count by the total and wrap it in round with 2 decimals." },
+      { "level": 5, "text": "The gap is true capability minus observed, and template_problem is that gap greater than 0.2." }
+    ],
+    "tests": [
+      {
+        "id": "t_template_problem",
+        "description": "wide gap flags a template problem",
+        "assert": "assert analyze_tool_calls([{'parsed_ok': True, 'capability_ok': True}, {'parsed_ok': False, 'capability_ok': True}, {'parsed_ok': False, 'capability_ok': True}, {'parsed_ok': False, 'capability_ok': True}]) == {'observed_pass_rate': 0.25, 'true_capability_rate': 1.0, 'gap': 0.75, 'template_problem': True}"
+      },
+      {
+        "id": "t_no_gap",
+        "description": "matching rates give no template problem",
+        "assert": "assert analyze_tool_calls([{'parsed_ok': True, 'capability_ok': True}, {'parsed_ok': False, 'capability_ok': False}]) == {'observed_pass_rate': 0.5, 'true_capability_rate': 0.5, 'gap': 0.0, 'template_problem': False}"
+      }
+    ],
+    "hidden_tests": [
+      {
+        "id": "h_empty",
+        "description": "empty list returns zeros",
+        "assert": "assert analyze_tool_calls([]) == {'observed_pass_rate': 0.0, 'true_capability_rate': 0.0, 'gap': 0.0, 'template_problem': False}"
+      },
+      {
+        "id": "h_all_pass",
+        "description": "every attempt parses and is capable",
+        "assert": "assert analyze_tool_calls([{'parsed_ok': True, 'capability_ok': True}, {'parsed_ok': True, 'capability_ok': True}]) == {'observed_pass_rate': 1.0, 'true_capability_rate': 1.0, 'gap': 0.0, 'template_problem': False}"
+      }
+    ]
+  },
+  "practice": {
+    "written_feedback": "llm_judge",
+    "pass_threshold": 5,
+    "questions": [
+      {
+        "id": "ae2-so-1",
+        "type": "select_one",
+        "prompt": "At the Gemma 4 launch the tool call pass rate was about ten percent. What was the real cause?",
+        "concept": "capability-vs-protocol",
+        "difficulty": "easy",
+        "choices": [
+          "A chat template formatting problem, not the weights",
+          "The model genuinely could not call tools",
+          "The tools themselves were broken",
+          "The eval questions were too hard"
+        ],
+        "correct_index": 0,
+        "explanation": "The weights were capable. The chat template emitted the wrong format, so calls could not be parsed and scored as failures."
+      },
+      {
+        "id": "ae2-sa-some",
+        "type": "select_all",
+        "prompt": "Which statements about the capability versus protocol split are true?",
+        "concept": "capability-vs-protocol",
+        "difficulty": "medium",
+        "choices": [
+          "Capability lives in the weights",
+          "Protocol lives in the template and control tokens",
+          "A protocol bug can hide a capable model behind a failing score",
+          "A protocol bug means the weights need retraining"
+        ],
+        "correct_indices": [0, 1, 2],
+        "explanation": "The first three describe the split correctly. A protocol bug is fixed in the template, not by retraining the weights, so the last is false."
+      },
+      {
+        "id": "ae2-sa-none",
+        "type": "select_all",
+        "prompt": "The template already emits the correct control tokens and a valid tool call format. Which of these does that correct template still force you to change? Select any that apply.",
+        "concept": "chat-template",
+        "difficulty": "hard",
+        "choices": [
+          "The model weights",
+          "The tool schema definition",
+          "The learner's diagnosis that capability was the problem"
+        ],
+        "correct_indices": [],
+        "explanation": "A correct template changes none of these. It just serializes the conversation properly, which is what lets the capable model score correctly."
+      },
+      {
+        "id": "ae2-sa-all",
+        "type": "select_all",
+        "prompt": "Which are genuinely part of the runtime contract that a chat template serializes?",
+        "concept": "control-tokens",
+        "difficulty": "medium",
+        "choices": [
+          "Role markers for who is speaking",
+          "Turn delimiters between messages",
+          "Special tool tokens and tool responses"
+        ],
+        "correct_indices": [0, 1, 2],
+        "explanation": "Roles, turn delimiters, and the special tool tokens plus tool responses are all part of the exact token sequence the template must produce."
+      },
+      {
+        "id": "ae2-order",
+        "type": "ordering",
+        "prompt": "Order how a template bug turns a capable model into a failing score.",
+        "concept": "tool-call-format",
+        "difficulty": "medium",
+        "items": [
+          "The model produces a correct tool call in intent",
+          "The template wraps it in the wrong control tokens",
+          "The runtime cannot parse a valid tool call",
+          "The attempt scores as a failure"
+        ],
+        "correct_order": [
+          "The model produces a correct tool call in intent",
+          "The template wraps it in the wrong control tokens",
+          "The runtime cannot parse a valid tool call",
+          "The attempt scores as a failure"
+        ]
+      },
+      {
+        "id": "ae2-written",
+        "type": "written",
+        "prompt": "Explain why an observed low tool call pass rate must be diagnosed rather than assumed to be a model weakness, and how the agentic benchmark helped.",
+        "concept": "observed-vs-true",
+        "difficulty": "hard",
+        "actual_answer": "The observed pass rate only counts attempts that were both parsed into a valid tool call and correct, so it blends two very different things, the capability in the weights and the protocol in the chat template. When the template emits the wrong control tokens, a perfectly capable call cannot be parsed and scores as a failure, which drives the observed rate down even though true capability is high. That is exactly what happened at the Gemma 4 launch, where about ten percent looked like a weak model but was a formatting bug that a hand tuned template later fixed. So a low pass rate has to be diagnosed to separate a protocol bug from a real weakness. The agentic benchmark helped because it exercised the full tool call round trip, emit, parse, execute, and read the tool response back, which is where the wrong control tokens actually surface. Single turn academic evals never ran that loop, so they missed the nuance, and the benchmark evidence justified the template rollout.",
+        "rubric": "Full credit: explains that the observed pass rate blends capability and protocol so a template bug can sink a capable model's score, AND that the agentic benchmark exercised the full tool call round trip which surfaced the serialization bug that single turn evals missed. Partial: mentions the capability versus protocol split OR the benchmark's round trip advantage but not both. Low: vague or claims the weights were actually weak."
+      }
+    ]
+  }
+}

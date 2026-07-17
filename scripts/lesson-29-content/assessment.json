@@ -1,0 +1,182 @@
+{
+  "questions": [
+    {
+      "id": "ei-free-1",
+      "text": "Explain how Gbench evaluates an agentic task. What does it stand up, how does it trigger the model, and how does it decide pass or fail? Why is grading the end state better than matching the text the model produced?",
+      "type": "free_text",
+      "concept": "eval-harness",
+      "difficulty": "medium",
+      "actual_answer": "For an agentic task Gbench stands up a seeded fake environment with fake files, fake tools, and a starting backend state. It then triggers the model as an agent inside that environment and lets it take actions by calling the tools. When the agent finishes, Gbench inspects the resulting backend state and compares it to the expected end state to decide pass or fail. Grading the end state is stronger than matching the text because a model can produce words that look correct while leaving the backend wrong, or reach the right state through slightly different wording. What actually matters is whether the tool calls changed the world the way the task required, which is exactly what a state check measures. This is the pattern from the Berkeley Function Calling Leaderboard and tau-bench, where the final database or backend state is the ground truth.",
+      "rubric": "Full credit: names the three parts (seeded fake environment, trigger the agent, inspect final state vs expected) AND explains that end-state grading catches cases where text looks right but the backend is wrong. Partial: describes the harness without the end-state-beats-text point, or vice versa. Low: vague.",
+      "support_ref": "ei-part-1-gbench"
+    },
+    {
+      "id": "ei-free-2",
+      "text": "Describe the Borg to GCP crossover that Ditto depends on, and why it blocks eval runs. What are the two serving surfaces the development model is exercised through, and why does hitting the right one matter?",
+      "type": "free_text",
+      "concept": "borg-gcp-serving",
+      "difficulty": "hard",
+      "actual_answer": "Ditto is an eval runner that runs on Borg, which is the cluster job scheduler, and it evaluates the model by pinging a model API. The model is hosted on GCP, so a Borg job has to reach across into Google Cloud to call the endpoint. That Borg to GCP crossover, the auth, networking, and routing between two different infrastructure worlds, is the wiring a teammate is currently stuck on, and until it works the eval job cannot reach the model, so runs are blocked. The development model is exercised through two serving surfaces, vLLM and the Hugging Face implementation. They run the same weights but are different runtimes, so an eval must target the correct surface. If it hits the wrong one, results can differ because the runtime protocol, including the tokenizer and chat template, may not match, which is the same protocol parity idea from the previous lesson.",
+      "rubric": "Full credit: Ditto runs on Borg and pings a GCP-hosted model API, the crossover is the Borg to GCP bridge that blocks runs when broken, AND the two serving surfaces are vLLM and Hugging Face with a note that the wrong surface changes results. Partial: covers the crossover OR the serving surfaces but not both. Low: vague.",
+      "support_ref": "ei-part-2-ditto-borg"
+    },
+    {
+      "id": "ei-free-3",
+      "text": "Frank wants to replace the fifteen page manual setup document with one-shot reproducible runs. Walk through the lifecycle from provisioning to teardown, and name the three benefits of doing this as infrastructure as code.",
+      "type": "free_text",
+      "concept": "one-shot-infra",
+      "difficulty": "medium",
+      "actual_answer": "The one-shot run lifecycle is provision, run, emit, tear down. Terraform provisions the cloud resources from a declarative config that describes the desired state. A Docker image pins the exact code and a specific Gemmaclaw benchmark commit so the inputs are deterministic. Cloud Run executes exactly one job against one model build. The results are emitted to durable storage, and then everything is torn down so nothing lingers or keeps costing money. The three infrastructure as code benefits are, first, identical reproducible environments every run instead of hand configured snowflake machines, second, a diff you can read and review before you apply it because a plan shows exactly what will change, and third, automatic rollback when an apply fails so a broken change does not leave the system half configured. Codifying the fifteen page document turns fragile tribal knowledge into something anyone can run and review.",
+      "rubric": "Full credit: lifecycle provision (Terraform) with pinned Docker commit, run once (Cloud Run), emit results, idempotent teardown AND all three benefits (reproducible environments, diff before apply, automatic rollback). Partial: lifecycle or benefits but not both, or misses a benefit. Low: vague.",
+      "support_ref": "ei-part-3-oneshot"
+    }
+  ],
+  "quiz": {
+    "pass_threshold": 6,
+    "consecutive_correct_required": 6,
+    "idk_option": true,
+    "grounding_required": true,
+    "questions": [
+      {
+        "id": "eiq1",
+        "question": "For an agentic task, what does Gbench stand up before it triggers the model?",
+        "choices": [
+          "A seeded fake environment with fake files, fake tools, and a starting backend state",
+          "A public leaderboard ranking of released models",
+          "A production database of real user records",
+          "A quantized copy of the model for local devices"
+        ],
+        "correct_index": 0,
+        "explanation": "Gbench seeds a fake environment so the agent can act, then inspects the resulting state.",
+        "concept": "eval-harness",
+        "difficulty": "easy",
+        "learning_scope": "taught",
+        "support_ref": "ei-part-1-gbench"
+      },
+      {
+        "id": "eiq2",
+        "question": "How does an agentic Gbench eval decide whether the model passed?",
+        "choices": [
+          "It inspects the final backend state and compares it to the expected end state",
+          "It counts how many words the model produced",
+          "It checks the model response against a single fixed string",
+          "It measures only the inference latency"
+        ],
+        "correct_index": 0,
+        "explanation": "The grader checks what the agent did to the backend, not just the text it emitted.",
+        "concept": "eval-harness",
+        "difficulty": "medium",
+        "learning_scope": "taught",
+        "support_ref": "ei-part-1-gbench"
+      },
+      {
+        "id": "eiq3",
+        "question": "Where does Ditto run, and what does it call to evaluate the model?",
+        "choices": [
+          "It runs on Borg and pings the GCP-hosted model API",
+          "It runs on the learner laptop and calls a local file",
+          "It runs on GCP and pings a Borg scheduler",
+          "It runs inside the tokenizer and calls the optimizer"
+        ],
+        "correct_index": 0,
+        "explanation": "Ditto is a Borg job that reaches a GCP-hosted model endpoint, which is the crossover.",
+        "concept": "borg-gcp-serving",
+        "difficulty": "medium",
+        "learning_scope": "taught",
+        "support_ref": "ei-part-2-ditto-borg"
+      },
+      {
+        "id": "eiq4",
+        "question": "Why is the Borg to GCP crossover hard enough to block eval runs?",
+        "choices": [
+          "It bridges two different infrastructure worlds, so auth, networking, and routing must line up before the job can reach the model",
+          "It requires retraining the model from scratch each time",
+          "It needs the model to be quantized to GGUF first",
+          "It only works when the leaderboard is empty"
+        ],
+        "correct_index": 0,
+        "explanation": "The Borg job and the GCP endpoint live in separate systems that must be wired together.",
+        "concept": "borg-gcp-serving",
+        "difficulty": "hard",
+        "learning_scope": "taught",
+        "support_ref": "ei-part-2-ditto-borg"
+      },
+      {
+        "id": "eiq5",
+        "question": "Select all that are true about the two serving surfaces for the development model.",
+        "choices": [
+          "vLLM is one serving surface the model is exercised through",
+          "The Hugging Face implementation is the other serving surface",
+          "Both surfaces run the same weights through different runtimes",
+          "None of the above"
+        ],
+        "correct_indices": [
+          0,
+          1,
+          2
+        ],
+        "allow_multiple_correct": true,
+        "explanation": "vLLM and the Hugging Face implementation are two runtimes over the same weights, so an eval must target the right one.",
+        "concept": "borg-gcp-serving",
+        "difficulty": "medium",
+        "learning_scope": "taught",
+        "support_ref": "ei-part-2-ditto-borg"
+      },
+      {
+        "id": "eiq6",
+        "question": "What does a Terraform plan give you before any resource actually changes?",
+        "choices": [
+          "A readable diff of exactly what will be created, changed, or destroyed",
+          "A finished training run against the new model",
+          "A quantized artifact ready for release",
+          "A ranking of released models by benchmark score"
+        ],
+        "correct_index": 0,
+        "explanation": "Plan shows the diff before apply, so you review the change before it happens.",
+        "concept": "one-shot-infra",
+        "difficulty": "medium",
+        "learning_scope": "taught",
+        "support_ref": "ei-part-3-oneshot"
+      },
+      {
+        "id": "eiq7",
+        "question": "Select all of the benefits of running evals as reproducible one-shot infrastructure as code.",
+        "choices": [
+          "Identical reproducible environments on every run",
+          "A diff you can read and review before you apply it",
+          "Automatic rollback when an apply fails",
+          "Codifying the fifteen page manual setup document",
+          "None of the above"
+        ],
+        "correct_indices": [
+          0,
+          1,
+          2,
+          3
+        ],
+        "allow_multiple_correct": true,
+        "explanation": "Reproducibility, reviewable diffs, automatic rollback, and codified setup are exactly the infrastructure as code benefits Frank highlighted.",
+        "concept": "one-shot-infra",
+        "difficulty": "medium",
+        "learning_scope": "taught",
+        "support_ref": "ei-part-3-oneshot"
+      },
+      {
+        "id": "eiq8",
+        "question": "Why is an idempotent teardown important for a one-shot eval run?",
+        "choices": [
+          "Running teardown from any state leaves nothing behind, so runs never leak resources or cost",
+          "It makes the model train faster",
+          "It raises the leaderboard signal above the bar",
+          "It converts the weights to a compliant architecture"
+        ],
+        "correct_index": 0,
+        "explanation": "Idempotent teardown returns to an empty state safely, so one-shot runs do not leave snowflake resources.",
+        "concept": "one-shot-infra",
+        "difficulty": "easy",
+        "learning_scope": "taught",
+        "support_ref": "ei-part-3-oneshot"
+      }
+    ]
+  }
+}

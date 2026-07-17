@@ -1,0 +1,373 @@
+{
+  "part_id": "ei-part-3-oneshot",
+  "reading": {
+    "intro": "How to turn a brittle fifteen page setup document into a run you can trust.",
+    "blocks": [
+      {
+        "type": "heading",
+        "text": "From a fifteen page setup doc to one reproducible run"
+      },
+      {
+        "type": "paragraph",
+        "text": "Right now the eval setup is a fifteen page document full of manual steps. Someone opens it, follows the clicks, copies the values, and hopes nothing drifted since last time. That is tribal knowledge. It lives in one person's head and in a stale doc, it breaks when a default changes, and no two people run it the same way. Frank's highest leverage contribution as an infra engineer is to delete that doc and replace it with reproducible one shot runs that anyone can trigger and that produce the same result every time."
+      },
+      {
+        "type": "definition",
+        "term": "Terraform (declarative provisioning)",
+        "definition": "A tool where you write a config that describes the cloud resources you want, and Terraform figures out how to create them. You declare the desired end state, you do not script each manual step, so the same config produces the same resources on every run."
+      },
+      {
+        "type": "definition",
+        "term": "Plan versus apply (diff before change)",
+        "definition": "Terraform plan shows you a readable diff of exactly what will be created, changed, or destroyed before anything happens. Apply then performs that diff. You review the change first, so nothing surprising touches the cloud."
+      },
+      {
+        "type": "definition",
+        "term": "Pinned commit (deterministic inputs)",
+        "definition": "A Docker image that pins the exact code and a specific Gemmaclaw benchmark commit. Because the inputs are locked to one commit, the run is deterministic, and a result can be traced back to the exact code that produced it."
+      },
+      {
+        "type": "definition",
+        "term": "Cloud Run one shot job",
+        "definition": "A Cloud Run job that starts, runs exactly one eval against one model build, writes its results, and then exits. It is not a long lived server. It runs once and stops, which is what makes a single clean run possible."
+      },
+      {
+        "type": "definition",
+        "term": "Idempotent teardown",
+        "definition": "Teardown that is safe to run twice. Applying an empty desired set from any state leaves nothing behind, and running teardown again changes nothing, so resources never linger and never keep costing money."
+      },
+      {
+        "type": "paragraph",
+        "text": "The lifecycle is five clean stages. Terraform provisions the cloud resources from the config. A Docker image pins the exact code and the benchmark commit so the inputs are deterministic. Cloud Run executes exactly one job against one model build. Results are emitted to durable storage so they outlive the run. Then everything tears down so nothing lingers or keeps billing. The whole thing is codified, so the next person just triggers it."
+      },
+      {
+        "type": "list",
+        "ordered": true,
+        "items": [
+          "Identical reproducible environments every run, so there are no snowflake machines that only one person can rebuild.",
+          "A diff you can read and review before you apply it, because plan shows exactly what will change ahead of time.",
+          "Automatic rollback when an apply fails, so a broken change does not leave the system half configured."
+        ]
+      },
+      {
+        "type": "example",
+        "title": "The manual doc against the codified run",
+        "body": "The manual path is fifteen pages of clicks that drift, and a failed step halfway through leaves a half built environment nobody wants to clean up. The codified path is one command. Terraform plans the diff, you read it, you apply, Cloud Run runs the single job, results land in durable storage, and teardown removes every resource. Same result today, next week, and on a teammate's machine."
+      },
+      {
+        "type": "callout",
+        "tone": "insight",
+        "text": "The goal is not to automate the fifteen pages faster. It is to make the run so reproducible that the fifteen page doc stops existing."
+      }
+    ],
+    "summary": "A fifteen page manual setup doc is tribal knowledge that breaks and cannot be reproduced. Codifying it into one shot runs gives identical environments every time, a reviewable plan diff before any change, and automatic rollback on failure. Terraform provisions, a pinned Docker image makes inputs deterministic, Cloud Run runs one job, results are emitted to durable storage, and idempotent teardown leaves nothing behind.",
+    "diagrams": [
+      {
+        "kind": "mermaid",
+        "title": "The one shot run lifecycle",
+        "mermaid": "flowchart LR\n  T[Terraform provisions resources] --> D[Docker image pins code and commit]\n  D --> R[Cloud Run runs one job]\n  R --> E[Emit results to durable storage]\n  E --> X[Teardown leaves nothing]",
+        "takeaway": "Provision, pin, run once, emit, tear down. Every stage is codified, so the run is reproducible and nothing lingers.",
+        "support_ref": "ei-oneshot"
+      }
+    ]
+  },
+  "audio": {
+    "script": "Leo: Today the eval setup is a fifteen page document full of manual steps. That is tribal knowledge, and tribal knowledge breaks.\n\nMaya: So how do we make a run we can actually trust?\n\nLeo: We codify it as one shot runs. Terraform provisions the cloud resources from a config that describes what we want. A Docker image pins the exact code and a specific Gemmaclaw benchmark commit, so the inputs are deterministic. Then Cloud Run executes exactly one job against one model build.\n\nMaya: And after the job finishes?\n\nLeo: Results are emitted to durable storage, then everything tears down so nothing lingers or costs money. The wins are real. Every run gets an identical environment, we read a plan diff before we apply it, and a failed apply rolls back automatically instead of leaving a half configured mess.",
+    "transcript": "Leo: Today the eval setup is a fifteen page document full of manual steps. That is tribal knowledge, and tribal knowledge breaks.\n\nMaya: So how do we make a run we can actually trust?\n\nLeo: We codify it as one shot runs. Terraform provisions the cloud resources from a config that describes what we want. A Docker image pins the exact code and a specific Gemmaclaw benchmark commit, so the inputs are deterministic. Then Cloud Run executes exactly one job against one model build.\n\nMaya: And after the job finishes?\n\nLeo: Results are emitted to durable storage, then everything tears down so nothing lingers or costs money. The wins are real. Every run gets an identical environment, we read a plan diff before we apply it, and a failed apply rolls back automatically instead of leaving a half configured mess.",
+    "duration_hint": 95,
+    "synced_visual": {
+      "strategy": "timeline",
+      "artifact_slug": "ei-oneshot",
+      "scene": {
+        "scene_id": "ei-oneshot-scene",
+        "title": "One reproducible run, start to teardown",
+        "motif": "provision-pin-run-emit-teardown",
+        "description": "The lifecycle of one reproducible eval run, from Terraform provisioning through a pinned Docker image and a single Cloud Run job to emitted results and a clean teardown, contrasted with the brittle manual doc.",
+        "panels": [
+          {
+            "id": "lifecycle",
+            "title": "The one shot lifecycle",
+            "kind": "pipeline",
+            "description": "The five codified stages a reproducible run moves through, each one automated so the whole run is deterministic.",
+            "data": [
+              { "label": "Terraform", "value": "provision resources", "role": "input" },
+              { "label": "Docker image", "value": "pin code and commit", "role": "process" },
+              { "label": "Cloud Run", "value": "run one job", "role": "process" },
+              { "label": "Durable storage", "value": "emit results", "role": "output" },
+              { "label": "Teardown", "value": "leave nothing", "role": "output" }
+            ]
+          },
+          {
+            "id": "benefits",
+            "title": "Why infrastructure as code wins",
+            "kind": "cards",
+            "description": "The three benefits that make a codified run beat the fifteen page manual doc, shown against the manual baseline.",
+            "data": [
+              { "label": "Identical environments", "value": "no snowflake machines", "role": "output" },
+              { "label": "Readable plan diff", "value": "review before apply", "role": "output" },
+              { "label": "Automatic rollback", "value": "no half configured state", "role": "output" },
+              { "label": "Manual doc baseline", "value": "fifteen pages that drift", "role": "context" }
+            ]
+          }
+        ]
+      },
+      "cues": [
+        {
+          "start": 0,
+          "end": 20,
+          "label": "The brittle doc",
+          "headline": "Fifteen pages of manual steps",
+          "narration": "Today the eval setup is a fifteen page manual document, and that tribal knowledge breaks.",
+          "receive": "the current setup doc",
+          "transform": "notice it cannot be reproduced",
+          "pass": "the need for a codified run"
+        },
+        {
+          "start": 20,
+          "end": 40,
+          "label": "Provision and pin",
+          "headline": "Terraform provisions, Docker pins",
+          "narration": "Terraform provisions the resources from a config, and a Docker image pins the code and the benchmark commit.",
+          "receive": "a Terraform config",
+          "transform": "provision resources and pin the commit",
+          "pass": "a deterministic environment"
+        },
+        {
+          "start": 40,
+          "end": 60,
+          "label": "Run one job",
+          "headline": "Cloud Run runs exactly once",
+          "narration": "Cloud Run executes exactly one job against one model build, then the job exits.",
+          "receive": "the pinned image",
+          "transform": "run one job against one model build",
+          "pass": "a single deterministic result"
+        },
+        {
+          "start": 60,
+          "end": 80,
+          "label": "Emit and tear down",
+          "headline": "Results out, resources gone",
+          "narration": "Results are emitted to durable storage, then everything tears down so nothing lingers or costs money.",
+          "receive": "the run output",
+          "transform": "emit results and tear down",
+          "pass": "durable results and a clean slate"
+        },
+        {
+          "start": 80,
+          "end": 95,
+          "label": "The three wins",
+          "headline": "Identical, reviewable, reversible",
+          "narration": "Every run gets an identical environment, a plan diff you read before apply, and automatic rollback on failure.",
+          "receive": "the codified run",
+          "transform": "compare it to the manual doc",
+          "pass": "reproducible one shot runs"
+        }
+      ]
+    }
+  },
+  "interactive": {
+    "schema_version": "1.0",
+    "widget_type": "bespoke-artifact",
+    "title": "Trace a one shot run",
+    "instructions": "Step through the lifecycle. Provision with Terraform, pin the Docker image to a benchmark commit, run one Cloud Run job, emit the results, then tear down. Toggle a failing apply to watch the automatic rollback leave the system untouched, and read the plan diff before each apply.",
+    "params": {
+      "artifact_slug": "ei-oneshot",
+      "min_height": 320
+    }
+  },
+  "code": {
+    "language": "python",
+    "prompt": "Model an idempotent one shot run lifecycle. Given a desired resource set and the current state, compute a plan (what to create, what already exists, what to destroy), then apply it and return the resulting state. Teardown is just an empty desired set, and it must be idempotent, so running it from any state, and running it twice, always leaves an empty state. Fill the TODOs, then compose them.",
+    "starter_code": "def compute_plan(desired, current):\n    # desired and current are lists of resource names.\n    # TODO: return a dict with three sorted lists:\n    #   'create'  = in desired but not current\n    #   'keep'    = in both desired and current\n    #   'destroy' = in current but not desired\n    pass\n\n\ndef apply_plan(current, plan):\n    # TODO: start from the current set, add everything in plan['create'],\n    # remove everything in plan['destroy'], and return the state as a sorted list.\n    pass\n\n\ndef run_once(desired, current):\n    plan = compute_plan(desired, current)\n    return {\"plan\": plan, \"state\": apply_plan(current, plan)}\n",
+    "constraints": [
+      "Use plain Python sets and dicts, no cloud libraries.",
+      "compute_plan must return sorted lists so the output is deterministic.",
+      "Teardown is an empty desired set. run_once([], anything) must return an empty state, and running it twice must stay empty."
+    ],
+    "walkthrough": {
+      "title": "From desired and current to the next state",
+      "steps": [
+        {
+          "title": "Diff the two sets",
+          "detail": "compute_plan turns desired and current into sets and takes the differences. Create is desired minus current, destroy is current minus desired, keep is the intersection.",
+          "input": "desired=['a', 'b'], current=['b', 'c']",
+          "output": "{'create': ['a'], 'keep': ['b'], 'destroy': ['c']}"
+        },
+        {
+          "title": "Apply the diff",
+          "detail": "apply_plan starts from current, adds the create list, removes the destroy list, and returns the sorted result, which always equals the desired set.",
+          "input": "current=['b', 'c'], plan above",
+          "output": "['a', 'b']"
+        },
+        {
+          "title": "Teardown is idempotent",
+          "detail": "Passing an empty desired set makes create empty and destroy the whole current set, so the state becomes empty. Running it again keeps it empty, which is what idempotent means.",
+          "input": "desired=[], current=['a', 'b']",
+          "output": "[] (state emptied)"
+        }
+      ]
+    },
+    "io_examples": [
+      {
+        "label": "provision from scratch",
+        "input": "run_once(['db', 'bucket'], [])",
+        "expected_output": "{'plan': {'create': ['bucket', 'db'], 'keep': [], 'destroy': []}, 'state': ['bucket', 'db']}",
+        "explanation": "Nothing exists yet, so both resources are created and the state holds both, sorted."
+      },
+      {
+        "label": "teardown to nothing",
+        "input": "run_once([], ['db', 'bucket'])",
+        "expected_output": "{'plan': {'create': [], 'keep': [], 'destroy': ['bucket', 'db']}, 'state': []}",
+        "explanation": "An empty desired set destroys everything, leaving an empty state. Running it again stays empty, so teardown is idempotent."
+      }
+    ],
+    "visualization": {
+      "title": "desired plus current to plan to state",
+      "description": "How the diff between desired and current becomes a plan, and how applying that plan yields the next state.",
+      "items": [
+        { "label": "desired and current", "value": "two resource sets", "role": "input" },
+        { "label": "compute_plan", "value": "create, keep, destroy", "role": "process" },
+        { "label": "apply_plan", "value": "the next state", "role": "output" }
+      ]
+    },
+    "worked_examples": [
+      {
+        "label": "basic",
+        "title": "Explicit set differences",
+        "code": "def compute_plan(desired, current):\n    desired_set = set(desired)\n    current_set = set(current)\n    return {\n        \"create\": sorted(desired_set - current_set),\n        \"keep\": sorted(desired_set & current_set),\n        \"destroy\": sorted(current_set - desired_set),\n    }\n\ndef apply_plan(current, plan):\n    state = set(current)\n    state.update(plan[\"create\"])\n    state.difference_update(plan[\"destroy\"])\n    return sorted(state)\n\ndef run_once(desired, current):\n    plan = compute_plan(desired, current)\n    return {\"plan\": plan, \"state\": apply_plan(current, plan)}",
+        "explanation": "compute_plan diffs the two sets into create, keep, and destroy. apply_plan adds the creates and removes the destroys, and the sorted result always equals the desired set."
+      },
+      {
+        "label": "concise",
+        "title": "State equals the desired set",
+        "code": "def compute_plan(desired, current):\n    d, c = set(desired), set(current)\n    return {\"create\": sorted(d - c), \"keep\": sorted(d & c), \"destroy\": sorted(c - d)}\n\ndef apply_plan(current, plan):\n    return sorted((set(current) | set(plan[\"create\"])) - set(plan[\"destroy\"]))\n\ndef run_once(desired, current):\n    plan = compute_plan(desired, current)\n    return {\"plan\": plan, \"state\": apply_plan(current, plan)}",
+        "explanation": "Applying create then destroy leaves exactly the desired set, so an empty desired always yields an empty state, which makes teardown idempotent."
+      }
+    ],
+    "hints": [
+      { "level": 1, "text": "Turn desired and current into sets so you can take differences." },
+      { "level": 2, "text": "create is desired minus current, destroy is current minus desired, keep is the intersection." },
+      { "level": 3, "text": "Wrap each result in sorted(...) so the lists are deterministic." },
+      { "level": 4, "text": "In apply_plan start from set(current), add the create list, then remove the destroy list." },
+      { "level": 5, "text": "An empty desired set makes create empty and destroy everything, so run_once([], current) returns an empty state, and running it again stays empty." }
+    ],
+    "tests": [
+      {
+        "id": "t_provision",
+        "description": "provisioning from an empty state creates everything",
+        "assert": "assert run_once(['db', 'bucket'], []) == {'plan': {'create': ['bucket', 'db'], 'keep': [], 'destroy': []}, 'state': ['bucket', 'db']}"
+      },
+      {
+        "id": "t_diff",
+        "description": "a mixed desired and current yields create, keep, and destroy",
+        "assert": "assert run_once(['a', 'b'], ['b', 'c']) == {'plan': {'create': ['a'], 'keep': ['b'], 'destroy': ['c']}, 'state': ['a', 'b']}"
+      }
+    ],
+    "hidden_tests": [
+      {
+        "id": "h_teardown",
+        "description": "empty desired tears everything down",
+        "assert": "assert run_once([], ['db', 'bucket'])['state'] == []"
+      },
+      {
+        "id": "h_idempotent",
+        "description": "teardown from an already empty state stays empty",
+        "assert": "assert run_once([], [])['state'] == []"
+      }
+    ]
+  },
+  "practice": {
+    "written_feedback": "llm_judge",
+    "pass_threshold": 5,
+    "questions": [
+      {
+        "id": "ei3-so-1",
+        "type": "select_one",
+        "prompt": "Today, how is the eval setup documented?",
+        "concept": "reproducible-runs",
+        "difficulty": "easy",
+        "choices": [
+          "A fifteen page manual setup document full of steps",
+          "A single Terraform config in version control",
+          "A pinned Docker image",
+          "A Cloud Run one shot job"
+        ],
+        "correct_index": 0,
+        "explanation": "The current setup is a brittle fifteen page manual document, which is tribal knowledge that breaks and cannot be reproduced."
+      },
+      {
+        "id": "ei3-sa-some",
+        "type": "select_all",
+        "prompt": "Which statements about the one shot lifecycle are true? Select all that apply.",
+        "concept": "reproducible-runs",
+        "difficulty": "medium",
+        "choices": [
+          "Terraform provisions the cloud resources from a declarative config",
+          "The manual doc makes each run deterministic",
+          "A Docker image pins the code and a specific benchmark commit",
+          "Cloud Run keeps the job running forever after it finishes"
+        ],
+        "correct_indices": [0, 2],
+        "explanation": "Terraform provisions declaratively and the Docker image pins the commit. The manual doc is not deterministic, and a Cloud Run one shot job exits after it runs once."
+      },
+      {
+        "id": "ei3-sa-none",
+        "type": "select_all",
+        "prompt": "Which of these does the codified one shot run rely on? Select all that apply.",
+        "concept": "tribal-knowledge",
+        "difficulty": "hard",
+        "choices": [
+          "A fifteen page manual setup document",
+          "Engineers memorizing the steps as tribal knowledge",
+          "Leaving resources running after the job to save setup time"
+        ],
+        "correct_indices": [],
+        "explanation": "None of these. The whole point is to replace the manual doc and tribal knowledge, and teardown removes resources rather than leaving them running."
+      },
+      {
+        "id": "ei3-sa-all",
+        "type": "select_all",
+        "prompt": "Which of these are genuine properties of the codified approach? Select all that apply.",
+        "concept": "infrastructure-as-code",
+        "difficulty": "medium",
+        "choices": [
+          "Terraform describes desired resources declaratively",
+          "A pinned commit makes the inputs deterministic",
+          "Idempotent teardown can run twice and still leave nothing"
+        ],
+        "correct_indices": [0, 1, 2],
+        "explanation": "All three are core properties. Declarative provisioning, a pinned commit for determinism, and idempotent teardown together make the run reproducible."
+      },
+      {
+        "id": "ei3-order",
+        "type": "ordering",
+        "prompt": "Put the one shot run lifecycle stages in order.",
+        "concept": "reproducible-runs",
+        "difficulty": "medium",
+        "items": [
+          "Cloud Run executes one job against one model build",
+          "Terraform provisions the cloud resources",
+          "Docker pins the code and the benchmark commit",
+          "Results are emitted to durable storage",
+          "Everything tears down to nothing"
+        ],
+        "correct_order": [
+          "Terraform provisions the cloud resources",
+          "Docker pins the code and the benchmark commit",
+          "Cloud Run executes one job against one model build",
+          "Results are emitted to durable storage",
+          "Everything tears down to nothing"
+        ]
+      },
+      {
+        "id": "ei3-written",
+        "type": "written",
+        "prompt": "Explain why reproducible one shot runs beat the fifteen page manual setup document, and name the three infrastructure as code benefits.",
+        "concept": "infrastructure-as-code",
+        "difficulty": "hard",
+        "actual_answer": "The fifteen page manual document is tribal knowledge. It lives in one person's head and a stale doc, it drifts when defaults change, and no two people run it the same way, so results cannot be reproduced or trusted. A codified one shot run fixes this. Terraform provisions the resources from a declarative config, a Docker image pins the exact code and benchmark commit so the inputs are deterministic, Cloud Run executes exactly one job, results are emitted to durable storage, and idempotent teardown removes everything so nothing lingers or costs money. The three infrastructure as code benefits are identical reproducible environments every run with no snowflake machines, a plan diff you can read and review before you apply it, and automatic rollback when an apply fails so a broken change never leaves the system half configured.",
+        "rubric": "Full credit: explains that the manual doc is unreproducible tribal knowledge that drifts, and names all three benefits, identical reproducible environments, a reviewable plan diff before apply, and automatic rollback on failure. Partial credit: names some benefits or only contrasts the doc without the three benefits. Low credit: vague or missing the reproducibility point."
+      }
+    ]
+  }
+}

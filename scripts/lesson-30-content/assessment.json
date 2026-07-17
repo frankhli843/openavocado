@@ -1,0 +1,180 @@
+{
+  "questions": [
+    {
+      "id": "ae-free-1",
+      "text": "Explain why a model can pass every single-turn eval and still ship as a broken agent. What does a multi-turn agentic task require that a single-turn question does not?",
+      "type": "free_text",
+      "concept": "multiturn-eval",
+      "difficulty": "medium",
+      "actual_answer": "A single-turn eval gives the model one prompt and grades one answer in isolation, so it never tests whether the model can carry information across turns. A multi-turn agentic task requires cross-turn state. The model requests a tool on one turn, receives the tool result, and then has to use that result correctly on a later turn. The failure only appears when state has to survive across turns, so a model can answer every isolated question correctly and still drop the tool result or lose the thread in the multi-turn task. That is why a green single-turn score can hide a broken agent, and why you need a multi-turn eval that checks the agent across a sequence of turns and tool calls the way a real user would drive it. Part of the reason the gap existed is organizational, the post-training team and the evals team disagreed over whether multi-turn was even a supported use case, so no one owned the multi-turn eval.",
+      "rubric": "Full credit: single-turn grades one answer in isolation, multi-turn needs cross-turn state where a tool call spans turns, so a model can pass single-turn and fail multi-turn. Bonus for the org cause. Partial: distinguishes single vs multi-turn without the cross-turn state or tool-call-spanning-turns detail. Low: vague.",
+      "support_ref": "ae-multiturn"
+    },
+    {
+      "id": "ae-free-2",
+      "text": "At the Gemma 4 launch the tool-call pass rate was about ten percent. Explain why that was not a capability problem, and decompose the difference between capability and protocol so a future engineer can diagnose a low pass rate instead of assuming the model is weak.",
+      "type": "free_text",
+      "concept": "template-trap",
+      "difficulty": "hard",
+      "actual_answer": "The ten percent tool-call pass rate at launch was a chat-template formatting problem, not a capability gap. The weights were fine. The chat template serializes the roles, the turn delimiters, and the special tool tokens into the exact token sequence the model expects, and when it emits the wrong control tokens or the wrong tool-call format, the output cannot be parsed as a valid tool call, so it scores as a failure even though the model knew what to do. A hand-tuned template later lifted the pass rate dramatically. The decomposition is capability versus protocol. Capability lives in the weights, meaning whether the model knows how to call the tool. Protocol lives in the template and control tokens, meaning whether the call is formatted so it can be parsed and executed. A protocol bug hides a capable model behind a failing score, so a low observed pass rate must be diagnosed by checking whether the calls parsed before concluding the model is weak. Frank's agentic benchmark surfaced exactly this nuance that the single-turn academic evals missed.",
+      "rubric": "Full credit: the ~10% was chat-template formatting not weights, template serializes roles and tool tokens and wrong tokens make the call unparseable, AND the capability (weights) versus protocol (template/tokens) decomposition with the point that a protocol bug hides a capable model. Partial: says it was a template bug without the capability versus protocol framing. Low: vague.",
+      "support_ref": "ae-template"
+    },
+    {
+      "id": "ae-free-3",
+      "text": "Describe how you would design an agentic eval that means something. Cover how the task is scored, why held-out data matters, and give one concrete eval worth building.",
+      "type": "free_text",
+      "concept": "agentic-eval-design",
+      "difficulty": "medium",
+      "actual_answer": "To score an agentic task you seed a fake environment with a known starting state, trigger the agent, let it call tools, then inspect the final state against a precisely defined expected end state, which is a state check. Defining the expected state exactly is what makes pass and fail unambiguous. Held-out data matters because if the eval questions or environments leak into training, the model can memorize them and the score is inflated and meaningless. A held-out test set the model never trained on measures generalization, while a contaminated eval only measures memorization, so a high score on a contaminated eval is worthless. One concrete eval worth building is a context-disclosure privacy eval. An agent that knows things about you should reveal different amounts of context to different audiences, sharing a lot with a spouse, less with a friend, less still with a colleague, and almost nothing with a stranger. The eval seeds a scenario, asks the agent to respond to each audience, and scores whether the agent stayed within the disclosure boundary for that audience.",
+      "rubric": "Full credit: seeded environment plus state check against a precise expected end state, held-out prevents contamination so the score measures generalization not memorization, AND a concrete eval such as the context-disclosure privacy eval. Partial: covers scoring or held-out but not both, or no concrete eval. Low: vague.",
+      "support_ref": "ae-design"
+    }
+  ],
+  "quiz": {
+    "pass_threshold": 6,
+    "consecutive_correct_required": 6,
+    "idk_option": true,
+    "grounding_required": true,
+    "questions": [
+      {
+        "id": "aeq1",
+        "question": "What does a multi-turn agentic task require that a single-turn eval does not?",
+        "choices": [
+          "Cross-turn state, where a tool result from an earlier turn must be used correctly on a later turn",
+          "A larger model with more parameters",
+          "A quantized copy of the weights",
+          "A public leaderboard ranking"
+        ],
+        "correct_index": 0,
+        "explanation": "Multi-turn tasks carry state across turns, which single-turn questions never exercise.",
+        "concept": "multiturn-eval",
+        "difficulty": "easy",
+        "learning_scope": "taught",
+        "support_ref": "ae-multiturn"
+      },
+      {
+        "id": "aeq2",
+        "question": "Why can a model pass every single-turn question yet fail the multi-turn task?",
+        "choices": [
+          "The failure only appears when state has to survive across turns, which single-turn grading never tests",
+          "Single-turn questions are always harder than multi-turn tasks",
+          "Multi-turn tasks do not use the model weights",
+          "The tokenizer changes between turns"
+        ],
+        "correct_index": 0,
+        "explanation": "A green single-turn score can hide a broken agent because it never checks cross-turn state.",
+        "concept": "multiturn-eval",
+        "difficulty": "medium",
+        "learning_scope": "taught",
+        "support_ref": "ae-multiturn"
+      },
+      {
+        "id": "aeq3",
+        "question": "The Gemma 4 launch tool-call pass rate of about ten percent was caused by what?",
+        "choices": [
+          "A chat-template formatting problem, not the weights",
+          "Too few parameters in the model",
+          "A broken optimizer during training",
+          "Insufficient training data"
+        ],
+        "correct_index": 0,
+        "explanation": "It was a template and control-token formatting bug. A hand-tuned template lifted the pass rate.",
+        "concept": "template-trap",
+        "difficulty": "medium",
+        "learning_scope": "taught",
+        "support_ref": "ae-template"
+      },
+      {
+        "id": "aeq4",
+        "question": "Select all that correctly describe the capability versus protocol decomposition.",
+        "choices": [
+          "Capability lives in the weights, meaning whether the model knows how to call the tool",
+          "Protocol lives in the template and control tokens, meaning whether the call is formatted to be parsed",
+          "A protocol bug can hide a capable model behind a failing score",
+          "None of the above"
+        ],
+        "correct_indices": [
+          0,
+          1,
+          2
+        ],
+        "allow_multiple_correct": true,
+        "explanation": "Capability is in the weights, protocol is in the template, and a protocol bug hides a capable model.",
+        "concept": "template-trap",
+        "difficulty": "medium",
+        "learning_scope": "taught",
+        "support_ref": "ae-template"
+      },
+      {
+        "id": "aeq5",
+        "question": "A held-out eval measures one thing and a contaminated eval measures another. Which pairing is correct?",
+        "choices": [
+          "Held-out measures generalization, contaminated measures memorization",
+          "Held-out measures memorization, contaminated measures generalization",
+          "Both measure inference speed",
+          "Both measure model size"
+        ],
+        "correct_index": 0,
+        "explanation": "A held-out set the model never trained on tests generalization, contamination only tests memorization.",
+        "concept": "agentic-eval-design",
+        "difficulty": "medium",
+        "learning_scope": "taught",
+        "support_ref": "ae-design"
+      },
+      {
+        "id": "aeq6",
+        "question": "Why is a high score on a contaminated eval worthless?",
+        "choices": [
+          "The model may have memorized the leaked eval data, so the score does not reflect real skill",
+          "Contaminated evals run too slowly to trust",
+          "The score is always exactly zero",
+          "Contamination changes the model architecture"
+        ],
+        "correct_index": 0,
+        "explanation": "If eval data leaked into training, the score reflects memorization, not ability.",
+        "concept": "agentic-eval-design",
+        "difficulty": "easy",
+        "learning_scope": "taught",
+        "support_ref": "ae-design"
+      },
+      {
+        "id": "aeq7",
+        "question": "Select all that are true about the context-disclosure privacy eval.",
+        "choices": [
+          "An agent should reveal different amounts of context to different audiences",
+          "It seeds a scenario and scores whether the agent stayed within the disclosure boundary",
+          "An agent may share more with a spouse than with a stranger",
+          "None of the above"
+        ],
+        "correct_indices": [
+          0,
+          1,
+          2
+        ],
+        "allow_multiple_correct": true,
+        "explanation": "The eval scores whether the agent respected audience-specific disclosure boundaries.",
+        "concept": "agentic-eval-design",
+        "difficulty": "medium",
+        "learning_scope": "taught",
+        "support_ref": "ae-design"
+      },
+      {
+        "id": "aeq8",
+        "question": "What organizational cause helped the multi-turn eval gap persist?",
+        "choices": [
+          "The post-training team and the evals team disagreed over whether multi-turn was a supported use case",
+          "The model was too small to run multi-turn tasks",
+          "Multi-turn evals are mathematically impossible",
+          "The leaderboard forbade multi-turn tests"
+        ],
+        "correct_index": 0,
+        "explanation": "What counts as a real eval is a decision, and the two teams disagreed, so no one owned it.",
+        "concept": "multiturn-eval",
+        "difficulty": "hard",
+        "learning_scope": "taught",
+        "support_ref": "ae-multiturn"
+      }
+    ]
+  }
+}

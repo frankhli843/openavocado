@@ -1,0 +1,192 @@
+{
+  "title": "Evals as Infrastructure: Gbench, Ditto, and One-Shot Reproducible Runs",
+  "description": "The eval and serving infrastructure that decides what can ship. This lesson goes past why evals matter into how they actually run: Gbench seeds a fake environment and grades what an agent does to the backend, Ditto runs on Borg and pings a GCP-hosted model across the crossover a teammate is stuck on, vLLM and the Hugging Face implementation are the two serving surfaces, and Terraform plus Docker plus Cloud Run turn a brittle fifteen page setup document into one-shot reproducible runs with reviewable diffs and automatic rollback. It is the infrastructure comparative advantage lesson for an engineer joining the model-build loop.",
+  "goals": [
+    "Explain how Gbench evaluates an agentic task by seeding a fake environment, triggering the agent, and grading the final backend state instead of the text",
+    "Describe how Ditto runs on Borg and pings a GCP-hosted model, and why the Borg to GCP crossover blocks eval runs when it is not wired up",
+    "Distinguish the two serving surfaces, vLLM and the Hugging Face implementation, and why an eval must target the correct one",
+    "Explain how Terraform, Docker, and Cloud Run turn a brittle setup document into one-shot reproducible runs with plan diffs and automatic rollback",
+    "Reason about idempotent provisioning and teardown so an eval run leaves no snowflake state behind"
+  ],
+  "tags": [
+    "gemma",
+    "evals",
+    "eval-infrastructure",
+    "gbench",
+    "ditto",
+    "borg",
+    "gcp",
+    "vllm",
+    "hugging-face",
+    "terraform",
+    "cloud-run",
+    "reproducibility",
+    "infrastructure-as-code",
+    "meeting-derived",
+    "research-backed"
+  ],
+  "next_lesson_diagnostics": [
+    {
+      "id": "diag-ei-agentic-eval",
+      "prompt": "The next lesson can go deep on the agentic evals the team is missing. Which failure would you most want a new eval to catch first: a tool call that is formatted wrong by the chat template, a multi-turn conversation that loses state, or a task where the agent reveals context it should not?",
+      "hint": "Think about which failure users hit most and which one a single-turn eval would never see."
+    },
+    {
+      "id": "diag-ei-crossover",
+      "prompt": "If you owned the Borg to GCP crossover, what would you wire up first to make an eval run reach the model: the auth path, the network route, the endpoint discovery, or the retry and timeout behavior?",
+      "hint": "Pick the piece that has to work before any request can succeed at all."
+    },
+    {
+      "id": "diag-ei-reproducibility",
+      "prompt": "To make a one-shot run truly reproducible, what would you pin down first: the Gemmaclaw benchmark commit, the model build, the container image, or the resource config?",
+      "hint": "Reproducibility means the same inputs produce the same run, so start with whatever varies most."
+    }
+  ],
+  "knowledge_graph_data": {
+    "type": "focused",
+    "title": "Eval and serving infrastructure in the subject map",
+    "description": "This lesson teaches the eval and serving infrastructure that gates a release: Gbench agentic grading, Ditto on Borg pinging a GCP-hosted model, vLLM and Hugging Face serving surfaces, and one-shot reproducible runs with Terraform, Docker, and Cloud Run. The next lesson designs the agentic evals themselves, and quantization and release come later.",
+    "nodes": [
+      {
+        "id": "subject-root",
+        "label": "Model Building and Inference",
+        "category": "subject_root",
+        "covered": true
+      },
+      {
+        "id": "evals-decide",
+        "label": "Evals decide what ships",
+        "category": "lesson_concept",
+        "covered": true
+      },
+      {
+        "id": "eval-harness",
+        "label": "Gbench: seed, trigger, grade the state",
+        "category": "lesson_concept",
+        "covered": true
+      },
+      {
+        "id": "borg-gcp-serving",
+        "label": "Ditto on Borg to GCP, vLLM and HF surfaces",
+        "category": "lesson_concept",
+        "covered": true
+      },
+      {
+        "id": "one-shot-infra",
+        "label": "One-shot runs: Terraform, Docker, Cloud Run",
+        "category": "lesson_concept",
+        "covered": true
+      },
+      {
+        "id": "agentic-eval-design",
+        "label": "Designing agentic evals",
+        "category": "concept",
+        "preview": true,
+        "covered": false
+      },
+      {
+        "id": "quantization",
+        "label": "Quantization and GGUF",
+        "category": "concept",
+        "preview": true,
+        "covered": false
+      },
+      {
+        "id": "release",
+        "label": "Open release",
+        "category": "concept",
+        "covered": false
+      }
+    ],
+    "edges": [
+      {
+        "from": "evals-decide",
+        "to": "eval-harness"
+      },
+      {
+        "from": "eval-harness",
+        "to": "borg-gcp-serving"
+      },
+      {
+        "from": "borg-gcp-serving",
+        "to": "one-shot-infra"
+      },
+      {
+        "from": "one-shot-infra",
+        "to": "agentic-eval-design"
+      }
+    ],
+    "curriculum_stages": [
+      {
+        "id": "architecture",
+        "label": "Architecture",
+        "status": "done"
+      },
+      {
+        "id": "training",
+        "label": "Training and experiments",
+        "status": "done"
+      },
+      {
+        "id": "evaluation",
+        "label": "Evaluation infrastructure",
+        "status": "current"
+      },
+      {
+        "id": "serving",
+        "label": "Serving and protocol parity",
+        "status": "current"
+      },
+      {
+        "id": "agentic-evals",
+        "label": "Agentic eval design",
+        "status": "next"
+      },
+      {
+        "id": "quantization",
+        "label": "Quantization and GGUF",
+        "status": "later"
+      },
+      {
+        "id": "release",
+        "label": "Release",
+        "status": "later"
+      }
+    ],
+    "current": "evaluation"
+  },
+  "planning_rationale": "Lesson 29 is the seq 5 advancement named in the subject 5 workpad: Evals as Infrastructure. Lesson 28 established that evals decide what can ship. This lesson goes deep on the eval and serving infrastructure Frank will actually own, which is his infrastructure comparative advantage and the exact contribution angle Sara flagged. It teaches Gbench agentic grading, Ditto on Borg pinging a GCP-hosted model and the crossover a teammate is stuck on, the vLLM and Hugging Face serving surfaces, and the one-shot reproducible run lifecycle with Terraform, Docker, and Cloud Run that replaces a brittle fifteen page setup document. The lesson is grounded in the 2026-07-09 Sara meeting plus public sources on agentic eval design (Berkeley Function Calling Leaderboard and tau-bench for state-graded evaluation) and reproducible provisioning (Terraform and Cloud Run one-shot jobs). The next lesson designs the agentic evals themselves.",
+  "source_context": {
+    "author": "cc-handauthored/evals-as-infrastructure",
+    "derived_from": "subject 5 workpad seq 5 (Evals as Infrastructure) + 2026-07-09 Sara meeting",
+    "sources": [
+      {
+        "title": "Berkeley Function Calling Leaderboard V3",
+        "url": "https://gorilla.cs.berkeley.edu/blogs/13_bfcl_v3_multi_turn.html",
+        "contribution": "Multi-turn, backend-state-checked agentic evaluation design that grades what the agent did, not just the text."
+      },
+      {
+        "title": "tau-bench paper and repository",
+        "url": "https://arxiv.org/abs/2406.12045",
+        "contribution": "Domain API tools with final database-state comparison and reliability metrics, the state-grading pattern Gbench uses."
+      },
+      {
+        "title": "Google Cloud Run jobs",
+        "url": "https://cloud.google.com/run/docs/create-jobs",
+        "contribution": "One-shot job execution model: run a container to completion once, then exit, which is the one-shot run lifecycle."
+      },
+      {
+        "title": "Terraform plan and apply",
+        "url": "https://developer.hashicorp.com/terraform/cli/commands/plan",
+        "contribution": "Declarative provisioning with a reviewable diff before apply and safe rollback, the infrastructure as code benefits taught here."
+      },
+      {
+        "title": "vLLM documentation",
+        "url": "https://docs.vllm.ai/",
+        "contribution": "High-throughput serving surface for the development model, one of the two runtimes an eval must target correctly."
+      }
+    ]
+  },
+  "generated_by": "cc-handauthored/evals-as-infrastructure",
+  "generator_version": "1.0.0"
+}

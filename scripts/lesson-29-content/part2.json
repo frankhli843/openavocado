@@ -1,0 +1,356 @@
+{
+  "part_id": "ei-part-2-ditto-borg",
+  "reading": {
+    "intro": "The eval runs in one place, the model lives in another, and the wiring between them is the current bottleneck.",
+    "blocks": [
+      {
+        "type": "heading",
+        "text": "Where the eval job runs and where the model lives"
+      },
+      {
+        "type": "paragraph",
+        "text": "An eval is not one thing running in one place. It is a job that runs somewhere and a model that is hosted somewhere else. The team uses an eval runner called Ditto. Ditto scores the development model by pinging a model API and comparing the replies against expected answers in an internal format. The important detail is location. Ditto runs on Borg, which is Google's cluster job scheduler, while the model it grades is hosted on GCP, which is Google Cloud. So the eval is really a Borg job that sends requests out to a GCP endpoint, collects the responses, and scores them. Two systems, one round trip."
+      },
+      {
+        "type": "definition",
+        "term": "Borg",
+        "definition": "Google's internal cluster job scheduler. It places and runs batch jobs on a shared fleet of machines. Here it is the place the Ditto eval job actually executes, not where the model is served."
+      },
+      {
+        "type": "definition",
+        "term": "GCP hosted model API",
+        "definition": "The model endpoint that Ditto calls. The development model is deployed on Google Cloud and exposes an API. The eval job sends prompts to this endpoint and reads back the model's responses to score them."
+      },
+      {
+        "type": "example",
+        "title": "One eval round trip",
+        "body": "Ditto wakes up as a Borg job. For each test item it builds a request and sends it to the GCP hosted model endpoint. The endpoint runs the model and returns a response. Ditto reads the response, scores it against the expected answer, and moves to the next item. When every item is scored, Ditto reports the run. Every one of those requests has to cross from the Borg world into the GCP world and back."
+      },
+      {
+        "type": "definition",
+        "term": "The crossover",
+        "definition": "The bridge a request must travel from a Borg job to a GCP hosted endpoint and back. It covers authentication between the two systems, network reachability, and request routing. Borg and GCP are separate infrastructure worlds, so this bridge does not come for free."
+      },
+      {
+        "type": "callout",
+        "tone": "warning",
+        "text": "A teammate named Sindhu is currently stuck on the crossover. Until a Borg job can reliably authenticate to and reach the GCP hosted model endpoint, the eval runs are blocked. The model is fine and the eval logic is fine. The wiring between the two worlds is what is not yet working."
+      },
+      {
+        "type": "heading",
+        "text": "Two serving surfaces, the same weights"
+      },
+      {
+        "type": "paragraph",
+        "text": "There is a second subtlety that decides whether an eval number even means anything. The development model is exercised through two different runtimes. One is vLLM, a high throughput inference server built for serving many requests quickly. The other is the Hugging Face implementation, a more reference style path. Same weights, two serving paths. An eval must target the correct serving surface, because if the wrong one is hit the results can differ even though the underlying weights are identical."
+      },
+      {
+        "type": "definition",
+        "term": "Serving surface",
+        "definition": "A specific runtime that turns weights into responses. vLLM and the Hugging Face implementation are two serving surfaces for the same model. Which surface an eval targets is part of the experiment, not an implementation detail."
+      },
+      {
+        "type": "callout",
+        "tone": "insight",
+        "text": "This ties straight back to protocol parity from Lesson 28. Two serving surfaces can drift on tokenizer, chat template, or tool format, so the same weights can be fed subtly different token sequences. If your eval hits the wrong surface, a score change can be formatting drift rather than a real model difference."
+      }
+    ],
+    "summary": "Ditto is an eval runner that executes as a Borg job and scores the model by pinging a GCP hosted endpoint. The Borg to GCP crossover, the auth and networking bridge between the two worlds, is what Sindhu is stuck on and what blocks eval runs. Separately, the model has two serving surfaces, vLLM and Hugging Face, and an eval must target the correct one or the numbers can drift.",
+    "diagrams": [
+      {
+        "kind": "mermaid",
+        "title": "The Borg to GCP eval round trip",
+        "mermaid": "flowchart LR\n  A[Ditto eval job on Borg] --> B[Crossover bridge]\n  B --> C[GCP hosted model API]\n  C --> D[Model response]\n  D --> E[Ditto scores the response]\n  B --> F[Auth and routing across two worlds]",
+        "takeaway": "The eval runs on Borg but the model lives on GCP, so every request has to cross a bridge that must handle auth and routing between two separate systems.",
+        "support_ref": "ei-ditto-borg"
+      }
+    ]
+  },
+  "audio": {
+    "script": "Leo: We know the eval bundles changes and probes cheaply. Now, where does the eval actually run, and where does the model live? Maya: Those turn out to be two different places, right? Leo: Exactly. Ditto is the eval runner, and it runs on Borg, Google's cluster job scheduler. But the model it grades is hosted on GCP, which is Google Cloud. So a Borg job reaches across to a GCP endpoint, sends prompts, and scores the replies. Maya: And that reach across is the hard part. Leo: That is the crossover. Auth, networking, and routing between Borg and GCP are two different worlds, and a teammate named Sindhu is stuck bridging them, which blocks the eval runs. Maya: You also mentioned two serving surfaces. Leo: Same weights, two paths. One is vLLM for high throughput, the other is the Hugging Face implementation. An eval must target the correct surface, or the numbers can drift, which is the protocol parity idea from last lesson.",
+    "transcript": "Leo: We know the eval bundles changes and probes cheaply. Now, where does the eval actually run, and where does the model live? Maya: Those turn out to be two different places, right? Leo: Exactly. Ditto is the eval runner, and it runs on Borg, Google's cluster job scheduler. But the model it grades is hosted on GCP, which is Google Cloud. So a Borg job reaches across to a GCP endpoint, sends prompts, and scores the replies. Maya: And that reach across is the hard part. Leo: That is the crossover. Auth, networking, and routing between Borg and GCP are two different worlds, and a teammate named Sindhu is stuck bridging them, which blocks the eval runs. Maya: You also mentioned two serving surfaces. Leo: Same weights, two paths. One is vLLM for high throughput, the other is the Hugging Face implementation. An eval must target the correct surface, or the numbers can drift, which is the protocol parity idea from last lesson.",
+    "duration_hint": 95,
+    "synced_visual": {
+      "strategy": "timeline",
+      "artifact_slug": "ei-ditto-borg",
+      "scene": {
+        "scene_id": "ei-ditto-borg-scene",
+        "title": "Ditto on Borg, model on GCP",
+        "motif": "job-here-model-there-bridge-between",
+        "description": "A Borg eval job and a GCP hosted model in two separate worlds, connected by a crossover bridge that carries auth and routing, plus a view of the two serving surfaces the eval can target.",
+        "panels": [
+          {
+            "id": "topology",
+            "title": "Two worlds, one bridge",
+            "kind": "pipeline",
+            "description": "Where the eval job runs, where the model lives, and the crossover bridge that must connect them for a request to complete.",
+            "data": [
+              { "label": "Ditto eval job", "value": "runs on Borg", "role": "input" },
+              { "label": "crossover bridge", "value": "auth plus routing", "role": "process" },
+              { "label": "model endpoint", "value": "hosted on GCP", "role": "output" },
+              { "label": "current status", "value": "bridge blocked, Sindhu working it", "role": "context" }
+            ]
+          },
+          {
+            "id": "surfaces",
+            "title": "Two serving surfaces",
+            "kind": "cards",
+            "description": "The same weights are exercised through two runtimes, and an eval must aim at the correct one to trust the number.",
+            "data": [
+              { "label": "vLLM", "value": "high throughput inference server", "role": "input" },
+              { "label": "Hugging Face", "value": "reference style implementation", "role": "input" },
+              { "label": "same weights", "value": "two serving paths", "role": "context" },
+              { "label": "risk", "value": "wrong surface, drifted number", "role": "output" }
+            ]
+          }
+        ]
+      },
+      "cues": [
+        {
+          "start": 0,
+          "end": 24,
+          "label": "Two locations",
+          "headline": "Job here, model there",
+          "narration": "The eval runs in one place and the model lives in another, so an eval is really a round trip between two systems.",
+          "receive": "a request to evaluate the model",
+          "transform": "separate the runner from the model host",
+          "pass": "the idea that they live apart"
+        },
+        {
+          "start": 24,
+          "end": 48,
+          "label": "Ditto on Borg",
+          "headline": "The runner runs on Borg",
+          "narration": "Ditto is the eval runner and it executes as a job on Borg, Google's cluster scheduler, while the model it grades is hosted on GCP.",
+          "receive": "the eval runner Ditto",
+          "transform": "place it as a Borg job",
+          "pass": "a job that must reach GCP"
+        },
+        {
+          "start": 48,
+          "end": 72,
+          "label": "The crossover",
+          "headline": "Bridge the two worlds",
+          "narration": "Auth, networking, and routing between Borg and GCP are the crossover, and that bridge is what Sindhu is stuck on, which blocks the eval runs.",
+          "receive": "a Borg job that needs a GCP endpoint",
+          "transform": "authenticate and route across the boundary",
+          "pass": "a completed request, once the bridge works"
+        },
+        {
+          "start": 72,
+          "end": 95,
+          "label": "Serving surfaces",
+          "headline": "Aim at the right runtime",
+          "narration": "The same weights run on two serving surfaces, vLLM and Hugging Face, so an eval must target the correct one or the number can drift.",
+          "receive": "the same weights on two runtimes",
+          "transform": "choose the correct serving surface",
+          "pass": "a trustworthy eval number"
+        }
+      ]
+    }
+  },
+  "interactive": {
+    "schema_version": "1.0",
+    "widget_type": "bespoke-artifact",
+    "title": "Trace the Borg to GCP request path",
+    "instructions": "Toggle the crossover bridge open or blocked, pick a serving surface, and watch a request travel from the Ditto Borg job to the GCP hosted model and back. See how a blocked bridge or a wrong serving surface changes the outcome.",
+    "params": {
+      "artifact_slug": "ei-ditto-borg",
+      "min_height": 320
+    }
+  },
+  "code": {
+    "language": "python",
+    "prompt": "Model the eval request path. Given an eval job config (which serving surface, an endpoint host, and a retry budget) and a sequence of simulated endpoint responses (each either 'ok' or 'timeout'), route the request. Retry on every timeout up to the budget of extra tries. Return the outcome as a dict, either a success carrying the surface, or a failure after the retries are exhausted.",
+    "starter_code": "def route_request(config, responses):\n    # config has keys: serving_surface, endpoint_host, retry_budget\n    # responses is a list of 'ok' or 'timeout' strings, one per attempt.\n    # The initial try plus retry_budget retries is the max number of attempts.\n    surface = config['serving_surface']\n    budget = config['retry_budget']\n    # TODO: compute the maximum number of attempts allowed.\n    # TODO: walk the responses, stopping once attempts are exhausted.\n    # TODO: return a success dict on the first 'ok', else a failed dict.\n    pass\n",
+    "constraints": [
+      "The maximum number of attempts is retry_budget plus one for the initial try.",
+      "Stop sending once the attempt budget is used up, even if more responses remain.",
+      "Return a dict with keys outcome, attempts, and surface."
+    ],
+    "walkthrough": {
+      "title": "From a job config and responses to an outcome",
+      "steps": [
+        {
+          "title": "Read the budget",
+          "detail": "Pull serving_surface and retry_budget from the config. The initial try plus retry_budget retries gives the maximum number of attempts you are allowed to make.",
+          "input": "a config dict",
+          "output": "a surface string and a max attempts count"
+        },
+        {
+          "title": "Walk the responses",
+          "detail": "Step through the simulated responses one attempt at a time. On an ok, stop and report success with the attempt count. On a timeout, keep going until the attempt budget is used up.",
+          "input": "a list of ok or timeout strings",
+          "output": "either an early success or an exhausted loop"
+        },
+        {
+          "title": "Report the outcome",
+          "detail": "If an ok was reached, return a success dict carrying the surface and the attempts used. Otherwise return a failed dict after the retries are exhausted.",
+          "input": "the loop result",
+          "output": "an outcome dict"
+        }
+      ]
+    },
+    "io_examples": [
+      {
+        "label": "success after one retry",
+        "input": "config={'serving_surface':'vllm','endpoint_host':'gcp-host','retry_budget':2}, responses=['timeout','ok']",
+        "expected_output": "{'outcome': 'success', 'attempts': 2, 'surface': 'vllm'}",
+        "explanation": "The first attempt times out, the second returns ok within the budget, so it succeeds on attempt two."
+      },
+      {
+        "label": "failed after budget exhausted",
+        "input": "config={'serving_surface':'hugging-face','endpoint_host':'gcp-host','retry_budget':1}, responses=['timeout','timeout','ok']",
+        "expected_output": "{'outcome': 'failed', 'attempts': 2, 'surface': 'hugging-face'}",
+        "explanation": "With a budget of one retry only two attempts are allowed, both time out, and the loop stops before the later ok is ever reached."
+      }
+    ],
+    "visualization": {
+      "title": "Config plus responses to outcome",
+      "description": "How the job config and the response stream produce a success or a failure.",
+      "items": [
+        { "label": "job config", "value": "serving surface, endpoint host, retry budget", "role": "input" },
+        { "label": "route and retry", "value": "send, and on timeout retry within the budget", "role": "process" },
+        { "label": "outcome", "value": "success with surface or failed after retries", "role": "output" }
+      ]
+    },
+    "worked_examples": [
+      {
+        "label": "basic",
+        "title": "Explicit loop",
+        "code": "def route_request(config, responses):\n    surface = config['serving_surface']\n    budget = config['retry_budget']\n    max_attempts = budget + 1\n    attempts = 0\n    for reply in responses:\n        if attempts >= max_attempts:\n            break\n        attempts += 1\n        if reply == 'ok':\n            return {'outcome': 'success', 'attempts': attempts, 'surface': surface}\n    return {'outcome': 'failed', 'attempts': attempts, 'surface': surface}",
+        "explanation": "Count attempts up to the initial try plus the retry budget. Return on the first ok, otherwise report a failure once the attempts are spent."
+      },
+      {
+        "label": "concise",
+        "title": "Sliced responses",
+        "code": "def route_request(config, responses):\n    surface = config['serving_surface']\n    allowed = responses[: config['retry_budget'] + 1]\n    for i, reply in enumerate(allowed, start=1):\n        if reply == 'ok':\n            return {'outcome': 'success', 'attempts': i, 'surface': surface}\n    return {'outcome': 'failed', 'attempts': len(allowed), 'surface': surface}",
+        "explanation": "Slice the responses to the allowed attempt count first, then return on the first ok or fail with the number of attempts used."
+      }
+    ],
+    "hints": [
+      { "level": 1, "text": "The retry budget is the number of extra tries after the first one, so the maximum attempts is budget plus one." },
+      { "level": 2, "text": "Keep a running attempts counter and stop the loop once it reaches the maximum attempts." },
+      { "level": 3, "text": "The moment a response is ok, return a success dict with the current attempts count and the surface." },
+      { "level": 4, "text": "If the loop ends without an ok, return a failed dict carrying the attempts you actually used." },
+      { "level": 5, "text": "A clean shortcut is to slice responses to budget plus one entries, then scan that slice for the first ok." }
+    ],
+    "tests": [
+      {
+        "id": "t_success_retry",
+        "description": "succeeds on the second attempt within budget",
+        "assert": "assert route_request({'serving_surface':'vllm','endpoint_host':'gcp-host','retry_budget':2}, ['timeout','ok']) == {'outcome': 'success', 'attempts': 2, 'surface': 'vllm'}"
+      },
+      {
+        "id": "t_fail_exhausted",
+        "description": "fails once the retry budget is exhausted",
+        "assert": "assert route_request({'serving_surface':'hugging-face','endpoint_host':'gcp-host','retry_budget':1}, ['timeout','timeout','ok']) == {'outcome': 'failed', 'attempts': 2, 'surface': 'hugging-face'}"
+      }
+    ],
+    "hidden_tests": [
+      {
+        "id": "h_first_ok",
+        "description": "succeeds on the first attempt",
+        "assert": "assert route_request({'serving_surface':'vllm','endpoint_host':'gcp-host','retry_budget':3}, ['ok']) == {'outcome': 'success', 'attempts': 1, 'surface': 'vllm'}"
+      },
+      {
+        "id": "h_no_retries",
+        "description": "a zero budget allows only the initial attempt",
+        "assert": "assert route_request({'serving_surface':'vllm','endpoint_host':'gcp-host','retry_budget':0}, ['timeout','ok']) == {'outcome': 'failed', 'attempts': 1, 'surface': 'vllm'}"
+      }
+    ]
+  },
+  "practice": {
+    "written_feedback": "llm_judge",
+    "pass_threshold": 5,
+    "questions": [
+      {
+        "id": "ei2-so-1",
+        "type": "select_one",
+        "prompt": "Where does the Ditto eval runner actually execute?",
+        "concept": "borg-vs-gcp",
+        "difficulty": "easy",
+        "choices": [
+          "On Borg, Google's cluster job scheduler",
+          "On the GCP hosted model endpoint itself",
+          "Inside the vLLM server process",
+          "On the learner's laptop"
+        ],
+        "correct_index": 0,
+        "explanation": "Ditto runs as a job on Borg. The model it grades is hosted separately on GCP, and Ditto reaches out to that endpoint."
+      },
+      {
+        "id": "ei2-sa-some",
+        "type": "select_all",
+        "prompt": "Which statements about the Borg to GCP crossover are true?",
+        "concept": "crossover",
+        "difficulty": "medium",
+        "choices": [
+          "The eval job runs on Borg",
+          "The model endpoint is hosted on GCP",
+          "Auth and routing must bridge the two systems",
+          "Borg and GCP are the same infrastructure world"
+        ],
+        "correct_indices": [0, 1, 2],
+        "explanation": "The job runs on Borg, the model lives on GCP, and the crossover bridges them with auth and routing. Borg and GCP are separate worlds, so the last statement is false."
+      },
+      {
+        "id": "ei2-sa-none",
+        "type": "select_all",
+        "prompt": "The crossover is fully working. Which of these does a working crossover let you skip entirely? Select any that apply.",
+        "concept": "crossover",
+        "difficulty": "hard",
+        "choices": [
+          "Authenticating a Borg job to the GCP endpoint",
+          "Routing the request across the two systems",
+          "Letting responses travel back to the eval job"
+        ],
+        "correct_indices": [],
+        "explanation": "None of these get skipped. A working crossover still performs auth, routing, and the return path, it just performs them reliably instead of failing."
+      },
+      {
+        "id": "ei2-sa-all",
+        "type": "select_all",
+        "prompt": "Which are true about the two serving surfaces? Select all that apply.",
+        "concept": "serving-surfaces",
+        "difficulty": "medium",
+        "choices": [
+          "vLLM is a high throughput inference server",
+          "The Hugging Face implementation is a second serving path",
+          "Both serve the same underlying weights",
+          "An eval should target the correct surface to trust the number"
+        ],
+        "correct_indices": [0, 1, 2, 3],
+        "explanation": "All four hold. vLLM and Hugging Face are two serving surfaces for the same weights, and an eval must aim at the right one or the result can drift."
+      },
+      {
+        "id": "ei2-order",
+        "type": "ordering",
+        "prompt": "Put one Ditto eval round trip in order.",
+        "concept": "borg-vs-gcp",
+        "difficulty": "medium",
+        "items": [
+          "Ditto starts as a job on Borg",
+          "The request crosses over to the GCP hosted endpoint",
+          "The GCP hosted model returns a response",
+          "Ditto scores the response"
+        ],
+        "correct_order": [
+          "Ditto starts as a job on Borg",
+          "The request crosses over to the GCP hosted endpoint",
+          "The GCP hosted model returns a response",
+          "Ditto scores the response"
+        ]
+      },
+      {
+        "id": "ei2-written",
+        "type": "written",
+        "prompt": "Explain why the Borg to GCP crossover is hard and why being stuck on it blocks the eval runs.",
+        "concept": "crossover",
+        "difficulty": "hard",
+        "actual_answer": "Ditto runs as a job on Borg but the model it evaluates is hosted on GCP, so every eval request has to leave one infrastructure world and reach another. That bridge has to handle authentication from a Borg job to a GCP endpoint, network reachability between the two systems, and correct request routing. Borg and GCP were not built as one seamless environment, so none of that is automatic. Until the bridge works reliably, a Borg job cannot reach the GCP hosted model, so no request completes and no responses come back to score. Since the eval depends on reaching the model, being stuck on the crossover means the eval runs cannot proceed at all, even though the model and the eval logic are both fine.",
+        "rubric": "Full credit: names that the eval job is on Borg while the model is on GCP, so requests must cross a boundary that needs auth, networking, and routing between two separate systems, AND explains that a broken bridge means the job cannot reach the model so eval runs are blocked. Partial: mentions the two systems OR the blocking effect but not both. Low: vague or conflates the crossover with the model itself."
+      }
+    ]
+  }
+}

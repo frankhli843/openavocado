@@ -1,0 +1,399 @@
+{
+  "part_id": "ae-part-3-design",
+  "reading": {
+    "intro": "How to design an agentic eval that means something, and one privacy eval worth building.",
+    "blocks": [
+      {
+        "type": "heading",
+        "text": "Designing an eval that means something"
+      },
+      {
+        "type": "paragraph",
+        "text": "An agentic eval is only worth running if a pass and a fail are unambiguous. The cleanest way to get there is to score the world the agent changed, not the words it produced. You seed a fake environment with a known starting state, you trigger the agent on a goal, you let it call tools, and then you inspect the final state of that environment against the state you expected. This is exactly the shape of Gbench from the previous lesson. The whole design hinges on one choice, defining the expected end state precisely enough that the check has a single correct answer."
+      },
+      {
+        "type": "definition",
+        "term": "Seeded environment",
+        "definition": "A fake, controlled world for the task, set up with a known starting state before the agent runs. Seeding means you fully control what exists at the start, so every run begins from the same place and the result is reproducible."
+      },
+      {
+        "type": "definition",
+        "term": "Expected end state",
+        "definition": "The precise final state the environment should be in if the agent did the task correctly. It is written down in advance, so it is the answer key the run is graded against rather than a vague sense of success."
+      },
+      {
+        "type": "definition",
+        "term": "State check",
+        "definition": "The grading step that compares the environment's actual final state to the expected end state after the agent has finished calling tools. The task passes only when the two match, which makes pass and fail unambiguous."
+      },
+      {
+        "type": "paragraph",
+        "text": "The second design idea is discipline about what the model has already seen. If your eval questions or your seeded environments leak into the training data, the model can simply memorize the answers, and the score climbs for a reason that has nothing to do with real capability. To avoid this you keep a test set that the model never trained on, and you actively guard against that set leaking in. A held out eval tells you whether the model generalizes to new situations. A contaminated eval only tells you whether it can recite what it saw."
+      },
+      {
+        "type": "definition",
+        "term": "Contamination",
+        "definition": "When eval items or seeded environments leak into the training data, so the model has effectively already seen the test. A contaminated score is inflated, because it rewards recall of the specific items rather than the skill you meant to measure."
+      },
+      {
+        "type": "definition",
+        "term": "Held out test set",
+        "definition": "A set of eval cases deliberately kept out of training, so the model has never been exposed to them. Because the model cannot have memorized these cases, the score reflects how well it handles genuinely new inputs."
+      },
+      {
+        "type": "definition",
+        "term": "Generalization versus memorization",
+        "definition": "Generalization is doing well on cases the model never trained on, which is the thing you actually want. Memorization is doing well only because the answers were in training. A held out eval measures generalization, a contaminated eval measures memorization."
+      },
+      {
+        "type": "callout",
+        "tone": "warning",
+        "text": "A high score on a contaminated eval is worthless. It looks like capability but it is recall of leaked answers, so it predicts nothing about how the agent behaves on inputs it has never seen."
+      },
+      {
+        "type": "heading",
+        "text": "A privacy eval worth building"
+      },
+      {
+        "type": "paragraph",
+        "text": "Here is a concrete eval that is worth building, Frank's context disclosure privacy eval, which Sara said is worth exploring. The idea is that an agent that knows things about you should reveal different amounts of context to different audiences. It can share a lot with your spouse, less with a friend, less still with a colleague, and almost nothing with a stranger. The disclosure boundary depends on who is asking. An eval can seed a scenario with private facts, ask the agent to respond to each of those audiences in turn, and score whether the agent respected the boundary for that audience."
+      },
+      {
+        "type": "definition",
+        "term": "Context disclosure boundary",
+        "definition": "The maximum amount of private context an agent is allowed to reveal to a given audience. A spouse sits at a high boundary and a stranger at a very low one, so respecting the boundary means never disclosing more than that audience is permitted to receive."
+      },
+      {
+        "type": "example",
+        "title": "Scoring the privacy eval",
+        "body": "Seed the agent with a fact such as a medical appointment. Ask it to answer four audiences, a spouse, a friend, a colleague, and a stranger. Give each audience a maximum allowed disclosure level in a policy. Then score each response against that policy. If the agent tells a stranger the appointment details, it exceeded the stranger boundary and that case fails. The eval score is the fraction of audiences where the agent stayed at or below the allowed level."
+      },
+      {
+        "type": "callout",
+        "tone": "insight",
+        "text": "Treat the context disclosure eval as a preview. It is a real direction worth building, and a later lesson can explore it in depth, from seeding richer scenarios to grading partial disclosure."
+      }
+    ],
+    "summary": "To design an agentic eval that means something you seed a fake environment with a known starting state, trigger the agent, let it call tools, and run a state check comparing the final state to a precisely defined expected end state, which is the shape of Gbench. You must hold out a test set the model never trained on and guard against contamination, because a held out eval measures generalization while a contaminated eval only measures memorization and its high score is worthless. Frank's context disclosure privacy eval is a concrete build worth pursuing, seed a scenario, ask the agent to answer a spouse, a friend, a colleague, and a stranger, and score whether it respected each audience's disclosure boundary.",
+    "diagrams": [
+      {
+        "kind": "mermaid",
+        "title": "From seeded state to a meaningful score",
+        "mermaid": "flowchart LR\n  S[Seed known start state] --> A[Trigger agent, it calls tools]\n  A --> C[State check against expected end state]\n  C --> H[Hold out the test set]\n  H --> G[Measure generalization not memorization]",
+        "takeaway": "Seed a known state, check the final state against the expected end state, and keep the set held out so the score reflects generalization rather than memorized answers.",
+        "support_ref": "ae-design"
+      }
+    ]
+  },
+  "audio": {
+    "script": "Leo: Last part. How do you design an agentic eval that actually means something?\n\nMaya: Start with the environment, I think.\n\nLeo: Right. You seed a fake environment with a known starting state, trigger the agent, let it call tools, then check the final state against the expected end state. That state check makes pass and fail unambiguous. It ties straight back to Gbench.\n\nMaya: And contamination is the trap.\n\nLeo: Exactly. If the eval leaks into training data, the model just memorizes it and the score is inflated and worthless. So you hold out a test set the model never trained on. A held out eval measures generalization. A contaminated one only measures memorization.\n\nMaya: You also had a privacy eval idea.\n\nLeo: Frank's context disclosure eval. An agent should share a lot with your spouse, less with a friend, less with a colleague, and almost nothing with a stranger. Seed a scenario, ask it to answer each audience, and score whether it respected the disclosure boundary. Sara said it is worth exploring, so treat it as a preview of where we go next.",
+    "transcript": "Leo: Last part. How do you design an agentic eval that actually means something?\n\nMaya: Start with the environment, I think.\n\nLeo: Right. You seed a fake environment with a known starting state, trigger the agent, let it call tools, then check the final state against the expected end state. That state check makes pass and fail unambiguous. It ties straight back to Gbench.\n\nMaya: And contamination is the trap.\n\nLeo: Exactly. If the eval leaks into training data, the model just memorizes it and the score is inflated and worthless. So you hold out a test set the model never trained on. A held out eval measures generalization. A contaminated one only measures memorization.\n\nMaya: You also had a privacy eval idea.\n\nLeo: Frank's context disclosure eval. An agent should share a lot with your spouse, less with a friend, less with a colleague, and almost nothing with a stranger. Seed a scenario, ask it to answer each audience, and score whether it respected the disclosure boundary. Sara said it is worth exploring, so treat it as a preview of where we go next.",
+    "duration_hint": 95,
+    "synced_visual": {
+      "strategy": "timeline",
+      "artifact_slug": "ae-design",
+      "scene": {
+        "scene_id": "ae-design-scene",
+        "title": "Seeded state, held out discipline, and a privacy eval",
+        "motif": "seed-check-holdout-disclose",
+        "description": "The design of a meaningful agentic eval, from a seeded environment and a state check against the expected end state, through held out discipline that separates generalization from memorization, to Frank's context disclosure privacy eval scored per audience.",
+        "panels": [
+          {
+            "id": "loop",
+            "title": "The seeded eval loop",
+            "kind": "pipeline",
+            "description": "The four stages that turn a seeded environment into an unambiguous pass or fail through a state check.",
+            "data": [
+              { "label": "Seed", "value": "known start state", "role": "input" },
+              { "label": "Trigger", "value": "agent calls tools", "role": "process" },
+              { "label": "State check", "value": "actual vs expected end state", "role": "process" },
+              { "label": "Score", "value": "pass or fail", "role": "output" }
+            ]
+          },
+          {
+            "id": "disclosure",
+            "title": "Disclosure boundary per audience",
+            "kind": "ledger",
+            "description": "The context disclosure policy, showing the maximum allowed disclosure level dropping as the audience gets more distant.",
+            "data": [
+              { "label": "Spouse", "value": "share a lot", "role": "input" },
+              { "label": "Friend", "value": "share less", "role": "context" },
+              { "label": "Colleague", "value": "share little", "role": "context" },
+              { "label": "Stranger", "value": "share almost nothing", "role": "output" }
+            ]
+          }
+        ]
+      },
+      "cues": [
+        {
+          "start": 0,
+          "end": 20,
+          "label": "Seed and check",
+          "headline": "Score the world, not the words",
+          "narration": "Seed a fake environment with a known start state, trigger the agent, then check the final state against the expected end state.",
+          "receive": "a seeded environment",
+          "transform": "let the agent call tools",
+          "pass": "a final state to grade"
+        },
+        {
+          "start": 20,
+          "end": 40,
+          "label": "The state check",
+          "headline": "Pass and fail become unambiguous",
+          "narration": "The state check compares the actual end state to the expected end state, so a pass has a single correct answer, just like Gbench.",
+          "receive": "the actual end state",
+          "transform": "compare to the expected end state",
+          "pass": "a clean pass or fail"
+        },
+        {
+          "start": 40,
+          "end": 60,
+          "label": "Contamination trap",
+          "headline": "Leaked answers inflate the score",
+          "narration": "If the eval leaks into training data the model memorizes it, and that inflated score is worthless.",
+          "receive": "an eval set",
+          "transform": "check whether it leaked into training",
+          "pass": "a warning that the score is hollow"
+        },
+        {
+          "start": 60,
+          "end": 80,
+          "label": "Hold it out",
+          "headline": "Measure generalization",
+          "narration": "Hold out a test set the model never trained on, so the score measures generalization rather than memorization.",
+          "receive": "a held out test set",
+          "transform": "run the agent on unseen cases",
+          "pass": "a trustworthy generalization score"
+        },
+        {
+          "start": 80,
+          "end": 95,
+          "label": "Privacy eval",
+          "headline": "Respect the disclosure boundary",
+          "narration": "The context disclosure eval asks the agent to answer each audience and scores whether it stayed within the disclosure boundary.",
+          "receive": "a seeded private scenario",
+          "transform": "answer spouse, friend, colleague, stranger",
+          "pass": "a per audience boundary score"
+        }
+      ]
+    }
+  },
+  "interactive": {
+    "schema_version": "1.0",
+    "widget_type": "bespoke-artifact",
+    "title": "Design a meaningful eval",
+    "instructions": "Walk the seeded eval loop. Set a known start state, trigger the agent, and run the state check against the expected end state. Then toggle contamination on and off to watch a held out score stay honest while a leaked score inflates. Finally set a disclosure policy and score the agent's answer to each audience.",
+    "params": {
+      "artifact_slug": "ae-design",
+      "min_height": 320
+    }
+  },
+  "code": {
+    "language": "python",
+    "prompt": "Model a context disclosure scorer for the privacy eval. A policy maps each audience to the maximum disclosure level it is allowed to receive. Given the level the agent actually used for an audience, decide whether the agent respected the boundary, meaning the used level is less than or equal to the allowed max. Then compute a pass rate across several scenarios. Fill the two TODO helpers, then compose them.",
+    "starter_code": "def respected_boundary(policy, audience, used_level):\n    # policy maps each audience to its maximum allowed disclosure level (an int).\n    # TODO: return True when used_level is less than or equal to the allowed\n    # max for this audience, otherwise False.\n    pass\n\n\ndef pass_rate(policy, scenarios):\n    # scenarios is a list of (audience, used_level) pairs.\n    # TODO: return the fraction of scenarios that respected the boundary.\n    # An empty list should return 0.0.\n    pass\n\n\ndef audit(policy, scenarios):\n    return {\n        \"pass_rate\": round(pass_rate(policy, scenarios), 2),\n        \"respected\": sum(1 for a, u in scenarios if respected_boundary(policy, a, u)),\n        \"total\": len(scenarios),\n    }\n",
+    "constraints": [
+      "Use plain Python dicts and lists, no external libraries.",
+      "Respecting the boundary means the used level is less than or equal to the allowed max for that audience.",
+      "pass_rate must return 0.0 for an empty scenario list rather than dividing by zero."
+    ],
+    "walkthrough": {
+      "title": "From a disclosure policy to a pass rate",
+      "steps": [
+        {
+          "title": "Check one boundary",
+          "detail": "respected_boundary looks up the allowed max for the audience in the policy and returns whether the used level stayed at or below it.",
+          "input": "policy, audience 'stranger', used_level 2",
+          "output": "False when the stranger max is 0"
+        },
+        {
+          "title": "Score every scenario",
+          "detail": "pass_rate walks the list of audience and used level pairs, counts how many respected the boundary, and divides by the total, guarding the empty list.",
+          "input": "a list of (audience, used_level) pairs",
+          "output": "a fraction in the range 0 to 1"
+        },
+        {
+          "title": "Bundle the audit",
+          "detail": "audit rounds the pass rate and reports how many scenarios respected the boundary out of the total.",
+          "input": "policy and scenarios",
+          "output": "a report dict"
+        }
+      ]
+    },
+    "io_examples": [
+      {
+        "label": "all respected",
+        "input": "audit({'spouse': 3, 'friend': 2, 'colleague': 1, 'stranger': 0}, [('spouse', 3), ('friend', 1), ('stranger', 0)])",
+        "expected_output": "{'pass_rate': 1.0, 'respected': 3, 'total': 3}",
+        "explanation": "Every used level stayed at or below the allowed max, so the agent respected all three boundaries."
+      },
+      {
+        "label": "one breach",
+        "input": "audit({'spouse': 3, 'friend': 2, 'colleague': 1, 'stranger': 0}, [('stranger', 2), ('colleague', 1)])",
+        "expected_output": "{'pass_rate': 0.5, 'respected': 1, 'total': 2}",
+        "explanation": "Telling a stranger level 2 exceeds the stranger max of 0, so that case fails while the colleague case passes."
+      }
+    ],
+    "visualization": {
+      "title": "policy plus scenarios to pass rate",
+      "description": "How the disclosure policy and the used levels combine into a per audience boundary decision and a pass rate.",
+      "items": [
+        { "label": "policy and scenarios", "value": "allowed max per audience", "role": "input" },
+        { "label": "respected_boundary", "value": "used level within allowed max", "role": "process" },
+        { "label": "pass rate", "value": "fraction respected", "role": "output" }
+      ]
+    },
+    "worked_examples": [
+      {
+        "label": "basic",
+        "title": "Explicit helpers",
+        "code": "def respected_boundary(policy, audience, used_level):\n    allowed = policy[audience]\n    return used_level <= allowed\n\ndef pass_rate(policy, scenarios):\n    if not scenarios:\n        return 0.0\n    ok = sum(1 for a, u in scenarios if respected_boundary(policy, a, u))\n    return ok / len(scenarios)\n\ndef audit(policy, scenarios):\n    return {\n        \"pass_rate\": round(pass_rate(policy, scenarios), 2),\n        \"respected\": sum(1 for a, u in scenarios if respected_boundary(policy, a, u)),\n        \"total\": len(scenarios),\n    }",
+        "explanation": "respected_boundary reads the allowed max from the policy and compares it to the used level. pass_rate counts the respected scenarios and guards the empty list."
+      },
+      {
+        "label": "concise",
+        "title": "Idiomatic Python",
+        "code": "def respected_boundary(policy, audience, used_level):\n    return used_level <= policy[audience]\n\ndef pass_rate(policy, scenarios):\n    ok = sum(respected_boundary(policy, a, u) for a, u in scenarios)\n    return ok / len(scenarios) if scenarios else 0.0\n\ndef audit(policy, scenarios):\n    ok = sum(respected_boundary(policy, a, u) for a, u in scenarios)\n    rate = ok / len(scenarios) if scenarios else 0.0\n    return {\"pass_rate\": round(rate, 2), \"respected\": ok, \"total\": len(scenarios)}",
+        "explanation": "Booleans sum as ints, so counting respected scenarios is a single sum, and the empty guard keeps the pass rate at 0.0."
+      }
+    ],
+    "hints": [
+      { "level": 1, "text": "Look up the allowed max for the audience with policy[audience]." },
+      { "level": 2, "text": "Respecting the boundary means used_level is less than or equal to that allowed max." },
+      { "level": 3, "text": "In pass_rate, count the scenarios where respected_boundary is True." },
+      { "level": 4, "text": "Return 0.0 when scenarios is empty so you never divide by zero." },
+      { "level": 5, "text": "Divide the respected count by len(scenarios) to get the pass rate, then let audit round it." }
+    ],
+    "tests": [
+      {
+        "id": "t_all_respected",
+        "description": "every audience stays within its boundary",
+        "assert": "assert audit({'spouse': 3, 'friend': 2, 'colleague': 1, 'stranger': 0}, [('spouse', 3), ('friend', 1), ('stranger', 0)]) == {'pass_rate': 1.0, 'respected': 3, 'total': 3}"
+      },
+      {
+        "id": "t_one_breach",
+        "description": "a stranger over the limit fails that case",
+        "assert": "assert audit({'spouse': 3, 'friend': 2, 'colleague': 1, 'stranger': 0}, [('stranger', 2), ('colleague', 1)]) == {'pass_rate': 0.5, 'respected': 1, 'total': 2}"
+      }
+    ],
+    "hidden_tests": [
+      {
+        "id": "h_empty",
+        "description": "an empty scenario list is 0.0 and respects nothing",
+        "assert": "assert audit({'spouse': 3, 'stranger': 0}, []) == {'pass_rate': 0.0, 'respected': 0, 'total': 0}"
+      },
+      {
+        "id": "h_equal_boundary",
+        "description": "using exactly the allowed max still respects the boundary",
+        "assert": "assert respected_boundary({'colleague': 1}, 'colleague', 1) == True"
+      }
+    ]
+  },
+  "practice": {
+    "written_feedback": "llm_judge",
+    "pass_threshold": 5,
+    "questions": [
+      {
+        "id": "ae3-so-1",
+        "type": "select_one",
+        "prompt": "In a seeded agentic eval, what does the state check compare?",
+        "concept": "seeded-environment",
+        "difficulty": "easy",
+        "choices": [
+          "The environment's actual final state against the expected end state",
+          "The number of tokens the agent produced",
+          "The wording of the agent's final message",
+          "How long the agent took to respond"
+        ],
+        "correct_index": 0,
+        "explanation": "The state check grades the world the agent changed, comparing the actual final state to the precisely defined expected end state."
+      },
+      {
+        "id": "ae3-sa-some",
+        "type": "select_all",
+        "prompt": "Which statements about contamination and held out sets are true? Select all that apply.",
+        "concept": "contamination",
+        "difficulty": "medium",
+        "choices": [
+          "A held out test set is kept out of training so the model never saw it",
+          "A contaminated eval can inflate the score by rewarding memorization",
+          "A high score on a contaminated eval proves real capability",
+          "A held out eval measures generalization to new cases"
+        ],
+        "correct_indices": [0, 1, 3],
+        "explanation": "Held out sets measure generalization and contamination inflates scores through memorization. A high contaminated score does not prove capability, it is worthless."
+      },
+      {
+        "id": "ae3-sa-none",
+        "type": "select_all",
+        "prompt": "Which of these make a contaminated eval trustworthy? Select all that apply.",
+        "concept": "contamination",
+        "difficulty": "hard",
+        "choices": [
+          "The eval questions appearing in the training data",
+          "The model memorizing the seeded environments",
+          "Reporting a very high score from leaked answers"
+        ],
+        "correct_indices": [],
+        "explanation": "None of these. Each one is a symptom of contamination, which makes the score memorization rather than a trustworthy measure of capability."
+      },
+      {
+        "id": "ae3-sa-all",
+        "type": "select_all",
+        "prompt": "Which of these are genuine parts of designing the context disclosure privacy eval? Select all that apply.",
+        "concept": "privacy-eval",
+        "difficulty": "medium",
+        "choices": [
+          "Seed a scenario that contains private facts",
+          "Give each audience a maximum allowed disclosure level",
+          "Score whether the agent respected each audience's boundary"
+        ],
+        "correct_indices": [0, 1, 2],
+        "explanation": "All three are core to the design. You seed private facts, set a per audience disclosure policy, and score whether the agent stayed within each boundary."
+      },
+      {
+        "id": "ae3-order",
+        "type": "ordering",
+        "prompt": "Put the stages of a seeded agentic eval in order.",
+        "concept": "seeded-environment",
+        "difficulty": "medium",
+        "items": [
+          "Trigger the agent on the goal and let it call tools",
+          "Seed a fake environment with a known start state",
+          "Run the state check against the expected end state",
+          "Record the pass or fail result"
+        ],
+        "correct_order": [
+          "Seed a fake environment with a known start state",
+          "Trigger the agent on the goal and let it call tools",
+          "Run the state check against the expected end state",
+          "Record the pass or fail result"
+        ]
+      },
+      {
+        "id": "ae3-so-2",
+        "type": "select_one",
+        "prompt": "In the disclosure policy, which audience should receive the least context?",
+        "concept": "privacy-eval",
+        "difficulty": "easy",
+        "choices": [
+          "A stranger",
+          "Your spouse",
+          "A friend",
+          "A colleague"
+        ],
+        "correct_index": 0,
+        "explanation": "A stranger sits at the lowest disclosure boundary, so the agent should share almost nothing, while a spouse sits at the highest."
+      },
+      {
+        "id": "ae3-written",
+        "type": "written",
+        "prompt": "Explain why a held out test set matters and why a high score on a contaminated eval is worthless, using the idea of generalization versus memorization.",
+        "concept": "contamination",
+        "difficulty": "hard",
+        "actual_answer": "A held out test set is a set of eval cases that the model never trained on, so it has had no chance to memorize the answers. That is what makes it valuable, because the score reflects how well the model handles genuinely new inputs, which is generalization, the thing we actually care about. Contamination is when the eval cases or the seeded environments leak into the training data. When that happens the model can score well simply by reciting what it saw, which is memorization, not skill. So a high score on a contaminated eval is worthless. It looks like capability but it predicts nothing about behavior on unseen inputs, because it rewards recall of leaked answers rather than real problem solving. To keep an eval meaningful you hold out the test set and guard against leakage, so the number you report measures generalization instead of memorization.",
+        "rubric": "Full credit: defines a held out set as never trained on, ties it to generalization, defines contamination as leakage into training, ties a high contaminated score to memorization and explains it predicts nothing about unseen inputs. Partial credit: covers held out or contamination but does not connect both to generalization versus memorization. Low credit: vague or missing the memorization point."
+      }
+    ]
+  }
+}

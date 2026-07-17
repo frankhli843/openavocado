@@ -1,0 +1,133 @@
+{
+  "language": "python",
+  "prompt": "Integrator: build the reproducible eval run controller that ties the three parts together. A one-shot run first provisions its resources (idempotently), then runs the Gbench agentic cases and scores them by whether each case reached its expected backend state, then decides the release gate from the pass rate, then tears everything down. Given a desired resource set, a list of case results (each True when the agent left the backend in the expected state), and a pass threshold, return the full run report. Fill the two TODO helpers, then compose them.",
+  "starter_code": "def apply_plan(desired, state):\n    # Idempotent provisioning. Return a NEW set equal to the desired resources,\n    # regardless of the current state. Applying an empty desired set tears down\n    # to an empty set, and running apply twice is always safe.\n    # TODO: return set(desired)\n    pass\n\n\ndef pass_rate(results):\n    # Fraction of True case results. Return 0.0 for an empty list.\n    # TODO\n    pass\n\n\ndef run_reproducible_eval(desired, cases, threshold):\n    provisioned = apply_plan(desired, set())\n    rate = pass_rate(cases)\n    torn_down = apply_plan([], provisioned)\n    return {\n        \"provisioned\": sorted(provisioned),\n        \"pass_rate\": round(rate, 2),\n        \"gate\": rate >= threshold,\n        \"clean_teardown\": len(torn_down) == 0,\n    }\n",
+  "constraints": [
+    "Provisioning must be idempotent, so applying the same desired set from any state gives the same result and teardown leaves nothing behind.",
+    "The release gate passes only when the agentic pass rate clears the threshold, which is the Gbench state check, not a text match.",
+    "Guard the empty case list so pass_rate never divides by zero."
+  ],
+  "walkthrough": {
+    "title": "From one-shot provisioning to a gated, torn-down eval run",
+    "steps": [
+      {
+        "title": "Provision idempotently",
+        "detail": "apply_plan returns exactly the desired resource set, so the run starts from a clean, reproducible environment no matter what came before.",
+        "input": "a desired resource set and the current state",
+        "output": "a new state equal to the desired set"
+      },
+      {
+        "title": "Score the agentic cases",
+        "detail": "pass_rate is the fraction of cases where the agent left the backend in the expected end state, which is how Gbench grades an agentic task.",
+        "input": "a list of boolean case results",
+        "output": "a pass rate between 0 and 1"
+      },
+      {
+        "title": "Gate then tear down",
+        "detail": "run_reproducible_eval releases only when the pass rate clears the threshold, then tears the environment down to nothing so the run leaves no snowflake state.",
+        "input": "desired, cases, threshold",
+        "output": "the run report dict"
+      }
+    ]
+  },
+  "io_examples": [
+    {
+      "label": "passes gate",
+      "input": "desired=['bench','model'], cases=[True,True,True,False], threshold=0.5",
+      "expected_output": "{'provisioned': ['bench', 'model'], 'pass_rate': 0.75, 'gate': True, 'clean_teardown': True}",
+      "explanation": "Three of four cases reached the expected state, so the pass rate 0.75 clears the 0.5 gate, and teardown returns an empty set."
+    },
+    {
+      "label": "fails gate",
+      "input": "desired=['bench'], cases=[True,False,False,False], threshold=0.5",
+      "expected_output": "{'provisioned': ['bench'], 'pass_rate': 0.25, 'gate': False, 'clean_teardown': True}",
+      "explanation": "Only one of four cases reached the expected state, so the pass rate 0.25 fails the gate, but the run still tears down cleanly."
+    }
+  ],
+  "visualization": {
+    "title": "Provision, grade, gate, teardown",
+    "description": "How a reproducible one-shot run moves from resources to a gated decision.",
+    "items": [
+      {
+        "label": "desired resources",
+        "value": "idempotent apply_plan",
+        "role": "input"
+      },
+      {
+        "label": "state-graded pass rate",
+        "value": "cases that reached expected state",
+        "role": "process"
+      },
+      {
+        "label": "gate and clean teardown",
+        "value": "release only over threshold, then empty",
+        "role": "output"
+      }
+    ]
+  },
+  "worked_examples": [
+    {
+      "label": "basic",
+      "title": "Explicit helpers",
+      "code": "def apply_plan(desired, state):\n    return set(desired)\n\ndef pass_rate(results):\n    return (sum(1 for r in results if r) / len(results)) if results else 0.0\n\ndef run_reproducible_eval(desired, cases, threshold):\n    provisioned = apply_plan(desired, set())\n    rate = pass_rate(cases)\n    torn_down = apply_plan([], provisioned)\n    return {\"provisioned\": sorted(provisioned), \"pass_rate\": round(rate, 2), \"gate\": rate >= threshold, \"clean_teardown\": len(torn_down) == 0}",
+      "explanation": "apply_plan ignores the prior state and returns the desired set, which makes provisioning and teardown idempotent. pass_rate guards the empty list. The controller composes both and reports the gate."
+    },
+    {
+      "label": "concise",
+      "title": "Idiomatic Python",
+      "code": "def apply_plan(desired, state):\n    return set(desired)\n\ndef run_reproducible_eval(desired, cases, threshold):\n    rate = (sum(cases) / len(cases)) if cases else 0.0\n    return {\"provisioned\": sorted(set(desired)), \"pass_rate\": round(rate, 2), \"gate\": rate >= threshold, \"clean_teardown\": len(apply_plan([], set(desired))) == 0}",
+      "explanation": "The pass rate is inlined by summing the boolean cases, and teardown is shown to return an empty set for any desired input."
+    }
+  ],
+  "hints": [
+    {
+      "level": 1,
+      "text": "There are two helpers. One provisions the resources, the other scores the cases."
+    },
+    {
+      "level": 2,
+      "text": "apply_plan should return set(desired) and ignore the current state, which is what makes it idempotent."
+    },
+    {
+      "level": 3,
+      "text": "pass_rate is the count of True results divided by the total, with 0.0 for an empty list."
+    },
+    {
+      "level": 4,
+      "text": "gate is rate >= threshold, and clean_teardown checks that apply_plan([], provisioned) is empty."
+    },
+    {
+      "level": 5,
+      "text": "Round the pass rate to 2 places and sort the provisioned set in the returned report."
+    }
+  ],
+  "tests": [
+    {
+      "id": "i_pass",
+      "description": "clears the gate and tears down",
+      "assert": "assert run_reproducible_eval(['bench','model'], [True,True,True,False], 0.5) == {'provisioned': ['bench', 'model'], 'pass_rate': 0.75, 'gate': True, 'clean_teardown': True}"
+    },
+    {
+      "id": "i_fail",
+      "description": "fails the gate on a low pass rate",
+      "assert": "assert run_reproducible_eval(['bench'], [True,False,False,False], 0.5)['gate'] is False"
+    },
+    {
+      "id": "i_teardown",
+      "description": "teardown is always clean",
+      "assert": "assert run_reproducible_eval(['a','b','c'], [True], 0.5)['clean_teardown'] is True"
+    }
+  ],
+  "hidden_tests": [
+    {
+      "id": "hi_empty_cases",
+      "description": "empty cases fail the gate",
+      "assert": "assert run_reproducible_eval(['bench'], [], 0.5)['gate'] is False"
+    },
+    {
+      "id": "hi_idempotent",
+      "description": "provisioning is deterministic regardless of order",
+      "assert": "assert run_reproducible_eval(['model','bench'], [True,True], 0.5)['provisioned'] == ['bench', 'model']"
+    }
+  ]
+}

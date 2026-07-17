@@ -1,0 +1,180 @@
+{
+  "title": "Agentic Evals That Matter: Multi-Turn, Tool-Calling, and the Template Trap",
+  "description": "The evals the team is missing and how to build them. This lesson moves from eval infrastructure to eval design: why a green single-turn score can ship a broken multi-turn agent, why the Gemma 4 launch tool-call pass rate of about ten percent was a chat-template formatting bug rather than a capability gap, how a seeded agent environment is scored with a state check, why held-out data and contamination discipline decide whether a score means anything, and a concrete context-disclosure privacy eval worth building. It closes the loop from why evals decide to which evals to build.",
+  "goals": [
+    "Distinguish single-turn evaluation from multi-turn agentic tasks and explain why cross-turn state makes a green single-turn score hide a broken agent",
+    "Decompose tool-calling correctness into capability in the weights versus protocol in the chat template, and diagnose a low pass rate instead of assuming the model is weak",
+    "Explain the Gemma 4 launch template trap, where a formatting bug held the tool-call pass rate near ten percent while the weights were fine",
+    "Design an agentic eval with a seeded environment, a precise expected end state, and held-out data that guards against contamination",
+    "Describe a concrete context-disclosure privacy eval that scores whether an agent respects audience-specific disclosure boundaries"
+  ],
+  "tags": [
+    "gemma",
+    "evals",
+    "agentic-evals",
+    "multi-turn",
+    "tool-calling",
+    "chat-template",
+    "template-trap",
+    "contamination",
+    "held-out",
+    "privacy-eval",
+    "eval-design",
+    "meeting-derived",
+    "research-backed"
+  ],
+  "next_lesson_diagnostics": [
+    {
+      "id": "diag-ae-build-privacy",
+      "prompt": "If the next lesson builds the context-disclosure privacy eval, what would you define first: the audiences and their allowed disclosure levels, the seeded scenario, the agent trigger, or the scoring rule that checks the boundary?",
+      "hint": "Think about what must exist before an agent response can be judged as respecting or breaking a boundary."
+    },
+    {
+      "id": "diag-ae-template-vs-capability",
+      "prompt": "When a new tool-calling eval reports a low pass rate, what would you inspect first to decide whether it is a template problem or a capability gap: the parsed tool-call format, the control tokens, the model reasoning, or the expected end state?",
+      "hint": "One of these tells you whether the call could even be parsed before you judge whether it was correct."
+    },
+    {
+      "id": "diag-ae-heldout",
+      "prompt": "To keep a new agentic eval trustworthy over time, what would you protect most carefully against contamination: the tool schemas, the seeded environments, the expected end states, or the held-out task set?",
+      "hint": "Contamination inflates a score by letting the model memorize what it should have to generalize."
+    }
+  ],
+  "knowledge_graph_data": {
+    "type": "focused",
+    "title": "Agentic eval design in the subject map",
+    "description": "This lesson teaches how to design the agentic evals the team is missing: single-turn versus multi-turn, the capability versus protocol template trap, seeded-environment scoring with held-out data, and a context-disclosure privacy eval. It builds on the eval infrastructure lesson and points toward quantization and release.",
+    "nodes": [
+      {
+        "id": "subject-root",
+        "label": "Model Building and Inference",
+        "category": "subject_root",
+        "covered": true
+      },
+      {
+        "id": "eval-infra",
+        "label": "Eval and serving infrastructure",
+        "category": "lesson_concept",
+        "covered": true
+      },
+      {
+        "id": "multiturn-eval",
+        "label": "Single-turn versus multi-turn",
+        "category": "lesson_concept",
+        "covered": true
+      },
+      {
+        "id": "template-trap",
+        "label": "Capability versus protocol template trap",
+        "category": "lesson_concept",
+        "covered": true
+      },
+      {
+        "id": "agentic-eval-design",
+        "label": "Seeded scoring, held-out, privacy eval",
+        "category": "lesson_concept",
+        "covered": true
+      },
+      {
+        "id": "build-privacy-eval",
+        "label": "Build the context-disclosure eval",
+        "category": "concept",
+        "preview": true,
+        "covered": false
+      },
+      {
+        "id": "quantization",
+        "label": "Quantization and GGUF",
+        "category": "concept",
+        "preview": true,
+        "covered": false
+      },
+      {
+        "id": "release",
+        "label": "Open release",
+        "category": "concept",
+        "covered": false
+      }
+    ],
+    "edges": [
+      {
+        "from": "eval-infra",
+        "to": "multiturn-eval"
+      },
+      {
+        "from": "multiturn-eval",
+        "to": "template-trap"
+      },
+      {
+        "from": "template-trap",
+        "to": "agentic-eval-design"
+      },
+      {
+        "from": "agentic-eval-design",
+        "to": "build-privacy-eval"
+      }
+    ],
+    "curriculum_stages": [
+      {
+        "id": "evaluation",
+        "label": "Evaluation infrastructure",
+        "status": "done"
+      },
+      {
+        "id": "agentic-evals",
+        "label": "Agentic eval design",
+        "status": "current"
+      },
+      {
+        "id": "build-evals",
+        "label": "Build the missing evals",
+        "status": "next"
+      },
+      {
+        "id": "quantization",
+        "label": "Quantization and GGUF",
+        "status": "later"
+      },
+      {
+        "id": "release",
+        "label": "Release",
+        "status": "later"
+      }
+    ],
+    "current": "agentic-evals"
+  },
+  "planning_rationale": "Lesson 30 is the seq 6 advancement named in the subject 5 workpad: Agentic Evals That Matter. Lesson 29 taught the eval and serving infrastructure. This lesson deepens the eval-design half, which evals to build and why the ones the team has miss real failures. It teaches single-turn versus multi-turn evaluation, the capability versus protocol decomposition behind the Gemma 4 launch template trap where the tool-call pass rate sat near ten percent, how a seeded agent environment is scored with a state check, contamination and held-out discipline, and Frank's own context-disclosure privacy eval that Sara flagged as worth exploring. It is grounded in the 2026-07-09 Sara meeting plus public sources on tool-calling and multi-turn evaluation (Berkeley Function Calling Leaderboard, tau-bench, Gemma prompt formatting, Hugging Face chat templates and tool use, FunctionGemma). The next lesson can build the privacy eval end to end.",
+  "source_context": {
+    "author": "cc-handauthored/agentic-evals-that-matter",
+    "derived_from": "subject 5 workpad seq 6 (Agentic Evals That Matter) + 2026-07-09 Sara meeting",
+    "sources": [
+      {
+        "title": "Berkeley Function Calling Leaderboard V3",
+        "url": "https://gorilla.cs.berkeley.edu/blogs/13_bfcl_v3_multi_turn.html",
+        "contribution": "Multi-turn, multi-step tool-calling categories with backend state checks across turns, the basis for the single versus multi-turn contrast."
+      },
+      {
+        "title": "FunctionGemma formatting and best practices",
+        "url": "https://ai.google.dev/gemma/docs/functiongemma/formatting-and-best-practices",
+        "contribution": "Single-turn and parallel tool calls are supported while multi-turn and multi-step workflows are not, which is the exact gap the lesson teaches."
+      },
+      {
+        "title": "Google AI Gemma 4 prompt formatting",
+        "url": "https://ai.google.dev/gemma/docs/core/prompt-formatting-gemma4",
+        "contribution": "Roles, turn delimiters, thinking tokens, tool tokens, and tool responses are the runtime contract, which explains the template trap."
+      },
+      {
+        "title": "Hugging Face Transformers chat templates",
+        "url": "https://huggingface.co/docs/transformers/en/chat_templating",
+        "contribution": "Chat templates serialize messages into exact token sequences and wrong control tokens hurt behavior, the mechanism behind the ten percent pass rate."
+      },
+      {
+        "title": "tau-bench paper and repository",
+        "url": "https://arxiv.org/abs/2406.12045",
+        "contribution": "Final database-state comparison and reliability metrics across trials, the seeded-environment scoring and held-out discipline pattern."
+      }
+    ]
+  },
+  "generated_by": "cc-handauthored/agentic-evals-that-matter",
+  "generator_version": "1.0.0"
+}

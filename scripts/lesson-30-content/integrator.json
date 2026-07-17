@@ -1,0 +1,133 @@
+{
+  "language": "python",
+  "prompt": "Integrator: build the agentic eval verdict that ties the three parts together. You score only held-out items, because a contaminated item measures memorization, not skill. A task passes only when the tool call was parsed correctly by the template AND the agent was actually capable on the task. Given a list of task results, each with parsed_ok, capability_ok, and held_out, compute the observed pass rate and the true capability rate over the held-out items, then diagnose whether a low score points to a template problem or a real capability gap. Fill the two TODO helpers, then compose them.",
+  "starter_code": "def held_out_only(results):\n    # Keep only the items that were held out of training.\n    # TODO: return the list of results where held_out is True.\n    pass\n\n\ndef rate(results, predicate):\n    # Fraction of results where predicate(item) is True. 0.0 for an empty list.\n    # TODO\n    pass\n\n\ndef eval_verdict(results, gap_threshold):\n    scored = held_out_only(results)\n    observed = rate(scored, lambda r: r[\"parsed_ok\"] and r[\"capability_ok\"])\n    capability = rate(scored, lambda r: r[\"capability_ok\"])\n    gap = capability - observed\n    return {\n        \"scored\": len(scored),\n        \"observed_rate\": round(observed, 2),\n        \"capability_rate\": round(capability, 2),\n        \"template_gap\": round(gap, 2),\n        \"diagnosis\": \"template\" if gap >= gap_threshold else \"capability\",\n    }\n",
+  "constraints": [
+    "Score only held-out items, because a contaminated item measures memorization and inflates the result.",
+    "A task passes only when the template parsed the call correctly and the agent was capable, so both must be true.",
+    "A large gap between the capability rate and the observed rate points to a template problem, not a weak model."
+  ],
+  "walkthrough": {
+    "title": "From raw results to a template-versus-capability verdict",
+    "steps": [
+      {
+        "title": "Keep only held-out items",
+        "detail": "held_out_only drops items that leaked into training, so the score reflects generalization rather than memorization.",
+        "input": "a list of task results",
+        "output": "the held-out subset"
+      },
+      {
+        "title": "Measure two rates",
+        "detail": "observed pass requires parsed_ok and capability_ok together, while the capability rate looks at capability_ok alone, which isolates the template effect.",
+        "input": "the held-out results",
+        "output": "an observed rate and a capability rate"
+      },
+      {
+        "title": "Diagnose the gap",
+        "detail": "eval_verdict reports both rates and diagnoses a template problem when the capability rate sits well above the observed rate.",
+        "input": "results and a gap threshold",
+        "output": "the verdict dict"
+      }
+    ]
+  },
+  "io_examples": [
+    {
+      "label": "template problem",
+      "input": "results=[{'parsed_ok':False,'capability_ok':True,'held_out':True}, {'parsed_ok':False,'capability_ok':True,'held_out':True}, {'parsed_ok':True,'capability_ok':True,'held_out':True}, {'parsed_ok':True,'capability_ok':True,'held_out':True}], gap_threshold=0.3",
+      "expected_output": "{'scored': 4, 'observed_rate': 0.5, 'capability_rate': 1.0, 'template_gap': 0.5, 'diagnosis': 'template'}",
+      "explanation": "Every task was within capability, but two calls failed to parse, so the observed rate is 0.5 while capability is 1.0, and the 0.5 gap flags a template problem."
+    },
+    {
+      "label": "capability gap",
+      "input": "results=[{'parsed_ok':True,'capability_ok':False,'held_out':True}, {'parsed_ok':True,'capability_ok':False,'held_out':True}, {'parsed_ok':True,'capability_ok':True,'held_out':True}, {'parsed_ok':True,'capability_ok':True,'held_out':True}], gap_threshold=0.3",
+      "expected_output": "{'scored': 4, 'observed_rate': 0.5, 'capability_rate': 0.5, 'template_gap': 0.0, 'diagnosis': 'capability'}",
+      "explanation": "The template parsed every call, so the observed rate equals the capability rate and the zero gap points to a real capability gap."
+    }
+  ],
+  "visualization": {
+    "title": "Held-out, two rates, verdict",
+    "description": "How held-out results become a template or capability diagnosis.",
+    "items": [
+      {
+        "label": "held-out results",
+        "value": "drop contaminated items",
+        "role": "input"
+      },
+      {
+        "label": "observed vs capability rate",
+        "value": "parsed and capable versus capable alone",
+        "role": "process"
+      },
+      {
+        "label": "diagnosis",
+        "value": "template gap or real capability gap",
+        "role": "output"
+      }
+    ]
+  },
+  "worked_examples": [
+    {
+      "label": "basic",
+      "title": "Explicit helpers",
+      "code": "def held_out_only(results):\n    return [r for r in results if r[\"held_out\"]]\n\ndef rate(results, predicate):\n    return (sum(1 for r in results if predicate(r)) / len(results)) if results else 0.0\n\ndef eval_verdict(results, gap_threshold):\n    scored = held_out_only(results)\n    observed = rate(scored, lambda r: r[\"parsed_ok\"] and r[\"capability_ok\"])\n    capability = rate(scored, lambda r: r[\"capability_ok\"])\n    gap = capability - observed\n    return {\"scored\": len(scored), \"observed_rate\": round(observed, 2), \"capability_rate\": round(capability, 2), \"template_gap\": round(gap, 2), \"diagnosis\": \"template\" if gap >= gap_threshold else \"capability\"}",
+      "explanation": "held_out_only filters the items, rate computes a guarded fraction, and eval_verdict compares the two rates to diagnose the gap."
+    },
+    {
+      "label": "concise",
+      "title": "Idiomatic Python",
+      "code": "def eval_verdict(results, gap_threshold):\n    scored = [r for r in results if r[\"held_out\"]]\n    n = len(scored)\n    observed = (sum(1 for r in scored if r[\"parsed_ok\"] and r[\"capability_ok\"]) / n) if n else 0.0\n    capability = (sum(1 for r in scored if r[\"capability_ok\"]) / n) if n else 0.0\n    gap = capability - observed\n    return {\"scored\": n, \"observed_rate\": round(observed, 2), \"capability_rate\": round(capability, 2), \"template_gap\": round(gap, 2), \"diagnosis\": \"template\" if gap >= gap_threshold else \"capability\"}",
+      "explanation": "The held-out filter and both rates are inlined, and the diagnosis is the comparison of the gap to the threshold."
+    }
+  ],
+  "hints": [
+    {
+      "level": 1,
+      "text": "First keep only the held-out items, because contaminated items would inflate the score."
+    },
+    {
+      "level": 2,
+      "text": "held_out_only returns the results where held_out is True."
+    },
+    {
+      "level": 3,
+      "text": "rate divides the count that match a predicate by the total, with a guard for the empty list."
+    },
+    {
+      "level": 4,
+      "text": "observed uses parsed_ok and capability_ok together, capability uses capability_ok alone."
+    },
+    {
+      "level": 5,
+      "text": "diagnosis is template when the gap is at least the threshold, otherwise capability."
+    }
+  ],
+  "tests": [
+    {
+      "id": "v_template",
+      "description": "capable model blocked by parsing is a template problem",
+      "assert": "assert eval_verdict([{'parsed_ok':False,'capability_ok':True,'held_out':True},{'parsed_ok':False,'capability_ok':True,'held_out':True},{'parsed_ok':True,'capability_ok':True,'held_out':True},{'parsed_ok':True,'capability_ok':True,'held_out':True}], 0.3) == {'scored': 4, 'observed_rate': 0.5, 'capability_rate': 1.0, 'template_gap': 0.5, 'diagnosis': 'template'}"
+    },
+    {
+      "id": "v_capability",
+      "description": "no parse gap means a real capability gap",
+      "assert": "assert eval_verdict([{'parsed_ok':True,'capability_ok':False,'held_out':True},{'parsed_ok':True,'capability_ok':True,'held_out':True}], 0.3)['diagnosis'] == 'capability'"
+    },
+    {
+      "id": "v_heldout",
+      "description": "contaminated items are excluded from scoring",
+      "assert": "assert eval_verdict([{'parsed_ok':True,'capability_ok':True,'held_out':False},{'parsed_ok':True,'capability_ok':True,'held_out':True}], 0.3)['scored'] == 1"
+    }
+  ],
+  "hidden_tests": [
+    {
+      "id": "hv_empty",
+      "description": "no held-out items yields a zero observed rate",
+      "assert": "assert eval_verdict([{'parsed_ok':True,'capability_ok':True,'held_out':False}], 0.3)['observed_rate'] == 0.0"
+    },
+    {
+      "id": "hv_gap",
+      "description": "template gap computed correctly",
+      "assert": "assert eval_verdict([{'parsed_ok':False,'capability_ok':True,'held_out':True},{'parsed_ok':True,'capability_ok':True,'held_out':True}], 0.3)['template_gap'] == 0.5"
+    }
+  ]
+}

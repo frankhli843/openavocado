@@ -1,0 +1,438 @@
+{
+  "part_id": "ei-gbench-part-1",
+  "reading": {
+    "intro": "How the team's eval harness scores an agent by what it does to a world, not by what it says.",
+    "blocks": [
+      {
+        "type": "heading",
+        "text": "Gbench: grade what the model did, not what it said"
+      },
+      {
+        "type": "paragraph",
+        "text": "Gbench is the team's evaluation harness. It runs two very different kinds of checks. The first is the classic academic single-turn eval, where you hand the model one prompt, read back one answer, and compare that answer to a reference. That style is cheap and familiar, but it only tells you whether the words came out right. The second kind is the interesting one. It is an agentic task, and it does not grade words at all. It grades actions. To do that, Gbench has to stand up a small world for the model to act inside, watch it work, and then look at what changed."
+      },
+      {
+        "type": "definition",
+        "term": "Eval harness",
+        "definition": "The full apparatus that turns a task into a pass or fail decision. It has three parts, an environment the model acts inside, a trigger that starts the model running as an agent, and a grader that decides the result. In one line, an eval harness is environment plus trigger plus grader."
+      },
+      {
+        "type": "paragraph",
+        "text": "For an agentic task, Gbench builds a seeded fake environment before the model ever runs. It creates fake files, fake tools the agent is allowed to call, and a known starting backend state, for example a small database or a set of records. Because the team wrote the seed, it knows exactly what the world looks like at time zero. Gbench then triggers the model as an agent inside that world and lets it take actions, meaning it lets the model call the fake tools in whatever order it decides. Each tool call can mutate the backend state. When the agent stops, Gbench inspects the resulting backend state and compares it to the expected end state the authors defined in advance. If they match, the task passes. If they do not, it fails."
+      },
+      {
+        "type": "example",
+        "title": "A support-ticket task",
+        "body": "Seed the world with one open ticket, state is tickets equals 1 and status equals open. Give the agent two tools, one that resolves a ticket and one that closes it. Trigger the model with the request, resolve the customer's issue. The agent calls the resolve tool. Now inspect the backend, status has become resolved. Compare to the expected end state, status equals resolved. They match, so the task passes. Notice that the grader never read the agent's chat reply. It only read the world the agent left behind."
+      },
+      {
+        "type": "formula",
+        "latex": "\\text{pass} = \\big( \\text{apply}(\\text{seed}, \\text{actions}) = \\text{expected} \\big)",
+        "plain_english": "A task passes when you apply the agent's actions to the seeded starting state and the resulting end state equals the expected end state the authors defined. The verdict is a comparison of world states, not a comparison of sentences.",
+        "variables": [
+          {
+            "symbol": "seed",
+            "meaning": "the known starting backend state the harness creates before the agent runs"
+          },
+          {
+            "symbol": "actions",
+            "meaning": "the ordered tool calls the agent chose to make, each of which can mutate the state"
+          },
+          {
+            "symbol": "expected",
+            "meaning": "the end state the task authors defined in advance as correct"
+          }
+        ]
+      },
+      {
+        "type": "definition",
+        "term": "Seeded fake environment",
+        "definition": "A purpose-built sandbox with a deterministic starting state, fake files, and fake callable tools, created so the harness knows the world at time zero and can measure exactly what the agent changed by the time it stops."
+      },
+      {
+        "type": "callout",
+        "tone": "insight",
+        "text": "research-backfill: this is the design pattern from the Berkeley Function Calling Leaderboard V3, which added multi-turn tasks scored on backend state, and from tau-bench, which gives the agent domain API tools and grades by comparing the final database state to a goal. The shared lesson, an agentic eval grades the end state, not the transcript."
+      }
+    ],
+    "summary": "Gbench runs classic single-turn evals and agentic tasks. The agentic path seeds a fake environment with fake files, fake tools, and a known backend state, triggers the model as an agent, lets it call tools that mutate the state, then inspects the end state against an expected end state to decide pass or fail. An eval harness is environment plus trigger plus grader, and the agentic grader scores what the model did, not what it said.",
+    "diagrams": [
+      {
+        "kind": "mermaid",
+        "title": "Agentic eval as environment, trigger, grader",
+        "mermaid": "flowchart LR\n  A[Seed fake environment] --> B[Trigger model as agent]\n  B --> C[Agent calls tools]\n  C --> D[Actions mutate backend state]\n  D --> E{End state equals expected?}\n  E -- yes --> F[Pass]\n  E -- no --> G[Fail]",
+        "takeaway": "The grader compares the end state the agent left behind to the expected state, so it scores actions, not words.",
+        "support_ref": "ei-gbench"
+      }
+    ]
+  },
+  "audio": {
+    "script": "Leo: Gbench is our eval harness, and the clever part is how it grades an agent. Maya: Walk me through it, because most evals just check an answer string. Leo: Right, that is the classic single-turn eval. But for an agentic task Gbench first builds a seeded fake environment, fake files, fake tools, and a known starting backend state. Maya: So a little sandbox with a starting point you fully control. Leo: Exactly. Then it triggers the model as an agent and lets it take actions, meaning it calls those tools in whatever order it wants, and each call can change the state. Maya: And then how does it decide pass or fail? Leo: When the agent stops, Gbench inspects the resulting backend state and compares it to the expected end state. Pass or fail comes from what the model actually did to the world, not from the words it produced. Maya: That is the Berkeley Function Calling and tau-bench idea, check the final database state. Leo: Right. Environment plus trigger plus grader. A single-turn eval string matches an answer. An agentic eval grades the end state.",
+    "transcript": "Leo: Gbench is our eval harness, and the clever part is how it grades an agent. Maya: Walk me through it, because most evals just check an answer string. Leo: Right, that is the classic single-turn eval. But for an agentic task Gbench first builds a seeded fake environment, fake files, fake tools, and a known starting backend state. Maya: So a little sandbox with a starting point you fully control. Leo: Exactly. Then it triggers the model as an agent and lets it take actions, meaning it calls those tools in whatever order it wants, and each call can change the state. Maya: And then how does it decide pass or fail? Leo: When the agent stops, Gbench inspects the resulting backend state and compares it to the expected end state. Pass or fail comes from what the model actually did to the world, not from the words it produced. Maya: That is the Berkeley Function Calling and tau-bench idea, check the final database state. Leo: Right. Environment plus trigger plus grader. A single-turn eval string matches an answer. An agentic eval grades the end state.",
+    "duration_hint": 90,
+    "synced_visual": {
+      "strategy": "timeline",
+      "artifact_slug": "ei-gbench",
+      "scene": {
+        "scene_id": "ei-gbench-scene",
+        "title": "Seed, trigger, act, grade",
+        "motif": "seeded-world-then-state-diff",
+        "description": "A seeded fake environment is created, the model is triggered as an agent and calls tools that mutate a backend state, then the end state is compared to the expected state to decide pass or fail.",
+        "panels": [
+          {
+            "id": "pipeline",
+            "title": "The agentic eval pipeline",
+            "kind": "pipeline",
+            "description": "The four stages Gbench runs for an agentic task, from building the seeded world to grading the end state against expected.",
+            "data": [
+              {
+                "label": "seed",
+                "value": "fake files, fake tools, starting backend state",
+                "role": "input"
+              },
+              {
+                "label": "trigger",
+                "value": "run the model as an agent in the world",
+                "role": "process"
+              },
+              {
+                "label": "actions",
+                "value": "agent calls tools that mutate state",
+                "role": "process"
+              },
+              {
+                "label": "grade",
+                "value": "end state compared to expected",
+                "role": "output"
+              }
+            ]
+          },
+          {
+            "id": "statediff",
+            "title": "State comparison",
+            "kind": "ledger",
+            "description": "The concrete support-ticket world, showing the starting state, the tool call the agent made, the resulting end state, and the expected end state.",
+            "data": [
+              {
+                "label": "start state",
+                "value": "tickets 1, status open",
+                "role": "input"
+              },
+              {
+                "label": "tool call",
+                "value": "resolve the open ticket",
+                "role": "process"
+              },
+              {
+                "label": "end state",
+                "value": "tickets 1, status resolved",
+                "role": "output"
+              },
+              {
+                "label": "expected",
+                "value": "tickets 1, status resolved",
+                "role": "context"
+              }
+            ]
+          }
+        ]
+      },
+      "cues": [
+        {
+          "start": 0,
+          "end": 24,
+          "label": "Seed the world",
+          "headline": "Build a seeded fake environment",
+          "narration": "Before the model runs, Gbench creates fake files, fake tools, and a known starting backend state.",
+          "receive": "a task definition",
+          "transform": "stand up a deterministic sandbox",
+          "pass": "a known world at time zero"
+        },
+        {
+          "start": 24,
+          "end": 48,
+          "label": "Trigger the agent",
+          "headline": "Run the model and let it act",
+          "narration": "Gbench triggers the model as an agent, and it calls tools in whatever order it chooses.",
+          "receive": "the seeded world",
+          "transform": "let the agent call tools",
+          "pass": "a sequence of state mutations"
+        },
+        {
+          "start": 48,
+          "end": 72,
+          "label": "Inspect the end state",
+          "headline": "Compare end state to expected",
+          "narration": "When the agent stops, the harness reads the resulting backend state and compares it to the expected end state.",
+          "receive": "the mutated backend state",
+          "transform": "diff against expected",
+          "pass": "a pass or fail verdict"
+        },
+        {
+          "start": 72,
+          "end": 90,
+          "label": "Harness anatomy",
+          "headline": "Environment plus trigger plus grader",
+          "narration": "An agentic eval grades what the model did to the world, unlike a single-turn eval that only string matches an answer.",
+          "receive": "the verdict",
+          "transform": "generalize the pattern",
+          "pass": "environment plus trigger plus grader"
+        }
+      ]
+    }
+  },
+  "interactive": {
+    "schema_version": "1.0",
+    "widget_type": "bespoke-artifact",
+    "title": "Run a Gbench agentic task",
+    "instructions": "Seed a small backend state, pick the tool calls the agent makes, and watch the end state form. Compare it to the expected end state and see the harness return pass or fail, the same way an agentic eval grades actions instead of words.",
+    "params": {
+      "artifact_slug": "ei-gbench",
+      "min_height": 320
+    }
+  },
+  "code": {
+    "language": "python",
+    "prompt": "Build the grader at the heart of an agentic eval. You are given a seeded starting state (a dict), a list of the agent's tool calls (each call mutates the state), and the expected end state (a dict). Apply the calls to the seed in order, then return True when the final state matches the expected state and False otherwise. Fill the two TODO helpers, then compose them in grade.",
+    "starter_code": "def apply_calls(state, calls):\n    # state is a dict, calls is a list of dicts like {\"op\": \"set\", \"key\": \"status\", \"value\": \"resolved\"}\n    # or {\"op\": \"delete\", \"key\": \"status\"}.\n    # TODO: copy the seed so you do not mutate it, then apply each call in order.\n    # For op \"set\", set result[key] = value. For op \"delete\", remove key if present.\n    # Return the resulting dict.\n    pass\n\n\ndef states_match(end_state, expected):\n    # TODO: return True when the two dicts are equal, else False.\n    pass\n\n\ndef grade(seed, calls, expected):\n    end_state = apply_calls(seed, calls)\n    return states_match(end_state, expected)\n",
+    "constraints": [
+      "Do not mutate the seed dict in place. Copy it first so the starting state stays intact for later inspection.",
+      "Apply the tool calls in the given order, because a later call can overwrite an earlier one.",
+      "Grade only on the final state. Never look at any chat text the agent produced."
+    ],
+    "walkthrough": {
+      "title": "From a seed and some tool calls to a pass or fail",
+      "steps": [
+        {
+          "title": "Copy the seed",
+          "detail": "Start from a fresh copy of the seed dict so applying calls does not corrupt the original starting state, which the harness may still need.",
+          "input": "seed dict, for example tickets 1 and status open",
+          "output": "a working copy you can safely mutate"
+        },
+        {
+          "title": "Apply each tool call",
+          "detail": "Walk the calls in order. A set writes a key, a delete removes one. Order matters because a later call can overwrite an earlier value.",
+          "input": "a list of set and delete calls",
+          "output": "the end state after every call has run"
+        },
+        {
+          "title": "Compare to expected",
+          "detail": "Return whether the end state dict equals the expected dict. Dict equality already checks every key and value, so this is the whole grader.",
+          "input": "end state and expected dict",
+          "output": "True on a match, False otherwise"
+        }
+      ]
+    },
+    "io_examples": [
+      {
+        "label": "pass",
+        "input": "seed={'tickets': 1, 'status': 'open'}, calls=[{'op': 'set', 'key': 'status', 'value': 'resolved'}], expected={'tickets': 1, 'status': 'resolved'}",
+        "expected_output": "True",
+        "explanation": "Applying the set call turns status into resolved, so the end state equals the expected state and the task passes."
+      },
+      {
+        "label": "fail",
+        "input": "seed={'tickets': 1, 'status': 'open'}, calls=[], expected={'tickets': 1, 'status': 'resolved'}",
+        "expected_output": "False",
+        "explanation": "The agent made no calls, so status stays open. The end state does not match expected, so the task fails."
+      },
+      {
+        "label": "delete",
+        "input": "seed={'draft': 'x', 'status': 'open'}, calls=[{'op': 'delete', 'key': 'draft'}], expected={'status': 'open'}",
+        "expected_output": "True",
+        "explanation": "The delete call removes the draft key, leaving exactly the expected state."
+      }
+    ],
+    "visualization": {
+      "title": "Seed to end state to verdict",
+      "description": "How a seed plus the agent's tool calls produces an end state that is compared to expected.",
+      "items": [
+        {
+          "label": "seed and calls",
+          "value": "start state plus ordered tool calls",
+          "role": "input"
+        },
+        {
+          "label": "apply calls",
+          "value": "mutate a copy of the state in order",
+          "role": "process"
+        },
+        {
+          "label": "verdict",
+          "value": "end state equals expected ? pass : fail",
+          "role": "output"
+        }
+      ]
+    },
+    "worked_examples": [
+      {
+        "label": "basic",
+        "title": "Explicit helpers",
+        "code": "def apply_calls(state, calls):\n    result = dict(state)\n    for call in calls:\n        if call[\"op\"] == \"set\":\n            result[call[\"key\"]] = call[\"value\"]\n        elif call[\"op\"] == \"delete\":\n            result.pop(call[\"key\"], None)\n    return result\n\ndef states_match(end_state, expected):\n    return end_state == expected\n\ndef grade(seed, calls, expected):\n    return states_match(apply_calls(seed, calls), expected)",
+        "explanation": "apply_calls copies the seed and applies each set or delete in order, states_match is dict equality, and grade composes them."
+      },
+      {
+        "label": "concise",
+        "title": "Inlined grader",
+        "code": "def grade(seed, calls, expected):\n    state = dict(seed)\n    for call in calls:\n        if call[\"op\"] == \"set\":\n            state[call[\"key\"]] = call[\"value\"]\n        elif call[\"op\"] == \"delete\":\n            state.pop(call[\"key\"], None)\n    return state == expected",
+        "explanation": "The same logic without helper functions. Copy the seed, apply the calls, and compare the final dict to expected."
+      }
+    ],
+    "hints": [
+      {
+        "level": 1,
+        "text": "The grader never reads the agent's words. It only asks whether the final world matches the expected world."
+      },
+      {
+        "level": 2,
+        "text": "Copy the seed first with dict(state) so you do not change the original starting state."
+      },
+      {
+        "level": 3,
+        "text": "Loop over calls. For op set, write result[call['key']] = call['value']. For op delete, use result.pop(call['key'], None)."
+      },
+      {
+        "level": 4,
+        "text": "states_match can just be return end_state == expected, since dict equality checks every key and value."
+      },
+      {
+        "level": 5,
+        "text": "grade applies the calls to the seed and returns whether the end state equals expected, a single boolean."
+      }
+    ],
+    "tests": [
+      {
+        "id": "t_pass",
+        "description": "resolving the ticket reaches the expected state",
+        "assert": "assert grade({'tickets': 1, 'status': 'open'}, [{'op': 'set', 'key': 'status', 'value': 'resolved'}], {'tickets': 1, 'status': 'resolved'}) == True"
+      },
+      {
+        "id": "t_fail",
+        "description": "no actions leaves the state unresolved",
+        "assert": "assert grade({'tickets': 1, 'status': 'open'}, [], {'tickets': 1, 'status': 'resolved'}) == False"
+      }
+    ],
+    "hidden_tests": [
+      {
+        "id": "h_delete",
+        "description": "delete removes a key to reach expected",
+        "assert": "assert grade({'draft': 'x', 'status': 'open'}, [{'op': 'delete', 'key': 'draft'}], {'status': 'open'}) == True"
+      },
+      {
+        "id": "h_order",
+        "description": "a later set overwrites an earlier one",
+        "assert": "assert grade({'status': 'open'}, [{'op': 'set', 'key': 'status', 'value': 'closed'}, {'op': 'set', 'key': 'status', 'value': 'resolved'}], {'status': 'resolved'}) == True"
+      },
+      {
+        "id": "h_nomutate",
+        "description": "the seed is not mutated in place",
+        "assert": "s = {'status': 'open'}\nassert grade(s, [{'op': 'set', 'key': 'status', 'value': 'resolved'}], {'status': 'resolved'}) == True and s == {'status': 'open'}"
+      }
+    ]
+  },
+  "practice": {
+    "written_feedback": "llm_judge",
+    "pass_threshold": 5,
+    "questions": [
+      {
+        "id": "ei-gbench-q1",
+        "type": "select_one",
+        "prompt": "In an agentic Gbench task, what does the grader actually inspect to decide pass or fail?",
+        "concept": "agentic-eval-grading",
+        "difficulty": "easy",
+        "choices": [
+          "The resulting backend state, compared to an expected end state",
+          "The chat reply the agent produced, matched against a reference string",
+          "The number of tokens the model generated",
+          "Whether the model apologized when it was uncertain"
+        ],
+        "correct_index": 0,
+        "explanation": "An agentic eval grades what the model did to the environment. It compares the final backend state to the expected end state, not the words the model produced."
+      },
+      {
+        "id": "ei-gbench-q2",
+        "type": "select_all",
+        "prompt": "Which of the following are parts of what we called the eval harness?",
+        "concept": "eval-harness-anatomy",
+        "difficulty": "medium",
+        "choices": [
+          "An environment the model acts inside",
+          "A trigger that starts the model running as an agent",
+          "A grader that decides pass or fail",
+          "A human reviewer who reads every transcript by hand"
+        ],
+        "correct_indices": [0, 1, 2],
+        "explanation": "An eval harness is environment plus trigger plus grader. A per-transcript human reviewer is not part of that definition."
+      },
+      {
+        "id": "ei-gbench-q3",
+        "type": "select_all",
+        "prompt": "Which of these does Gbench create when it seeds a fake environment for an agentic task?",
+        "concept": "seeded-environment",
+        "difficulty": "medium",
+        "choices": [
+          "Fake files",
+          "Fake tools the agent can call",
+          "A known starting backend state"
+        ],
+        "correct_indices": [0, 1, 2],
+        "explanation": "Seeding builds all three, fake files, fake callable tools, and a deterministic starting backend state, so the harness knows the world at time zero."
+      },
+      {
+        "id": "ei-gbench-q4",
+        "type": "select_all",
+        "prompt": "Which of the following are TRUE about a classic single-turn academic eval, as contrasted with an agentic task?",
+        "concept": "single-turn-vs-agentic",
+        "difficulty": "hard",
+        "choices": [
+          "It seeds a fake environment and lets the model call tools",
+          "It compares a final backend state to an expected state",
+          "It inspects the actions the model took across many turns"
+        ],
+        "correct_indices": [],
+        "explanation": "None are true of a single-turn eval. Those are all properties of the agentic path. A single-turn eval simply string matches one answer against a reference."
+      },
+      {
+        "id": "ei-gbench-q5",
+        "type": "select_all",
+        "prompt": "Which statements correctly describe the research grounding for the agentic path?",
+        "concept": "research-grounding",
+        "difficulty": "medium",
+        "choices": [
+          "The Berkeley Function Calling Leaderboard V3 added multi-turn tasks scored on backend state",
+          "tau-bench gives the agent domain API tools and compares the final database state to a goal"
+        ],
+        "correct_indices": [0, 1],
+        "explanation": "Both are accurate. Gbench's agentic path follows the same design pattern, seed a world, let the agent act, and grade the end state."
+      },
+      {
+        "id": "ei-gbench-q6",
+        "type": "ordering",
+        "prompt": "Put the stages of an agentic Gbench task in the order they run.",
+        "concept": "agentic-eval-pipeline",
+        "difficulty": "medium",
+        "items": [
+          "Seed a fake environment with files, tools, and a starting state",
+          "Trigger the model as an agent inside the environment",
+          "Let the agent call tools that mutate the backend state",
+          "Compare the resulting end state to the expected end state"
+        ],
+        "correct_order": [
+          "Seed a fake environment with files, tools, and a starting state",
+          "Trigger the model as an agent inside the environment",
+          "Let the agent call tools that mutate the backend state",
+          "Compare the resulting end state to the expected end state"
+        ]
+      },
+      {
+        "id": "ei-gbench-q7",
+        "type": "written",
+        "prompt": "Explain why an agentic eval grades the end state of the environment rather than the text the model produced. What does that catch that a string match on the answer would miss?",
+        "concept": "why-grade-actions",
+        "difficulty": "hard",
+        "actual_answer": "An agentic task is judged by whether the model accomplished the goal in the world, so the harness seeds a known starting state, lets the agent call tools, and then checks whether the resulting backend state matches the expected state. Grading the end state catches whether the model actually took the right actions, for example whether it truly resolved the ticket in the database. A string match on the answer would only check that the model claimed to resolve it. A model can produce a perfectly worded reply while calling the wrong tool, calling tools in the wrong order, or doing nothing at all, and only a state comparison exposes that gap between what it said and what it did.",
+        "rubric": "Full credit: says the agentic grader compares the final backend state to an expected state AND explains that this catches whether the model took the correct actions, unlike a string match which can be fooled by a model that says the right thing while doing the wrong thing or nothing. Partial credit: mentions grading actions or end state but does not explain what a string match misses. Low credit: vague or only restates the question."
+      }
+    ]
+  }
+}
