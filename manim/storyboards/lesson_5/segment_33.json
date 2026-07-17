@@ -1,0 +1,71 @@
+{
+  "lesson_id": 5,
+  "activity_id": 33,
+  "activity_type": "lesson_part",
+  "title": "Lesson 5 part 33",
+  "audio": {
+    "file_path": "runtime_artifacts/audio/lesson_5_activity_33_audio.mp3",
+    "duration_sec": 153.168
+  },
+  "audio_source": "artifact",
+  "cue_source": "audio.synced_visual.cues",
+  "cues": [
+    {
+      "index": 0,
+      "start": 0,
+      "end": 25.528,
+      "duration": 25.528,
+      "label": "The contract chain",
+      "headline": "Each stage hands the next an artifact",
+      "narration": "Each stage produces an artifact the next stage depends on, so break one contract and the downstream stages run on the wrong thing."
+    },
+    {
+      "index": 1,
+      "start": 25.528,
+      "end": 51.056,
+      "duration": 25.528,
+      "label": "Plan and Organize",
+      "headline": "A vague plan optimizes a vague goal",
+      "narration": "Planning picks the task, scale, data mix, and eval target, then Organize cleans, deduplicates, and mixes the corpus."
+    },
+    {
+      "index": 2,
+      "start": 51.056,
+      "end": 76.584,
+      "duration": 25.528,
+      "label": "Tokenize",
+      "headline": "Text becomes stable integer IDs",
+      "narration": "The tokenizer maps strings to integer IDs the embedding table learns, so training and serving must agree on those IDs."
+    },
+    {
+      "index": 3,
+      "start": 76.584,
+      "end": 102.112,
+      "duration": 25.528,
+      "label": "Train",
+      "headline": "The output is weights, not a product",
+      "narration": "Training adjusts weights to predict the next token and its output is a checkpoint of learned weights, not a finished product."
+    },
+    {
+      "index": 4,
+      "start": 102.112,
+      "end": 127.64,
+      "duration": 25.528,
+      "label": "Evaluate",
+      "headline": "The gate before anyone trusts it",
+      "narration": "Evaluation decides whether a checkpoint is good enough, safe enough, and better than the alternatives before it ships."
+    },
+    {
+      "index": 5,
+      "start": 127.64,
+      "end": 153.168,
+      "duration": 25.528,
+      "label": "The map",
+      "headline": "Seven stages, seven contracts",
+      "narration": "Treat the pipeline as an address system, where each contract locates a future topic on the same shared map."
+    }
+  ],
+  "cue_span_sec": 153.168,
+  "formulas": [],
+  "exported_at": "2026-07-17T14:20:00.000Z"
+}

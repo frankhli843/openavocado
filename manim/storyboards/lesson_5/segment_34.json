@@ -1,0 +1,89 @@
+{
+  "lesson_id": 5,
+  "activity_id": 34,
+  "activity_type": "lesson_part",
+  "title": "Lesson 5 part 34",
+  "audio": {
+    "file_path": "runtime_artifacts/audio/lesson_5_activity_34_audio.mp3",
+    "duration_sec": 249.96
+  },
+  "audio_source": "artifact",
+  "cue_source": "audio.synced_visual.cues",
+  "cues": [
+    {
+      "index": 0,
+      "start": 0,
+      "end": 31.245,
+      "duration": 31.245,
+      "label": "A contract, not a step",
+      "headline": "The token ID must never move",
+      "narration": "A tokenizer is a contract, because the integer ID for a fragment must stay identical from training through inference."
+    },
+    {
+      "index": 1,
+      "start": 31.245,
+      "end": 62.49,
+      "duration": 31.245,
+      "label": "The bridge",
+      "headline": "Text becomes numbers",
+      "narration": "Models process numbers, so the tokenizer converts the whole corpus into integer sequences before training begins."
+    },
+    {
+      "index": 2,
+      "start": 62.49,
+      "end": 93.735,
+      "duration": 31.245,
+      "label": "Vocab 1000",
+      "headline": "A tiny vocabulary, a high UNK rate",
+      "narration": "With only a thousand tokens most subwords are missing, so real text collapses into UNK and its content is thrown away."
+    },
+    {
+      "index": 3,
+      "start": 93.735,
+      "end": 124.98,
+      "duration": 31.245,
+      "label": "Vocab 32000",
+      "headline": "LLaMA size, UNK drops away",
+      "narration": "At thirty two thousand tokens, the size LLaMA uses, most English is representable at about three to four characters per token."
+    },
+    {
+      "index": 4,
+      "start": 124.98,
+      "end": 156.225,
+      "duration": 31.245,
+      "label": "Vocab 262144",
+      "headline": "Gemma 4, UNK near zero",
+      "narration": "Gemma 4 uses two hundred sixty two thousand tokens, so tokens get longer and the UNK rate approaches zero even for technical text."
+    },
+    {
+      "index": 5,
+      "start": 156.225,
+      "end": 187.47,
+      "duration": 31.245,
+      "label": "BPE",
+      "headline": "Merge common pairs into subwords",
+      "narration": "BPE starts from characters and repeatedly merges the most common adjacent pair until it reaches the target vocabulary size."
+    },
+    {
+      "index": 6,
+      "start": 187.47,
+      "end": 218.715,
+      "duration": 31.245,
+      "label": "The shared contract",
+      "headline": "ID N always the same subword",
+      "narration": "The tokenizer and model share a contract where token ID N always maps to the same subword, from training through all inference."
+    },
+    {
+      "index": 7,
+      "start": 218.715,
+      "end": 249.96,
+      "duration": 31.245,
+      "label": "Swapping breaks it",
+      "headline": "A new tokenizer reads a new language",
+      "narration": "Swap the tokenizer and the IDs shift underneath the weights, so the model is suddenly reading a different language than it trained on."
+    }
+  ],
+  "cue_span_sec": 249.96,
+  "formulas": [],
+  "exported_at": "2026-07-17T14:20:00.000Z"
+}
