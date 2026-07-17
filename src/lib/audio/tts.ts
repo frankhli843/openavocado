@@ -15,10 +15,16 @@
  * Server-only: uses Node fs / child_process. Never import from client code.
  */
 import { spawnSync } from "child_process";
-import { createHash } from "crypto";
+import { createHash, randomBytes } from "crypto";
 import fs from "fs";
 import os from "os";
 import path from "path";
+
+// Monotonic counter so each synthesizeEdge call gets a unique scratch file even
+// when two concurrent lessons (Promise.all) synthesize identical short dialogue
+// lines. Without this, both derive the same content-hashed tmp path and one
+// unlinks the file the other is mid-read, which forced an espeak fallback.
+let edgeScratchCounter = 0;
 
 export type TtsProvider = "edge-tts" | "openai-tts" | "espeak-ng";
 
@@ -180,7 +186,7 @@ function synthesizeEdge(script: string, outPath: string, voice: string): TtsResu
   ensureDir(outPath);
   const textPath = path.join(
     os.tmpdir(),
-    `avo-edge-tts-${createHash("sha256").update(script).digest("hex").slice(0, 16)}.txt`
+    `avo-edge-tts-${createHash("sha256").update(script).digest("hex").slice(0, 16)}-${process.pid}-${(edgeScratchCounter += 1)}-${randomBytes(4).toString("hex")}.txt`
   );
   fs.writeFileSync(textPath, script);
 
