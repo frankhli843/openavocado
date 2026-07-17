@@ -1,0 +1,109 @@
+{
+  "activityId": 118,
+  "lessonId": 20,
+  "op": "part_practice",
+  "questions": [
+    {
+      "id": "tp2-so-1",
+      "type": "select_all",
+      "prompt": "Select all that are true about what you do the instant you finish walking the prefix successfully.",
+      "concept": "trie",
+      "difficulty": "easy",
+      "choices": [
+        "You are standing on the node for that prefix.",
+        "Every word in that node's subtree is a completion.",
+        "You DFS the subtree, recording each end-of-word node's string.",
+        "You build up the string as you descend, starting from the prefix itself."
+      ],
+      "correct_indices": [
+        0,
+        1,
+        2,
+        3
+      ],
+      "explanation": "After consuming the prefix you stand on the prefix node, every word in its subtree is a completion, and you DFS that subtree building the string as you descend, recording only flagged nodes."
+    },
+    {
+      "id": "tp2-sa-multi",
+      "type": "select_all",
+      "prompt": "Which statements about trie autocomplete are true?",
+      "concept": "trie",
+      "difficulty": "hard",
+      "choices": [
+        "Reaching the prefix node costs O(length of the prefix)",
+        "Only words in the prefix node's subtree are ever visited",
+        "You must record every node you pass through, flagged or not",
+        "The prefix itself is a completion when its node is end-of-word"
+      ],
+      "correct_indices": [
+        0,
+        1,
+        3
+      ],
+      "explanation": "Record only flagged nodes. Emitting passing-through nodes would invent unstored words."
+    },
+    {
+      "id": "tp2-sa-none",
+      "type": "select_all",
+      "prompt": "For prefix \"car\" over {car, card, cart, cat, cap, dog}, which of these words does the DFS VISIT? (If none, select none.)",
+      "concept": "trie",
+      "difficulty": "medium",
+      "choices": [
+        "cat",
+        "cap",
+        "dog"
+      ],
+      "correct_indices": [],
+      "explanation": "None. Cat and cap live under \"ca\" but not \"car\", and dog fails at the first character, so the car-subtree DFS never touches them."
+    },
+    {
+      "id": "tp2-order",
+      "type": "ordering",
+      "prompt": "Order the steps of autocomplete for a prefix.",
+      "concept": "trie",
+      "difficulty": "medium",
+      "items": [
+        "Walk the prefix character by character from the root",
+        "If a character is missing, return no completions",
+        "Stand on the prefix node. Its subtree holds every completion",
+        "DFS the subtree, recording each end-of-word node's string"
+      ],
+      "correct_order": [
+        "Walk the prefix character by character from the root",
+        "If a character is missing, return no completions",
+        "Stand on the prefix node. Its subtree holds every completion",
+        "DFS the subtree, recording each end-of-word node's string"
+      ]
+    },
+    {
+      "id": "tp2-pattern",
+      "type": "pattern_recognition",
+      "prompt": "\"Design a search-suggestions system: as the user types each character, show up to three stored products that start with what they have typed so far.\" Which pattern(s) apply?",
+      "concept": "pattern-recognition",
+      "difficulty": "medium",
+      "choices": [
+        "Trie / Prefix Tree",
+        "Heap / Priority Queue",
+        "Binary Search",
+        "Two Pointer",
+        "Sliding Window"
+      ],
+      "primary_indices": [
+        0
+      ],
+      "secondary_indices": [
+        1
+      ],
+      "explanation": "Type-ahead over a fixed product list is the trie fingerprint. A heap is a reasonable secondary to keep the top three suggestions by rank."
+    },
+    {
+      "id": "tp2-written",
+      "type": "written",
+      "prompt": "Explain why trie autocomplete never looks at words that do not start with the prefix, and why that makes it faster than filtering a flat list.",
+      "concept": "trie",
+      "difficulty": "hard",
+      "actual_answer": "Walking the prefix from the root lands you on exactly one node, and by construction every word that begins with that prefix lives in that node's subtree while every word that does not begin with it lives elsewhere in the tree. So once you reach the prefix node you only DFS its subtree. You have already excluded every non-matching word in O(length of the prefix), without inspecting any of them. Filtering a flat list, by contrast, must test all N stored words against the prefix, which is O(N times prefix length). The trie converts \"check every word\" into \"walk to one node and enumerate its subtree,\" so the cost scales with the number of matches plus the prefix length, not with the size of the whole dictionary.",
+      "rubric": "Full credit: the prefix node's subtree contains exactly the matching words; reaching it excludes non-matches in O(prefix length) without inspecting them; a flat filter is O(N·len). Partial: says the subtree holds matches but misses the cost comparison. Low: vague."
+    }
+  ]
+}

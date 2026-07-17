@@ -1,0 +1,134 @@
+{
+  "activityId": 87,
+  "lessonId": 15,
+  "op": "part_practice",
+  "questions": [
+    {
+      "id": "a87-q0-select-one-mlp-cross-token",
+      "type": "select_all",
+      "concept": "mlp-mechanism",
+      "difficulty": "easy",
+      "prompt": "Select all that are true about how the MLP sublayer handles token positions.",
+      "choices": [
+        "The MLP processes each token row independently",
+        "The MLP has no mechanism to read another token's vector",
+        "Cross-token mixing is handled by the attention sublayer, not the MLP"
+      ],
+      "correct_indices": [
+        0,
+        1,
+        2
+      ],
+      "explanation": "The MLP applies its weight matrices to each token row on its own, so it never reads another token's vector. Mixing information across positions is entirely attention's job."
+    },
+    {
+      "id": "a87-q1-select-all-mlp-facts",
+      "type": "select_all",
+      "concept": "mlp-mechanism",
+      "difficulty": "medium",
+      "prompt": "Select all that are true about the MLP sublayer in a transformer.",
+      "choices": [
+        "It processes each token independently, without mixing information across token positions",
+        "It uses a 4x expansion followed by compression back to d_model",
+        "It allows tokens to communicate with each other the way attention does"
+      ],
+      "correct_indices": [
+        0,
+        1
+      ],
+      "explanation": "The MLP is per-token with no cross-token mixing. It expands by 4x then compresses back to d_model. Cross-token mixing is attention's job."
+    },
+    {
+      "id": "a87-q2-select-all-gelu",
+      "type": "select_all",
+      "concept": "mlp-mechanism",
+      "difficulty": "medium",
+      "prompt": "Select all that are true about GELU compared to ReLU.",
+      "choices": [
+        "GELU provides a smooth gradient near zero, unlike ReLU's hard cutoff",
+        "GELU can pass slightly negative values, weighted by their probability of being positive",
+        "GELU and ReLU behave identically for all positive inputs"
+      ],
+      "correct_indices": [
+        0,
+        1
+      ],
+      "explanation": "GELU is smooth with no hard zero threshold, and it can pass small negative values scaled by how positive they should be. ReLU hard-clips all negatives to exactly zero, so the two do not behave identically."
+    },
+    {
+      "id": "a87-q3-ordering-mlp-ops",
+      "type": "ordering",
+      "concept": "mlp-mechanism",
+      "difficulty": "medium",
+      "prompt": "Order the MLP sublayer operations:",
+      "items": [
+        "GELU activation on the expanded vector",
+        "Linear projection: W2 compresses back to d_model",
+        "Linear projection: W1 expands to 4*d_model"
+      ],
+      "correct_order": [
+        "Linear projection: W1 expands to 4*d_model",
+        "GELU activation on the expanded vector",
+        "Linear projection: W2 compresses back to d_model"
+      ],
+      "explanation": "W1 expand then GELU then W2 compress. This is the standard two-layer feedforward with a non-linearity in between."
+    },
+    {
+      "id": "a87-q4-select-all-division-labor",
+      "type": "select_all",
+      "concept": "mlp-mechanism",
+      "difficulty": "medium",
+      "prompt": "Select all that are true about the division of labor between attention and the MLP.",
+      "choices": [
+        "Attention handles cross-token information mixing, the MLP handles per-token processing",
+        "The MLP is where factual knowledge and world knowledge are thought to be stored",
+        "Attention and MLP both mix information across all token positions equally"
+      ],
+      "correct_indices": [
+        0,
+        1
+      ],
+      "explanation": "Attention decides who relates to whom, and the MLP decides what each token means. The MLP is the believed home of factual storage, and it does not mix across positions, so the third statement is false."
+    },
+    {
+      "id": "a87-q5-select-all-dimensions",
+      "type": "select_all",
+      "concept": "mlp-mechanism",
+      "difficulty": "medium",
+      "prompt": "Select all that are true about the MLP input dimension and output dimension.",
+      "choices": [
+        "Input is d_model, intermediate is 4*d_model, output is d_model",
+        "The output of the MLP has the same shape as its input",
+        "The intermediate dimension must always be exactly 4*d_model in practice"
+      ],
+      "correct_indices": [
+        0,
+        1
+      ],
+      "explanation": "The MLP goes d_model to 4*d_model to d_model, so the output matches the input shape. The 4x ratio is conventional but not mandatory, some architectures use other ratios."
+    },
+    {
+      "id": "a87-q6-written-mlp-cross-token",
+      "type": "written",
+      "concept": "mlp-mechanism",
+      "difficulty": "medium",
+      "prompt": "In your own words: why does the MLP not allow cross-token communication, and which part of the transformer block handles that?",
+      "actual_answer": "The MLP applies its weight matrices independently to each token's vector, so there is no mechanism for one token's values to influence another token's MLP computation. Cross-token communication is handled entirely by the attention sublayer, which explicitly mixes information between positions through the Q, K, V mechanism.",
+      "rubric": "Answer should state: (1) the MLP applies weight matrices W1 and W2 independently to each token's hidden vector, with no sum or interaction between different token positions; (2) attention handles cross-token mixing through the Q, K, V dot product mechanism. Bonus points for mentioning the MLP acting as a key-value memory that stores factual knowledge per token position."
+    },
+    {
+      "id": "a87-none-of-these",
+      "type": "select_all",
+      "concept": "mlp-mechanism",
+      "difficulty": "medium",
+      "prompt": "Select all that are true about the transformer block. It is possible that none are correct.",
+      "choices": [
+        "This sublayer permanently changes the sequence length inside the block",
+        "The residual stream deletes the incoming hidden state before adding the update",
+        "LayerNorm is the component that mixes information across token positions"
+      ],
+      "correct_indices": [],
+      "explanation": "None are correct. Transformer block sublayers keep sequence length stable, residual connections preserve and add to the incoming state, and attention handles cross-token mixing."
+    }
+  ]
+}

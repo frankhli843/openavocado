@@ -1,0 +1,107 @@
+{
+  "activityId": 141,
+  "lessonId": 24,
+  "op": "part_practice",
+  "questions": [
+    {
+      "id": "g1-so-1",
+      "type": "select_all",
+      "concept": "graph-traversal",
+      "difficulty": "easy",
+      "prompt": "Select all that are true about why breadth-first search finds a shortest path in an unweighted graph.",
+      "choices": [
+        "A first-in-first-out queue processes nodes in nondecreasing distance order.",
+        "The first time BFS reaches a node is along a path with the fewest edges.",
+        "Marking a node on enqueue keeps each node in the frontier exactly once, so its first-discovery distance is its true shortest distance."
+      ],
+      "correct_indices": [
+        0,
+        1,
+        2
+      ],
+      "explanation": "All three are why BFS gives shortest paths. FIFO ordering makes first discovery the fewest-edge path, and mark-on-enqueue keeps that distance well defined."
+    },
+    {
+      "id": "g1-sa-multi",
+      "type": "select_all",
+      "prompt": "Which statements about multi-source BFS on the rotting-oranges grid are true?",
+      "concept": "graph-traversal",
+      "difficulty": "medium",
+      "choices": [
+        "You enqueue every rotten cell at minute 0 before the loop",
+        "The minute a cell rots equals its distance to the NEAREST source",
+        "You should mark a cell rotten when you enqueue it, not when you pop it",
+        "If any cell is still fresh at the end, the answer is 0"
+      ],
+      "correct_indices": [
+        0,
+        1,
+        2
+      ],
+      "explanation": "Leftover fresh means unreachable → return -1, not 0. The other three are the core facts."
+    },
+    {
+      "id": "g1-sa-none",
+      "type": "select_all",
+      "prompt": "For oranges_rotting([[2,1,1],[0,1,1],[1,0,1]]), which of these outputs are correct? (If none, select none.)",
+      "concept": "graph-traversal",
+      "difficulty": "hard",
+      "choices": [
+        "4 (everything eventually rots)",
+        "2 (the reachable oranges rot in 2)",
+        "0 (there is nothing to rot)"
+      ],
+      "correct_indices": [],
+      "explanation": "None: the bottom-left orange (2,0) is walled off by empty cells, so it never rots and the answer is -1."
+    },
+    {
+      "id": "g1-order",
+      "type": "ordering",
+      "prompt": "Order the steps of one minute of multi-source BFS.",
+      "concept": "graph-traversal",
+      "difficulty": "medium",
+      "items": [
+        "Record how many cells are in the current frontier (len(q))",
+        "Pop each of those cells and scan its 4 neighbors",
+        "Flip each fresh neighbor to rotten, decrement fresh, enqueue it",
+        "Increment the minute counter and repeat while the queue is non-empty"
+      ],
+      "correct_order": [
+        "Record how many cells are in the current frontier (len(q))",
+        "Pop each of those cells and scan its 4 neighbors",
+        "Flip each fresh neighbor to rotten, decrement fresh, enqueue it",
+        "Increment the minute counter and repeat while the queue is non-empty"
+      ]
+    },
+    {
+      "id": "g1-pattern",
+      "type": "pattern_recognition",
+      "prompt": "\"Find the fewest moves to reach the exit of a maze from the entrance, where each move is one step to an open cell.\" Which pattern(s) apply?",
+      "concept": "pattern-recognition",
+      "difficulty": "medium",
+      "choices": [
+        "Breadth-First Search (BFS)",
+        "Shortest path in an unweighted graph",
+        "Dijkstra (priority queue)",
+        "Dynamic Programming",
+        "Two Pointer"
+      ],
+      "primary_indices": [
+        0
+      ],
+      "secondary_indices": [
+        1
+      ],
+      "explanation": "Fewest unit-cost moves in a grid is unweighted shortest path, plain BFS with a queue. Dijkstra is overkill because every edge has weight 1."
+    },
+    {
+      "id": "g1-written",
+      "type": "written",
+      "prompt": "Explain precisely why you should mark a cell visited (rotten) when you ENQUEUE it, not when you dequeue it, in BFS.",
+      "concept": "graph-traversal",
+      "difficulty": "hard",
+      "actual_answer": "In BFS a node can be adjacent to several nodes in the current frontier, so several of them may try to discover it. If you only mark a node visited when you pop it, then between the time the first neighbor pushes it and the time it is finally popped, other neighbors also see it as unvisited and push it again, the same node ends up in the queue multiple times. That inflates the queue and, worse, the node gets processed more than once, so its distance or the layer count can be assigned twice and corrupted. Marking on enqueue fixes this: the instant a node is discovered and pushed, it is flagged, so no other neighbor will ever enqueue it again. Each node therefore enters the frontier exactly once, every edge is examined a constant number of times, and the traversal stays O(V+E) with each node's first-discovery distance being its true shortest distance. In the rotting-oranges framing, marking rotten on enqueue is what makes 'the minute a cell flips' a well-defined single value rather than something two neighbors could both claim.",
+      "rubric": "Full credit: a node can be discovered by multiple frontier neighbors, marking on dequeue lets it be enqueued/processed multiple times, inflating the queue and corrupting distance, marking on enqueue guarantees each node enters once and keeps O(V+E). Partial: says it avoids duplicates without the multiple-neighbor reason. Low: vague."
+    }
+  ]
+}

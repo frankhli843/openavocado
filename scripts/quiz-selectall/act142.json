@@ -1,0 +1,107 @@
+{
+  "activityId": 142,
+  "lessonId": 24,
+  "op": "part_practice",
+  "questions": [
+    {
+      "id": "g2-so-1",
+      "type": "select_all",
+      "concept": "union-find",
+      "difficulty": "easy",
+      "prompt": "Select all that are true about a real union in Union Find, when find returns two different roots.",
+      "choices": [
+        "It attaches one root under the other, merging two distinct groups into one.",
+        "It decrements the component count by exactly one.",
+        "It happens only when the two endpoints have different roots."
+      ],
+      "correct_indices": [
+        0,
+        1,
+        2
+      ],
+      "explanation": "A real union merges two different roots into one group and drops the component count by one. A same-root edge is redundant, a cycle, and changes nothing."
+    },
+    {
+      "id": "g2-sa-multi",
+      "type": "select_all",
+      "prompt": "Which statements about Union Find are true?",
+      "concept": "union-find",
+      "difficulty": "medium",
+      "choices": [
+        "Two nodes are in the same group exactly when they share a root",
+        "Path compression flattens the parent chain during find",
+        "Union by rank attaches the shorter tree under the taller",
+        "It returns the actual shortest path between two nodes"
+      ],
+      "correct_indices": [
+        0,
+        1,
+        2
+      ],
+      "explanation": "Union Find answers connectivity, not paths, use BFS/DFS for an actual route. The other three are core facts."
+    },
+    {
+      "id": "g2-sa-none",
+      "type": "select_all",
+      "prompt": "For find_provinces([[1,1,0],[1,1,0],[0,0,1]]) = 2, which of these are correct descriptions? (If none, select none.)",
+      "concept": "union-find",
+      "difficulty": "hard",
+      "choices": [
+        "There are 3 provinces because there are 3 people",
+        "Persons 0, 1, and 2 form a single province",
+        "The edge between person 0 and person 2 merges their groups"
+      ],
+      "correct_indices": [],
+      "explanation": "None: persons 0 and 1 form one province and person 2 is alone (2 total), there is no 0, 2 friendship in the matrix."
+    },
+    {
+      "id": "g2-order",
+      "type": "ordering",
+      "prompt": "Order the steps of processing one friendship edge (a, b) in Union Find.",
+      "concept": "union-find",
+      "difficulty": "medium",
+      "items": [
+        "find(a) and find(b) by walking parent pointers to the roots",
+        "If the roots are equal, stop, the edge is redundant (a cycle)",
+        "Otherwise attach the shorter-rank root under the taller",
+        "Decrement the component count by one"
+      ],
+      "correct_order": [
+        "find(a) and find(b) by walking parent pointers to the roots",
+        "If the roots are equal, stop, the edge is redundant (a cycle)",
+        "Otherwise attach the shorter-rank root under the taller",
+        "Decrement the component count by one"
+      ]
+    },
+    {
+      "id": "g2-pattern",
+      "type": "pattern_recognition",
+      "prompt": "\"Given a list of edges added one at a time, find the first edge that creates a cycle in an undirected graph.\" Which pattern(s) apply?",
+      "concept": "pattern-recognition",
+      "difficulty": "medium",
+      "choices": [
+        "Union Find (DSU)",
+        "Cycle detection via same-root union",
+        "Dijkstra",
+        "Sliding Window",
+        "Binary Search"
+      ],
+      "primary_indices": [
+        0
+      ],
+      "secondary_indices": [
+        1
+      ],
+      "explanation": "Redundant Connection is Union Find: process edges, and the first edge whose endpoints already share a root closes the cycle."
+    },
+    {
+      "id": "g2-written",
+      "type": "written",
+      "prompt": "Explain why path compression and union by rank together make each Union Find operation effectively constant, and what breaks if you use a bare parent array without them.",
+      "concept": "union-find",
+      "difficulty": "hard",
+      "actual_answer": "A bare parent array, where union just points one root at another with no balancing, can build a long chain, in the worst case a linked list of n nodes, so a single find walks O(n) pointers, and a sequence of operations degrades to O(n) each, timing out on large inputs. Union by rank fixes the shape: by always hanging the shorter tree under the taller, a tree's height only increases when two trees of equal height merge, which keeps height logarithmic in the group size, so find is already O(log n). Path compression fixes it further from the other side: during each find, every node on the path is re-pointed closer to the root (or directly to it), so the very next find on those nodes is nearly O(1). When both are combined, the flattening from compression and the balance from rank reinforce each other, and the amortized cost per operation drops to the inverse Ackermann function α(n), which is at most about four for any n you will ever run, effectively constant. So the fix is never to write Union Find with a plain parent array: always include the halving line in find and the rank comparison in union.",
+      "rubric": "Full credit: bare array → O(n) chain/find, union by rank keeps height log n, path compression flattens future finds, together α(n) ≈ constant. Partial: names one optimization or says 'faster' without the worst-case chain. Low: vague."
+    }
+  ]
+}

@@ -1,0 +1,121 @@
+{
+  "activityId": 199,
+  "lessonId": 30,
+  "op": "part_practice",
+  "questions": [
+    {
+      "id": "ae3-so-1",
+      "type": "select_all",
+      "prompt": "Select all that are true about the state check in a seeded agentic eval.",
+      "concept": "seeded-environment",
+      "difficulty": "easy",
+      "choices": [
+        "It compares the environment's actual final state against the expected end state.",
+        "The task passes only when the actual final state matches the expected end state.",
+        "It grades the number of tokens the agent produced.",
+        "It grades how long the agent took to respond."
+      ],
+      "correct_indices": [
+        0,
+        1
+      ],
+      "explanation": "A state check grades the world the agent changed, comparing the actual final state to the precisely defined expected end state, not token counts or latency."
+    },
+    {
+      "id": "ae3-sa-some",
+      "type": "select_all",
+      "prompt": "Which statements about contamination and held out sets are true? Select all that apply.",
+      "concept": "contamination",
+      "difficulty": "medium",
+      "choices": [
+        "A held out test set is kept out of training so the model never saw it",
+        "A contaminated eval can inflate the score by rewarding memorization",
+        "A high score on a contaminated eval proves real capability",
+        "A held out eval measures generalization to new cases"
+      ],
+      "correct_indices": [
+        0,
+        1,
+        3
+      ],
+      "explanation": "Held out sets measure generalization and contamination inflates scores through memorization. A high contaminated score does not prove capability, it is worthless."
+    },
+    {
+      "id": "ae3-sa-none",
+      "type": "select_all",
+      "prompt": "Which of these make a contaminated eval trustworthy? Select all that apply.",
+      "concept": "contamination",
+      "difficulty": "hard",
+      "choices": [
+        "The eval questions appearing in the training data",
+        "The model memorizing the seeded environments",
+        "Reporting a very high score from leaked answers"
+      ],
+      "correct_indices": [],
+      "explanation": "None of these. Each one is a symptom of contamination, which makes the score memorization rather than a trustworthy measure of capability."
+    },
+    {
+      "id": "ae3-sa-all",
+      "type": "select_all",
+      "prompt": "Which of these are genuine parts of designing the context disclosure privacy eval? Select all that apply.",
+      "concept": "privacy-eval",
+      "difficulty": "medium",
+      "choices": [
+        "Seed a scenario that contains private facts",
+        "Give each audience a maximum allowed disclosure level",
+        "Score whether the agent respected each audience's boundary"
+      ],
+      "correct_indices": [
+        0,
+        1,
+        2
+      ],
+      "explanation": "All three are core to the design. You seed private facts, set a per audience disclosure policy, and score whether the agent stayed within each boundary."
+    },
+    {
+      "id": "ae3-order",
+      "type": "ordering",
+      "prompt": "Put the stages of a seeded agentic eval in order.",
+      "concept": "seeded-environment",
+      "difficulty": "medium",
+      "items": [
+        "Trigger the agent on the goal and let it call tools",
+        "Seed a fake environment with a known start state",
+        "Run the state check against the expected end state",
+        "Record the pass or fail result"
+      ],
+      "correct_order": [
+        "Seed a fake environment with a known start state",
+        "Trigger the agent on the goal and let it call tools",
+        "Run the state check against the expected end state",
+        "Record the pass or fail result"
+      ]
+    },
+    {
+      "id": "ae3-so-2",
+      "type": "select_all",
+      "prompt": "Select all that are true about the disclosure policy in the context-disclosure privacy eval.",
+      "concept": "privacy-eval",
+      "difficulty": "easy",
+      "choices": [
+        "A stranger sits at the lowest disclosure boundary and should receive almost no context.",
+        "A spouse sits at a higher disclosure boundary than a colleague.",
+        "The agent should reveal the same amount of context to every audience."
+      ],
+      "correct_indices": [
+        0,
+        1
+      ],
+      "explanation": "The disclosure boundary depends on the audience. A spouse is high and a stranger is very low, so equal disclosure to everyone is wrong."
+    },
+    {
+      "id": "ae3-written",
+      "type": "written",
+      "prompt": "Explain why a held out test set matters and why a high score on a contaminated eval is worthless, using the idea of generalization versus memorization.",
+      "concept": "contamination",
+      "difficulty": "hard",
+      "actual_answer": "A held out test set is a set of eval cases that the model never trained on, so it has had no chance to memorize the answers. That is what makes it valuable, because the score reflects how well the model handles genuinely new inputs, which is generalization, the thing we actually care about. Contamination is when the eval cases or the seeded environments leak into the training data. When that happens the model can score well simply by reciting what it saw, which is memorization, not skill. So a high score on a contaminated eval is worthless. It looks like capability but it predicts nothing about behavior on unseen inputs, because it rewards recall of leaked answers rather than real problem solving. To keep an eval meaningful you hold out the test set and guard against leakage, so the number you report measures generalization instead of memorization.",
+      "rubric": "Full credit: defines a held out set as never trained on, ties it to generalization, defines contamination as leakage into training, ties a high contaminated score to memorization and explains it predicts nothing about unseen inputs. Partial credit: covers held out or contamination but does not connect both to generalization versus memorization. Low credit: vague or missing the memorization point."
+    }
+  ]
+}

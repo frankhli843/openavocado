@@ -1,0 +1,119 @@
+{
+  "activityId": 191,
+  "lessonId": 29,
+  "op": "part_practice",
+  "questions": [
+    {
+      "id": "ei-gbench-q1",
+      "type": "select_all",
+      "prompt": "Select all that are true about what the grader inspects to decide pass or fail in an agentic Gbench task.",
+      "concept": "agentic-eval-grading",
+      "difficulty": "easy",
+      "choices": [
+        "The resulting backend state, compared to an expected end state",
+        "The chat reply the agent produced, matched against a reference string",
+        "The number of tokens the model generated",
+        "Whether the model apologized when it was uncertain"
+      ],
+      "correct_indices": [
+        0
+      ],
+      "explanation": "An agentic eval grades what the model did to the environment. It compares the final backend state to the expected end state, not the words, the token count, or the tone."
+    },
+    {
+      "id": "ei-gbench-q2",
+      "type": "select_all",
+      "prompt": "Which of the following are parts of what we called the eval harness?",
+      "concept": "eval-harness-anatomy",
+      "difficulty": "medium",
+      "choices": [
+        "An environment the model acts inside",
+        "A trigger that starts the model running as an agent",
+        "A grader that decides pass or fail",
+        "A human reviewer who reads every transcript by hand"
+      ],
+      "correct_indices": [
+        0,
+        1,
+        2
+      ],
+      "explanation": "An eval harness is environment plus trigger plus grader. A per-transcript human reviewer is not part of that definition."
+    },
+    {
+      "id": "ei-gbench-q3",
+      "type": "select_all",
+      "prompt": "Which of these does Gbench create when it seeds a fake environment for an agentic task?",
+      "concept": "seeded-environment",
+      "difficulty": "medium",
+      "choices": [
+        "Fake files",
+        "Fake tools the agent can call",
+        "A known starting backend state"
+      ],
+      "correct_indices": [
+        0,
+        1,
+        2
+      ],
+      "explanation": "Seeding builds all three, fake files, fake callable tools, and a deterministic starting backend state, so the harness knows the world at time zero."
+    },
+    {
+      "id": "ei-gbench-q4",
+      "type": "select_all",
+      "prompt": "Which of the following are TRUE about a classic single-turn academic eval, as contrasted with an agentic task?",
+      "concept": "single-turn-vs-agentic",
+      "difficulty": "hard",
+      "choices": [
+        "It seeds a fake environment and lets the model call tools",
+        "It compares a final backend state to an expected state",
+        "It inspects the actions the model took across many turns"
+      ],
+      "correct_indices": [],
+      "explanation": "None are true of a single-turn eval. Those are all properties of the agentic path. A single-turn eval simply string matches one answer against a reference."
+    },
+    {
+      "id": "ei-gbench-q5",
+      "type": "select_all",
+      "prompt": "Which statements correctly describe the research grounding for the agentic path?",
+      "concept": "research-grounding",
+      "difficulty": "medium",
+      "choices": [
+        "The Berkeley Function Calling Leaderboard V3 added multi-turn tasks scored on backend state",
+        "tau-bench gives the agent domain API tools and compares the final database state to a goal"
+      ],
+      "correct_indices": [
+        0,
+        1
+      ],
+      "explanation": "Both are accurate. Gbench's agentic path follows the same design pattern, seed a world, let the agent act, and grade the end state."
+    },
+    {
+      "id": "ei-gbench-q6",
+      "type": "ordering",
+      "prompt": "Put the stages of an agentic Gbench task in the order they run.",
+      "concept": "agentic-eval-pipeline",
+      "difficulty": "medium",
+      "items": [
+        "Seed a fake environment with files, tools, and a starting state",
+        "Trigger the model as an agent inside the environment",
+        "Let the agent call tools that mutate the backend state",
+        "Compare the resulting end state to the expected end state"
+      ],
+      "correct_order": [
+        "Seed a fake environment with files, tools, and a starting state",
+        "Trigger the model as an agent inside the environment",
+        "Let the agent call tools that mutate the backend state",
+        "Compare the resulting end state to the expected end state"
+      ]
+    },
+    {
+      "id": "ei-gbench-q7",
+      "type": "written",
+      "prompt": "Explain why an agentic eval grades the end state of the environment rather than the text the model produced. What does that catch that a string match on the answer would miss?",
+      "concept": "why-grade-actions",
+      "difficulty": "hard",
+      "actual_answer": "An agentic task is judged by whether the model accomplished the goal in the world, so the harness seeds a known starting state, lets the agent call tools, and then checks whether the resulting backend state matches the expected state. Grading the end state catches whether the model actually took the right actions, for example whether it truly resolved the ticket in the database. A string match on the answer would only check that the model claimed to resolve it. A model can produce a perfectly worded reply while calling the wrong tool, calling tools in the wrong order, or doing nothing at all, and only a state comparison exposes that gap between what it said and what it did.",
+      "rubric": "Full credit: says the agentic grader compares the final backend state to an expected state AND explains that this catches whether the model took the correct actions, unlike a string match which can be fooled by a model that says the right thing while doing the wrong thing or nothing. Partial credit: mentions grading actions or end state but does not explain what a string match misses. Low credit: vague or only restates the question."
+    }
+  ]
+}

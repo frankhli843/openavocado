@@ -1,0 +1,107 @@
+{
+  "activityId": 148,
+  "lessonId": 25,
+  "op": "part_practice",
+  "questions": [
+    {
+      "id": "s2-so-1",
+      "type": "select_all",
+      "concept": "rate-limiting",
+      "difficulty": "easy",
+      "prompt": "Select all that are true about the token bucket's lazy refill.",
+      "choices": [
+        "It stores just the current token count and the timestamp of the last request per client.",
+        "On each request it adds elapsed-time times the refill rate, capped at capacity.",
+        "An idle client costs nothing until its next request, because tokens are computed on demand."
+      ],
+      "correct_indices": [
+        0,
+        1,
+        2
+      ],
+      "explanation": "Lazy refill computes the drip only when a request touches the bucket, from two stored numbers, so it is O(1) time and space per client."
+    },
+    {
+      "id": "s2-sa-multi",
+      "type": "select_all",
+      "prompt": "Which statements about rate-limiting algorithms are true?",
+      "concept": "rate-limiting",
+      "difficulty": "medium",
+      "choices": [
+        "The token bucket allows a burst up to its capacity",
+        "A sliding-window counter enforces a strict count per rolling window with no saved-up burst",
+        "The leaky bucket smooths output at a fixed drain rate, adding latency",
+        "Ten independent local limiters automatically enforce a correct global limit"
+      ],
+      "correct_indices": [
+        0,
+        1,
+        2
+      ],
+      "explanation": "Independent local limiters do NOT enforce a global limit under lopsided traffic, that is a classic distributed-rate-limiting bug."
+    },
+    {
+      "id": "s2-sa-none",
+      "type": "select_all",
+      "prompt": "For token_bucket(5, 1, [0,0,0,0,0,0,0]), which of these describe the result? (If none, select none.)",
+      "concept": "rate-limiting",
+      "difficulty": "hard",
+      "choices": [
+        "All seven requests are allowed",
+        "Exactly six are allowed and one is rejected",
+        "The first three are rejected and the rest allowed"
+      ],
+      "correct_indices": [],
+      "explanation": "None: the bucket serves the first FIVE (capacity 5) and rejects the last TWO → [T,T,T,T,T,F,F]."
+    },
+    {
+      "id": "s2-order",
+      "type": "ordering",
+      "prompt": "Order the steps the token bucket takes when a request arrives.",
+      "concept": "rate-limiting",
+      "difficulty": "medium",
+      "items": [
+        "Compute elapsed time since the last request",
+        "Add elapsed × refill_rate tokens, capped at capacity",
+        "Update the stored last-request timestamp to now",
+        "If a token is available, spend one and allow, otherwise reject"
+      ],
+      "correct_order": [
+        "Compute elapsed time since the last request",
+        "Add elapsed × refill_rate tokens, capped at capacity",
+        "Update the stored last-request timestamp to now",
+        "If a token is available, spend one and allow, otherwise reject"
+      ]
+    },
+    {
+      "id": "s2-pattern",
+      "type": "pattern_recognition",
+      "prompt": "\"Allow each API key up to 100 requests per minute, but tolerate short bursts when a client has been quiet.\" Which pattern(s) apply?",
+      "concept": "pattern-recognition",
+      "difficulty": "medium",
+      "choices": [
+        "Token Bucket rate limiter",
+        "Lazy refill from elapsed time",
+        "Union Find",
+        "Binary Search",
+        "Consistent Hashing"
+      ],
+      "primary_indices": [
+        0
+      ],
+      "secondary_indices": [
+        1
+      ],
+      "explanation": "Average rate with tolerated bursts is the token bucket, lazy refill from the stored timestamp is its implementation trick."
+    },
+    {
+      "id": "s2-written",
+      "type": "written",
+      "prompt": "Explain the trade-off between a token bucket and a sliding-window counter, and give one requirement that would make you choose each.",
+      "concept": "rate-limiting",
+      "difficulty": "hard",
+      "actual_answer": "Both cap a client's request rate, but they differ in how they treat bursts. A token bucket stores a token count that refills at a steady rate up to a capacity, a request spends a token, and because tokens accumulate while the client is quiet, the client can spend a whole bucket at once as a short burst, then is throttled back to the refill rate. So it enforces a long-run AVERAGE while tolerating spikes up to capacity. A sliding-window counter instead keeps the timestamps of recent requests and allows a new request only if the number inside the trailing window is below the limit, it enforces a strict 'at most X in any rolling window' with no saved-up burst credit at all. The trade-off is burst tolerance versus strictness: the token bucket is friendlier to real, bursty traffic and cheaper (two numbers of state), while the sliding window gives a hard guarantee that the count never exceeds the limit in any window, at the cost of storing recent timestamps. Choose the token bucket when short bursts are acceptable and you want an average rate, for example a public API that should not punish an occasional spike. Choose the sliding window when bursts are forbidden and the limit must never be exceeded in any window, for example a strict per-user cap on an expensive or abuse-prone operation.",
+      "rubric": "Full credit: token bucket = average rate + bounded burst via accumulated tokens, sliding window = strict rolling count, no burst, trade-off burst-tolerance vs strictness, a concrete requirement for each. Partial: describes both but not the burst-vs-strict trade-off or only one use case. Low: vague."
+    }
+  ]
+}

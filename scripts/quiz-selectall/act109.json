@@ -1,0 +1,107 @@
+{
+  "activityId": 109,
+  "lessonId": 19,
+  "op": "part_practice",
+  "questions": [
+    {
+      "id": "hp1-so-1",
+      "type": "select_all",
+      "prompt": "Select all that are true about the min-heap invariant and its root.",
+      "concept": "heap",
+      "difficulty": "easy",
+      "choices": [
+        "Every parent is less than or equal to each of its children.",
+        "The invariant forces the minimum element to sit at the root.",
+        "The invariant is local, so siblings are left only partially ordered."
+      ],
+      "correct_indices": [
+        0,
+        1,
+        2
+      ],
+      "explanation": "The min-heap promise is parent less than or equal to children, which forces the minimum to the root while leaving the rest, including siblings, only partially ordered."
+    },
+    {
+      "id": "hp1-sa-multi",
+      "type": "select_all",
+      "prompt": "Which statements about a binary min-heap are true?",
+      "concept": "heap",
+      "difficulty": "medium",
+      "choices": [
+        "It is stored as an array. A node at index i has children at 2i+1 and 2i+2",
+        "push and pop each run in O(log n)",
+        "It keeps all elements fully sorted at all times",
+        "Building a heap from n elements at once can be done in O(n)"
+      ],
+      "correct_indices": [
+        0,
+        1,
+        3
+      ],
+      "explanation": "A heap is only partially ordered (the invariant is local). Push/pop are O(log n) and bulk heapify is O(n)."
+    },
+    {
+      "id": "hp1-sa-none",
+      "type": "select_all",
+      "prompt": "Which of these does a plain binary heap support EFFICIENTLY (better than O(n))? (If none, select none.)",
+      "concept": "heap",
+      "difficulty": "hard",
+      "choices": [
+        "Finding whether an arbitrary value is present",
+        "Returning the elements in fully sorted order for free",
+        "Deleting a specific element from the middle by value"
+      ],
+      "correct_indices": [],
+      "explanation": "None. A heap only makes the extreme cheap. Arbitrary search, full sorting, and middle deletion are not its strengths."
+    },
+    {
+      "id": "hp1-order",
+      "type": "ordering",
+      "prompt": "Order the steps of removing the minimum from a min-heap.",
+      "concept": "heap",
+      "difficulty": "medium",
+      "items": [
+        "Take the root as the minimum to return",
+        "Move the last element into the root slot",
+        "Sift down: swap with the smaller child while out of order",
+        "Stop when the parent is ≤ both children"
+      ],
+      "correct_order": [
+        "Take the root as the minimum to return",
+        "Move the last element into the root slot",
+        "Sift down: swap with the smaller child while out of order",
+        "Stop when the parent is ≤ both children"
+      ]
+    },
+    {
+      "id": "hp1-pattern",
+      "type": "pattern_recognition",
+      "prompt": "\"Design a data structure that supports inserting numbers and repeatedly removing the smallest one, both efficiently, as items keep arriving.\" Which pattern(s) apply?",
+      "concept": "pattern-recognition",
+      "difficulty": "medium",
+      "choices": [
+        "Heap / Priority Queue",
+        "Sorting",
+        "Two Pointer",
+        "Binary Search Tree",
+        "Sliding Window"
+      ],
+      "primary_indices": [
+        0
+      ],
+      "secondary_indices": [
+        3
+      ],
+      "explanation": "Repeated insert + remove-min on changing data is the priority-queue fingerprint. A balanced BST can also do it in O(log n) and is a reasonable secondary answer."
+    },
+    {
+      "id": "hp1-written",
+      "type": "written",
+      "prompt": "Explain why removing the minimum moves the LAST element to the root (rather than promoting a child), and why the operation is still O(log n).",
+      "concept": "heap",
+      "difficulty": "hard",
+      "actual_answer": "The heap must stay a complete tree. Every level full, filled left to right. Because that shape is what makes the array index math (children at 2i+1 and 2i+2) valid. Promoting a child would leave a hole in the middle of the array and break that arithmetic. Moving the last element to the root keeps the shape perfectly compact. It only violates the value ordering temporarily. You then sift that element down, swapping it with its smaller child until the parent-≤-children invariant holds again. Sifting down walks a single root-to-leaf path whose length is the tree height, about log n, so the whole removal is O(log n).",
+      "rubric": "Full credit: moving the last element preserves the complete-tree shape (needed for the index math), and sift-down repairs ordering along one path of height log n. Partial: mentions shape OR the log n path but not both. Low: vague."
+    }
+  ]
+}

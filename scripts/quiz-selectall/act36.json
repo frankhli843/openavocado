@@ -1,0 +1,170 @@
+{
+  "activityId": 36,
+  "lessonId": 5,
+  "op": "assessment_quiz",
+  "questions": [
+    {
+      "id": "q1",
+      "question": "Select all that are true about how BPE builds its vocabulary.",
+      "choices": [
+        "It starts from individual characters or bytes as the base vocabulary.",
+        "It repeatedly merges the most frequent adjacent pair until a target vocabulary size is reached.",
+        "It assigns every whole word a unique ID ranked by frequency without any merging.",
+        "None of the above"
+      ],
+      "correct_indices": [
+        0,
+        1
+      ],
+      "allow_multiple_correct": true,
+      "explanation": "BPE works bottom-up. It begins with characters or bytes and iteratively merges the most frequent adjacent pair until the target size is reached. It does not simply rank whole words by frequency.",
+      "concept": "bpe-algorithm",
+      "difficulty": "easy",
+      "learning_scope": "taught",
+      "support_ref": "part-2-bpe-vocabulary"
+    },
+    {
+      "id": "q2",
+      "question": "Select all that are true about the consequence of serving a model with a different tokenizer than the one used in training.",
+      "choices": [
+        "The model reads different integer IDs for the same text and produces garbage output.",
+        "The model automatically retrains its embedding table to match the new tokenizer.",
+        "The model crashes immediately with a hard error before producing any text.",
+        "None of the above"
+      ],
+      "correct_indices": [
+        0
+      ],
+      "allow_multiple_correct": true,
+      "explanation": "A tokenizer mismatch feeds the wrong integer IDs into the embedding table, so the model reads the wrong language and produces bad text. It does not retrain itself, and the failure is usually silent rather than a crash.",
+      "concept": "tokenizer-model-contract",
+      "difficulty": "medium",
+      "learning_scope": "taught",
+      "support_ref": "part-2-tokenizer-contract"
+    },
+    {
+      "id": "q3",
+      "question": "Select all that are true about quantization as taught in this lesson.",
+      "choices": [
+        "It represents each weight with fewer bits to reduce memory.",
+        "A 7B model at FP32 needs about 28 GB for weights, since FP32 uses 4 bytes per parameter.",
+        "It trades a small, measurable reduction in model quality for the memory savings.",
+        "None of the above"
+      ],
+      "correct_indices": [
+        0,
+        1,
+        2
+      ],
+      "allow_multiple_correct": true,
+      "explanation": "Quantization stores each weight with fewer bits, cutting the roughly 28 GB FP32 footprint of a 7B model, and it trades a small measurable quality drop for that saving. All three statements are true.",
+      "concept": "quantization-purpose",
+      "difficulty": "medium",
+      "learning_scope": "taught",
+      "support_ref": "part-1-quantization"
+    },
+    {
+      "id": "q4",
+      "question": "Select all that are true about a character-level tokenizer as taught.",
+      "choices": [
+        "It uses a vocabulary of 262,144 entries like Gemma 4.",
+        "It merges the most frequent adjacent pairs thousands of times.",
+        "Its vocabulary size equals the total number of characters in the training text.",
+        "None of the above"
+      ],
+      "correct_indices": [
+        3
+      ],
+      "allow_multiple_correct": true,
+      "explanation": "A character-level tokenizer is BPE with zero merges, and its vocabulary size equals the number of unique characters, roughly 65 to 70 for ASCII English, not the total character count and not a 262k merged vocabulary. So none of the listed statements is true.",
+      "concept": "character-tokenizer",
+      "difficulty": "medium",
+      "learning_scope": "taught",
+      "support_ref": "part-2-character-tokenizer"
+    },
+    {
+      "id": "q5",
+      "question": "Select all that are true about the GGUF format.",
+      "choices": [
+        "It is a model file format used by llama.cpp for local inference.",
+        "It bundles weights, tokenizer data, and metadata in a single file.",
+        "It is itself a quantization precision level, the same thing as Q4_K_M.",
+        "None of the above"
+      ],
+      "correct_indices": [
+        0,
+        1
+      ],
+      "allow_multiple_correct": true,
+      "explanation": "GGUF is the single-file container llama.cpp loads for local inference, holding weights, tokenizer data, and metadata. Q4_K_M is a quantization level embedded inside a GGUF file, not the format itself.",
+      "concept": "gguf-format",
+      "difficulty": "medium",
+      "learning_scope": "taught",
+      "support_ref": "part-1-gguf"
+    },
+    {
+      "id": "q6",
+      "question": "Select all that are NOT true about the seven-stage LLM pipeline as taught.",
+      "choices": [
+        "Each stage produces an artifact that the next stage depends on.",
+        "Quantization belongs to the Reduce stage, not the whole lifecycle.",
+        "The tokenizer stage produces the final checkpoint of learned weights.",
+        "If one contract breaks, every downstream stage still runs correctly on the right input.",
+        "None of the above"
+      ],
+      "correct_indices": [
+        2,
+        3
+      ],
+      "allow_multiple_correct": true,
+      "explanation": "The false statements are that the tokenizer produces the checkpoint, since checkpoints come from training, and that a broken contract still leaves downstream stages correct, since they may run but on the wrong input. The first two statements are true.",
+      "concept": "llm-pipeline-stages",
+      "difficulty": "hard",
+      "learning_scope": "taught",
+      "support_ref": "part-1-pipeline-contracts"
+    },
+    {
+      "id": "q7",
+      "question": "Select all that are true about the effect of increasing the BPE vocabulary size.",
+      "choices": [
+        "It generally produces fewer tokens per sentence because longer subword sequences become single tokens.",
+        "It requires a larger embedding table and more training data to cover the vocabulary.",
+        "It pushes the UNK rate down toward zero even for technical or multilingual text.",
+        "It shrinks the embedding table because each token stores less information.",
+        "None of the above"
+      ],
+      "correct_indices": [
+        0,
+        1,
+        2
+      ],
+      "allow_multiple_correct": true,
+      "explanation": "A larger vocabulary encodes text in fewer tokens, needs a larger embedding table and more training data, and drives the UNK rate toward zero. It does not shrink the embedding table, so that statement is false.",
+      "concept": "vocabulary-size-effect",
+      "difficulty": "medium",
+      "learning_scope": "taught",
+      "support_ref": "part-2-vocabulary-size"
+    },
+    {
+      "id": "q8",
+      "question": "Select all that are NOT true about what runs during inference versus training.",
+      "choices": [
+        "The backward pass that computes gradients runs during plain inference.",
+        "Inference runs the forward pass through the transformer layers.",
+        "Sampling a next token happens only during training, never at inference.",
+        "Weight updates happen during training, not during plain inference.",
+        "None of the above"
+      ],
+      "correct_indices": [
+        0,
+        2
+      ],
+      "allow_multiple_correct": true,
+      "explanation": "The false statements are that the backward pass runs during inference and that sampling happens only in training. Inference runs the forward pass and samples a token, while the backward pass and weight updates are training only.",
+      "concept": "inference-vs-training",
+      "difficulty": "medium",
+      "learning_scope": "taught",
+      "support_ref": "part-1-inference-vs-training"
+    }
+  ]
+}

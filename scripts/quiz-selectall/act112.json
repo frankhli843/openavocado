@@ -1,0 +1,168 @@
+{
+  "activityId": 112,
+  "lessonId": 19,
+  "op": "assessment_quiz",
+  "questions": [
+    {
+      "id": "q1",
+      "question": "Select all that are true about the min-heap invariant and its consequences.",
+      "choices": [
+        "Every parent node is at most each of its children.",
+        "The global minimum sits at the root and is readable in O(1).",
+        "Every element is fully sorted, so the whole array is in ascending order.",
+        "None of the above"
+      ],
+      "correct_indices": [
+        0,
+        1
+      ],
+      "allow_multiple_correct": true,
+      "explanation": "The invariant is a local promise that forces the minimum to the root, readable in O(1). Nothing is said about siblings, so the array is only partially ordered, not fully sorted.",
+      "concept": "heap",
+      "difficulty": "easy",
+      "learning_scope": "taught",
+      "support_ref": "heap-part-1-mechanics"
+    },
+    {
+      "id": "q2",
+      "question": "Select all that are true about how a heap node at index i maps to its neighbors in the backing array.",
+      "choices": [
+        "Its children live at indices 2i+1 and 2i+2.",
+        "Its children live at indices i+1 and i+2.",
+        "Its parent lives at index i/2 rounded up.",
+        "None of the above"
+      ],
+      "correct_indices": [
+        0
+      ],
+      "allow_multiple_correct": true,
+      "explanation": "Children live at 2i+1 and 2i+2 and the parent at (i-1) integer-divided by 2. The other two index formulas are wrong.",
+      "concept": "heap",
+      "difficulty": "medium",
+      "learning_scope": "taught",
+      "support_ref": "heap-part-1-mechanics"
+    },
+    {
+      "id": "q3",
+      "question": "Select all that are true about removing the minimum from a binary min-heap.",
+      "choices": [
+        "You take the root as the answer, then move the last element into the root slot.",
+        "You sift the moved element down, swapping with its smaller child until the invariant holds.",
+        "Moving the last element to the root keeps the tree shape gap-free so the index formula stays valid.",
+        "None of the above"
+      ],
+      "correct_indices": [
+        0,
+        1,
+        2
+      ],
+      "allow_multiple_correct": true,
+      "explanation": "Remove-min takes the root, promotes the last element, and sifts it down against the smaller child. Using the last element keeps the shape gap-free so the index arithmetic stays valid.",
+      "concept": "heap",
+      "difficulty": "medium",
+      "learning_scope": "taught",
+      "support_ref": "heap-part-1-mechanics"
+    },
+    {
+      "id": "q4",
+      "question": "Select all that are true about which heap to use to track the k LARGEST elements of a stream.",
+      "choices": [
+        "A min-heap, so the smallest survivor sits at the root and is evicted first.",
+        "A max-heap, so the largest value sits at the root.",
+        "A sorted array rebuilt on every incoming element.",
+        "None of the above"
+      ],
+      "correct_indices": [
+        0
+      ],
+      "allow_multiple_correct": true,
+      "explanation": "A min-heap keeps the weakest survivor at the root, ready to be evicted, so what remains is the k largest. A max-heap would guard the value you never want to drop.",
+      "concept": "heap",
+      "difficulty": "hard",
+      "learning_scope": "taught",
+      "support_ref": "heap-part-2-topk"
+    },
+    {
+      "id": "q5",
+      "question": "Select all that are true about the size-k min-heap trick for the k-th largest of n elements.",
+      "choices": [
+        "The heap is never allowed to grow past size k, and the instant it exceeds k you pop the smallest.",
+        "The root of the size-k min-heap is exactly the k-th largest value.",
+        "It runs in O(n log k) time and O(k) space.",
+        "It runs in O(n log n) time because every element must be fully sorted.",
+        "None of the above"
+      ],
+      "correct_indices": [
+        0,
+        1,
+        2
+      ],
+      "allow_multiple_correct": true,
+      "explanation": "The heap is capped at k, its root is the smallest survivor which is the k-th largest, and every operation touches a heap of size k for O(n log k) time and O(k) space. Nothing is fully sorted, so the last claim is false.",
+      "concept": "complexity",
+      "difficulty": "medium",
+      "learning_scope": "taught",
+      "support_ref": "heap-part-2-topk"
+    },
+    {
+      "id": "q6",
+      "question": "Select all that are NOT true about using a max-heap for a 'k largest' question and about Python's heapq.",
+      "choices": [
+        "A max-heap is correct because it keeps the largest value at the root, which is exactly the value you want to evict.",
+        "Python's heapq exposes a reverse or maxheap flag so it can behave as a max-heap directly.",
+        "For the k largest, a min-heap is correct because you want the weakest survivor on the chopping block.",
+        "To use heapq as a max-heap you push the negated value and negate again on the way out.",
+        "None of the above"
+      ],
+      "correct_indices": [
+        0,
+        1
+      ],
+      "allow_multiple_correct": true,
+      "explanation": "The largest value is the one you never want to evict, and heapq is min-only with no max flag, so the first two statements are false. The min-heap reasoning and the negate trick are true.",
+      "concept": "heap",
+      "difficulty": "hard",
+      "learning_scope": "taught",
+      "support_ref": "heap-part-2-topk"
+    },
+    {
+      "id": "q7",
+      "question": "Select all that are true about what a heap hands you for free.",
+      "choices": [
+        "It returns all elements in fully sorted order with no extra work.",
+        "It guarantees the second-smallest element is always at a fixed known index.",
+        "It keeps sibling nodes ordered relative to each other.",
+        "None of the above"
+      ],
+      "correct_indices": [
+        3
+      ],
+      "allow_multiple_correct": true,
+      "explanation": "A heap only makes the extreme cheap. It does not give a full sort, does not fix the second-smallest at a known index, and says nothing about sibling order, so None of the above is correct.",
+      "concept": "pattern-recognition",
+      "difficulty": "medium",
+      "learning_scope": "taught",
+      "support_ref": "heap-part-1-mechanics"
+    },
+    {
+      "id": "q8",
+      "question": "Select all that are true about heap recognition cues and heap construction.",
+      "choices": [
+        "'k-th largest' is a classic heap fingerprint.",
+        "'merge k sorted lists' is a classic heap fingerprint.",
+        "Building a heap from n elements given all at once requires at least O(n log n).",
+        "None of the above"
+      ],
+      "correct_indices": [
+        0,
+        1
+      ],
+      "allow_multiple_correct": true,
+      "explanation": "'k-th largest' and 'merge k sorted lists' are classic heap cues. Bottom-up heapify builds a heap from n elements in O(n), so the third claim is false.",
+      "concept": "pattern-recognition",
+      "difficulty": "medium",
+      "learning_scope": "taught",
+      "support_ref": "heap-part-2-topk"
+    }
+  ]
+}

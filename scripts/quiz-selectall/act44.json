@@ -1,0 +1,168 @@
+{
+  "activityId": 44,
+  "lessonId": 7,
+  "op": "assessment_quiz",
+  "questions": [
+    {
+      "id": "q1",
+      "question": "Select all that are true about what a token ID does inside the model.",
+      "choices": [
+        "It acts as a row address into the learned embedding matrix.",
+        "It selects one learned vector row that becomes the token's starting representation.",
+        "It stores the raw text piece of the token inside the model.",
+        "It is directly converted into a probability by softmax.",
+        "None of the above"
+      ],
+      "correct_indices": [
+        0,
+        1
+      ],
+      "allow_multiple_correct": true,
+      "explanation": "A token ID is an address that selects one learned row from the embedding matrix as the token's starting vector. It does not store the raw text and is not turned straight into a probability.",
+      "concept": "embedding-lookup",
+      "difficulty": "easy",
+      "learning_scope": "taught",
+      "support_ref": "part-2-embedding-lookup"
+    },
+    {
+      "id": "q2",
+      "question": "Select all that are true about the shape of the embedding matrix as taught.",
+      "choices": [
+        "It has one row per vocabulary ID and one column per hidden dimension, shape V by D.",
+        "It has one row per token position in the current prompt.",
+        "It has shape L by D, where L is the current prompt length.",
+        "None of the above"
+      ],
+      "correct_indices": [
+        0
+      ],
+      "allow_multiple_correct": true,
+      "explanation": "The embedding matrix is shape V by D, one row per vocabulary ID and one column per hidden dimension. The L by D, one-row-per-position object is the hidden-state matrix, not the embedding matrix.",
+      "concept": "embedding-matrix",
+      "difficulty": "medium",
+      "learning_scope": "taught",
+      "support_ref": "part-2-embedding-matrix"
+    },
+    {
+      "id": "q3",
+      "question": "Select all that are NOT true about position information.",
+      "choices": [
+        "It lets the model distinguish 'dog bites man' from 'man bites dog'.",
+        "It makes two copies of the same token ID separable after embedding lookup.",
+        "It replaces the vocabulary so the tokenizer is no longer needed.",
+        "It removes the need for attention.",
+        "None of the above"
+      ],
+      "correct_indices": [
+        2,
+        3
+      ],
+      "allow_multiple_correct": true,
+      "explanation": "The false statements are that position information replaces the vocabulary and that it removes the need for attention. Its real job is to encode order so identical token IDs at different positions become separable.",
+      "concept": "position-information",
+      "difficulty": "medium",
+      "learning_scope": "taught",
+      "support_ref": "part-2-position-information"
+    },
+    {
+      "id": "q4",
+      "question": "Select all that are true about a transformer block as defined in this lesson.",
+      "choices": [
+        "It receives an L by D hidden-state matrix and returns an L by D matrix.",
+        "It contains attention, an MLP, residual connections, and normalization.",
+        "It preserves the shape so the next block can consume the same kind of object.",
+        "None of the above"
+      ],
+      "correct_indices": [
+        0,
+        1,
+        2
+      ],
+      "allow_multiple_correct": true,
+      "explanation": "A transformer block is a same-shape editing layer. It takes an L by D matrix and returns an L by D matrix, made of attention, an MLP, residual connections, and normalization, so blocks can be stacked. All three statements are true.",
+      "concept": "transformer-block",
+      "difficulty": "medium",
+      "learning_scope": "taught",
+      "support_ref": "part-3-transformer-block"
+    },
+    {
+      "id": "q5",
+      "question": "Select all that are true about how attention and the MLP differ inside a transformer block.",
+      "choices": [
+        "Attention mixes information across token positions.",
+        "The MLP is applied to each token row independently and does not mix positions.",
+        "The MLP mixes information across token positions while attention works on each row alone.",
+        "None of the above"
+      ],
+      "correct_indices": [
+        0,
+        1
+      ],
+      "allow_multiple_correct": true,
+      "explanation": "Attention is the across-position mixing step, and the MLP transforms each token row independently without mixing positions. The third statement reverses their roles, so it is false.",
+      "concept": "attention-vs-mlp",
+      "difficulty": "medium",
+      "learning_scope": "taught",
+      "support_ref": "part-3-attention-mlp"
+    },
+    {
+      "id": "q6",
+      "question": "Select all that are true about what the embedding table does by itself.",
+      "choices": [
+        "It mixes context across token positions on its own.",
+        "It computes the training loss.",
+        "It applies softmax sampling to choose the next token.",
+        "None of the above"
+      ],
+      "correct_indices": [
+        3
+      ],
+      "allow_multiple_correct": true,
+      "explanation": "The embedding table only maps token IDs to learned rows. Context mixing, loss computation, and softmax sampling all happen in later model steps, so none of the listed statements is true.",
+      "concept": "embedding-lookup",
+      "difficulty": "medium",
+      "learning_scope": "taught",
+      "support_ref": "part-2-embedding-responsibilities"
+    },
+    {
+      "id": "q7",
+      "question": "Select all that are true about logits and the output head.",
+      "choices": [
+        "The output head projects the final D-wide hidden vector into one raw score per vocabulary token.",
+        "Logits are the raw next-token scores produced before softmax.",
+        "Logits are the cached Keys and Values used during serving.",
+        "The output head preserves the L by D shape without changing it.",
+        "None of the above"
+      ],
+      "correct_indices": [
+        0,
+        1
+      ],
+      "allow_multiple_correct": true,
+      "explanation": "The output head projects the final hidden vector into one raw score per vocabulary token, and those pre-softmax scores are logits. Cached Keys and Values are the KV cache, and the output head changes shape from D to V, so those two statements are false.",
+      "concept": "logits",
+      "difficulty": "medium",
+      "learning_scope": "taught",
+      "support_ref": "part-3-logits-output-head"
+    },
+    {
+      "id": "q8",
+      "question": "Select all that are NOT true about the KV cache as previewed in this lesson.",
+      "choices": [
+        "It stores past attention Keys and Values during inference.",
+        "It is a serving-time optimization.",
+        "It is the same thing as the token embeddings.",
+        "None of the above"
+      ],
+      "correct_indices": [
+        2
+      ],
+      "allow_multiple_correct": true,
+      "explanation": "The false statement is that the KV cache is the same as token embeddings. The KV cache stores past attention Keys and Values during inference and is a serving-time optimization.",
+      "concept": "kv-cache-preview",
+      "difficulty": "medium",
+      "learning_scope": "taught",
+      "support_ref": "part-3-kv-cache-preview"
+    }
+  ]
+}

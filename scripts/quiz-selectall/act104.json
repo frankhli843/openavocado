@@ -1,0 +1,108 @@
+{
+  "activityId": 104,
+  "lessonId": 18,
+  "op": "part_practice",
+  "questions": [
+    {
+      "id": "tp1-so-1",
+      "type": "select_all",
+      "prompt": "Select all that are true about the converging two-pointer scan on a sorted array.",
+      "concept": "two-pointer",
+      "difficulty": "easy",
+      "choices": [
+        "A pair sum larger than the target means retreating the right pointer to a smaller value.",
+        "A pair sum smaller than the target means advancing the left pointer to a bigger value.",
+        "Sorted order is what makes one comparison eliminate an entire end of candidate pairs."
+      ],
+      "correct_indices": [
+        0,
+        1,
+        2
+      ],
+      "explanation": "On a sorted array a too-big sum condemns the largest value so the right pointer retreats, a too-small sum condemns the smallest so the left pointer advances, and sortedness is what makes each comparison decisive."
+    },
+    {
+      "id": "tp1-sa-multi",
+      "type": "select_all",
+      "prompt": "Which statements about converging two-sum on a sorted array are true?",
+      "concept": "two-pointer",
+      "difficulty": "medium",
+      "choices": [
+        "Each comparison can eliminate an entire end's worth of pairs",
+        "The array must be sorted for the move rule to be valid",
+        "It runs in O(n) time",
+        "It requires O(n) extra memory for a hash set"
+      ],
+      "correct_indices": [
+        0,
+        1,
+        2
+      ],
+      "explanation": "Converging pointers are O(n) time and O(1) space. Sortedness is what makes each comparison decisive. No hash set is needed."
+    },
+    {
+      "id": "tp1-sa-none",
+      "type": "select_all",
+      "prompt": "Which of these are REQUIRED for converging two-pointer two-sum to be correct? (Select all that truly are. If none, select none.)",
+      "concept": "two-pointer",
+      "difficulty": "hard",
+      "choices": [
+        "All values must be positive",
+        "The array must contain no duplicates",
+        "The target must be even"
+      ],
+      "correct_indices": [],
+      "explanation": "None are required. Converging two-sum works with negatives, duplicates, and any target, as long as the array is sorted."
+    },
+    {
+      "id": "tp1-order",
+      "type": "ordering",
+      "prompt": "Put the converging two-sum steps in order.",
+      "concept": "two-pointer",
+      "difficulty": "medium",
+      "items": [
+        "Place left at index 0 and right at the last index",
+        "Read the pair sum of the two pointed-at values",
+        "If the sum is below target advance left, if above retreat right",
+        "Return the indices when the sum equals the target"
+      ],
+      "correct_order": [
+        "Place left at index 0 and right at the last index",
+        "Read the pair sum of the two pointed-at values",
+        "If the sum is below target advance left, if above retreat right",
+        "Return the indices when the sum equals the target"
+      ]
+    },
+    {
+      "id": "tp1-pattern",
+      "type": "pattern_recognition",
+      "prompt": "\"Given an array of integers that is already SORTED ascending, return two numbers that add up to a specific target.\" Which pattern(s) apply?",
+      "concept": "pattern-recognition",
+      "difficulty": "medium",
+      "choices": [
+        "Two Pointer",
+        "Sliding Window",
+        "Binary Search",
+        "Hashing",
+        "Dynamic Programming"
+      ],
+      "primary_indices": [
+        0
+      ],
+      "secondary_indices": [
+        2,
+        3
+      ],
+      "explanation": "Sorted + \"two numbers that add to a target\" is the converging two-pointer fingerprint. Binary search for the complement and a hash map are valid alternate approaches, so they are reasonable secondary lenses."
+    },
+    {
+      "id": "tp1-written",
+      "type": "written",
+      "prompt": "Explain why the SAME two-sum problem is a two-pointer problem when the array is sorted, but a hashing problem when it is not.",
+      "concept": "pattern-recognition",
+      "difficulty": "hard",
+      "actual_answer": "When the array is sorted, the pair sum is monotonic in the pointer positions: moving the right pointer left can only lower the sum and moving the left pointer right can only raise it, so a single comparison against the target tells you unambiguously which end is hopeless and can be dropped. That decisiveness is what lets two converging pointers finish in one linear pass. When the array is unsorted, a too-big or too-small sum says nothing about where a better value sits, so the move rule is invalid. Instead you scan once and remember each value in a hash set, checking for the complement (target minus the current value) in O(1). Same linear time, but the mechanism relies on lookup, not on ordering.",
+      "rubric": "Full credit: sorted makes the sum monotonic so one comparison is decisive (enables converging pointers); unsorted breaks that so you use a hash set / complement lookup instead. Partial: says sorted enables two pointers without the monotonic-decisiveness reason. Low: vague."
+    }
+  ]
+}

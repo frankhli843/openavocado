@@ -1,0 +1,104 @@
+{
+  "activityId": 197,
+  "lessonId": 30,
+  "op": "part_practice",
+  "questions": [
+    {
+      "id": "ae-multiturn-q1",
+      "type": "select_all",
+      "prompt": "Select all that are true about what a single-turn eval measures.",
+      "concept": "single-turn-eval",
+      "difficulty": "easy",
+      "choices": [
+        "It grades one response to one prompt in isolation, with no state carried across turns.",
+        "It tells you whether the model answers well when everything it needs is already present at once.",
+        "It verifies that a value produced on an early turn is still reused correctly many turns later.",
+        "It measures the backend state left behind after a long agentic session."
+      ],
+      "correct_indices": [
+        0,
+        1
+      ],
+      "explanation": "A single-turn eval hands the model one prompt and grades one response in isolation, so it checks isolated answering but never cross-turn reuse or accumulated backend state."
+    },
+    {
+      "id": "ae-multiturn-q2",
+      "type": "select_all",
+      "prompt": "Which statements about a multi-turn agentic task are true?",
+      "concept": "multi-turn-task",
+      "difficulty": "medium",
+      "choices": [
+        "The conversation carries state across several turns",
+        "A tool call can span turns, with the result arriving on a later turn",
+        "The agent may need to reuse an earlier tool result on a later turn",
+        "Every turn is graded fully in isolation from the others"
+      ],
+      "correct_indices": [
+        0,
+        1,
+        2
+      ],
+      "explanation": "Multi-turn tasks carry state, let tool calls span turns, and require reusing earlier results. Grading each turn in isolation is the single-turn model, not the multi-turn one."
+    },
+    {
+      "id": "ae-multiturn-q3",
+      "type": "select_all",
+      "prompt": "Which of these are accurate about the research grounding for the single-turn versus multi-turn gap?",
+      "concept": "research-grounding",
+      "difficulty": "medium",
+      "choices": [
+        "The Berkeley Function Calling Leaderboard V3 added multi-turn categories that check backend state across turns",
+        "The FunctionGemma docs state that multi-turn and multi-step workflows are not supported",
+        "The FunctionGemma docs state that single-turn and parallel tool calls are supported"
+      ],
+      "correct_indices": [
+        0,
+        1,
+        2
+      ],
+      "explanation": "All three are accurate. BFCL V3 added multi-turn state checks, and the FunctionGemma docs support single-turn and parallel calls while explicitly excluding multi-turn workflows."
+    },
+    {
+      "id": "ae-multiturn-q4",
+      "type": "select_all",
+      "prompt": "Which of the following are TRUE of a single-turn eval, as opposed to a multi-turn agentic task?",
+      "concept": "single-turn-vs-multi-turn",
+      "difficulty": "hard",
+      "choices": [
+        "It carries state from an earlier turn into a later turn",
+        "It grades a tool call that spans multiple turns",
+        "It checks that a value produced early is reused correctly later"
+      ],
+      "correct_indices": [],
+      "explanation": "None are true of a single-turn eval. Those are all properties of the multi-turn agentic task. A single-turn eval grades one response in isolation."
+    },
+    {
+      "id": "ae-multiturn-q5",
+      "type": "ordering",
+      "prompt": "Put the turns of the failing multi-turn task in the order they happen.",
+      "concept": "tool-call-spans-turns",
+      "difficulty": "medium",
+      "items": [
+        "The user asks the agent to complete a task",
+        "The agent calls a lookup tool",
+        "The tool returns an order id on a later turn",
+        "The agent must reuse the order id but drops it and fails"
+      ],
+      "correct_order": [
+        "The user asks the agent to complete a task",
+        "The agent calls a lookup tool",
+        "The tool returns an order id on a later turn",
+        "The agent must reuse the order id but drops it and fails"
+      ]
+    },
+    {
+      "id": "ae-multiturn-q6",
+      "type": "written",
+      "prompt": "Explain how a model can pass every single-turn function-calling question and still ship as a broken agent. Include both the technical reason and the organizational reason from the lesson.",
+      "concept": "green-score-broken-agent",
+      "difficulty": "hard",
+      "actual_answer": "Technically, a single-turn eval grades one response in isolation, so it only checks whether the model answers well when everything it needs is already present. A multi-turn agentic task is different because state has to survive across turns and a tool call can span turns. The model requests a tool on one turn, gets the result on the next, and must reuse that result on a later turn. That carry-forward step is exactly what the single-turn eval never exercises, so the model can be perfect on every single-turn question and still drop the value across turns and fail the real task. The Berkeley Function Calling Leaderboard V3 added multi-turn categories that check backend state across turns for this reason, and the FunctionGemma docs confirm single-turn and parallel calls are supported while multi-turn workflows are not. Organizationally, the post-training team and the evals team disagreed over whether multi-turn was even a supported use case, so no one owned the multi-turn eval. An unowned eval left a blind spot, and the green single-turn score shipped a broken agent.",
+      "rubric": "Full credit: names the technical reason (single-turn grades one response in isolation while multi-turn needs a value to survive across turns and a tool call to span turns, so the carry-forward step is untested) AND the organizational reason (two teams disagreed on scope, so no one owned the multi-turn eval). Bonus for citing BFCL V3 or the FunctionGemma docs. Partial credit: gives the technical reason or the organizational reason but not both. Low credit: vague or only restates that the eval passed."
+    }
+  ]
+}

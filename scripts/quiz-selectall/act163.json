@@ -1,0 +1,165 @@
+{
+  "activityId": 163,
+  "lessonId": 27,
+  "op": "assessment_quiz",
+  "questions": [
+    {
+      "id": "q1",
+      "question": "Select all that are true about the formed counter in the sliding window for Minimum Window Substring.",
+      "choices": [
+        "It counts how many distinct required characters currently meet or exceed their needed count.",
+        "The window is valid when formed equals the number of distinct characters in t.",
+        "It tracks the total number of characters currently inside the window.",
+        "None of the above"
+      ],
+      "correct_indices": [
+        0,
+        1
+      ],
+      "allow_multiple_correct": true,
+      "explanation": "Formed is the count of distinct required characters that are fully satisfied, and the window becomes valid when it equals the distinct characters in t. It is not the raw character count of the window.",
+      "concept": "formed-counter",
+      "difficulty": "easy",
+      "learning_scope": "taught",
+      "support_ref": "mh-part-1-sliding-window"
+    },
+    {
+      "id": "q2",
+      "question": "Select all that are NOT true about the need map in the sliding window.",
+      "choices": [
+        "The need map is rebuilt every time the window moves.",
+        "The need map is updated when the left pointer shrinks the window.",
+        "The need map is built once from t and records how many copies of each character the window must contain.",
+        "None of the above"
+      ],
+      "correct_indices": [
+        0,
+        1
+      ],
+      "allow_multiple_correct": true,
+      "explanation": "The need map is built once from t and never changes, so claims that it is rebuilt on every move or updated when left shrinks are false and are the NOT-true selections.",
+      "concept": "need-map",
+      "difficulty": "medium",
+      "learning_scope": "taught",
+      "support_ref": "mh-part-1-sliding-window"
+    },
+    {
+      "id": "q3",
+      "question": "Select all that are true about why the sliding window runs in O(|s| + |t|) time.",
+      "choices": [
+        "Each character in s is visited at most twice, once when the right pointer expands and once when the left pointer shrinks.",
+        "The window never holds more than 26 characters, which bounds the total work.",
+        "The string s is sorted first so lookups become O(log |s|).",
+        "None of the above"
+      ],
+      "correct_indices": [
+        0
+      ],
+      "allow_multiple_correct": true,
+      "explanation": "The linear bound comes from each character entering and leaving the window at most once. The window can hold many characters, and s is never sorted.",
+      "concept": "sliding-window-complexity",
+      "difficulty": "medium",
+      "learning_scope": "taught",
+      "support_ref": "mh-part-1-sliding-window"
+    },
+    {
+      "id": "q4",
+      "question": "Select all that are true recognition signals for reaching for a sliding window.",
+      "choices": [
+        "The problem asks about a contiguous subarray or substring.",
+        "The problem involves a coverage or count condition over a range.",
+        "The problem mentions minimizing or maximizing a window.",
+        "None of the above"
+      ],
+      "correct_indices": [
+        0,
+        1,
+        2
+      ],
+      "allow_multiple_correct": true,
+      "explanation": "All three are the taught sliding-window signals: a contiguous range, a coverage or count condition, and a minimum or maximum window objective.",
+      "concept": "recognition-sliding-window",
+      "difficulty": "medium",
+      "learning_scope": "taught",
+      "support_ref": "mh-part-1-sliding-window"
+    },
+    {
+      "id": "q5",
+      "question": "Select all that are true about the base case and un-choose step in the backtracking for Palindrome Partitioning.",
+      "choices": [
+        "The base case is reached when start equals the length of the string, and the current path is copied into the results.",
+        "After a recursive call returns, the last element is popped from the path, which is the un-choose step.",
+        "The path can be appended by reference because it is never mutated after being added.",
+        "None of the above"
+      ],
+      "correct_indices": [
+        0,
+        1
+      ],
+      "allow_multiple_correct": true,
+      "explanation": "The base case copies the complete path, and the un-choose step pops the last element after recursion. The path is mutated across branches, so it must be copied rather than appended by reference.",
+      "concept": "backtracking-structure",
+      "difficulty": "medium",
+      "learning_scope": "taught",
+      "support_ref": "mh-part-2-backtracking"
+    },
+    {
+      "id": "q6",
+      "question": "Select all that are true about the palindrome DP table.",
+      "choices": [
+        "dp[i][j] is true when the substring from index i to index j inclusive is a palindrome.",
+        "The transition is dp[i][j] = (s[i] == s[j]) and (j - i < 2 or dp[i+1][j-1]).",
+        "The table is filled from the longest substrings down to the single characters.",
+        "None of the above"
+      ],
+      "correct_indices": [
+        0,
+        1
+      ],
+      "allow_multiple_correct": true,
+      "explanation": "The table marks palindromic substrings and uses the shown transition. It is filled from the smallest substrings outward, singles then pairs then longer, not from longest down.",
+      "concept": "palindrome-dp",
+      "difficulty": "medium",
+      "learning_scope": "taught",
+      "support_ref": "mh-part-2-backtracking"
+    },
+    {
+      "id": "q7",
+      "question": "Select all that are true about the time complexity of Palindrome Partitioning.",
+      "choices": [
+        "It is O(n * 2^n), driven by up to 2^(n-1) partitions each copied in O(n), with an O(n^2) DP precomputation.",
+        "The DP precomputation dominates, making the overall time O(n^2).",
+        "Because n <= 16, the number of partitions is constant regardless of the input.",
+        "None of the above"
+      ],
+      "correct_indices": [
+        0
+      ],
+      "allow_multiple_correct": true,
+      "explanation": "The enumeration of up to 2^(n-1) partitions dominates the O(n^2) DP, giving O(n * 2^n). The count of partitions still depends on the input, it is just bounded because n is at most 16.",
+      "concept": "backtracking-complexity",
+      "difficulty": "hard",
+      "learning_scope": "taught",
+      "support_ref": "mh-part-2-backtracking"
+    },
+    {
+      "id": "q8",
+      "question": "Select all that are true about how backtracking differs from a plain brute-force enumeration.",
+      "choices": [
+        "Backtracking guarantees it outputs the partitions in sorted order.",
+        "Backtracking uses memoization to cache intermediate results by default.",
+        "Backtracking requires an explicit graph structure to track visited states.",
+        "None of the above"
+      ],
+      "correct_indices": [
+        3
+      ],
+      "allow_multiple_correct": true,
+      "explanation": "None of these are true. Backtracking does not guarantee sorted output, memoization is a dynamic programming technique, and backtracking uses recursion and the call stack rather than an explicit graph. What it actually does is prune invalid branches early.",
+      "concept": "backtracking-vs-bruteforce",
+      "difficulty": "hard",
+      "learning_scope": "taught",
+      "support_ref": "mh-part-2-backtracking"
+    }
+  ]
+}

@@ -1,0 +1,104 @@
+{
+  "activityId": 166,
+  "lessonId": 28,
+  "op": "part_practice",
+  "questions": [
+    {
+      "id": "gm2-so-1",
+      "type": "select_all",
+      "prompt": "Select all that are true about a data run in single-lever isolation.",
+      "concept": "isolation",
+      "difficulty": "easy",
+      "choices": [
+        "A data run changes the training data and holds the model architecture fixed.",
+        "Isolating one lever makes any metric movement attributable to that single cause.",
+        "The team alternates data runs and architecture runs, changing only one lever at a time."
+      ],
+      "correct_indices": [
+        0,
+        1,
+        2
+      ],
+      "explanation": "A data run moves only the data with the architecture fixed. Isolating one lever keeps a metric move attributable, and the team cycles between data and architecture runs."
+    },
+    {
+      "id": "gm2-sa-some",
+      "type": "select_all",
+      "prompt": "Which are true about single-lever isolation?",
+      "concept": "isolation",
+      "difficulty": "medium",
+      "choices": [
+        "Changing only data makes movement attributable to the data",
+        "Changing only architecture makes movement attributable to the architecture",
+        "The team alternates data runs and architecture runs",
+        "Changing both levers gives the cleanest attribution"
+      ],
+      "correct_indices": [
+        0,
+        1,
+        2
+      ],
+      "explanation": "Isolating one lever attributes the result. Changing both destroys attribution."
+    },
+    {
+      "id": "gm2-sa-none",
+      "type": "select_all",
+      "prompt": "Which of these does an architecture run change? (If none, select none.)",
+      "concept": "isolation",
+      "difficulty": "hard",
+      "choices": [
+        "The training data",
+        "The eval questions",
+        "The random seed only"
+      ],
+      "correct_indices": [],
+      "explanation": "None, an architecture run changes the architecture and holds the data (and the rest) fixed."
+    },
+    {
+      "id": "gm2-order",
+      "type": "ordering",
+      "prompt": "Order the reasoning that makes a run's result attributable.",
+      "concept": "isolation",
+      "difficulty": "medium",
+      "items": [
+        "Decide which single lever to change",
+        "Hold the other lever fixed",
+        "Run the experiment and read the metric",
+        "Attribute the movement to the changed lever"
+      ],
+      "correct_order": [
+        "Decide which single lever to change",
+        "Hold the other lever fixed",
+        "Run the experiment and read the metric",
+        "Attribute the movement to the changed lever"
+      ]
+    },
+    {
+      "id": "gm2-pattern",
+      "type": "pattern_recognition",
+      "prompt": "\"We changed the data mixture AND swapped the attention block, and the eval went up 1.5.\" What is the problem/pattern here?",
+      "concept": "isolation",
+      "difficulty": "medium",
+      "choices": [
+        "Unattributable result (two levers moved)",
+        "Clean data run",
+        "Clean architecture run",
+        "No experiment ran"
+      ],
+      "primary_indices": [
+        0
+      ],
+      "secondary_indices": [],
+      "explanation": "Two levers changed at once, so the +1.5 cannot be attributed to either cause."
+    },
+    {
+      "id": "gm2-written",
+      "type": "written",
+      "prompt": "Explain why moving two levers at once is especially costly for model training, compared to a cheap software A/B test.",
+      "concept": "isolation",
+      "difficulty": "hard",
+      "actual_answer": "Attribution requires changing exactly one variable so a metric move can be assigned to a cause. If you change both the data and the architecture and the eval moves, you cannot tell whether the data, the architecture, or their interaction caused it. In a cheap software A/B test you could just rerun with one variable isolated at little cost. But a model training run is enormously expensive in compute and time, so an unattributable result means you spent that entire budget and learned nothing actionable, you cannot even decide what to keep. The cost of the wasted run is what makes the isolation discipline non-negotiable here.",
+      "rubric": "Full credit: two levers make the result unattributable AND the run is so expensive that an unattributable result wastes a large budget (vs cheap software reruns). Partial: mentions attribution OR cost but not both. Low: vague."
+    }
+  ]
+}

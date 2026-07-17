@@ -1,0 +1,104 @@
+{
+  "activityId": 193,
+  "lessonId": 29,
+  "op": "part_practice",
+  "questions": [
+    {
+      "id": "ei3-so-1",
+      "type": "select_all",
+      "prompt": "Select all that are true about how the eval setup is documented today.",
+      "concept": "reproducible-runs",
+      "difficulty": "easy",
+      "choices": [
+        "A fifteen page manual setup document full of steps",
+        "A single Terraform config in version control",
+        "A pinned Docker image",
+        "A Cloud Run one shot job"
+      ],
+      "correct_indices": [
+        0
+      ],
+      "explanation": "The current setup is a brittle fifteen page manual document, which is tribal knowledge that breaks and cannot be reproduced. The codified pieces are what replace it, not what exists today."
+    },
+    {
+      "id": "ei3-sa-some",
+      "type": "select_all",
+      "prompt": "Which statements about the one shot lifecycle are true? Select all that apply.",
+      "concept": "reproducible-runs",
+      "difficulty": "medium",
+      "choices": [
+        "Terraform provisions the cloud resources from a declarative config",
+        "The manual doc makes each run deterministic",
+        "A Docker image pins the code and a specific benchmark commit",
+        "Cloud Run keeps the job running forever after it finishes"
+      ],
+      "correct_indices": [
+        0,
+        2
+      ],
+      "explanation": "Terraform provisions declaratively and the Docker image pins the commit. The manual doc is not deterministic, and a Cloud Run one shot job exits after it runs once."
+    },
+    {
+      "id": "ei3-sa-none",
+      "type": "select_all",
+      "prompt": "Which of these does the codified one shot run rely on? Select all that apply.",
+      "concept": "tribal-knowledge",
+      "difficulty": "hard",
+      "choices": [
+        "A fifteen page manual setup document",
+        "Engineers memorizing the steps as tribal knowledge",
+        "Leaving resources running after the job to save setup time"
+      ],
+      "correct_indices": [],
+      "explanation": "None of these. The whole point is to replace the manual doc and tribal knowledge, and teardown removes resources rather than leaving them running."
+    },
+    {
+      "id": "ei3-sa-all",
+      "type": "select_all",
+      "prompt": "Which of these are genuine properties of the codified approach? Select all that apply.",
+      "concept": "infrastructure-as-code",
+      "difficulty": "medium",
+      "choices": [
+        "Terraform describes desired resources declaratively",
+        "A pinned commit makes the inputs deterministic",
+        "Idempotent teardown can run twice and still leave nothing"
+      ],
+      "correct_indices": [
+        0,
+        1,
+        2
+      ],
+      "explanation": "All three are core properties. Declarative provisioning, a pinned commit for determinism, and idempotent teardown together make the run reproducible."
+    },
+    {
+      "id": "ei3-order",
+      "type": "ordering",
+      "prompt": "Put the one shot run lifecycle stages in order.",
+      "concept": "reproducible-runs",
+      "difficulty": "medium",
+      "items": [
+        "Cloud Run executes one job against one model build",
+        "Terraform provisions the cloud resources",
+        "Docker pins the code and the benchmark commit",
+        "Results are emitted to durable storage",
+        "Everything tears down to nothing"
+      ],
+      "correct_order": [
+        "Terraform provisions the cloud resources",
+        "Docker pins the code and the benchmark commit",
+        "Cloud Run executes one job against one model build",
+        "Results are emitted to durable storage",
+        "Everything tears down to nothing"
+      ]
+    },
+    {
+      "id": "ei3-written",
+      "type": "written",
+      "prompt": "Explain why reproducible one shot runs beat the fifteen page manual setup document, and name the three infrastructure as code benefits.",
+      "concept": "infrastructure-as-code",
+      "difficulty": "hard",
+      "actual_answer": "The fifteen page manual document is tribal knowledge. It lives in one person's head and a stale doc, it drifts when defaults change, and no two people run it the same way, so results cannot be reproduced or trusted. A codified one shot run fixes this. Terraform provisions the resources from a declarative config, a Docker image pins the exact code and benchmark commit so the inputs are deterministic, Cloud Run executes exactly one job, results are emitted to durable storage, and idempotent teardown removes everything so nothing lingers or costs money. The three infrastructure as code benefits are identical reproducible environments every run with no snowflake machines, a plan diff you can read and review before you apply it, and automatic rollback when an apply fails so a broken change never leaves the system half configured.",
+      "rubric": "Full credit: explains that the manual doc is unreproducible tribal knowledge that drifts, and names all three benefits, identical reproducible environments, a reviewable plan diff before apply, and automatic rollback on failure. Partial credit: names some benefits or only contrasts the doc without the three benefits. Low credit: vague or missing the reproducibility point."
+    }
+  ]
+}

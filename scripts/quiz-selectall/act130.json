@@ -1,0 +1,110 @@
+{
+  "activityId": 130,
+  "lessonId": 22,
+  "op": "part_practice",
+  "questions": [
+    {
+      "id": "mp2-so-1",
+      "type": "select_all",
+      "prompt": "Select all that are true about the Largest Rectangle in a Histogram machine.",
+      "concept": "monotonic-stack",
+      "difficulty": "easy",
+      "choices": [
+        "You keep a stack of bar indices whose heights are increasing from bottom to top.",
+        "You pop the top bar when a new bar is shorter than it.",
+        "A pop resolves the widest rectangle limited in height by the popped bar.",
+        "A sentinel bar of height zero appended at the end flushes every remaining bar through the same loop."
+      ],
+      "correct_indices": [
+        0,
+        1,
+        2,
+        3
+      ],
+      "explanation": "A shorter arrival walls in the top bar on the right, so popping it measures the widest rectangle of that bar's height, and the stack stays increasing. A height-zero sentinel is shorter than everything, so it forces the leftovers to be measured in the same loop."
+    },
+    {
+      "id": "mp2-sa-multi",
+      "type": "select_all",
+      "prompt": "Which statements about the histogram walk are true?",
+      "concept": "monotonic-stack",
+      "difficulty": "medium",
+      "choices": [
+        "The left edge of the popped bar's rectangle is the neighbor now exposed on the stack",
+        "The right edge is the current index that triggered the pop",
+        "A sentinel bar of height 0 flushes the remaining bars in the same loop",
+        "The width equals the current index minus the popped index"
+      ],
+      "correct_indices": [
+        0,
+        1,
+        2
+      ],
+      "explanation": "The width is current index minus the NEW stack top minus one, not minus the popped index. The rectangle extends past every taller bar already popped."
+    },
+    {
+      "id": "mp2-sa-none",
+      "type": "select_all",
+      "prompt": "For largest_rectangle([2,1,5,6,2,3]) = 10, which of these describe the winning rectangle? (If none, select none.)",
+      "concept": "monotonic-stack",
+      "difficulty": "hard",
+      "choices": [
+        "Height 6 across a width of 2",
+        "Height 2 across a width of 6",
+        "Height 3 across a width of 4"
+      ],
+      "correct_indices": [],
+      "explanation": "None: the winning rectangle is height 5 across width 2 (bars at indices 2 and 3, area 10). Each listed rectangle is unachievable. The bars needed for that height and width are not contiguously present."
+    },
+    {
+      "id": "mp2-order",
+      "type": "ordering",
+      "prompt": "Order the steps taken when a shorter bar triggers a pop in the histogram walk.",
+      "concept": "monotonic-stack",
+      "difficulty": "medium",
+      "items": [
+        "Pop the top index, whose bar is walled in on the right",
+        "Take the popped bar's height as the rectangle height",
+        "Compute width = current index - new stack top - 1 (or current index if empty)",
+        "Update the running maximum area"
+      ],
+      "correct_order": [
+        "Pop the top index, whose bar is walled in on the right",
+        "Take the popped bar's height as the rectangle height",
+        "Compute width = current index - new stack top - 1 (or current index if empty)",
+        "Update the running maximum area"
+      ]
+    },
+    {
+      "id": "mp2-pattern",
+      "type": "pattern_recognition",
+      "prompt": "\"Given elevations, compute how much rain water is trapped between the bars.\" Which pattern(s) apply?",
+      "concept": "pattern-recognition",
+      "difficulty": "medium",
+      "choices": [
+        "Monotonic Stack",
+        "Two Pointer",
+        "Dynamic Programming (prefix max)",
+        "Binary Search",
+        "Heap"
+      ],
+      "primary_indices": [
+        0
+      ],
+      "secondary_indices": [
+        1,
+        2
+      ],
+      "explanation": "Trapping Rain Water has a decreasing-monotonic-stack solution (pop resolves a water layer). A converging two-pointer and a precomputed left/right-max DP are equally valid alternatives."
+    },
+    {
+      "id": "mp2-written",
+      "type": "written",
+      "prompt": "Explain why the rectangle width at a pop is 'current index minus new stack top minus one' and not 'current index minus the popped index'.",
+      "concept": "monotonic-stack",
+      "difficulty": "hard",
+      "actual_answer": "The popped bar's rectangle is limited in height by that bar, but it can extend horizontally as far left and right as every bar that is at least as tall. Because the stack was kept increasing, all the bars between the popped bar and the neighbor now exposed below it were taller and have already been popped, meaning the popped bar's height fits across all of them. So the true left edge of the rectangle is not the popped bar's own position. It is one past the exposed neighbor, the nearest strictly shorter bar to the left. The right edge is the current index, the nearest shorter bar to the right, which is exactly why the pop is happening now. The span of full-height coverage therefore runs from newTop+1 to i-1 inclusive, whose length is i - newTop - 1. Using i minus the popped index would only count from the bar's own position rightward and would ignore all the taller bars to its left that the rectangle actually covers, badly undercounting the width. When the stack empties after the pop, there is no shorter bar to the left at all, so the rectangle reaches the far left edge and the width is the full current index i.",
+      "rubric": "Full credit: the rectangle extends left past every taller already-popped bar to the exposed neighbor. Left edge = newTop+1, right edge = i-1, width = i - newTop - 1. Empty stack gives width i. Partial: says use the new top without explaining the taller-bars coverage. Low: vague."
+    }
+  ]
+}

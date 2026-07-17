@@ -1,0 +1,171 @@
+{
+  "activityId": 133,
+  "lessonId": 22,
+  "op": "assessment_quiz",
+  "questions": [
+    {
+      "id": "q1",
+      "question": "Select all that are true about what a monotonic stack keeps on it.",
+      "choices": [
+        "It holds only the elements whose answer is still open.",
+        "The elements it holds are kept in sorted, monotonic order.",
+        "It holds every element seen so far, in arrival order.",
+        "It holds the k largest elements in a heap.",
+        "None of the above"
+      ],
+      "correct_indices": [
+        0,
+        1
+      ],
+      "allow_multiple_correct": true,
+      "explanation": "The stack holds just the unresolved elements, kept increasing or decreasing so a single pop resolves an answer. It is not every element in arrival order, nor a heap of top-k values.",
+      "concept": "monotonic-stack",
+      "difficulty": "easy",
+      "learning_scope": "taught",
+      "support_ref": "monotonic-part-1-next-greater"
+    },
+    {
+      "id": "q2",
+      "question": "Select all that are true about why the whole scan is O(n) even though the loop body contains a while loop.",
+      "choices": [
+        "Each element is pushed exactly once and popped at most once, so total stack work is bounded by n.",
+        "An element removed from the stack can never be removed again.",
+        "The while loop runs at most twice per element by definition.",
+        "The stack never holds more than a constant number of elements.",
+        "None of the above"
+      ],
+      "correct_indices": [
+        0,
+        1
+      ],
+      "allow_multiple_correct": true,
+      "explanation": "It is an amortized argument, so total pops are bounded by n because a removed element cannot be removed again. The while loop is not capped per element, and the stack can hold up to every element.",
+      "concept": "monotonic-stack",
+      "difficulty": "medium",
+      "learning_scope": "taught",
+      "support_ref": "monotonic-part-1-next-greater"
+    },
+    {
+      "id": "q3",
+      "question": "Select all that are true about the stack and pop rule for Next Greater Element to the right.",
+      "choices": [
+        "You keep a decreasing stack and pop while the arriving value is greater than the value at the top.",
+        "You keep an increasing stack and pop while the arriving value is smaller than the top.",
+        "You keep a sorted list and binary search it at every step.",
+        "None of the above"
+      ],
+      "correct_indices": [
+        0
+      ],
+      "allow_multiple_correct": true,
+      "explanation": "A larger arrival resolves the smaller waiters, so keep the stack decreasing and pop while the newcomer beats the top. The other options describe different structures.",
+      "concept": "monotonic-stack",
+      "difficulty": "medium",
+      "learning_scope": "taught",
+      "support_ref": "monotonic-part-1-next-greater"
+    },
+    {
+      "id": "q4",
+      "question": "Select all that are true about what a single pop resolves in Largest Rectangle in a Histogram.",
+      "choices": [
+        "It resolves the widest rectangle whose height is limited by the popped bar.",
+        "It resolves the next taller bar to the right of the popped bar.",
+        "It resolves the average height of the remaining bars.",
+        "None of the above"
+      ],
+      "correct_indices": [
+        0
+      ],
+      "allow_multiple_correct": true,
+      "explanation": "A shorter arrival walls in the top bar, so popping it measures the largest rectangle of that bar's height. It is not a next-taller lookup or an average.",
+      "concept": "monotonic-stack",
+      "difficulty": "hard",
+      "learning_scope": "taught",
+      "support_ref": "monotonic-part-2-largest-rectangle"
+    },
+    {
+      "id": "q5",
+      "question": "Select all that are true about the rectangle width at a pop in the histogram walk.",
+      "choices": [
+        "It is current index minus the new stack top minus one.",
+        "When the stack is empty after the pop, the width is simply the current index.",
+        "It is current index minus the popped index.",
+        "It is the height of the popped bar.",
+        "None of the above"
+      ],
+      "correct_indices": [
+        0,
+        1
+      ],
+      "allow_multiple_correct": true,
+      "explanation": "The rectangle extends left past every taller already-popped bar to the exposed neighbor, so the width is current index minus new stack top minus one, or the current index when the stack empties. It is never current index minus the popped index.",
+      "concept": "monotonic-stack",
+      "difficulty": "hard",
+      "learning_scope": "taught",
+      "support_ref": "monotonic-part-2-largest-rectangle"
+    },
+    {
+      "id": "q6",
+      "question": "Select all that are true about a flushing sentinel.",
+      "choices": [
+        "It is a trailing element guaranteed to trigger the pop condition for everything left on the stack.",
+        "It lets the leftovers be measured inside the same loop instead of a separate cleanup pass.",
+        "A height-zero bar and positive infinity are both examples depending on the problem.",
+        "None of the above"
+      ],
+      "correct_indices": [
+        0,
+        1,
+        2
+      ],
+      "allow_multiple_correct": true,
+      "explanation": "A sentinel forces every remaining element to be popped through the general loop body, avoiding a cleanup pass. A height-zero bar flushes a histogram, and positive infinity flushes a next-smaller problem.",
+      "concept": "monotonic-stack",
+      "difficulty": "medium",
+      "learning_scope": "taught",
+      "support_ref": "monotonic-part-2-largest-rectangle"
+    },
+    {
+      "id": "q7",
+      "question": "Select all that are NOT true about which problems are a monotonic-stack fingerprint.",
+      "choices": [
+        "Finding how many days until a warmer temperature.",
+        "Finding the largest rectangle in a histogram.",
+        "Finding the k most frequent elements.",
+        "Finding whether two numbers sum to a target.",
+        "None of the above"
+      ],
+      "correct_indices": [
+        2,
+        3
+      ],
+      "allow_multiple_correct": true,
+      "explanation": "Statements 2 and 3 are the NOT-true ones because top-k frequency is a heap or bucket job and two-sum is a hashing job. Wait-time and largest rectangle are genuine nearest-neighbor monotonic-stack fingerprints.",
+      "concept": "pattern-recognition",
+      "difficulty": "medium",
+      "learning_scope": "taught",
+      "support_ref": "monotonic-part-1-next-greater"
+    },
+    {
+      "id": "q8",
+      "question": "Select all that are true about why you store indices rather than raw values on the stack.",
+      "choices": [
+        "An index recovers both the value, through a lookup, and the position.",
+        "Widths and wait-times are distances, which need positions to compute.",
+        "Indices use strictly less memory than values.",
+        "Raw values cannot be compared directly.",
+        "None of the above"
+      ],
+      "correct_indices": [
+        0,
+        1
+      ],
+      "allow_multiple_correct": true,
+      "explanation": "Storing indices gives the value via a lookup and the position for free, which is what distance answers like width and wait-time require. Memory and comparability are not the reason.",
+      "concept": "monotonic-stack",
+      "difficulty": "hard",
+      "learning_scope": "taught",
+      "support_ref": "monotonic-part-1-next-greater"
+    }
+  ]
+}

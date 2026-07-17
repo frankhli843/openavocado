@@ -1,0 +1,109 @@
+{
+  "activityId": 124,
+  "lessonId": 21,
+  "op": "part_practice",
+  "questions": [
+    {
+      "id": "bp2-so-1",
+      "type": "select_all",
+      "prompt": "Select all that are true about the used-array in the permutations walk.",
+      "concept": "backtracking",
+      "difficulty": "easy",
+      "choices": [
+        "It holds one boolean flag per element marking whether that element is already in the path.",
+        "The loop at each node skips any element whose used flag is set.",
+        "Order matters, so it replaces the subsets start index to let any free element sit at any position.",
+        "Un-choose must clear an element's flag so a later branch can use that element again."
+      ],
+      "correct_indices": [
+        0,
+        1,
+        2,
+        3
+      ],
+      "explanation": "The used-array is one flag per element, the loop skips set flags, it replaces the forward-only start index because order matters, and un-choose clears the flag to free the element for other branches."
+    },
+    {
+      "id": "bp2-sa-multi",
+      "type": "select_all",
+      "prompt": "Which statements about the permutations walk are true?",
+      "concept": "backtracking",
+      "difficulty": "medium",
+      "choices": [
+        "The base case records a copy when the path is full length",
+        "Un-choose must clear the used flag as well as pop the element",
+        "Pruning deletes doomed subtrees when a constraint is present",
+        "A start index would produce the same set of permutations"
+      ],
+      "correct_indices": [
+        0,
+        1,
+        2
+      ],
+      "explanation": "A start index would only produce combinations (order ignored), not all orderings. So the last statement is false."
+    },
+    {
+      "id": "bp2-sa-none",
+      "type": "select_all",
+      "prompt": "In plain permutations of [1,2,3] with no extra constraints, which branches get PRUNED before reaching a full-length leaf? (If none, select none.)",
+      "concept": "backtracking",
+      "difficulty": "hard",
+      "choices": [
+        "Branches starting with 1",
+        "Branches starting with 2",
+        "Branches starting with 3"
+      ],
+      "correct_indices": [],
+      "explanation": "None. With no constraints every full-length path is valid, so nothing is pruned. Pruning only appears once a constraint (like N-Queens attacks) can reject a partial state."
+    },
+    {
+      "id": "bp2-order",
+      "type": "ordering",
+      "prompt": "Order the operations for choosing one element in the permutations walk.",
+      "concept": "backtracking",
+      "difficulty": "medium",
+      "items": [
+        "Skip the element if its used flag is set",
+        "Set used[i] = True and append the element (choose)",
+        "Recurse to fill the next position (explore)",
+        "Pop the element and clear used[i] (un-choose)"
+      ],
+      "correct_order": [
+        "Skip the element if its used flag is set",
+        "Set used[i] = True and append the element (choose)",
+        "Recurse to fill the next position (explore)",
+        "Pop the element and clear used[i] (un-choose)"
+      ]
+    },
+    {
+      "id": "bp2-pattern",
+      "type": "pattern_recognition",
+      "prompt": "\"Place 8 queens on a chessboard so that no two attack each other. Return the number of valid boards.\" Which pattern(s) apply?",
+      "concept": "pattern-recognition",
+      "difficulty": "medium",
+      "choices": [
+        "Backtracking",
+        "Constraint pruning",
+        "Dynamic Programming",
+        "Two Pointer",
+        "Binary Search"
+      ],
+      "primary_indices": [
+        0
+      ],
+      "secondary_indices": [
+        1
+      ],
+      "explanation": "N-Queens is the classic backtracking problem. The essential optimization is pruning attacked squares before recursing, so constraint pruning is the natural secondary."
+    },
+    {
+      "id": "bp2-written",
+      "type": "written",
+      "prompt": "Explain why pruning a bad partial state early is far more valuable than filtering full answers at the end.",
+      "concept": "backtracking",
+      "difficulty": "hard",
+      "actual_answer": "The two approaches run the same validity test, but the timing changes the cost by orders of magnitude. If you only check validity at the leaves, then a single bad choice made near the root still forces you to walk its entire subtree. Every leaf beneath it. Before you finally discover the whole branch was doomed from the first move. If instead you test the constraint the instant you make that choice, you delete the entire subtree from the search in one step and never enter it. Because subtrees near the top of the tree are the largest, an early rejection erases the most work: one prune high up can eliminate a colossal fraction of the total exploration. That is why experienced solvers push every constraint check as high in the recursion as it can legally go. The earlier you can prove a partial state is hopeless, the bigger the subtree you avoid walking.",
+      "rubric": "Full credit: same test, but early rejection deletes a whole subtree instead of walking it to the leaves; subtrees near the root are largest so early pruning saves the most; push checks as high as legal. Partial: says early is better without the subtree-size reasoning. Low: vague."
+    }
+  ]
+}

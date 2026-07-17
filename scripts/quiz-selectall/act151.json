@@ -1,0 +1,168 @@
+{
+  "activityId": 151,
+  "lessonId": 25,
+  "op": "assessment_quiz",
+  "questions": [
+    {
+      "id": "q1",
+      "question": "Select all that are true about why hash(key) mod N remaps almost every key when you add one server.",
+      "choices": [
+        "Changing N changes the modulus for almost every key at once, so their destinations all shift.",
+        "Only the keys that land on the newly added server are rehashed.",
+        "The keys are stored in sorted order and must be re-sorted after a resize.",
+        "None of the above"
+      ],
+      "correct_indices": [
+        0
+      ],
+      "allow_multiple_correct": true,
+      "explanation": "mod N ties every key's destination to the exact value of N, so a new divisor rewrites the remainder for keys all over the table. It is not limited to the new server and has nothing to do with sorting.",
+      "concept": "consistent-hashing",
+      "difficulty": "easy",
+      "learning_scope": "taught",
+      "support_ref": "sysdesign-part-1-consistent-hashing"
+    },
+    {
+      "id": "q2",
+      "question": "Select all that are true about key ownership on a consistent-hashing ring.",
+      "choices": [
+        "A key is owned by the first server clockwise from its position.",
+        "Adding one of N servers relocates only about K/N of the keys.",
+        "Adding a server recomputes the owner of every key on the ring.",
+        "None of the above"
+      ],
+      "correct_indices": [
+        0,
+        1
+      ],
+      "allow_multiple_correct": true,
+      "explanation": "Ownership is local to an arc, so a key belongs to the next server clockwise and a new server only steals its one arc, about K/N keys. Every other key's clockwise walk is unchanged.",
+      "concept": "consistent-hashing",
+      "difficulty": "medium",
+      "learning_scope": "taught",
+      "support_ref": "sysdesign-part-1-consistent-hashing"
+    },
+    {
+      "id": "q3",
+      "question": "Select all that are true about virtual nodes on the ring.",
+      "choices": [
+        "Each server hashes to many replica points scattered around the ring.",
+        "The many small arcs owned by a server average out to a fair share of keys.",
+        "When a server leaves, its arcs spill to several different neighbors rather than one successor.",
+        "None of the above"
+      ],
+      "correct_indices": [
+        0,
+        1,
+        2
+      ],
+      "allow_multiple_correct": true,
+      "explanation": "Virtual nodes give each server many replicas and therefore many small arcs, which balances the key count and spreads a departing server's load across several neighbors.",
+      "concept": "consistent-hashing",
+      "difficulty": "medium",
+      "learning_scope": "taught",
+      "support_ref": "sysdesign-part-1-consistent-hashing"
+    },
+    {
+      "id": "q4",
+      "question": "Select all that are NOT true about what the consistent-hashing ring guarantees.",
+      "choices": [
+        "It balances the TRAFFIC per key, so a single hot key cannot overload its owner.",
+        "It balances the NUMBER of keys per server.",
+        "With one point per server the arcs are always perfectly even.",
+        "None of the above"
+      ],
+      "correct_indices": [
+        0,
+        2
+      ],
+      "allow_multiple_correct": true,
+      "explanation": "The ring balances key COUNT, not traffic, so a hot key still hammers its owner, and one point per server gives uneven arcs. Those two claims are false. The key-count claim is true.",
+      "concept": "consistent-hashing",
+      "difficulty": "hard",
+      "learning_scope": "taught",
+      "support_ref": "sysdesign-part-1-consistent-hashing"
+    },
+    {
+      "id": "q5",
+      "question": "Select all that are true about how the token bucket refills.",
+      "choices": [
+        "On each request it adds elapsed-time times the refill rate, capped at capacity.",
+        "It stores just the current token count and the last-request timestamp per client.",
+        "A background job tops up every bucket once per second.",
+        "None of the above"
+      ],
+      "correct_indices": [
+        0,
+        1
+      ],
+      "allow_multiple_correct": true,
+      "explanation": "Lazy refill computes the drip on demand from two stored numbers when a request arrives, capped at capacity. No background timer runs.",
+      "concept": "rate-limiting",
+      "difficulty": "medium",
+      "learning_scope": "taught",
+      "support_ref": "sysdesign-part-2-rate-limiting"
+    },
+    {
+      "id": "q6",
+      "question": "Select all that are true about a token bucket that never caps tokens at capacity.",
+      "choices": [
+        "It still enforces the same maximum burst as a capped bucket.",
+        "It is the recommended default configuration.",
+        "The cap has no effect on the size of a burst.",
+        "None of the above"
+      ],
+      "correct_indices": [
+        3
+      ],
+      "allow_multiple_correct": true,
+      "explanation": "Without the cap an idle client accumulates thousands of tokens and can unleash a burst that swamps the service, so the cap IS the maximum allowed burst. None of the listed statements is true.",
+      "concept": "rate-limiting",
+      "difficulty": "hard",
+      "learning_scope": "taught",
+      "support_ref": "sysdesign-part-2-rate-limiting"
+    },
+    {
+      "id": "q7",
+      "question": "Select all that are true about the rate-limiting family taught in this lesson.",
+      "choices": [
+        "The token bucket allows a bounded burst up to capacity while enforcing a long-run average.",
+        "A sliding-window counter enforces a strict rolling count with no saved-up burst.",
+        "A leaky bucket drains queued requests at a fixed rate, smoothing output but adding latency.",
+        "Ten independent local limiters automatically enforce a correct global limit.",
+        "None of the above"
+      ],
+      "correct_indices": [
+        0,
+        1,
+        2
+      ],
+      "allow_multiple_correct": true,
+      "explanation": "The three algorithms trade burst tolerance against smoothness as described. Ten independent local limiters do not enforce a global limit under lopsided traffic, so that claim is false.",
+      "concept": "rate-limiting",
+      "difficulty": "medium",
+      "learning_scope": "taught",
+      "support_ref": "sysdesign-part-2-rate-limiting"
+    },
+    {
+      "id": "q8",
+      "question": "Select all that are true about the distributed-systems guarantees in this lesson.",
+      "choices": [
+        "R + W > N guarantees a read set and a write set share at least one node, which holds the latest write.",
+        "During a partition only the side with a strict majority may accept writes, and two majorities always overlap.",
+        "Both sides of a partition may keep accepting writes safely.",
+        "None of the above"
+      ],
+      "correct_indices": [
+        0,
+        1
+      ],
+      "allow_multiple_correct": true,
+      "explanation": "Two subsets of N whose sizes sum to more than N must overlap, so a read sees the latest write, and only the overlapping majority side may progress. Letting both sides write causes split brain.",
+      "concept": "consensus",
+      "difficulty": "hard",
+      "learning_scope": "taught",
+      "support_ref": "sysdesign-part-2-rate-limiting"
+    }
+  ]
+}

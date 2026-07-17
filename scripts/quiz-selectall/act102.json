@@ -1,0 +1,168 @@
+{
+  "activityId": 102,
+  "lessonId": 17,
+  "op": "assessment_quiz",
+  "questions": [
+    {
+      "id": "q1",
+      "question": "Select all that are true about how a fixed-size window of width k advances by one step.",
+      "choices": [
+        "You subtract the element leaving the left edge and add the element entering the right edge.",
+        "The middle elements of the window are re-added from scratch on every slide.",
+        "The cost of one slide stays constant no matter how wide the window is.",
+        "None of the above"
+      ],
+      "correct_indices": [
+        0,
+        2
+      ],
+      "allow_multiple_correct": true,
+      "explanation": "A slide edits only the two boundary elements, so the middle is carried for free and the per-slide cost is constant regardless of window width.",
+      "concept": "sliding-window",
+      "difficulty": "easy",
+      "learning_scope": "taught",
+      "support_ref": "sw-part-1-fixed"
+    },
+    {
+      "id": "q2",
+      "question": "Select all that are true about how many times a full k-element sum is computed from scratch in the fixed-window max-sum solution.",
+      "choices": [
+        "Exactly once, for the very first window.",
+        "Once for every window position.",
+        "k times in total.",
+        "None of the above"
+      ],
+      "correct_indices": [
+        0
+      ],
+      "allow_multiple_correct": true,
+      "explanation": "Only the first window is summed honestly. Every later window is an O(1) repair of the two ends, not a rebuild.",
+      "concept": "sliding-window",
+      "difficulty": "easy",
+      "learning_scope": "taught",
+      "support_ref": "sw-part-1-fixed"
+    },
+    {
+      "id": "q3",
+      "question": "Select all that are true about the work done at each slide of a fixed-size window.",
+      "choices": [
+        "It performs one subtraction for the element that leaves.",
+        "It performs one addition for the element that enters.",
+        "It performs one comparison against the best seen so far.",
+        "None of the above"
+      ],
+      "correct_indices": [
+        0,
+        1,
+        2
+      ],
+      "allow_multiple_correct": true,
+      "explanation": "Each slide is exactly one subtraction, one addition, and one comparison, and none of that grows with the window width.",
+      "concept": "complexity",
+      "difficulty": "medium",
+      "learning_scope": "taught",
+      "support_ref": "sw-part-1-fixed"
+    },
+    {
+      "id": "q4",
+      "question": "Select all that are true about which element leaves a fixed-size window of width k when the right pointer sits at index r (with r at least k).",
+      "choices": [
+        "The element at index r.",
+        "The element at index r minus 1.",
+        "The element at index 0 every time.",
+        "None of the above"
+      ],
+      "correct_indices": [
+        3
+      ],
+      "allow_multiple_correct": true,
+      "explanation": "The element that leaves is the one k positions behind the right pointer, at index r minus k. None of the listed indices describes it, so None of the above is correct.",
+      "concept": "sliding-window",
+      "difficulty": "medium",
+      "learning_scope": "taught",
+      "support_ref": "sw-part-1-fixed"
+    },
+    {
+      "id": "q5",
+      "question": "Select all that are true about what the left boundary does in a variable-size window.",
+      "choices": [
+        "It advances only to restore the window's validity rule after the right boundary broke it.",
+        "It advances to keep the window pinned at exactly size k.",
+        "It sorts the elements currently inside the window.",
+        "None of the above"
+      ],
+      "correct_indices": [
+        0
+      ],
+      "allow_multiple_correct": true,
+      "explanation": "In a variable window the left boundary steps forward only to release elements until the window is legal again. The width is not fixed and nothing is sorted.",
+      "concept": "sliding-window",
+      "difficulty": "medium",
+      "learning_scope": "taught",
+      "support_ref": "sw-part-2-variable"
+    },
+    {
+      "id": "q6",
+      "question": "Select all that are NOT true about why a variable-size window runs in O(n) despite its inner shrink loop.",
+      "choices": [
+        "Each index is admitted once by the right boundary and released at most once by the left boundary.",
+        "Total pointer travel is bounded by about 2n.",
+        "The inner shrink loop runs a fixed three times per element.",
+        "It is linear only because the array is sorted first.",
+        "None of the above"
+      ],
+      "correct_indices": [
+        2,
+        3
+      ],
+      "allow_multiple_correct": true,
+      "explanation": "The first two statements are the true amortized argument. The shrink loop does not run a fixed number of times, and sorting is not required, so those two false statements are the NOT-true selections.",
+      "concept": "complexity",
+      "difficulty": "hard",
+      "learning_scope": "taught",
+      "support_ref": "sw-part-2-variable"
+    },
+    {
+      "id": "q7",
+      "question": "Select all that are true about the 'smallest subarray with sum at least a target' window trick.",
+      "choices": [
+        "It relies on all numbers being positive, so a wider window has a larger-or-equal sum.",
+        "The trick is safe because validity is monotonic in the window size.",
+        "Introducing a negative number breaks the monotonic promise, so you reach for prefix sums or a deque instead.",
+        "It works on any array regardless of the sign of the numbers.",
+        "None of the above"
+      ],
+      "correct_indices": [
+        0,
+        1,
+        2
+      ],
+      "allow_multiple_correct": true,
+      "explanation": "Positivity makes validity monotonic in window size, which is what makes shrinking safe. A negative number breaks that promise, so the last claim is false.",
+      "concept": "sliding-window",
+      "difficulty": "hard",
+      "learning_scope": "taught",
+      "support_ref": "sw-part-2-variable"
+    },
+    {
+      "id": "q8",
+      "question": "Select all that are true about which keywords hint at a contiguous-run sliding window.",
+      "choices": [
+        "'subarray' describes a contiguous run and hints at a sliding window.",
+        "'substring' describes a contiguous run and hints at a sliding window.",
+        "'subsequence' is contiguous and is a natural sliding-window fit.",
+        "None of the above"
+      ],
+      "correct_indices": [
+        0,
+        1
+      ],
+      "allow_multiple_correct": true,
+      "explanation": "'subarray' and 'substring' are contiguous runs. A 'subsequence' is not contiguous, so a window cannot slide over it.",
+      "concept": "pattern-recognition",
+      "difficulty": "medium",
+      "learning_scope": "taught",
+      "support_ref": "sw-part-2-variable"
+    }
+  ]
+}

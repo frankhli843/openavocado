@@ -1,0 +1,172 @@
+{
+  "activityId": 169,
+  "lessonId": 28,
+  "op": "assessment_quiz",
+  "questions": [
+    {
+      "id": "gq1",
+      "question": "Select all that are true about the leaderboard as Sara describes it.",
+      "choices": [
+        "It bundles a set of changes and runs a lightweight training run to get signal on whether they improve the model.",
+        "It is a lightweight probe rather than a full production training run.",
+        "It is a public ranking of already-released models.",
+        "It is the serving stack that hosts the model for inference.",
+        "None of the above"
+      ],
+      "correct_indices": [
+        0,
+        1
+      ],
+      "allow_multiple_correct": true,
+      "explanation": "The leaderboard is the change-bundling plus lightweight-probe experiment process, not a public ranking or the serving stack.",
+      "concept": "leaderboard",
+      "difficulty": "easy",
+      "learning_scope": "taught",
+      "support_ref": "gm-part-1-leaderboard"
+    },
+    {
+      "id": "gq2",
+      "question": "Select all that are true about what a data run changes.",
+      "choices": [
+        "It changes the architecture while holding the training data fixed.",
+        "It changes both the data and the architecture at the same time.",
+        "It changes only the tokenizer.",
+        "None of the above"
+      ],
+      "correct_indices": [
+        3
+      ],
+      "allow_multiple_correct": true,
+      "explanation": "A data run changes only the training data and holds the architecture fixed, so none of the three listed descriptions is correct.",
+      "concept": "isolation",
+      "difficulty": "medium",
+      "learning_scope": "taught",
+      "support_ref": "gm-part-2-isolation"
+    },
+    {
+      "id": "gq3",
+      "question": "Select all that are true about why the team changes only one lever per run.",
+      "choices": [
+        "Isolating one change makes any metric movement attributable to a single cause.",
+        "Changing two levers at once makes a metric move impossible to attribute cleanly.",
+        "The main reason is that changing two things at once is impossible to implement in code.",
+        "None of the above"
+      ],
+      "correct_indices": [
+        0,
+        1
+      ],
+      "allow_multiple_correct": true,
+      "explanation": "Isolation is about attribution: one lever keeps the result attributable, and two levers make a metric move unattributable. It is not about coding difficulty.",
+      "concept": "isolation",
+      "difficulty": "medium",
+      "learning_scope": "taught",
+      "support_ref": "gm-part-2-isolation"
+    },
+    {
+      "id": "gq4",
+      "question": "Select all that are true about a compliant architecture.",
+      "choices": [
+        "It is a Gemma architecture with proprietary Gemini pieces stripped or rewritten so it can be open-sourced.",
+        "It simply means an architecture that has passed all safety evals.",
+        "It is the Hugging Face serving implementation itself.",
+        "It is a quantized build produced for local devices.",
+        "None of the above"
+      ],
+      "correct_indices": [
+        0
+      ],
+      "allow_multiple_correct": true,
+      "explanation": "Compliant means the proprietary Gemini material is removed or rewritten so Gemma can be open-sourced. It is not a safety-eval pass, the serving code, or a quantized build.",
+      "concept": "compliant-architecture",
+      "difficulty": "hard",
+      "learning_scope": "taught",
+      "support_ref": "gm-orientation"
+    },
+    {
+      "id": "gq5",
+      "question": "Select all that are true about Gemma 4's roughly 10 percent tool-call pass rate at launch.",
+      "choices": [
+        "It was caused by the chat template and formatting, not by the weights.",
+        "It was fixed by template updates rather than by retraining the weights.",
+        "It was caused by the model having too few parameters.",
+        "It was caused by a broken optimizer during training.",
+        "None of the above"
+      ],
+      "correct_indices": [
+        0,
+        1
+      ],
+      "allow_multiple_correct": true,
+      "explanation": "The low pass rate was all template and formatting, fixed by template updates. The weights themselves were fine, so parameter count and optimizer are not the cause.",
+      "concept": "evals",
+      "difficulty": "medium",
+      "learning_scope": "taught",
+      "support_ref": "gm-part-3-evals"
+    },
+    {
+      "id": "gq6",
+      "question": "Select all that are true about confirming an open model is faithful once a compliant architecture is ready.",
+      "choices": [
+        "A parity check compares the Hugging Face implementation against the internal model.",
+        "Parity means the open implementation reproduces the internal model within tolerance.",
+        "Faithfulness is confirmed by running a larger leaderboard experiment.",
+        "Faithfulness is confirmed by training a new tokenizer.",
+        "None of the above"
+      ],
+      "correct_indices": [
+        0,
+        1
+      ],
+      "allow_multiple_correct": true,
+      "explanation": "A parity check reproduces the internal model with the open HF/PyTorch implementation within tolerance. A bigger leaderboard run or a new tokenizer does not establish faithfulness.",
+      "concept": "compliant-architecture",
+      "difficulty": "hard",
+      "learning_scope": "taught",
+      "support_ref": "gm-orientation"
+    },
+    {
+      "id": "gq7",
+      "question": "Select all that are true about why the team runs evals as reproducible infrastructure (Terraform and Cloud Run).",
+      "choices": [
+        "It gives reproducible, identical environments across runs.",
+        "It shows diffs before apply and rolls back automatically on failure.",
+        "It turns a brittle 15-page setup document into code.",
+        "None of the above"
+      ],
+      "correct_indices": [
+        0,
+        1,
+        2
+      ],
+      "allow_multiple_correct": true,
+      "explanation": "Reproducible environments, safe diffs with rollback, and codifying tribal setup knowledge are all infrastructure-as-code benefits the team highlighted.",
+      "concept": "eval-infra",
+      "difficulty": "medium",
+      "learning_scope": "taught",
+      "support_ref": "gm-orientation"
+    },
+    {
+      "id": "gq8",
+      "question": "Select all that are NOT true about why academic single-turn evals missed the tool-call regression.",
+      "choices": [
+        "They exercise multi-turn tool-calling, so they should have caught the regression.",
+        "The regression stayed invisible because they never exercise multi-turn or tool-calling.",
+        "They missed it because they were accidentally run on the wrong model.",
+        "They missed it because they only measure inference speed.",
+        "None of the above"
+      ],
+      "correct_indices": [
+        0,
+        2,
+        3
+      ],
+      "allow_multiple_correct": true,
+      "explanation": "Only the second statement is true: single-turn evals stay high because they do not exercise multi-turn or tool-calling. The other three are false, so they are the NOT-true selections.",
+      "concept": "evals",
+      "difficulty": "hard",
+      "learning_scope": "taught",
+      "support_ref": "gm-part-3-evals"
+    }
+  ]
+}

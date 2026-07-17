@@ -1,0 +1,107 @@
+{
+  "activityId": 147,
+  "lessonId": 25,
+  "op": "part_practice",
+  "questions": [
+    {
+      "id": "s1-so-1",
+      "type": "select_all",
+      "concept": "consistent-hashing",
+      "difficulty": "easy",
+      "prompt": "Select all that are true about why hash(key) mod N reshuffles almost every key when N changes.",
+      "choices": [
+        "The destination depends on the exact value of N, so changing N rewrites the remainder for keys all over the table.",
+        "In a distributed cache this causes a near-total cache-miss storm.",
+        "In a sharded database it means physically moving almost all of the data."
+      ],
+      "correct_indices": [
+        0,
+        1,
+        2
+      ],
+      "explanation": "mod N ties every key's destination to N, so changing N by one relocates nearly all keys, a cache-miss storm or a full data reshuffle."
+    },
+    {
+      "id": "s1-sa-multi",
+      "type": "select_all",
+      "prompt": "Which statements about consistent hashing on a ring are true?",
+      "concept": "consistent-hashing",
+      "difficulty": "medium",
+      "choices": [
+        "A key is owned by the first server clockwise from its position",
+        "Adding one of N servers relocates only about K/N keys",
+        "Virtual nodes give each server many small arcs to balance load",
+        "The ring guarantees even TRAFFIC across servers even with a hot key"
+      ],
+      "correct_indices": [
+        0,
+        1,
+        2
+      ],
+      "explanation": "The ring balances key COUNT, not traffic, a hot key still hammers its owner, so that last claim is false."
+    },
+    {
+      "id": "s1-sa-none",
+      "type": "select_all",
+      "prompt": "On the ring A@50, B@140, C@230, D@320, which of these ownerships are correct? (If none, select none.)",
+      "concept": "consistent-hashing",
+      "difficulty": "hard",
+      "choices": [
+        "A key at position 100 is owned by A",
+        "A key at position 340 is owned by D",
+        "A key at position 200 is owned by B"
+      ],
+      "correct_indices": [],
+      "explanation": "None: 100 → B (first clockwise), 340 wraps to A, and 200 → C. All three stated owners are wrong."
+    },
+    {
+      "id": "s1-order",
+      "type": "ordering",
+      "prompt": "Order the steps of finding a key's owner on a sorted ring.",
+      "concept": "consistent-hashing",
+      "difficulty": "medium",
+      "items": [
+        "Hash the key to a point on the ring",
+        "Binary-search the sorted positions for the first one >= the key's point",
+        "If the search runs past the end, wrap the index around to 0",
+        "Return the server at that ring position"
+      ],
+      "correct_order": [
+        "Hash the key to a point on the ring",
+        "Binary-search the sorted positions for the first one >= the key's point",
+        "If the search runs past the end, wrap the index around to 0",
+        "Return the server at that ring position"
+      ]
+    },
+    {
+      "id": "s1-pattern",
+      "type": "pattern_recognition",
+      "prompt": "\"Distribute cached objects across a fleet of cache servers so that adding or retiring a server rebalances as little data as possible.\" Which pattern(s) apply?",
+      "concept": "pattern-recognition",
+      "difficulty": "medium",
+      "choices": [
+        "Consistent Hashing (hash ring)",
+        "Virtual nodes for load balance",
+        "Two Pointer",
+        "Dynamic Programming",
+        "Binary Search"
+      ],
+      "primary_indices": [
+        0
+      ],
+      "secondary_indices": [
+        1
+      ],
+      "explanation": "Minimal-rebalance distribution across servers is the consistent-hashing ring, virtual nodes are the standard companion for even load."
+    },
+    {
+      "id": "s1-written",
+      "type": "written",
+      "prompt": "Explain precisely why adding one server to a consistent-hashing ring moves only about K/N keys, while hash-modulo-N moves almost all of them.",
+      "concept": "consistent-hashing",
+      "difficulty": "hard",
+      "actual_answer": "With hash-modulo-N, a key's server is hash(key) mod N, so the destination depends on the exact value of N. Change N from ten to eleven and the remainder changes for almost every key at once, because the modulus applies globally, so nearly all K keys relocate, causing a full cache-miss storm or data reshuffle. On a ring, ownership is instead LOCAL to an arc: each key belongs to the first server clockwise from its point, and each server owns the arc between it and the previous server. Adding a server drops a single new point on the ring, and the only keys that change owner are the ones sitting in the arc between the new point and the previous server going counter-clockwise, those keys used to walk clockwise to the old next server and now stop at the new one. Every other key's clockwise walk is completely unchanged, so it stays on the same server. Because the new server captures roughly one arc out of N, it steals about K/N keys, not all of them. Virtual nodes preserve this while smoothing balance: the new server's replicas each steal a small arc from a different neighbor, so its K/N share is spread across the cluster rather than taken from one server.",
+      "rubric": "Full credit: mod N ties destination to N so changing N rewrites nearly every key, ring ownership is local to an arc so a new node only steals its own arc (≈ K/N) and every other key's clockwise walk is unchanged. Partial: says 'the ring moves fewer keys' without the arc-locality reason. Low: vague."
+    }
+  ]
+}

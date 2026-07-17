@@ -1,0 +1,171 @@
+{
+  "activityId": 127,
+  "lessonId": 21,
+  "op": "assessment_quiz",
+  "questions": [
+    {
+      "id": "q1",
+      "question": "Select all that are true about the three beats of the backtracking template.",
+      "choices": [
+        "Choose appends the current element onto the shared path.",
+        "Explore recurses one level deeper with that choice in place.",
+        "Un-choose pops the element back off so the path is restored before the next branch.",
+        "None of the above"
+      ],
+      "correct_indices": [
+        0,
+        1,
+        2
+      ],
+      "allow_multiple_correct": true,
+      "explanation": "Choose pushes onto the shared path, explore recurses, and un-choose pops to restore the path, so all three descriptions hold.",
+      "concept": "backtracking",
+      "difficulty": "easy",
+      "learning_scope": "taught",
+      "support_ref": "backtracking-part-1-subsets"
+    },
+    {
+      "id": "q2",
+      "question": "Select all that are true about why you must record a copy of the path when you save an answer.",
+      "choices": [
+        "The path is one shared list that later pushes and pops keep mutating, so a stored reference would change.",
+        "Recording a snapshot with path[:] freezes contents that later mutations cannot touch.",
+        "Copying is needed only so the saved answers sort correctly.",
+        "Without copying, Python refuses to run the recursion at all.",
+        "None of the above"
+      ],
+      "correct_indices": [
+        0,
+        1
+      ],
+      "allow_multiple_correct": true,
+      "explanation": "You copy because the live path is mutated by later pushes and pops, so a snapshot keeps each saved answer independent. It has nothing to do with sorting or a syntax requirement.",
+      "concept": "backtracking",
+      "difficulty": "medium",
+      "learning_scope": "taught",
+      "support_ref": "backtracking-part-1-subsets"
+    },
+    {
+      "id": "q3",
+      "question": "Select all that are true about the start index in the subsets walk.",
+      "choices": [
+        "Looking only forward makes each subset appear exactly once, built in increasing position order.",
+        "It turns the depth-first walk into a breadth-first one.",
+        "It caps every subset at two elements.",
+        "It sorts the input array as a side effect.",
+        "None of the above"
+      ],
+      "correct_indices": [
+        0
+      ],
+      "allow_multiple_correct": true,
+      "explanation": "The start index only looks forward, so each subset is built once in increasing order. It does not change the traversal order, cap subset size, or sort the input.",
+      "concept": "backtracking",
+      "difficulty": "medium",
+      "learning_scope": "taught",
+      "support_ref": "backtracking-part-1-subsets"
+    },
+    {
+      "id": "q4",
+      "question": "Select all that are true about the used-array in the permutations walk.",
+      "choices": [
+        "A start index would generate the same set of permutations just as well.",
+        "Once an element's used flag is set, you never need to clear it.",
+        "The used-array forces every permutation to be built in increasing order.",
+        "None of the above"
+      ],
+      "correct_indices": [
+        3
+      ],
+      "allow_multiple_correct": true,
+      "explanation": "A start index would only yield combinations, the flag must be cleared on un-choose to free the element, and permutations are not restricted to increasing order, so none of the listed statements is true.",
+      "concept": "backtracking",
+      "difficulty": "hard",
+      "learning_scope": "taught",
+      "support_ref": "backtracking-part-2-permutations"
+    },
+    {
+      "id": "q5",
+      "question": "Select all that are true about pruning in backtracking.",
+      "choices": [
+        "Pruning tests a constraint on a partial state before recursing and skips a doomed branch.",
+        "An early rejection deletes an entire subtree instead of walking it down to the leaves.",
+        "In plain permutations with no constraints, every branch is still pruned before its leaf.",
+        "Pruning removes duplicate answers only after the whole search finishes.",
+        "None of the above"
+      ],
+      "correct_indices": [
+        0,
+        1
+      ],
+      "allow_multiple_correct": true,
+      "explanation": "Pruning rejects a partial state early and erases the whole doomed subtree. Plain permutations prune nothing because every full path is valid, and pruning is not an end-of-search deduplication step.",
+      "concept": "backtracking",
+      "difficulty": "medium",
+      "learning_scope": "taught",
+      "support_ref": "backtracking-part-2-permutations"
+    },
+    {
+      "id": "q6",
+      "question": "Select all that are true about the prune, if candidate is greater than remaining then break, in a sorted combination sum.",
+      "choices": [
+        "Because the candidates are sorted, once one overshoots the remaining amount every later candidate overshoots too, so the loop can stop.",
+        "The break is still safe even when the candidates are left unsorted.",
+        "Sorting is needed here only to remove duplicate candidates.",
+        "None of the above"
+      ],
+      "correct_indices": [
+        0
+      ],
+      "allow_multiple_correct": true,
+      "explanation": "With sorted candidates the first overshoot guarantees all larger ones overshoot, so break is safe. It depends on the sort, and the sort provides the ordering rather than deduplication.",
+      "concept": "backtracking",
+      "difficulty": "hard",
+      "learning_scope": "taught",
+      "support_ref": "backtracking-part-1-subsets"
+    },
+    {
+      "id": "q7",
+      "question": "Select all that are true about which problem phrasings point to a backtracking solution.",
+      "choices": [
+        "Return all subsets or combinations of the input.",
+        "Produce every valid arrangement or permutation.",
+        "Enumerate every configuration that satisfies the constraints.",
+        "Return the single shortest path length in an unweighted grid.",
+        "None of the above"
+      ],
+      "correct_indices": [
+        0,
+        1,
+        2
+      ],
+      "allow_multiple_correct": true,
+      "explanation": "Enumerating subsets, arrangements, or every valid configuration are backtracking fingerprints. A single shortest path length is a BFS or dynamic programming job.",
+      "concept": "pattern-recognition",
+      "difficulty": "medium",
+      "learning_scope": "taught",
+      "support_ref": "backtracking-part-1-subsets"
+    },
+    {
+      "id": "q8",
+      "question": "Select all that are NOT true about when to prefer dynamic programming over backtracking.",
+      "choices": [
+        "Backtracking is preferred whenever you need one optimum or a count and the subproblems overlap.",
+        "Dynamic programming folds an overlapping-subproblem tree into a polynomial table.",
+        "You should switch to dynamic programming only when the input is already sorted.",
+        "Backtracking has no memory, so it re-walks an exponential or factorial tree.",
+        "None of the above"
+      ],
+      "correct_indices": [
+        0,
+        2
+      ],
+      "allow_multiple_correct": true,
+      "explanation": "Statements 0 and 2 are false, so they are the NOT-true selections. Dynamic programming, not backtracking, is the tool when you need one optimum or a count with overlapping subproblems, and the trigger is overlap rather than a sorted input. The other two truly describe dynamic programming folding the tree and backtracking having no memory.",
+      "concept": "pattern-recognition",
+      "difficulty": "hard",
+      "learning_scope": "taught",
+      "support_ref": "backtracking-part-2-permutations"
+    }
+  ]
+}

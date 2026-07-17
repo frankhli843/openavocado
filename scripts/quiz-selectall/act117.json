@@ -1,0 +1,109 @@
+{
+  "activityId": 117,
+  "lessonId": 20,
+  "op": "part_practice",
+  "questions": [
+    {
+      "id": "tp1-so-1",
+      "type": "select_all",
+      "prompt": "Select all that are true about a single trie node.",
+      "concept": "trie",
+      "difficulty": "easy",
+      "choices": [
+        "It stores a map from a single character to a child node.",
+        "It stores a boolean end-of-word flag.",
+        "The end-of-word flag marks that a complete stored word ends at this node.",
+        "Walking through it costs one constant-time child lookup per character step."
+      ],
+      "correct_indices": [
+        0,
+        1,
+        2,
+        3
+      ],
+      "explanation": "A node holds exactly a per-character child map and a boolean end-of-word flag that marks a complete word, and each step of a walk is a single constant-time child lookup."
+    },
+    {
+      "id": "tp1-sa-multi",
+      "type": "select_all",
+      "prompt": "Which statements about a trie are true?",
+      "concept": "trie",
+      "difficulty": "medium",
+      "choices": [
+        "Words that share a prefix share the same path until they diverge",
+        "search, insert, and startsWith are each O(length of the string)",
+        "The time cost grows with the number of words stored",
+        "search must check the end-of-word flag, but startsWith does not"
+      ],
+      "correct_indices": [
+        0,
+        1,
+        3
+      ],
+      "explanation": "Cost is O(length), independent of how many words are stored. The flag distinguishes search from startsWith."
+    },
+    {
+      "id": "tp1-sa-none",
+      "type": "select_all",
+      "prompt": "If ONLY \"card\" has been inserted, which of these return true? (If none, select none.)",
+      "concept": "trie",
+      "difficulty": "hard",
+      "choices": [
+        "search(\"car\")",
+        "search(\"ca\")",
+        "search(\"cardable\")"
+      ],
+      "correct_indices": [],
+      "explanation": "None. Car and ca are unflagged prefixes, and cardable walks off the end of the stored path."
+    },
+    {
+      "id": "tp1-order",
+      "type": "ordering",
+      "prompt": "Order the steps of inserting a word into a trie.",
+      "concept": "trie",
+      "difficulty": "medium",
+      "items": [
+        "Start at the root (the empty prefix)",
+        "For each character, follow its child, creating an empty node if missing",
+        "Step into that child and continue",
+        "After the last character, set the end-of-word flag on the final node"
+      ],
+      "correct_order": [
+        "Start at the root (the empty prefix)",
+        "For each character, follow its child, creating an empty node if missing",
+        "Step into that child and continue",
+        "After the last character, set the end-of-word flag on the final node"
+      ]
+    },
+    {
+      "id": "tp1-pattern",
+      "type": "pattern_recognition",
+      "prompt": "\"Given a fixed dictionary of words and many queries, each asking whether a string is a stored word or whether any word starts with a given prefix.\" Which pattern(s) apply?",
+      "concept": "pattern-recognition",
+      "difficulty": "medium",
+      "choices": [
+        "Trie / Prefix Tree",
+        "Hashing",
+        "Two Pointer",
+        "Binary Search",
+        "Sliding Window"
+      ],
+      "primary_indices": [
+        0
+      ],
+      "secondary_indices": [
+        1
+      ],
+      "explanation": "Prefix queries against a fixed dictionary are the trie fingerprint. A hash set is a reasonable secondary for the exact-membership half but cannot do prefixes."
+    },
+    {
+      "id": "tp1-written",
+      "type": "written",
+      "prompt": "Explain why a trie needs an explicit end-of-word flag, using an example where a stored word is a prefix of another stored word.",
+      "concept": "trie",
+      "difficulty": "hard",
+      "actual_answer": "Walking a path in a trie only proves that those characters exist as a prefix of some stored word. It does not prove that the prefix is itself a word. Suppose you insert both \"app\" and \"apple\". The path a-p-p exists because it is on the way to \"apple\", but \"app\" is also a real stored word, and the only way to record that fact is a boolean flag on the second p node. Without the flag, search would either report every prefix as a word. Wrongly matching \"ap\". Or have no way to tell that \"app\" is stored while \"ap\" is not. The end-of-word flag is exactly the bit that separates \"a word ends here\" from \"this node is only passed through.\"",
+      "rubric": "Full credit: a path existing only proves a prefix exists, not a word; the flag records which nodes are real word-ends; concrete example where one word is a prefix of another (app/apple) and both facts must be distinguishable. Partial: states the flag's purpose without the prefix-of-another example. Low: vague."
+    }
+  ]
+}

@@ -1,0 +1,170 @@
+{
+  "activityId": 201,
+  "lessonId": 30,
+  "op": "assessment_quiz",
+  "questions": [
+    {
+      "id": "aeq1",
+      "question": "Select all that are true about what a multi-turn agentic task requires that a single-turn eval does not.",
+      "choices": [
+        "Cross-turn state, where a tool result produced on an earlier turn must be used correctly on a later turn.",
+        "A larger model with more parameters.",
+        "A public leaderboard ranking of already-released models.",
+        "None of the above"
+      ],
+      "correct_indices": [
+        0
+      ],
+      "allow_multiple_correct": true,
+      "explanation": "A multi-turn task requires cross-turn state, which single-turn grading never exercises. It is not about parameter count or a public ranking.",
+      "concept": "multiturn-eval",
+      "difficulty": "easy",
+      "learning_scope": "taught",
+      "support_ref": "ae-multiturn"
+    },
+    {
+      "id": "aeq2",
+      "question": "Select all that are true about why a model can pass every single-turn question yet fail the multi-turn task.",
+      "choices": [
+        "The failure only appears when state has to survive across turns, which single-turn grading never exercises.",
+        "Single-turn questions are always strictly harder than multi-turn tasks.",
+        "A green single-turn score can hide a broken agent.",
+        "The multi-turn task stops using the model weights partway through.",
+        "None of the above"
+      ],
+      "correct_indices": [
+        0,
+        2
+      ],
+      "allow_multiple_correct": true,
+      "explanation": "Single-turn grading never checks cross-turn state, so a fully green score can still hide a broken agent. The other statements are false.",
+      "concept": "multiturn-eval",
+      "difficulty": "medium",
+      "learning_scope": "taught",
+      "support_ref": "ae-multiturn"
+    },
+    {
+      "id": "aeq3",
+      "question": "Select all that are true about the organizational root cause of the multi-turn eval gap.",
+      "choices": [
+        "The post-training team and the evals team disagreed over whether multi-turn was even a supported use case.",
+        "Because no team owned the multi-turn eval, the gap became a blind spot.",
+        "Multi-turn evals are mathematically impossible to construct.",
+        "None of the above"
+      ],
+      "correct_indices": [
+        0,
+        1
+      ],
+      "allow_multiple_correct": true,
+      "explanation": "The two teams disagreed over whether multi-turn was supported, so no one owned the eval and the gap became a blind spot. Multi-turn evals are constructible.",
+      "concept": "multiturn-eval",
+      "difficulty": "hard",
+      "learning_scope": "taught",
+      "support_ref": "ae-multiturn"
+    },
+    {
+      "id": "aeq4",
+      "question": "Select all that are true about the Gemma 4 launch tool-call pass rate of about ten percent.",
+      "choices": [
+        "It was caused by a chat-template formatting problem, not by the weights.",
+        "The weights were capable and were left unchanged when the score was fixed.",
+        "A hand-tuned template later lifted the pass rate dramatically.",
+        "It was caused by the model having too few parameters.",
+        "None of the above"
+      ],
+      "correct_indices": [
+        0,
+        1,
+        2
+      ],
+      "allow_multiple_correct": true,
+      "explanation": "The low score was a template formatting bug fixed by a hand-tuned template with the capable weights unchanged. Parameter count was not the cause.",
+      "concept": "template-trap",
+      "difficulty": "medium",
+      "learning_scope": "taught",
+      "support_ref": "ae-template"
+    },
+    {
+      "id": "aeq5",
+      "question": "Select all that are true about the capability versus protocol distinction.",
+      "choices": [
+        "Capability lives in the weights and is whether the model knows how to call the tool.",
+        "Protocol lives in the template and control tokens and is whether the call is formatted so it can be parsed.",
+        "A protocol bug can hide a capable model behind a failing score.",
+        "None of the above"
+      ],
+      "correct_indices": [
+        0,
+        1,
+        2
+      ],
+      "allow_multiple_correct": true,
+      "explanation": "Capability is in the weights, protocol is in the template and control tokens, and a protocol bug hides a capable model behind a failing score.",
+      "concept": "template-trap",
+      "difficulty": "medium",
+      "learning_scope": "taught",
+      "support_ref": "ae-template"
+    },
+    {
+      "id": "aeq6",
+      "question": "Select all that are true about scoring an agentic task with a state check.",
+      "choices": [
+        "You seed a fake environment with a known starting state, trigger the agent, and inspect the final state against the expected end state.",
+        "Defining the expected end state precisely is what makes pass and fail unambiguous.",
+        "The state check grades the wording of the agent's final message rather than the world it changed.",
+        "None of the above"
+      ],
+      "correct_indices": [
+        0,
+        1
+      ],
+      "allow_multiple_correct": true,
+      "explanation": "A state check seeds a known start, lets the agent act, and compares the actual final state to a precisely defined expected end state. It grades the world, not the wording.",
+      "concept": "agentic-eval-design",
+      "difficulty": "medium",
+      "learning_scope": "taught",
+      "support_ref": "ae-design"
+    },
+    {
+      "id": "aeq7",
+      "question": "Select all that are true about a high score on a contaminated eval.",
+      "choices": [
+        "It proves the model generalizes to new, unseen inputs.",
+        "It guarantees the eval data was held out of training.",
+        "It reliably predicts real agent behavior on fresh inputs.",
+        "None of the above"
+      ],
+      "correct_indices": [
+        3
+      ],
+      "allow_multiple_correct": true,
+      "explanation": "A contaminated score rewards memorization of leaked items, so it proves none of these. It is worthless for predicting behavior on unseen inputs, so None of the above is correct.",
+      "concept": "agentic-eval-design",
+      "difficulty": "hard",
+      "learning_scope": "taught",
+      "support_ref": "ae-design"
+    },
+    {
+      "id": "aeq8",
+      "question": "Select all that are NOT true about the context-disclosure privacy eval.",
+      "choices": [
+        "An agent should reveal the same amount of context to every audience regardless of who is asking.",
+        "An agent may share more with a spouse than with a stranger.",
+        "The eval seeds a scenario and scores whether the agent stayed within the disclosure boundary for each audience.",
+        "A stranger should receive the most context of any audience.",
+        "None of the above"
+      ],
+      "correct_indices": [
+        0,
+        3
+      ],
+      "allow_multiple_correct": true,
+      "explanation": "Equal disclosure to everyone and giving a stranger the most context are both false, so they are the NOT-true selections. Audience-dependent boundaries and boundary scoring are true.",
+      "concept": "agentic-eval-design",
+      "difficulty": "medium",
+      "learning_scope": "taught",
+      "support_ref": "ae-design"
+    }
+  ]
+}

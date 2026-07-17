@@ -1,0 +1,119 @@
+{
+  "activityId": 86,
+  "lessonId": 15,
+  "op": "part_practice",
+  "questions": [
+    {
+      "id": "a86-q0-select-all-residual",
+      "type": "select_all",
+      "concept": "residual-stream",
+      "difficulty": "medium",
+      "prompt": "Select all that are true about the residual stream in a transformer block.",
+      "choices": [
+        "The output of each sublayer is added to the block's input, not used to replace it",
+        "The original token embedding is destroyed after the first block",
+        "Residual connections allow gradients to flow more easily during backpropagation"
+      ],
+      "correct_indices": [
+        0,
+        2
+      ],
+      "explanation": "The residual stream adds, it never replaces. This also helps gradient flow in deep networks because the skip path has gradient 1 rather than passing through a learned transform."
+    },
+    {
+      "id": "a86-q1-select-all-layernorm",
+      "type": "select_all",
+      "concept": "residual-stream",
+      "difficulty": "medium",
+      "prompt": "Select all that are true about LayerNorm in a transformer.",
+      "choices": [
+        "It normalizes each token's vector to have zero mean and unit variance",
+        "In the Pre-LN architecture, it runs before each sublayer (attention and MLP)",
+        "It replaces the residual connection in modern transformers"
+      ],
+      "correct_indices": [
+        0,
+        1
+      ],
+      "explanation": "LayerNorm normalizes per-token. Pre-LN runs it before each sublayer. It never replaces the residual, it coexists with it."
+    },
+    {
+      "id": "a86-q2-ordering-block-ops",
+      "type": "ordering",
+      "concept": "residual-stream",
+      "difficulty": "medium",
+      "prompt": "Order the operations inside one transformer block (Pre-LN architecture):",
+      "items": [
+        "Add attention output to H_input (first residual)",
+        "LayerNorm on H_input, then run Attention sublayer",
+        "LayerNorm on H_after_attn, then run MLP sublayer",
+        "Add MLP output to H_after_attn (second residual)"
+      ],
+      "correct_order": [
+        "LayerNorm on H_input, then run Attention sublayer",
+        "Add attention output to H_input (first residual)",
+        "LayerNorm on H_after_attn, then run MLP sublayer",
+        "Add MLP output to H_after_attn (second residual)"
+      ],
+      "explanation": "LayerNorm then attention then add, then LayerNorm then MLP then add. LayerNorm always precedes each sublayer in Pre-LN architecture."
+    },
+    {
+      "id": "a86-q3-select-all-accumulation",
+      "type": "select_all",
+      "concept": "residual-stream",
+      "difficulty": "medium",
+      "prompt": "Select all that are true about how information accumulates across many transformer blocks.",
+      "choices": [
+        "Each block adds incremental structure to the residual stream",
+        "Early blocks tend to encode syntactic patterns, later blocks semantic patterns",
+        "The input embedding is completely overwritten by block 2"
+      ],
+      "correct_indices": [
+        0,
+        1
+      ],
+      "explanation": "Blocks add deltas, they never fully overwrite. The stream accumulates interpretable structure layer by layer."
+    },
+    {
+      "id": "a86-q4-select-one-computation",
+      "type": "select_all",
+      "concept": "residual-stream",
+      "difficulty": "easy",
+      "prompt": "Select all that are true about the first residual update H_after_attn = H_input + attn_delta.",
+      "choices": [
+        "The attention update is added element by element to the incoming hidden state",
+        "H_after_attn has the same shape as H_input",
+        "The incoming hidden state is preserved and enriched rather than overwritten"
+      ],
+      "correct_indices": [
+        0,
+        1,
+        2
+      ],
+      "explanation": "The first residual add is a straight element-wise sum of H_input and the attention delta, so the result keeps the same L by d_model shape and the incoming state is preserved and enriched instead of replaced."
+    },
+    {
+      "id": "a86-q5-written-residual-gradient",
+      "type": "written",
+      "concept": "residual-stream",
+      "difficulty": "hard",
+      "prompt": "Why do residual connections help train very deep networks, and what would happen without them?",
+      "actual_answer": "Residual connections give gradients a direct path back through the network. The gradient of a residual block includes a term that is just 1, the identity path. Without residuals, gradients must pass through many learned transformations in sequence, which causes them to shrink and vanish or to explode as depth increases, making deep networks very hard to train.",
+      "rubric": "Answer should explain: (1) residual connections give gradients a direct path back through the identity function; (2) gradient of the residual block equals 1 (identity) plus the gradient through the sublayer; (3) without residuals, gradients vanish in deep networks because each layer may shrink the gradient by small factors that compound multiplicatively. Bonus: mention exploding gradients as a separate deep-network training failure."
+    },
+    {
+      "id": "a86-none-of-these",
+      "type": "select_all",
+      "concept": "residual-stream",
+      "difficulty": "medium",
+      "prompt": "Select all that are true about the transformer block. It is possible that none are correct.",
+      "choices": [
+        "This sublayer permanently changes the sequence length inside the block",
+        "The residual stream deletes the incoming hidden state before adding the update",
+        "LayerNorm is the component that mixes information across token positions"
+      ],
+      "correct_indices": [],
+      "explanation": "None are correct. Transformer block sublayers keep sequence length stable, residual connections preserve and add to the incoming state, and attention handles cross-token mixing."
+    }
+  ]
+}

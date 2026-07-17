@@ -1,0 +1,105 @@
+{
+  "activityId": 105,
+  "lessonId": 18,
+  "op": "part_practice",
+  "questions": [
+    {
+      "id": "tp2-so-1",
+      "type": "select_all",
+      "prompt": "Select all that are true about the write pointer in the in-place read/write dedup.",
+      "concept": "two-pointer",
+      "difficulty": "easy",
+      "choices": [
+        "It advances only when the read pointer finds a value different from the last kept one.",
+        "Everything strictly to its left is the finished, deduplicated answer.",
+        "The last kept value it compares against lives at index write minus one."
+      ],
+      "correct_indices": [
+        0,
+        1,
+        2
+      ],
+      "explanation": "The write pointer advances only on a genuine new value, marks the boundary of the finished prefix to its left, and compares against the last kept value at write minus one."
+    },
+    {
+      "id": "tp2-sa-multi",
+      "type": "select_all",
+      "prompt": "Why is in-place read/write compaction O(n) time and O(1) space? Select all correct reasons.",
+      "concept": "two-pointer",
+      "difficulty": "hard",
+      "choices": [
+        "The read pointer advances exactly n times",
+        "The write pointer advances at most n times and never backs up",
+        "Only a single extra index is stored, no second array",
+        "It sorts the array first in O(n log n)"
+      ],
+      "correct_indices": [
+        0,
+        1,
+        2
+      ],
+      "explanation": "Total pointer travel is at most 2n and only one index is stored. No sorting happens inside the scan (the input is already sorted)."
+    },
+    {
+      "id": "tp2-sa-none",
+      "type": "select_all",
+      "prompt": "For in-place dedup of a SORTED array, which of these data structures are REQUIRED? (If none, select none.)",
+      "concept": "two-pointer",
+      "difficulty": "medium",
+      "choices": [
+        "A hash set",
+        "A second output array",
+        "A stack"
+      ],
+      "correct_indices": [],
+      "explanation": "None are required. Two indices and the in-place array suffice. A hash set or second array would waste O(n) space."
+    },
+    {
+      "id": "tp2-order",
+      "type": "ordering",
+      "prompt": "Order the read/write dedup loop body for one read position.",
+      "concept": "two-pointer",
+      "difficulty": "medium",
+      "items": [
+        "Compare nums[read] against the last kept value nums[write-1]",
+        "If it is new, copy nums[read] into the write slot",
+        "Advance the write pointer past the new value",
+        "Move the read pointer forward regardless"
+      ],
+      "correct_order": [
+        "Compare nums[read] against the last kept value nums[write-1]",
+        "If it is new, copy nums[read] into the write slot",
+        "Advance the write pointer past the new value",
+        "Move the read pointer forward regardless"
+      ]
+    },
+    {
+      "id": "tp2-pattern",
+      "type": "pattern_recognition",
+      "prompt": "\"Given an array nums and a value val, remove all occurrences of val IN PLACE and return the new length. Extra space must be O(1).\" Which pattern(s) apply?",
+      "concept": "pattern-recognition",
+      "difficulty": "medium",
+      "choices": [
+        "Two Pointer",
+        "Sliding Window",
+        "Sorting",
+        "Hashing",
+        "Binary Search"
+      ],
+      "primary_indices": [
+        0
+      ],
+      "secondary_indices": [],
+      "explanation": "\"Remove in place, O(1) extra space\" is the read/write same-direction two-pointer fingerprint. Sorting or hashing would violate the O(1)-space requirement, so they are not valid here."
+    },
+    {
+      "id": "tp2-written",
+      "type": "written",
+      "prompt": "State the invariant the write pointer maintains, and explain what goes wrong if you advance write on every read step instead of only on a keeper.",
+      "concept": "two-pointer",
+      "difficulty": "hard",
+      "actual_answer": "The invariant is that everything strictly to the left of the write pointer is the final, compacted answer so far. Each slot before write holds a value that belongs in the result, in order. If you advance write on every read step instead of only when read finds a genuinely new value, you copy duplicates into the write region and push the boundary past them, so the prefix ends up containing repeated values and a wrong (too-large) length. The invariant is preserved only by advancing write exclusively on a keeper, which is what guarantees the left side stays a correct deduplicated prefix.",
+      "rubric": "Full credit: names the invariant (everything left of write is the finished answer) AND explains that advancing write blindly copies duplicates in, corrupting the prefix and inflating the length. Partial: states the invariant OR the bug but not both. Low: vague."
+    }
+  ]
+}

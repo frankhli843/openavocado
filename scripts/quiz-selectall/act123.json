@@ -1,0 +1,107 @@
+{
+  "activityId": 123,
+  "lessonId": 21,
+  "op": "part_practice",
+  "questions": [
+    {
+      "id": "bp1-so-1",
+      "type": "select_all",
+      "prompt": "Select all that are true about the three beats of the backtracking template.",
+      "concept": "backtracking",
+      "difficulty": "easy",
+      "choices": [
+        "Choose appends an element to the shared path.",
+        "Explore recurses one level deeper with that choice in place.",
+        "Un-choose pops the element back off so the shared path is restored for the next branch."
+      ],
+      "correct_indices": [
+        0,
+        1,
+        2
+      ],
+      "explanation": "The three beats are choose (append to the path), explore (recurse deeper), and un-choose (pop it back off), so all three statements are true."
+    },
+    {
+      "id": "bp1-sa-multi",
+      "type": "select_all",
+      "prompt": "Which statements about the subsets walk are true?",
+      "concept": "backtracking",
+      "difficulty": "medium",
+      "choices": [
+        "Every node visited is itself a valid subset, so you record on entry",
+        "A start index makes each subset appear exactly once",
+        "You must record a copy of the path, not the live list",
+        "The number of subsets grows linearly with n"
+      ],
+      "correct_indices": [
+        0,
+        1,
+        2
+      ],
+      "explanation": "Subsets grow as 2^n (exponential), not linearly. The other three are the core template facts."
+    },
+    {
+      "id": "bp1-sa-none",
+      "type": "select_all",
+      "prompt": "In subsets([1,2,3]) with the start-index template, which of these appear in the output? (If none, select none.)",
+      "concept": "backtracking",
+      "difficulty": "hard",
+      "choices": [
+        "[3, 1]",
+        "[2, 1]",
+        "[3, 2]"
+      ],
+      "correct_indices": [],
+      "explanation": "None. The start index only looks forward, so subsets are built in increasing order. [1,3], [1,2], [2,3] appear, but their reverses never do."
+    },
+    {
+      "id": "bp1-order",
+      "type": "ordering",
+      "prompt": "Order the operations inside one iteration of the subsets loop.",
+      "concept": "backtracking",
+      "difficulty": "medium",
+      "items": [
+        "Append the current element to the path (choose)",
+        "Recurse with the next start index (explore)",
+        "Pop the element back off (un-choose)",
+        "Move to the next element in the loop"
+      ],
+      "correct_order": [
+        "Append the current element to the path (choose)",
+        "Recurse with the next start index (explore)",
+        "Pop the element back off (un-choose)",
+        "Move to the next element in the loop"
+      ]
+    },
+    {
+      "id": "bp1-pattern",
+      "type": "pattern_recognition",
+      "prompt": "\"Given a list of distinct numbers, return every possible subset (the power set).\" Which pattern(s) apply?",
+      "concept": "pattern-recognition",
+      "difficulty": "medium",
+      "choices": [
+        "Backtracking",
+        "Bitmask enumeration",
+        "Two Pointer",
+        "Binary Search",
+        "Sliding Window"
+      ],
+      "primary_indices": [
+        0
+      ],
+      "secondary_indices": [
+        1
+      ],
+      "explanation": "Enumerating the power set is the backtracking fingerprint. A bitmask over 0.2^n-1 is a valid secondary for small n."
+    },
+    {
+      "id": "bp1-written",
+      "type": "written",
+      "prompt": "Explain why you must record a COPY of the path when saving a subset, using what happens on later pops.",
+      "concept": "backtracking",
+      "difficulty": "hard",
+      "actual_answer": "The path is a single shared list that the whole recursion mutates as it walks. Every choose appends to it and every un-choose pops from it. If you save that same list object into your results, you have only saved a reference to the live path, not its current contents. As the recursion continues it keeps popping and pushing that very list, so the thing you saved changes underneath you. By the time the walk unwinds to the end, the path has been emptied back out, and every reference you stored now points at the same empty list. Saving path[:] (a shallow copy) freezes the contents at that instant, so later mutations of the path cannot touch it. Copy on record is what makes each saved subset an independent, durable snapshot.",
+      "rubric": "Full credit: the path is one shared mutated list; saving it stores a reference that later pops/pushes change; path[:] freezes a snapshot so each answer is independent. Partial: says 'copy it' without explaining the aliasing. Low: vague."
+    }
+  ]
+}

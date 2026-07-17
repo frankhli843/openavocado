@@ -1,0 +1,109 @@
+{
+  "activityId": 129,
+  "lessonId": 22,
+  "op": "part_practice",
+  "questions": [
+    {
+      "id": "mp1-so-1",
+      "type": "select_all",
+      "prompt": "Select all that are true about the Next Greater Element machine.",
+      "concept": "monotonic-stack",
+      "difficulty": "easy",
+      "choices": [
+        "You keep on the stack only the indices whose answer is still open, held so their values are strictly decreasing from bottom to top.",
+        "You pop while the arriving value is greater than the value at the top index.",
+        "Each pop records the arriving value as the popped index's next greater element.",
+        "Indices still on the stack at the end keep the default answer of negative one."
+      ],
+      "correct_indices": [
+        0,
+        1,
+        2,
+        3
+      ],
+      "explanation": "A larger arrival resolves every smaller waiter, so the stack stays strictly decreasing and you pop while the newcomer beats the top, recording it as that element's next greater. Anything never beaten keeps the default of negative one."
+    },
+    {
+      "id": "mp1-sa-multi",
+      "type": "select_all",
+      "prompt": "Which statements about the Next Greater Element walk are true?",
+      "concept": "monotonic-stack",
+      "difficulty": "medium",
+      "choices": [
+        "Each pop is the moment the popped element's answer becomes known",
+        "One arrival can resolve several waiting elements at once",
+        "Every index is pushed once and popped at most once, so the scan is linear",
+        "Elements left on the stack at the end should be re-scanned in a second loop"
+      ],
+      "correct_indices": [
+        0,
+        1,
+        2
+      ],
+      "explanation": "Leftovers simply keep the default -1. There is no second scan. The other three are the core facts."
+    },
+    {
+      "id": "mp1-sa-none",
+      "type": "select_all",
+      "prompt": "In next_greater([2,1,2,4,3]), which of these answers appear in the output? (If none, select none.)",
+      "concept": "monotonic-stack",
+      "difficulty": "hard",
+      "choices": [
+        "res[3] (for value 4) is 5",
+        "res[0] (for the first 2) is 3",
+        "res[4] (for value 3) is 4"
+      ],
+      "correct_indices": [],
+      "explanation": "None: res[3]=-1 (nothing beats 4), res[0]=4 (not 3), res[4]=-1 (3 is last). The actual output is [4,2,4,-1,-1]."
+    },
+    {
+      "id": "mp1-order",
+      "type": "ordering",
+      "prompt": "Order the operations for one arriving element in the Next Greater Element loop.",
+      "concept": "monotonic-stack",
+      "difficulty": "medium",
+      "items": [
+        "Compare the arrival to the value at the top index",
+        "While the arrival is greater, pop and record res[popped] = arrival",
+        "Stop popping once the arrival no longer beats the top",
+        "Push the current index onto the stack"
+      ],
+      "correct_order": [
+        "Compare the arrival to the value at the top index",
+        "While the arrival is greater, pop and record res[popped] = arrival",
+        "Stop popping once the arrival no longer beats the top",
+        "Push the current index onto the stack"
+      ]
+    },
+    {
+      "id": "mp1-pattern",
+      "type": "pattern_recognition",
+      "prompt": "\"For each day's temperature, return how many days you must wait for a warmer day (0 if none).\" Which pattern(s) apply?",
+      "concept": "pattern-recognition",
+      "difficulty": "medium",
+      "choices": [
+        "Monotonic Stack",
+        "Store indices for distance",
+        "Two Pointer",
+        "Binary Search",
+        "Heap"
+      ],
+      "primary_indices": [
+        0
+      ],
+      "secondary_indices": [
+        1
+      ],
+      "explanation": "This is the wait-time variant of next-greater. A decreasing monotonic stack of indices gives the distance currentIndex - poppedIndex."
+    },
+    {
+      "id": "mp1-written",
+      "type": "written",
+      "prompt": "Explain why storing indices (rather than raw values) on the stack matters, using the wait-time / span variant as your example.",
+      "concept": "monotonic-stack",
+      "difficulty": "hard",
+      "actual_answer": "At the moment you pop an element you need three things to resolve it: its own value, the position of the neighbor now exposed below it, and the current scanning position. If the stack holds indices, all three are one lookup away. The value is the array indexed by the popped index, and the two positions are the exposed stack index and the loop counter. That is exactly what the wait-time variant needs: the answer is a distance, currentIndex minus poppedIndex, which is impossible to compute if the stack only held the raw temperature values, because a value does not tell you where it lived. Daily Temperatures is the clean example: for each day you want the number of days until a warmer one, so at the pop you compute i - poppedIndex. Storing values would force you to keep a parallel stack of positions anyway, which is strictly worse than just storing the index and dereferencing the array for the value. So indices are the default payload. Raw values are only a shortcut for a pure next-greater-value query that never measures a distance.",
+      "rubric": "Full credit: a pop needs the value AND positions. Indices give both via a lookup while raw values lose the positions. Wait-time answer = i - poppedIndex needs the index. Partial: says 'store indices' without the distance reasoning. Low: vague."
+    }
+  ]
+}

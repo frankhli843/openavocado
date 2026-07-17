@@ -1,0 +1,110 @@
+{
+  "activityId": 153,
+  "lessonId": 26,
+  "op": "part_practice",
+  "questions": [
+    {
+      "id": "bs1-so-1",
+      "type": "select_all",
+      "prompt": "Select all that are true about why binary search on the answer works for Koko Eating Bananas.",
+      "concept": "binary-search-on-answer",
+      "difficulty": "easy",
+      "choices": [
+        "The feasibility function is monotonic, so once a speed k is feasible, every larger speed is also feasible.",
+        "Increasing the eating speed can only reduce the total hours needed, never increase it.",
+        "Monotonicity creates a clean boundary between the infeasible slow speeds and the feasible fast speeds, and the search converges on that boundary."
+      ],
+      "correct_indices": [
+        0,
+        1,
+        2
+      ],
+      "explanation": "All three are the same property stated three ways. Higher speed never needs more hours, so feasibility is monotonic and there is a single clean boundary for the search to find."
+    },
+    {
+      "id": "bs1-sa-range",
+      "type": "select_all",
+      "prompt": "Which are valid choices for lo and hi in Koko Eating Bananas?",
+      "concept": "binary-search-on-answer",
+      "difficulty": "medium",
+      "choices": [
+        "lo = 1, hi = max(piles)",
+        "lo = 0, hi = sum(piles)",
+        "lo = min(piles), hi = max(piles)"
+      ],
+      "correct_indices": [
+        0,
+        2
+      ],
+      "explanation": "lo = 0 is invalid because speed 0 is meaningless. Lo = 1 and lo = min(piles) are both valid lower bounds (min >= 1). Hi = max(piles) is tight because eating faster than the biggest pile wastes nothing."
+    },
+    {
+      "id": "bs1-pr-1",
+      "type": "pattern_recognition",
+      "prompt": "You need to split an array of positive integers into k contiguous subarrays so that the maximum subarray sum is minimized. Which algorithmic pattern(s) apply?",
+      "concept": "binary-search-on-answer",
+      "difficulty": "medium",
+      "choices": [
+        "binary search on the answer",
+        "greedy",
+        "dynamic programming",
+        "sliding window",
+        "two pointer",
+        "divide and conquer",
+        "backtracking"
+      ],
+      "primary_indices": [
+        0
+      ],
+      "secondary_indices": [
+        1
+      ],
+      "explanation": "The primary pattern is binary search on the answer: the candidate is the max allowed subarray sum, with a greedy feasibility check. Greedy is secondary because it implements the feasibility oracle. DP can also solve it but is slower."
+    },
+    {
+      "id": "bs1-sa-none",
+      "type": "select_all",
+      "prompt": "Which of the following are necessary conditions for binary search on the answer to work? (If none, select none.)",
+      "concept": "binary-search-on-answer",
+      "difficulty": "hard",
+      "choices": [
+        "The input array must be sorted",
+        "The feasibility function must run in O(1) time",
+        "The candidates must be floating-point numbers"
+      ],
+      "correct_indices": [],
+      "explanation": "None of these are necessary: the input need not be sorted (Koko piles can be in any order), the feasibility function can be O(n) or more, and candidates can be integers. The only requirement is a monotonic feasibility function over the candidate range."
+    },
+    {
+      "id": "bs1-order-1",
+      "type": "ordering",
+      "prompt": "Order the steps of applying binary search on the answer to Koko Eating Bananas.",
+      "concept": "binary-search-on-answer",
+      "difficulty": "medium",
+      "items": [
+        "Set lo = 1, hi = max(piles)",
+        "Compute mid = (lo + hi) // 2",
+        "Calculate total hours: sum of ceiling(pile / mid) for each pile",
+        "If hours <= h, set hi = mid. Else set lo = mid + 1",
+        "When lo == hi, return lo as the minimum speed"
+      ],
+      "correct_order": [
+        "Set lo = 1, hi = max(piles)",
+        "Compute mid = (lo + hi) // 2",
+        "Calculate total hours: sum of ceiling(pile / mid) for each pile",
+        "If hours <= h, set hi = mid. Else set lo = mid + 1",
+        "When lo == hi, return lo as the minimum speed"
+      ],
+      "explanation": "The algorithm first defines the range, then iteratively picks the midpoint, checks feasibility via ceiling division, narrows the range, and returns when converged."
+    },
+    {
+      "id": "bs1-written-1",
+      "type": "written",
+      "prompt": "Explain why the greedy left-to-right scan gives the correct feasibility answer for Split Array Largest Sum. Why can no other split strategy use fewer subarrays for the same target sum?",
+      "concept": "binary-search-on-answer",
+      "difficulty": "hard",
+      "actual_answer": "The greedy scan extends each subarray as far as possible before starting a new one, which minimizes the number of subarrays. Any other strategy would start a new subarray earlier than greedy, which means it uses at least as many subarrays. Therefore, if greedy needs more than k subarrays, no other strategy can do it in k. This makes greedy the optimal way to spend the budget of k subarrays, and therefore a valid feasibility oracle for the binary search.",
+      "rubric": "Should explain that greedy extends each subarray as far as possible, using the fewest splits. Any other strategy starts a new subarray earlier, using at least as many. So if greedy needs more than k, nothing else can do it in k either. Should mention that this makes greedy a valid feasibility oracle."
+    }
+  ]
+}

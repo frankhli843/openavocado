@@ -13,6 +13,7 @@ import {
   integrateAcpResult,
   serializeQuizState,
   deserializeQuizState,
+  isSessionCompatibleWithQuestions,
   checkPassedAfterFeedback,
   isIdkSelection,
   getCorrectIndices,
@@ -127,7 +128,7 @@ function QuizEngine({ activity, quiz, savedQuizState, onStateChange, onPassedCha
 
   const [session, setSession] = useState<QuizSessionState>(() => {
     const restored = deserializeQuizState(savedQuizState);
-    if (restored) {
+    if (restored && isSessionCompatibleWithQuestions(restored, questions)) {
       // Keep retryCounter in sync with restored state so new retries get unique ids.
       const maxRetryNum = Math.max(
         0,
@@ -492,7 +493,7 @@ function QuizEngine({ activity, quiz, savedQuizState, onStateChange, onPassedCha
                 {feedback.correct ? "✓" : feedback.is_idk ? "?" : "✗"}
               </span>
               <span className={`text-sm font-semibold ${feedback.correct ? "text-green-700" : feedback.is_idk ? "text-amber-700" : "text-red-700"}`}>
-                {feedback.correct ? "Correct!" : feedback.is_idk ? "No problem — here's the answer." : "Not quite."}
+                {feedback.correct ? "Correct!" : feedback.is_idk ? "No problem, here's the answer." : "Not quite."}
               </span>
               {!feedback.correct && (
                 <span className={`text-xs ml-auto ${feedback.is_idk ? "text-amber-700" : "text-red-600"}`}>
@@ -506,7 +507,7 @@ function QuizEngine({ activity, quiz, savedQuizState, onStateChange, onPassedCha
             {!feedback.correct && (
               <p className="border-l-2 border-amber-300 bg-amber-50 px-3 py-2 text-xs text-amber-700">
                 {feedback.is_idk
-                  ? "Saying “I don’t know” is useful signal — we’ll bring this concept back so you can lock it in. No penalty."
+                  ? "Saying “I don’t know” is useful signal. We’ll bring this concept back so you can lock it in. No penalty."
                   : "This concept will come back later in a different form. Keep going!"}
               </p>
             )}

@@ -1,0 +1,107 @@
+{
+  "activityId": 99,
+  "lessonId": 17,
+  "op": "part_practice",
+  "questions": [
+    {
+      "id": "p1-so-1",
+      "type": "select_all",
+      "prompt": "Select all that are true about a single slide of a fixed-size window one step to the right.",
+      "concept": "sliding-window",
+      "difficulty": "easy",
+      "choices": [
+        "Exactly one element leaves on the left and exactly one element enters on the right.",
+        "The shared middle elements are carried over without being re-added.",
+        "The running sum is repaired by subtracting the leaver and adding the enterer."
+      ],
+      "correct_indices": [
+        0,
+        1,
+        2
+      ],
+      "explanation": "One slide changes only the two boundary elements. The middle is reused, and the sum is repaired by subtracting the element that leaves and adding the element that enters."
+    },
+    {
+      "id": "p1-sa-multi",
+      "type": "select_all",
+      "prompt": "Which statements about the O(1) slide update are true?",
+      "concept": "sliding-window",
+      "difficulty": "medium",
+      "choices": [
+        "The cost per slide does not depend on k",
+        "You add the entering element and subtract the leaving element",
+        "You must re-sum all k elements each step",
+        "The leaving element is nums[right - k] when the right pointer is at index right"
+      ],
+      "correct_indices": [
+        0,
+        1,
+        3
+      ],
+      "explanation": "The whole point is to avoid re-summing. The update is add-enter, subtract-leave, and the leaver is k behind the right pointer."
+    },
+    {
+      "id": "p1-sa-none",
+      "type": "select_all",
+      "prompt": "Which of these are REQUIRED for a fixed-size window to be correct? (Select all that truly are. If none, select none.)",
+      "concept": "sliding-window",
+      "difficulty": "hard",
+      "choices": [
+        "The array must be sorted first",
+        "All numbers must be positive",
+        "The window width must be a power of two"
+      ],
+      "correct_indices": [],
+      "explanation": "None of these are required. A fixed-size window sum works on any integers in any order, including negatives, and any width."
+    },
+    {
+      "id": "p1-order",
+      "type": "ordering",
+      "prompt": "Put the fixed-size-window algorithm steps in order.",
+      "concept": "sliding-window",
+      "difficulty": "medium",
+      "items": [
+        "Sum the first k elements to seed the running total",
+        "Set best equal to the first window's sum",
+        "For each new right index, add the entering and subtract the leaving element",
+        "Update best if the current window sum is larger"
+      ],
+      "correct_order": [
+        "Sum the first k elements to seed the running total",
+        "Set best equal to the first window's sum",
+        "For each new right index, add the entering and subtract the leaving element",
+        "Update best if the current window sum is larger"
+      ]
+    },
+    {
+      "id": "p1-pattern",
+      "type": "pattern_recognition",
+      "prompt": "\"Given an array of integers and a number k, find the maximum average of any contiguous subarray of length k.\" Which pattern(s) apply?",
+      "concept": "pattern-recognition",
+      "difficulty": "medium",
+      "choices": [
+        "Sliding Window",
+        "Two Pointer",
+        "Binary Search",
+        "Dynamic Programming",
+        "Heap / Priority Queue"
+      ],
+      "primary_indices": [
+        0
+      ],
+      "secondary_indices": [
+        1
+      ],
+      "explanation": "\"Contiguous subarray of length k\" is the fixed-size sliding-window fingerprint. A two-pointer framing is a reasonable secondary lens since the window is bounded by two indices."
+    },
+    {
+      "id": "p1-written",
+      "type": "written",
+      "prompt": "Explain, in your own words, why the per-slide cost of a fixed-size window is O(1) even though the window contains k elements.",
+      "concept": "sliding-window",
+      "difficulty": "medium",
+      "actual_answer": "Because sliding changes only the two boundary elements: the running sum is updated by adding the one element that enters on the right and subtracting the one that leaves on the left. The k-2 shared middle elements are carried over unchanged, so the work per slide is a constant two operations regardless of k.",
+      "rubric": "Full credit: identifies that only two elements change (one enters, one leaves) and the shared middle is reused, so the update is constant work independent of k. Partial: mentions add/subtract but not the reuse of the middle. Low: restates O(1) without the mechanism."
+    }
+  ]
+}

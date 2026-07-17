@@ -1,0 +1,165 @@
+{
+  "activityId": 107,
+  "lessonId": 18,
+  "op": "assessment_quiz",
+  "questions": [
+    {
+      "id": "q1",
+      "question": "Select all that are true about a converging two-pointer scan.",
+      "choices": [
+        "It requires the array to be sorted.",
+        "One pointer starts on the smallest element and the other on the largest.",
+        "It works equally well on an unsorted array.",
+        "None of the above"
+      ],
+      "correct_indices": [
+        0,
+        1
+      ],
+      "allow_multiple_correct": true,
+      "explanation": "The converging walk needs a sorted array so a single comparison can discard a whole end. One pointer sits on the smallest value, one on the largest.",
+      "concept": "two-pointer",
+      "difficulty": "easy",
+      "learning_scope": "taught",
+      "support_ref": "tp-part-1-converging"
+    },
+    {
+      "id": "q2",
+      "question": "Select all that are true about the correct move when a converging pair sum is smaller than the target.",
+      "choices": [
+        "Advance the left pointer toward a bigger value.",
+        "Retreat the right pointer toward a smaller value.",
+        "Move both pointers inward at the same time.",
+        "None of the above"
+      ],
+      "correct_indices": [
+        0
+      ],
+      "allow_multiple_correct": true,
+      "explanation": "A too-small sum means the smallest value cannot help, so the only way to raise the sum is to advance the left pointer toward a bigger value.",
+      "concept": "two-pointer",
+      "difficulty": "medium",
+      "learning_scope": "taught",
+      "support_ref": "tp-part-1-converging"
+    },
+    {
+      "id": "q3",
+      "question": "Select all that are NOT true about why sorted order makes the pair-sum comparison decisive.",
+      "choices": [
+        "A sum that is too large condemns every pair using the current largest element at once.",
+        "One comparison rules out an entire class of candidate pairs, not just one pair.",
+        "On unsorted data, moving a pointer still reliably pushes the sum in the expected direction.",
+        "Sorted order is irrelevant to whether a comparison is decisive.",
+        "None of the above"
+      ],
+      "correct_indices": [
+        2,
+        3
+      ],
+      "allow_multiple_correct": true,
+      "explanation": "The first two statements are the true decisive-comparison argument. On unsorted data moving a pointer does not reliably push the sum, and sorted order is exactly the license for the walk, so those two false statements are the NOT-true selections.",
+      "concept": "two-pointer",
+      "difficulty": "hard",
+      "learning_scope": "taught",
+      "support_ref": "tp-part-1-converging"
+    },
+    {
+      "id": "q4",
+      "question": "Select all that are true about how to solve two-sum on an UNSORTED array that must return the original indices.",
+      "choices": [
+        "A converging two-pointer scan from both ends solves it directly.",
+        "Sorting the array first and then using two pointers preserves the original indices for free.",
+        "The same-direction read/write compaction solves it.",
+        "None of the above"
+      ],
+      "correct_indices": [
+        3
+      ],
+      "allow_multiple_correct": true,
+      "explanation": "Unsorted two-sum lacks the decisive comparison, and sorting destroys the original indices. The taught fix is a hash map of complements, which is not listed, so None of the above is correct.",
+      "concept": "pattern-recognition",
+      "difficulty": "medium",
+      "learning_scope": "taught",
+      "support_ref": "tp-part-1-converging"
+    },
+    {
+      "id": "q5",
+      "question": "Select all that are true about the read and write pointers in an in-place dedup of a sorted array.",
+      "choices": [
+        "The read pointer marches across every element, inspecting each one.",
+        "Everything strictly to the left of the write pointer is the finished, compacted answer.",
+        "The write pointer advances only when the read pointer finds a new value worth keeping.",
+        "None of the above"
+      ],
+      "correct_indices": [
+        0,
+        1,
+        2
+      ],
+      "allow_multiple_correct": true,
+      "explanation": "Read scouts every element, the region left of write is the finished answer (the write boundary invariant), and write advances only on a keeper.",
+      "concept": "two-pointer",
+      "difficulty": "medium",
+      "learning_scope": "taught",
+      "support_ref": "tp-part-2-readwrite"
+    },
+    {
+      "id": "q6",
+      "question": "Select all that are true about why 'container with most water' always moves the pointer at the shorter wall.",
+      "choices": [
+        "The shorter wall caps the area, so moving the taller wall can only shrink the width without raising the cap.",
+        "The taller wall is always on the left.",
+        "Moving the shorter wall keeps the array sorted.",
+        "None of the above"
+      ],
+      "correct_indices": [
+        0
+      ],
+      "allow_multiple_correct": true,
+      "explanation": "The shorter wall is the limiting factor, so only abandoning it gives a chance at a taller cap. Moving the taller wall just loses width.",
+      "concept": "two-pointer",
+      "difficulty": "hard",
+      "learning_scope": "taught",
+      "support_ref": "tp-part-1-converging"
+    },
+    {
+      "id": "q7",
+      "question": "Select all that are true about why Floyd's fast and slow pointers collide inside a cycle.",
+      "choices": [
+        "On a finite loop the gap between them shrinks by one each tick, so it must reach zero.",
+        "The fast pointer repeatedly restarts from the head of the list.",
+        "They collide only when the loop length is even.",
+        "None of the above"
+      ],
+      "correct_indices": [
+        0
+      ],
+      "allow_multiple_correct": true,
+      "explanation": "A steadily closing gap of one per tick on a finite circular path forces a meeting. The fast pointer does not restart, and the loop length parity is irrelevant.",
+      "concept": "complexity",
+      "difficulty": "medium",
+      "learning_scope": "taught",
+      "support_ref": "tp-part-1-converging"
+    },
+    {
+      "id": "q8",
+      "question": "Select all that are true about read/write recognition cues and how a window relates to two pointers.",
+      "choices": [
+        "'in place' is a fingerprint of the same-direction read/write compaction.",
+        "'O(1) extra space' is a fingerprint of the same-direction read/write compaction.",
+        "A sliding window is a converging two-pointer setup that starts from opposite ends.",
+        "None of the above"
+      ],
+      "correct_indices": [
+        0,
+        1
+      ],
+      "allow_multiple_correct": true,
+      "explanation": "'in place' and 'O(1) extra space' both fingerprint the compaction. A sliding window is a same-direction two-pointer setup where you care about the span between the pointers, not a converging one.",
+      "concept": "pattern-recognition",
+      "difficulty": "medium",
+      "learning_scope": "taught",
+      "support_ref": "tp-part-2-readwrite"
+    }
+  ]
+}

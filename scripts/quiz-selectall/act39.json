@@ -1,0 +1,104 @@
+{
+  "activityId": 39,
+  "lessonId": 7,
+  "op": "part_practice",
+  "questions": [
+    {
+      "id": "part1-one",
+      "type": "select_all",
+      "prompt": "Select all that are true about what the model receives after tokenization.",
+      "concept": "tokenizer-model contract",
+      "difficulty": "easy",
+      "choices": [
+        "Token IDs, not raw words",
+        "A paragraph string",
+        "A finished probability distribution"
+      ],
+      "correct_indices": [
+        0
+      ],
+      "explanation": "The tokenizer converts text into stable integer IDs before the model sees it, so the model receives token IDs rather than raw words or a probability distribution."
+    },
+    {
+      "id": "part1-some",
+      "type": "select_all",
+      "prompt": "Select all objects that belong to the tokenizer-model handoff.",
+      "concept": "tokenizer-model contract",
+      "difficulty": "medium",
+      "choices": [
+        "Vocabulary mapping",
+        "Token ID list",
+        "Raw browser pixels",
+        "Embedding table row addresses"
+      ],
+      "correct_indices": [
+        0,
+        1,
+        3
+      ],
+      "explanation": "The vocabulary mapping creates IDs, and those IDs address embedding rows. Raw browser pixels are not part of the handoff."
+    },
+    {
+      "id": "part1-none",
+      "type": "select_all",
+      "prompt": "Select all statements that are true about the tokenizer itself creating hidden-state meaning.",
+      "concept": "tokenizer-model contract",
+      "difficulty": "medium",
+      "choices": [
+        "It learns transformer attention",
+        "It runs the MLP",
+        "It produces logits directly"
+      ],
+      "correct_indices": [],
+      "explanation": "None are true. The tokenizer makes IDs. The model layers create and edit hidden states."
+    },
+    {
+      "id": "part1-order",
+      "type": "ordering",
+      "prompt": "Order the first handoff from text into model input.",
+      "concept": "tokenizer-model contract",
+      "difficulty": "medium",
+      "items": [
+        "raw text",
+        "token pieces",
+        "token IDs",
+        "embedding-row lookup"
+      ],
+      "correct_order": [
+        "raw text",
+        "token pieces",
+        "token IDs",
+        "embedding-row lookup"
+      ],
+      "explanation": "Text is split into tokens, tokens map to IDs, then IDs select embedding rows."
+    },
+    {
+      "id": "part1-written",
+      "type": "written",
+      "prompt": "Explain why token ID 44 can appear twice but still become two different position-aware rows later.",
+      "concept": "tokenizer-model contract",
+      "difficulty": "hard",
+      "actual_answer": "The same token ID selects the same learned embedding row each time, but each occurrence sits at a different sequence position. Position information is added after lookup, so identical token IDs can become different position-aware hidden-state rows.",
+      "rubric": "A strong answer says same ID means same embedding row, different occurrence means different position, and position information is added before transformer blocks edit the rows.",
+      "hint": "Mention both the embedding lookup and the position slot."
+    },
+    {
+      "id": "part1-check",
+      "type": "select_all",
+      "prompt": "Select all that are true about the tokenizer in the tokenizer-model handoff.",
+      "concept": "tokenizer-model contract",
+      "difficulty": "easy",
+      "choices": [
+        "It owns the stable mapping from text pieces to token IDs",
+        "It converts raw text into integer IDs before the model runs",
+        "It hands token IDs to the model rather than raw words"
+      ],
+      "correct_indices": [
+        0,
+        1,
+        2
+      ],
+      "explanation": "All three are true. The tokenizer owns the stable text-to-ID mapping, converts text to integer IDs before the model runs, and hands those IDs to the model instead of raw words."
+    }
+  ]
+}

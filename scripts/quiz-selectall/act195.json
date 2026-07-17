@@ -1,0 +1,168 @@
+{
+  "activityId": 195,
+  "lessonId": 29,
+  "op": "assessment_quiz",
+  "questions": [
+    {
+      "id": "eiq1",
+      "question": "Select all that are true about the seeded fake environment Gbench builds before an agentic task runs.",
+      "choices": [
+        "It creates fake files, fake callable tools, and a known starting backend state.",
+        "It uses a production database of real user records as the starting state.",
+        "It ranks already-released models on a public leaderboard.",
+        "None of the above"
+      ],
+      "correct_indices": [
+        0
+      ],
+      "allow_multiple_correct": true,
+      "explanation": "Seeding builds fake files, fake tools, and a deterministic starting backend state so the harness knows the world at time zero. It is not a real production database or a public ranking.",
+      "concept": "seeded-environment",
+      "difficulty": "easy",
+      "learning_scope": "taught",
+      "support_ref": "ei-part-1-gbench"
+    },
+    {
+      "id": "eiq2",
+      "question": "Select all that are true about the parts that make up an eval harness.",
+      "choices": [
+        "An environment the model acts inside.",
+        "A trigger that starts the model running as an agent.",
+        "A grader that decides the pass or fail result.",
+        "None of the above"
+      ],
+      "correct_indices": [
+        0,
+        1,
+        2
+      ],
+      "allow_multiple_correct": true,
+      "explanation": "An eval harness is environment plus trigger plus grader, so all three listed parts are real. That leaves None of the above unselected.",
+      "concept": "eval-harness",
+      "difficulty": "medium",
+      "learning_scope": "taught",
+      "support_ref": "ei-part-1-gbench"
+    },
+    {
+      "id": "eiq3",
+      "question": "Select all that are true about where the Ditto eval runner runs and what it grades.",
+      "choices": [
+        "Ditto runs as a job on Borg, Google's cluster job scheduler.",
+        "The model Ditto grades is hosted on GCP and exposes an API endpoint.",
+        "Ditto runs inside the GCP hosted model endpoint itself.",
+        "None of the above"
+      ],
+      "correct_indices": [
+        0,
+        1
+      ],
+      "allow_multiple_correct": true,
+      "explanation": "Ditto is a Borg job and the model it grades lives on a separate GCP hosted endpoint. Ditto does not run inside that endpoint, so the third claim is false.",
+      "concept": "borg-gcp-serving",
+      "difficulty": "medium",
+      "learning_scope": "taught",
+      "support_ref": "ei-part-2-ditto-borg"
+    },
+    {
+      "id": "eiq4",
+      "question": "Select all that are true about the Borg to GCP crossover.",
+      "choices": [
+        "It is the bridge a request travels from a Borg job to a GCP hosted endpoint and back.",
+        "It must handle authentication between the two systems.",
+        "It must handle network reachability and request routing between the two worlds.",
+        "It requires retraining the model from scratch on every eval run.",
+        "None of the above"
+      ],
+      "correct_indices": [
+        0,
+        1,
+        2
+      ],
+      "allow_multiple_correct": true,
+      "explanation": "The crossover bridges a Borg job to a GCP endpoint and covers auth, networking, and routing. It has nothing to do with retraining the model, so that claim is false.",
+      "concept": "borg-gcp-serving",
+      "difficulty": "hard",
+      "learning_scope": "taught",
+      "support_ref": "ei-part-2-ditto-borg"
+    },
+    {
+      "id": "eiq5",
+      "question": "Select all that are true about what a working Borg to GCP crossover lets the eval skip entirely.",
+      "choices": [
+        "Authenticating a Borg job to the GCP endpoint.",
+        "Routing the request across the two systems.",
+        "Letting responses travel back to the eval job.",
+        "None of the above"
+      ],
+      "correct_indices": [
+        3
+      ],
+      "allow_multiple_correct": true,
+      "explanation": "A working crossover skips none of these. It still performs auth, routing, and the return path, it just performs them reliably, so None of the above is the only correct choice.",
+      "concept": "crossover",
+      "difficulty": "hard",
+      "learning_scope": "taught",
+      "support_ref": "ei-part-2-ditto-borg"
+    },
+    {
+      "id": "eiq6",
+      "question": "Select all that are true about what a Terraform plan gives you before any resource changes.",
+      "choices": [
+        "A readable diff of exactly what will be created, changed, or destroyed.",
+        "A finished training run against the new model build.",
+        "A quantized artifact ready for release.",
+        "None of the above"
+      ],
+      "correct_indices": [
+        0
+      ],
+      "allow_multiple_correct": true,
+      "explanation": "Plan shows a reviewable diff of what will change before apply performs it. It is not a training run or a quantized artifact.",
+      "concept": "one-shot-infra",
+      "difficulty": "medium",
+      "learning_scope": "taught",
+      "support_ref": "ei-part-3-oneshot"
+    },
+    {
+      "id": "eiq7",
+      "question": "Select all that are NOT true about the one shot reproducible run lifecycle.",
+      "choices": [
+        "A Cloud Run one shot job keeps running as a long lived server after it finishes.",
+        "The fifteen page manual document is what makes each run deterministic.",
+        "A Docker image pins the exact code and a specific benchmark commit so the inputs are deterministic.",
+        "Terraform provisions the cloud resources from a declarative config.",
+        "None of the above"
+      ],
+      "correct_indices": [
+        0,
+        1
+      ],
+      "allow_multiple_correct": true,
+      "explanation": "The false statements are the NOT-true selections. A one shot job exits rather than staying up, and the manual doc is the unreproducible thing being replaced. Docker pinning and Terraform provisioning are both true.",
+      "concept": "one-shot-infra",
+      "difficulty": "hard",
+      "learning_scope": "taught",
+      "support_ref": "ei-part-3-oneshot"
+    },
+    {
+      "id": "eiq8",
+      "question": "Select all that are true about idempotent teardown in a one shot eval run.",
+      "choices": [
+        "It is safe to run twice, and running it again changes nothing.",
+        "Applying an empty desired set leaves no resources behind, so runs do not keep billing.",
+        "It leaves resources running after the job to save setup time on the next run.",
+        "None of the above"
+      ],
+      "correct_indices": [
+        0,
+        1
+      ],
+      "allow_multiple_correct": true,
+      "explanation": "Idempotent teardown is safe to repeat and returns to an empty state so nothing lingers or bills. Leaving resources running is the opposite of teardown, so that claim is false.",
+      "concept": "one-shot-infra",
+      "difficulty": "medium",
+      "learning_scope": "taught",
+      "support_ref": "ei-part-3-oneshot"
+    }
+  ]
+}

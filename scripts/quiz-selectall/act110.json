@@ -1,0 +1,107 @@
+{
+  "activityId": 110,
+  "lessonId": 19,
+  "op": "part_practice",
+  "questions": [
+    {
+      "id": "hp2-so-1",
+      "type": "select_all",
+      "prompt": "Select all that are true about the size-k min-heap used to find the k largest values.",
+      "concept": "heap",
+      "difficulty": "easy",
+      "choices": [
+        "A min-heap keeps the smallest survivor at the root so it is the first evicted.",
+        "After streaming, the root is the smallest of the k largest, which is the k-th largest.",
+        "It runs in O(n log k) time and uses O(k) space."
+      ],
+      "correct_indices": [
+        0,
+        1,
+        2
+      ],
+      "explanation": "A min-heap puts the weakest survivor on the chopping block, its root ends up as the k-th largest, and each operation touches a size-k heap for O(n log k) time and O(k) space."
+    },
+    {
+      "id": "hp2-sa-multi",
+      "type": "select_all",
+      "prompt": "Which statements about the size-k min-heap for k-th largest are true?",
+      "concept": "heap",
+      "difficulty": "hard",
+      "choices": [
+        "The root is the smallest of the k largest, i.e. The k-th largest",
+        "It runs in O(n log k) time",
+        "It uses only O(k) extra memory",
+        "It requires sorting the whole array first"
+      ],
+      "correct_indices": [
+        0,
+        1,
+        2
+      ],
+      "explanation": "No full sort is needed. Each operation touches a size-k heap, giving O(n log k) time and O(k) space."
+    },
+    {
+      "id": "hp2-sa-none",
+      "type": "select_all",
+      "prompt": "For the size-k min-heap top-k solution, which of these are REQUIRED? (If none, select none.)",
+      "concept": "heap",
+      "difficulty": "medium",
+      "choices": [
+        "Sorting the entire input first",
+        "Storing all n elements in memory",
+        "A second max-heap"
+      ],
+      "correct_indices": [],
+      "explanation": "None. The whole point is to avoid sorting and to keep only k elements, using a single min-heap."
+    },
+    {
+      "id": "hp2-order",
+      "type": "ordering",
+      "prompt": "Order the steps of processing one incoming value in the size-k min-heap.",
+      "concept": "heap",
+      "difficulty": "medium",
+      "items": [
+        "Push the incoming value onto the min-heap",
+        "Check whether the heap now holds more than k elements",
+        "If so, pop the smallest (the root)",
+        "The root now holds the k-th largest so far"
+      ],
+      "correct_order": [
+        "Push the incoming value onto the min-heap",
+        "Check whether the heap now holds more than k elements",
+        "If so, pop the smallest (the root)",
+        "The root now holds the k-th largest so far"
+      ]
+    },
+    {
+      "id": "hp2-pattern",
+      "type": "pattern_recognition",
+      "prompt": "\"Return the k most frequent elements in an array.\" Which pattern(s) apply?",
+      "concept": "pattern-recognition",
+      "difficulty": "medium",
+      "choices": [
+        "Heap / Priority Queue",
+        "Hashing",
+        "Two Pointer",
+        "Sliding Window",
+        "Binary Search"
+      ],
+      "primary_indices": [
+        0
+      ],
+      "secondary_indices": [
+        1
+      ],
+      "explanation": "\"k most frequent\" is a top-k heap job: count with a hash map (a reasonable secondary), then keep a size-k heap by frequency."
+    },
+    {
+      "id": "hp2-written",
+      "type": "written",
+      "prompt": "Explain why a MIN-heap (not a max-heap) is correct for finding the k largest elements, and what the root represents.",
+      "concept": "heap",
+      "difficulty": "hard",
+      "actual_answer": "With a size-k heap you repeatedly need to throw away the weakest of your current top candidates whenever a new value arrives. A min-heap keeps the smallest candidate at the root, so that weakest survivor is exactly the element you can evict in one step. A max-heap would instead guard the largest value at the root. But the largest is the one you most want to keep, so a max-heap puts the wrong element on the chopping block and you would discard winners. After streaming everything, the min-heap's root is the smallest of the k largest values, which is precisely the k-th largest element.",
+      "rubric": "Full credit: min-heap keeps the weakest survivor at the root for cheap eviction (max-heap would evict winners), AND the root is the smallest of the k largest = the k-th largest. Partial: one of the two. Low: vague."
+    }
+  ]
+}

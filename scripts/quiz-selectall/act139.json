@@ -1,0 +1,173 @@
+{
+  "activityId": 139,
+  "lessonId": 23,
+  "op": "assessment_quiz",
+  "questions": [
+    {
+      "id": "gq1",
+      "question": "Select all that are true about the state best_here[i] in Kadane's algorithm.",
+      "choices": [
+        "It is the maximum sum of a contiguous subarray that ends exactly at index i.",
+        "The phrase 'ends exactly at i' forces element i to be included in the run.",
+        "It is the maximum sum of any subarray anywhere in the whole array.",
+        "It is the running sum of the first i elements.",
+        "None of the above"
+      ],
+      "correct_indices": [
+        0,
+        1
+      ],
+      "allow_multiple_correct": true,
+      "explanation": "best_here[i] is defined as the best contiguous run ending exactly at i, which pins element i in and leaves only the extend-or-restart choice. The whole-array maximum is a separate quantity, and a prefix sum is unrelated.",
+      "concept": "dynamic-programming",
+      "difficulty": "easy",
+      "learning_scope": "taught",
+      "support_ref": "dp-part-1-kadane"
+    },
+    {
+      "id": "gq2",
+      "question": "Select all that are true about the four decisions that define a dynamic programming solution.",
+      "choices": [
+        "They are: name the state, write the recurrence, pick the fill order, and set the base case.",
+        "They are: sort, search, partition, and merge.",
+        "They are: recurse, memoize, prune, and backtrack.",
+        "None of the above"
+      ],
+      "correct_indices": [
+        0
+      ],
+      "allow_multiple_correct": true,
+      "explanation": "The four decisions are naming the state, writing the recurrence, picking the fill order, and setting the base case. Said out loud they make the code nearly automatic. The other options describe unrelated technique groups.",
+      "concept": "dynamic-programming",
+      "difficulty": "easy",
+      "learning_scope": "taught",
+      "support_ref": "dp-part-1-kadane"
+    },
+    {
+      "id": "gq3",
+      "question": "Select all that are true about why Kadane needs no separate 'reset when the sum goes negative' rule.",
+      "choices": [
+        "best_here[i-1] + nums[i] beats nums[i] by exactly best_here[i-1], so extending wins only when best_here[i-1] is positive.",
+        "When the previous best_here is negative, the max picks nums[i] alone, which is a restart.",
+        "A separate branch checks for a negative sum and zeroes it out after the max is computed.",
+        "The reset is unnecessary because the input is assumed to be non-negative.",
+        "None of the above"
+      ],
+      "correct_indices": [
+        0,
+        1
+      ],
+      "allow_multiple_correct": true,
+      "explanation": "The reset is already inside max(nums[i], best_here_prev + nums[i]): extending only helps when the previous best is positive, so a negative previous best makes the max restart on its own. There is no separate branch and no non-negativity assumption.",
+      "concept": "dynamic-programming",
+      "difficulty": "medium",
+      "learning_scope": "taught",
+      "support_ref": "dp-part-1-kadane"
+    },
+    {
+      "id": "gq4",
+      "question": "Select all that are true about how best and best_here should be initialized in Kadane's algorithm.",
+      "choices": [
+        "You seed both best and best_here to 0, which correctly handles all-negative inputs.",
+        "Seeding both to 0 makes the input [-3,-2,-5] return -2.",
+        "You seed both to the sum of the entire array.",
+        "None of the above"
+      ],
+      "correct_indices": [
+        3
+      ],
+      "allow_multiple_correct": true,
+      "explanation": "The correct seed is nums[0], so all-negative inputs return the largest single element. Seeding at 0 wrongly returns 0 (an empty subarray) for [-3,-2,-5], not -2, and seeding at the array sum is not the rule. None of the listed statements is true.",
+      "concept": "dynamic-programming",
+      "difficulty": "medium",
+      "learning_scope": "taught",
+      "support_ref": "dp-part-1-kadane"
+    },
+    {
+      "id": "gq5",
+      "question": "Select all that are true about sweeping the capacity from high to low in the rolling 1D 0/1 knapsack.",
+      "choices": [
+        "It keeps dp[w - wt] holding the previous item's value at the moment you read it.",
+        "It ensures each item is added to the knapsack at most once.",
+        "Sweeping ascending instead would let the current item be used multiple times.",
+        "It is required only to avoid an index-out-of-range error.",
+        "None of the above"
+      ],
+      "correct_indices": [
+        0,
+        1,
+        2
+      ],
+      "allow_multiple_correct": true,
+      "explanation": "Descending protects the pre-item value at dp[w - wt], so the item is added on top of a state that excludes it, keeping it use-once. Ascending would let dp[w - wt] already include the item and reuse it. Index safety is not the reason.",
+      "concept": "dynamic-programming",
+      "difficulty": "hard",
+      "learning_scope": "taught",
+      "support_ref": "dp-part-2-knapsack"
+    },
+    {
+      "id": "gq6",
+      "question": "Select all that are true about sweeping the capacity ascending in the rolling knapsack array.",
+      "choices": [
+        "It lets dp[w - wt] already include the current item before you read it.",
+        "It allows a single item to be taken multiple times.",
+        "It correctly solves the unbounded knapsack variant.",
+        "It is the same sweep direction coin change uses to allow coins to repeat.",
+        "None of the above"
+      ],
+      "correct_indices": [
+        0,
+        1,
+        2,
+        3
+      ],
+      "allow_multiple_correct": true,
+      "explanation": "Ascending makes dp[w - wt] already include the current item, so it stacks a second and further time. That is exactly the unbounded knapsack, the same machine coin change uses by sweeping the amount ascending. All four statements are true.",
+      "concept": "dynamic-programming",
+      "difficulty": "medium",
+      "learning_scope": "taught",
+      "support_ref": "dp-part-2-knapsack"
+    },
+    {
+      "id": "gq7",
+      "question": "Select all that are NOT true about the time and space of the rolling 1D 0/1 knapsack over n items and capacity W.",
+      "choices": [
+        "It runs in O(n log W) time and O(1) space.",
+        "It runs in O(n times W) time and O(W) space.",
+        "It is pseudo-polynomial because the time depends on the numeric capacity W.",
+        "The single rolling row uses O(W) space instead of the full 2D table.",
+        "None of the above"
+      ],
+      "correct_indices": [
+        0
+      ],
+      "allow_multiple_correct": true,
+      "explanation": "Only the first statement is false: the rolling knapsack is O(n times W) time and O(W) space, pseudo-polynomial in the numeric capacity, and one rolling row replaces the 2D table. The false statement is the NOT-true selection.",
+      "concept": "dynamic-programming",
+      "difficulty": "medium",
+      "learning_scope": "taught",
+      "support_ref": "dp-part-2-knapsack"
+    },
+    {
+      "id": "gq8",
+      "question": "Select all that are NOT true about coin change treated as an unbounded knapsack.",
+      "choices": [
+        "You sweep the amount descending to forbid reusing a coin.",
+        "Each coin may be used at most once.",
+        "You sweep the amount ascending so dp[a - c] can already include the current coin.",
+        "It uses the same rolling-array transition as 0/1 knapsack with the opposite sweep direction.",
+        "None of the above"
+      ],
+      "correct_indices": [
+        0,
+        1
+      ],
+      "allow_multiple_correct": true,
+      "explanation": "Coin change reuses coins, so you sweep the amount ascending and a coin may repeat any number of times. The first two statements reverse that, so they are the NOT-true selections. Ascending sweep and the shared rolling-array transition are both true.",
+      "concept": "dynamic-programming",
+      "difficulty": "hard",
+      "learning_scope": "taught",
+      "support_ref": "dp-part-2-knapsack"
+    }
+  ]
+}

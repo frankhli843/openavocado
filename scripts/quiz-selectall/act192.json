@@ -1,0 +1,105 @@
+{
+  "activityId": 192,
+  "lessonId": 29,
+  "op": "part_practice",
+  "questions": [
+    {
+      "id": "ei2-so-1",
+      "type": "select_all",
+      "prompt": "Select all that are true about where the Ditto eval runner actually executes.",
+      "concept": "borg-vs-gcp",
+      "difficulty": "easy",
+      "choices": [
+        "It runs on Borg, Google's cluster job scheduler",
+        "It runs on the GCP hosted model endpoint itself",
+        "It runs inside the vLLM server process",
+        "It runs on the learner's laptop"
+      ],
+      "correct_indices": [
+        0
+      ],
+      "explanation": "Ditto runs as a job on Borg. The model it grades is hosted separately on GCP, and Ditto reaches out to that endpoint, so it does not run inside the endpoint, vLLM, or on a laptop."
+    },
+    {
+      "id": "ei2-sa-some",
+      "type": "select_all",
+      "prompt": "Which statements about the Borg to GCP crossover are true?",
+      "concept": "crossover",
+      "difficulty": "medium",
+      "choices": [
+        "The eval job runs on Borg",
+        "The model endpoint is hosted on GCP",
+        "Auth and routing must bridge the two systems",
+        "Borg and GCP are the same infrastructure world"
+      ],
+      "correct_indices": [
+        0,
+        1,
+        2
+      ],
+      "explanation": "The job runs on Borg, the model lives on GCP, and the crossover bridges them with auth and routing. Borg and GCP are separate worlds, so the last statement is false."
+    },
+    {
+      "id": "ei2-sa-none",
+      "type": "select_all",
+      "prompt": "The crossover is fully working. Which of these does a working crossover let you skip entirely? Select any that apply.",
+      "concept": "crossover",
+      "difficulty": "hard",
+      "choices": [
+        "Authenticating a Borg job to the GCP endpoint",
+        "Routing the request across the two systems",
+        "Letting responses travel back to the eval job"
+      ],
+      "correct_indices": [],
+      "explanation": "None of these get skipped. A working crossover still performs auth, routing, and the return path, it just performs them reliably instead of failing."
+    },
+    {
+      "id": "ei2-sa-all",
+      "type": "select_all",
+      "prompt": "Which are true about the two serving surfaces? Select all that apply.",
+      "concept": "serving-surfaces",
+      "difficulty": "medium",
+      "choices": [
+        "vLLM is a high throughput inference server",
+        "The Hugging Face implementation is a second serving path",
+        "Both serve the same underlying weights",
+        "An eval should target the correct surface to trust the number"
+      ],
+      "correct_indices": [
+        0,
+        1,
+        2,
+        3
+      ],
+      "explanation": "All four hold. VLLM and Hugging Face are two serving surfaces for the same weights, and an eval must aim at the right one or the result can drift."
+    },
+    {
+      "id": "ei2-order",
+      "type": "ordering",
+      "prompt": "Put one Ditto eval round trip in order.",
+      "concept": "borg-vs-gcp",
+      "difficulty": "medium",
+      "items": [
+        "Ditto starts as a job on Borg",
+        "The request crosses over to the GCP hosted endpoint",
+        "The GCP hosted model returns a response",
+        "Ditto scores the response"
+      ],
+      "correct_order": [
+        "Ditto starts as a job on Borg",
+        "The request crosses over to the GCP hosted endpoint",
+        "The GCP hosted model returns a response",
+        "Ditto scores the response"
+      ]
+    },
+    {
+      "id": "ei2-written",
+      "type": "written",
+      "prompt": "Explain why the Borg to GCP crossover is hard and why being stuck on it blocks the eval runs.",
+      "concept": "crossover",
+      "difficulty": "hard",
+      "actual_answer": "Ditto runs as a job on Borg but the model it evaluates is hosted on GCP, so every eval request has to leave one infrastructure world and reach another. That bridge has to handle authentication from a Borg job to a GCP endpoint, network reachability between the two systems, and correct request routing. Borg and GCP were not built as one seamless environment, so none of that is automatic. Until the bridge works reliably, a Borg job cannot reach the GCP hosted model, so no request completes and no responses come back to score. Since the eval depends on reaching the model, being stuck on the crossover means the eval runs cannot proceed at all, even though the model and the eval logic are both fine.",
+      "rubric": "Full credit: names that the eval job is on Borg while the model is on GCP, so requests must cross a boundary that needs auth, networking, and routing between two separate systems, AND explains that a broken bridge means the job cannot reach the model so eval runs are blocked. Partial: mentions the two systems OR the blocking effect but not both. Low: vague or conflates the crossover with the model itself."
+    }
+  ]
+}

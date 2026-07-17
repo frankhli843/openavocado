@@ -1,0 +1,106 @@
+{
+  "activityId": 165,
+  "lessonId": 28,
+  "op": "part_practice",
+  "questions": [
+    {
+      "id": "gm1-so-1",
+      "type": "select_all",
+      "prompt": "Select all that are true about the leaderboard as a way to buy signal before a full run.",
+      "concept": "leaderboard",
+      "difficulty": "easy",
+      "choices": [
+        "A lightweight training run gives cheap directional signal on whether a bundle beats baseline.",
+        "A bundle earns a full training run only when its signal clears the bar over baseline.",
+        "The lightweight probe is far cheaper than a full training run."
+      ],
+      "correct_indices": [
+        0,
+        1,
+        2
+      ],
+      "explanation": "The leaderboard is a cheap probe. It buys directional signal, and only bundles that clear the bar over baseline earn an expensive full run."
+    },
+    {
+      "id": "gm1-sa-some",
+      "type": "select_all",
+      "prompt": "Which statements about the leaderboard are true?",
+      "concept": "leaderboard",
+      "difficulty": "medium",
+      "choices": [
+        "A bundle groups the changes you want to make",
+        "The lightweight run is cheaper than a full run",
+        "Signal that clears the bar earns a full run",
+        "It guarantees the change works at full scale"
+      ],
+      "correct_indices": [
+        0,
+        1,
+        2
+      ],
+      "explanation": "The probe is cheap and directional. It earns a full run when it clears the bar, but small-run signal never guarantees full-scale results."
+    },
+    {
+      "id": "gm1-sa-none",
+      "type": "select_all",
+      "prompt": "Which of these are REQUIRED for a bundle to be accepted on the leaderboard? (If none, select none.)",
+      "concept": "leaderboard",
+      "difficulty": "hard",
+      "choices": [
+        "The bundle must contain an architecture change",
+        "The bundle must contain a data change",
+        "The full training run must already be complete"
+      ],
+      "correct_indices": [],
+      "explanation": "None are required, acceptance depends only on the probe's net signal clearing the bar, not on the bundle's composition or a completed full run."
+    },
+    {
+      "id": "gm1-order",
+      "type": "ordering",
+      "prompt": "Put the leaderboard steps in order.",
+      "concept": "leaderboard",
+      "difficulty": "medium",
+      "items": [
+        "Bundle the proposed changes",
+        "Run a lightweight training run for signal",
+        "Compare the net signal to the bar over baseline",
+        "Accept and schedule a full run, or drop the bundle"
+      ],
+      "correct_order": [
+        "Bundle the proposed changes",
+        "Run a lightweight training run for signal",
+        "Compare the net signal to the bar over baseline",
+        "Accept and schedule a full run, or drop the bundle"
+      ]
+    },
+    {
+      "id": "gm1-pattern",
+      "type": "pattern_recognition",
+      "prompt": "\"We have five ideas for improving the model but each full training run is hugely expensive. We want to know which ideas are worth the spend.\" Which approach(es) fit?",
+      "concept": "leaderboard",
+      "difficulty": "medium",
+      "choices": [
+        "Lightweight leaderboard probe",
+        "Full training run per idea",
+        "Isolate one lever per run",
+        "Skip testing and ship all five"
+      ],
+      "primary_indices": [
+        0
+      ],
+      "secondary_indices": [
+        2
+      ],
+      "explanation": "A lightweight probe gets cheap signal. Isolating one lever per run is a reasonable complementary discipline so results are attributable."
+    },
+    {
+      "id": "gm1-written",
+      "type": "written",
+      "prompt": "Explain why the team probes cheaply for signal instead of just running the full training and measuring the result directly.",
+      "concept": "leaderboard",
+      "difficulty": "hard",
+      "actual_answer": "A full training run is extremely expensive in compute and time, and in model building you cannot know in advance whether a change will help, you have to try it. Running every candidate to completion would be prohibitively costly and mostly wasted on ideas that do not pan out. The leaderboard's lightweight run gives noisy but directional signal at a fraction of the cost, so the team can rank bundles and spend the full-run budget only on the ones that clear the bar over baseline. It converts an unaffordable exhaustive search into an affordable filtered one.",
+      "rubric": "Full credit: full runs are too expensive to try everything AND you can't know a change helps without trying, so a cheap probe filters which bundles deserve the full spend. Partial: mentions cost OR uncertainty but not both. Low: vague."
+    }
+  ]
+}

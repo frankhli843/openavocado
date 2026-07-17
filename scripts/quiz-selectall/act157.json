@@ -1,0 +1,164 @@
+{
+  "activityId": 157,
+  "lessonId": 26,
+  "op": "assessment_quiz",
+  "questions": [
+    {
+      "id": "q1",
+      "question": "Select all that are true about what makes binary search on the answer valid for Koko Eating Bananas.",
+      "choices": [
+        "The feasibility function is monotonic, so once a speed is feasible every larger speed is feasible too.",
+        "Monotonicity creates a clean boundary between the infeasible slow speeds and the feasible fast speeds.",
+        "The piles must be sorted in ascending order before the search runs.",
+        "None of the above"
+      ],
+      "correct_indices": [
+        0,
+        1
+      ],
+      "allow_multiple_correct": true,
+      "explanation": "Monotonic feasibility gives a single clean boundary that the search converges on. The piles do not need to be sorted, since the hours calculation just sums a ceiling over every pile.",
+      "concept": "monotonicity",
+      "difficulty": "easy",
+      "learning_scope": "taught",
+      "support_ref": "bs-part-1-koko"
+    },
+    {
+      "id": "q2",
+      "question": "Select all that are true about the update rule in the lower binary search template.",
+      "choices": [
+        "If the candidate at mid is feasible, it sets hi = mid because the answer might be mid or smaller.",
+        "If the candidate at mid is feasible, it sets lo = mid + 1.",
+        "If the candidate at mid is infeasible, it sets hi = mid - 1.",
+        "None of the above"
+      ],
+      "correct_indices": [
+        0
+      ],
+      "allow_multiple_correct": true,
+      "explanation": "In the lower template a feasible mid moves hi down to mid, and an infeasible mid moves lo up to mid + 1. Setting lo = mid + 1 on feasible or hi = mid - 1 on infeasible belongs to a different rule.",
+      "concept": "lower-template",
+      "difficulty": "medium",
+      "learning_scope": "taught",
+      "support_ref": "bs-part-1-koko"
+    },
+    {
+      "id": "q3",
+      "question": "Select all that are true about the Koko Eating Bananas feasibility check.",
+      "choices": [
+        "For a candidate speed k, it sums the ceiling of each pile divided by k to get the total hours.",
+        "Ceiling division can be computed without floating point as (p + k - 1) integer-divided by k.",
+        "The search range starts with lo = 1 and hi = the maximum pile.",
+        "None of the above"
+      ],
+      "correct_indices": [
+        0,
+        1,
+        2
+      ],
+      "allow_multiple_correct": true,
+      "explanation": "The feasibility function totals the ceiling hours per pile, uses integer ceiling division to stay exact, and searches from lo = 1 up to hi = max pile.",
+      "concept": "feasibility-koko",
+      "difficulty": "medium",
+      "learning_scope": "taught",
+      "support_ref": "bs-part-1-koko"
+    },
+    {
+      "id": "q4",
+      "question": "Select all that are true about Split Array Largest Sum.",
+      "choices": [
+        "The candidate being searched is the maximum allowed subarray sum.",
+        "The search range is lo = max(nums) and hi = sum(nums).",
+        "The feasibility check sorts the array before scanning it.",
+        "None of the above"
+      ],
+      "correct_indices": [
+        0,
+        1
+      ],
+      "allow_multiple_correct": true,
+      "explanation": "The candidate is the max allowed subarray sum, searched from max element to total sum. The feasibility check is a contiguous greedy scan, so the array is never sorted.",
+      "concept": "split-array",
+      "difficulty": "medium",
+      "learning_scope": "taught",
+      "support_ref": "bs-part-1-koko"
+    },
+    {
+      "id": "q5",
+      "question": "Select all that are true about why the upper binary search rounds mid up.",
+      "choices": [
+        "Rounding up makes the search return the smallest feasible candidate instead of the largest.",
+        "Rounding up skips candidates so the search finishes in fewer iterations.",
+        "Rounding up is required because the problem itself performs a ceiling division.",
+        "None of the above"
+      ],
+      "correct_indices": [
+        3
+      ],
+      "allow_multiple_correct": true,
+      "explanation": "The real reason is to prevent an infinite loop when lo and hi differ by one. Rounding up does not change which end is returned, does not skip candidates, and is unrelated to any ceiling in the problem, so none of the listed reasons is correct.",
+      "concept": "upper-template",
+      "difficulty": "medium",
+      "learning_scope": "taught",
+      "support_ref": "bs-part-2-magnetic"
+    },
+    {
+      "id": "q6",
+      "question": "Select all that are true about the greedy feasibility check in Magnetic Force Between Two Balls.",
+      "choices": [
+        "It sorts the positions, places the first ball at position[0], then places a ball whenever a position is at least the candidate distance from the last placed ball.",
+        "By an exchange argument, sliding a ball left to the greedy position never shrinks its gap to the previous ball and can only enlarge the gap to the next ball.",
+        "Placing balls at the latest valid position instead of the earliest gives the same optimal result.",
+        "None of the above"
+      ],
+      "correct_indices": [
+        0,
+        1
+      ],
+      "allow_multiple_correct": true,
+      "explanation": "The greedy check places at the earliest valid positions after sorting, and the exchange argument proves earliest is optimal. Placing at the latest valid position is not guaranteed optimal.",
+      "concept": "magnetic-force-greedy",
+      "difficulty": "hard",
+      "learning_scope": "taught",
+      "support_ref": "bs-part-2-magnetic"
+    },
+    {
+      "id": "q7",
+      "question": "Select all that are true about the time complexity of these binary-search-on-the-answer problems.",
+      "choices": [
+        "Koko Eating Bananas runs in O(n log(max pile)), where each of the O(log max) iterations scans all n piles once.",
+        "Magnetic Force avoids sorting, so it runs in O(n) overall.",
+        "Split Array Largest Sum runs in O(n^2) because it re-scans the array for every integer candidate.",
+        "None of the above"
+      ],
+      "correct_indices": [
+        0
+      ],
+      "allow_multiple_correct": true,
+      "explanation": "Koko is O(n log max). Magnetic Force sorts first, giving O(n log n + n log span). Split Array is O(n log(sum - max)), not O(n^2), because the number of candidates is logarithmic.",
+      "concept": "complexity",
+      "difficulty": "medium",
+      "learning_scope": "taught",
+      "support_ref": "bs-part-2-magnetic"
+    },
+    {
+      "id": "q8",
+      "question": "Select all that are NOT true about initializing lo in these binary-search-on-the-answer problems.",
+      "choices": [
+        "For Koko, lo should start at 0 because a speed of 0 is a valid candidate.",
+        "For Split Array Largest Sum, lo should be the maximum element because no subarray sum can be smaller than the largest element.",
+        "For Koko, lo starts at 1 because a speed of 0 would mean infinite time.",
+        "None of the above"
+      ],
+      "correct_indices": [
+        0
+      ],
+      "allow_multiple_correct": true,
+      "explanation": "Only the first statement is false, so it is the NOT-true selection. A speed of 0 is meaningless, which is exactly why lo starts at 1. The other two statements are true.",
+      "concept": "lo-init",
+      "difficulty": "hard",
+      "learning_scope": "taught",
+      "support_ref": "bs-part-1-koko"
+    }
+  ]
+}

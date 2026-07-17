@@ -1,0 +1,106 @@
+{
+  "activityId": 41,
+  "lessonId": 7,
+  "op": "part_practice",
+  "questions": [
+    {
+      "id": "part3-one",
+      "type": "select_all",
+      "prompt": "Select all that are true about what a transformer block is in this lesson.",
+      "concept": "transformer block mechanism",
+      "difficulty": "easy",
+      "choices": [
+        "A same-shape editing layer for hidden-state rows",
+        "The tokenizer vocabulary",
+        "The final softmax probability table"
+      ],
+      "correct_indices": [
+        0
+      ],
+      "explanation": "A block receives an L by D hidden-state matrix and returns an L by D matrix with richer values. It is not the tokenizer vocabulary or the softmax table."
+    },
+    {
+      "id": "part3-some",
+      "type": "select_all",
+      "prompt": "Select all subparts that belong inside the block.",
+      "concept": "transformer block mechanism",
+      "difficulty": "medium",
+      "choices": [
+        "Attention",
+        "MLP",
+        "Residual connection and normalization",
+        "Browser rendering"
+      ],
+      "correct_indices": [
+        0,
+        1,
+        2
+      ],
+      "explanation": "Attention, MLP, residuals, and normalization are the mechanism pieces. Browser rendering is not part of the block."
+    },
+    {
+      "id": "part3-none",
+      "type": "select_all",
+      "prompt": "Select all statements that are true of the MLP inside a transformer block.",
+      "concept": "transformer block mechanism",
+      "difficulty": "medium",
+      "choices": [
+        "It tokenizes raw text",
+        "It changes sequence length by itself",
+        "It directly stores the KV cache"
+      ],
+      "correct_indices": [],
+      "explanation": "None are true. The MLP edits each row independently and keeps the hidden width shape."
+    },
+    {
+      "id": "part3-order",
+      "type": "ordering",
+      "prompt": "Order the block flow used in this lesson.",
+      "concept": "transformer block mechanism",
+      "difficulty": "medium",
+      "items": [
+        "hidden-state rows enter",
+        "attention mixes rows",
+        "residual and normalization stabilize",
+        "MLP edits each row",
+        "same-shape output leaves"
+      ],
+      "correct_order": [
+        "hidden-state rows enter",
+        "attention mixes rows",
+        "residual and normalization stabilize",
+        "MLP edits each row",
+        "same-shape output leaves"
+      ],
+      "explanation": "That order preserves the old signal while adding context and per-row feature updates."
+    },
+    {
+      "id": "part3-written",
+      "type": "written",
+      "prompt": "Explain how attention and the MLP differ inside the transformer block.",
+      "concept": "transformer block mechanism",
+      "difficulty": "hard",
+      "actual_answer": "Attention mixes information across token positions, so one row can read from other rows. The MLP then works on each row independently, expanding and compressing features to create a per-token update. Both outputs are added back through residual paths, and the block returns the same L by D shape.",
+      "rubric": "A strong answer contrasts across-position mixing with per-row transformation, mentions residual addition, and says the output shape stays L by D.",
+      "hint": "Use across rows for attention and within a row for MLP."
+    },
+    {
+      "id": "part3-check",
+      "type": "select_all",
+      "prompt": "Select all that are true about what a transformer block passes to the next stage.",
+      "concept": "transformer block mechanism",
+      "difficulty": "easy",
+      "choices": [
+        "It returns an updated hidden-state matrix",
+        "The output keeps the same L by D shape as the input",
+        "Each token row now carries more context-aware values"
+      ],
+      "correct_indices": [
+        0,
+        1,
+        2
+      ],
+      "explanation": "All three are true. The block returns an updated hidden-state matrix of the same L by D shape, with each token row carrying more context-aware values."
+    }
+  ]
+}

@@ -1,0 +1,108 @@
+{
+  "activityId": 100,
+  "lessonId": 17,
+  "op": "part_practice",
+  "questions": [
+    {
+      "id": "p2-so-1",
+      "type": "select_all",
+      "prompt": "Select all that are true about the left pointer in the variable-size no-repeat window.",
+      "concept": "sliding-window",
+      "difficulty": "easy",
+      "choices": [
+        "It advances only to restore the window rule after the right pointer admits a duplicate.",
+        "It never moves backward and never passes the right pointer.",
+        "When it advances it removes the released character from the window set."
+      ],
+      "correct_indices": [
+        0,
+        1,
+        2
+      ],
+      "explanation": "The left pointer shrinks only to fix a broken rule, moves strictly forward and stays behind the right pointer, and drops the released character from the set as it goes."
+    },
+    {
+      "id": "p2-sa-multi",
+      "type": "select_all",
+      "prompt": "Why is the two-pointer no-repeat scan O(n) despite its inner while loop? Select all correct reasons.",
+      "concept": "sliding-window",
+      "difficulty": "hard",
+      "choices": [
+        "The right pointer moves forward exactly n times total",
+        "The left pointer moves forward at most n times total",
+        "Each character is added and removed from the set at most once",
+        "The inner loop restarts the scan from the beginning each time"
+      ],
+      "correct_indices": [
+        0,
+        1,
+        2
+      ],
+      "explanation": "Total pointer travel is bounded by 2n. The inner loop never rewinds, so it is amortized linear."
+    },
+    {
+      "id": "p2-sa-none",
+      "type": "select_all",
+      "prompt": "For the plain 'longest substring without repeats' problem, which of these data structures are REQUIRED? (If none, select none.)",
+      "concept": "sliding-window",
+      "difficulty": "medium",
+      "choices": [
+        "A min-heap",
+        "A sorted list",
+        "A monotonic stack"
+      ],
+      "correct_indices": [],
+      "explanation": "None are required. A simple set (or last-seen-index map) suffices. Heaps, sorting, and stacks are unnecessary here."
+    },
+    {
+      "id": "p2-order",
+      "type": "ordering",
+      "prompt": "Order the steps of the variable-size window loop body for one right index.",
+      "concept": "sliding-window",
+      "difficulty": "medium",
+      "items": [
+        "Check whether the incoming character breaks the rule",
+        "While it breaks the rule, remove the left character and advance left",
+        "Add the incoming character to the window state",
+        "Record the current window length if it is a new best"
+      ],
+      "correct_order": [
+        "Check whether the incoming character breaks the rule",
+        "While it breaks the rule, remove the left character and advance left",
+        "Add the incoming character to the window state",
+        "Record the current window length if it is a new best"
+      ]
+    },
+    {
+      "id": "p2-pattern",
+      "type": "pattern_recognition",
+      "prompt": "\"Find the length of the smallest contiguous subarray whose sum is greater than or equal to a target, given an array of POSITIVE integers.\" Which pattern(s) apply?",
+      "concept": "pattern-recognition",
+      "difficulty": "medium",
+      "choices": [
+        "Sliding Window",
+        "Two Pointer",
+        "Binary Search",
+        "Dynamic Programming",
+        "Monotonic Stack"
+      ],
+      "primary_indices": [
+        0
+      ],
+      "secondary_indices": [
+        1,
+        2
+      ],
+      "explanation": "\"Smallest contiguous subarray such that a condition holds\" over positive numbers is the variable-size sliding window. Two-pointer is the same mechanism. Binary search on answer length is a valid alternate O(n log n) approach."
+    },
+    {
+      "id": "p2-written",
+      "type": "written",
+      "prompt": "The variable-window trick for 'smallest subarray with sum >= target' assumes all numbers are positive. Explain what breaks if a negative number is allowed.",
+      "concept": "sliding-window",
+      "difficulty": "hard",
+      "actual_answer": "With only positive numbers, a wider window always has a larger-or-equal sum, so once the window reaches the target you can safely shrink from the left to find a smaller valid window without missing anything. A negative number breaks this monotonicity: widening the window can now lower the sum and shrinking can raise it, so shrinking when you think you have enough may discard a negative that was hurting you, leading to a wrong answer. You would switch to prefix sums with a monotonic deque or similar.",
+      "rubric": "Full credit: states that positivity makes sum monotonic in window size, so shrinking is safe, and that a negative destroys that monotonicity making expand/shrink decisions unreliable. Partial: mentions negatives cause problems without the monotonicity reason. Low: vague 'it fails'."
+    }
+  ]
+}

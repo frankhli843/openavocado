@@ -1,0 +1,109 @@
+{
+  "activityId": 135,
+  "lessonId": 23,
+  "op": "part_practice",
+  "questions": [
+    {
+      "id": "dp1-so-1",
+      "type": "select_all",
+      "prompt": "Select all that are true about the state and recurrence in Kadane's algorithm.",
+      "concept": "dynamic-programming",
+      "difficulty": "easy",
+      "choices": [
+        "best_here[i] is the maximum sum of a contiguous subarray ending exactly at index i.",
+        "The recurrence is best_here[i] = max(nums[i], best_here[i-1] + nums[i]).",
+        "The answer to the whole problem is the maximum best_here over every index.",
+        "You seed best_here and best at nums[0], not 0, so all-negative inputs return the largest single element."
+      ],
+      "correct_indices": [
+        0,
+        1,
+        2,
+        3
+      ],
+      "explanation": "The 'ending exactly at i' state forces element i in, giving the extend-or-restart recurrence. The optimal subarray must end somewhere, so the answer is the maximum best_here over all indices, and seeding at nums[0] keeps all-negative inputs correct."
+    },
+    {
+      "id": "dp1-sa-multi",
+      "type": "select_all",
+      "prompt": "Which statements about Kadane's algorithm are true?",
+      "concept": "dynamic-programming",
+      "difficulty": "medium",
+      "choices": [
+        "best_here = max(x, best_here + x) folds the 'reset on negative' rule into the max",
+        "The global answer is the maximum best_here over all indices",
+        "It runs in O(n) time and O(1) space",
+        "You must seed best_here and best to 0"
+      ],
+      "correct_indices": [
+        0,
+        1,
+        2
+      ],
+      "explanation": "Seeding at 0 breaks all-negative inputs, so seed at nums[0]. The other three are the core facts."
+    },
+    {
+      "id": "dp1-sa-none",
+      "type": "select_all",
+      "prompt": "For max_subarray([-3,-2,-5,-1]), which of these outputs are correct? (If none, select none.)",
+      "concept": "dynamic-programming",
+      "difficulty": "hard",
+      "choices": [
+        "0 (the empty subarray)",
+        "-11 (the sum of everything)",
+        "-2 (the largest adjacent pair)"
+      ],
+      "correct_indices": [],
+      "explanation": "None: with all negatives the answer is the largest single element, -1. Empty (0) is wrong unless empty subarrays are allowed. -11 and -2 are not maxima."
+    },
+    {
+      "id": "dp1-order",
+      "type": "ordering",
+      "prompt": "Order the operations for one element in Kadane's loop.",
+      "concept": "dynamic-programming",
+      "difficulty": "medium",
+      "items": [
+        "Read the current element x",
+        "best_here = max(x, best_here + x)  (restart or extend)",
+        "best = max(best, best_here)",
+        "Move to the next element"
+      ],
+      "correct_order": [
+        "Read the current element x",
+        "best_here = max(x, best_here + x)  (restart or extend)",
+        "best = max(best, best_here)",
+        "Move to the next element"
+      ]
+    },
+    {
+      "id": "dp1-pattern",
+      "type": "pattern_recognition",
+      "prompt": "\"Find the contiguous run of days with the maximum total profit, where daily profit may be negative.\" Which pattern(s) apply?",
+      "concept": "pattern-recognition",
+      "difficulty": "medium",
+      "choices": [
+        "Dynamic Programming (Kadane)",
+        "Running scalar / O(1) state",
+        "Sliding Window",
+        "Two Pointer",
+        "Heap"
+      ],
+      "primary_indices": [
+        0
+      ],
+      "secondary_indices": [
+        1
+      ],
+      "explanation": "Maximum contiguous sum with possible negatives is exactly Kadane, a 1D running-DP with an extend-or-restart scalar. A fixed sliding window does not apply because the run length is unbounded."
+    },
+    {
+      "id": "dp1-written",
+      "type": "written",
+      "prompt": "Explain why 'reset the run when the sum goes negative' is not a separate rule you add, but a consequence of the recurrence best_here = max(x, best_here + x).",
+      "concept": "dynamic-programming",
+      "difficulty": "hard",
+      "actual_answer": "The recurrence compares exactly two candidates for the best run ending at the current element: the element standing alone, x, and the element appended to the best run ending just before it, best_here_prev + x. Subtract the two and you see that best_here_prev + x beats x by exactly best_here_prev, so extending wins if and only if best_here_prev is positive. Turn that around: the moment the previous running best is negative, x alone is at least as large as best_here_prev + x, so the max selects x, which is precisely 'throw away the accumulated run and start fresh here.' There is no separate branch that checks for a negative sum and zeroes it out. The comparison inside the max already encodes the decision. That is why the loop body is a single line. Adding an explicit reset would be redundant at best and, if done wrong (resetting to 0 instead of to x), would corrupt all-negative inputs. So the discipline is to trust the recurrence: the max is the reset.",
+      "rubric": "Full credit: best_here_prev + x beats x by best_here_prev, so extend wins iff prev > 0. A negative prev makes the max pick x = restart. No separate rule needed. Partial: says the max handles it without the subtraction argument. Low: vague."
+    }
+  ]
+}

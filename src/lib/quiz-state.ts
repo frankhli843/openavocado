@@ -134,6 +134,24 @@ export interface QuizSessionState {
   acp_pending: string[];
 }
 
+/**
+ * True when a restored (autosaved) session can still be rendered against the
+ * current question set. A session becomes incompatible when the lesson quiz was
+ * re-authored (for example single-answer questions converted to select-all),
+ * because the saved queue references original question ids that no longer exist.
+ * An incompatible session must be discarded and the quiz restarted cleanly
+ * rather than soft-locking on a queue item that can never resolve.
+ */
+export function isSessionCompatibleWithQuestions(
+  session: QuizSessionState,
+  questions: MultipleChoiceQuestion[]
+): boolean {
+  const ids = new Set(questions.map((q) => q.id));
+  return session.queue.every((item) =>
+    item.kind === "original" ? ids.has(item.question_id) : true
+  );
+}
+
 // ─── Session initialization ──────────────────────────────────────────────────
 
 /**

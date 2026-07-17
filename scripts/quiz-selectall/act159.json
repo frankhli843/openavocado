@@ -1,0 +1,131 @@
+{
+  "activityId": 159,
+  "lessonId": 27,
+  "op": "part_practice",
+  "questions": [
+    {
+      "id": "mh-p1-q1",
+      "type": "select_all",
+      "prompt": "Select all that are true about the formed counter in the sliding window for Minimum Window Substring.",
+      "concept": "sliding-window-recognition",
+      "difficulty": "easy",
+      "choices": [
+        "It counts how many distinct required characters currently meet or exceed their needed count.",
+        "The current window is valid when formed equals the number of distinct characters in t.",
+        "Tracking formed lets the algorithm avoid comparing the entire need and window maps on every step."
+      ],
+      "correct_indices": [
+        0,
+        1,
+        2
+      ],
+      "explanation": "All three are true. Formed is the count of satisfied distinct characters, validity is reached when it equals the distinct characters in t, and it exists precisely to avoid re-comparing the whole maps each step."
+    },
+    {
+      "id": "mh-p1-q2",
+      "type": "select_all",
+      "prompt": "Select all that are true about why the sliding window runs in O(|s|) time.",
+      "concept": "sliding-window-complexity",
+      "difficulty": "medium",
+      "choices": [
+        "Each character in s is visited at most twice, once when the right pointer expands and once when the left pointer shrinks.",
+        "Both the left and right pointers only move forward, never backward.",
+        "The window is guaranteed to never hold more than 26 characters.",
+        "The algorithm sorts s first so lookups become faster."
+      ],
+      "correct_indices": [
+        0,
+        1
+      ],
+      "explanation": "The linear bound comes from each character entering and leaving the window at most once because both pointers only advance. The window can hold many characters, and the algorithm never sorts s."
+    },
+    {
+      "id": "mh-p1-q3",
+      "type": "select_all",
+      "prompt": "Which of these are valid recognition signals for sliding window?",
+      "concept": "pattern-recognition",
+      "difficulty": "medium",
+      "choices": [
+        "The problem asks for a contiguous subarray or substring",
+        "The problem asks for all possible combinations",
+        "The problem involves a coverage or count condition over a range",
+        "The problem mentions 'minimum' or 'maximum' window"
+      ],
+      "correct_indices": [
+        0,
+        2,
+        3
+      ],
+      "explanation": "Sliding window problems involve contiguous ranges with coverage/count conditions. 'All possible combinations' is a backtracking signal, not sliding window."
+    },
+    {
+      "id": "mh-p1-q4",
+      "type": "select_all",
+      "prompt": "Which of these statements about the need map are correct?",
+      "concept": "sliding-window-implementation",
+      "difficulty": "easy",
+      "choices": [
+        "The need map is rebuilt every time the window moves",
+        "The need map is updated when the right pointer adds a new character",
+        "The need map records how many copies of each character are in t",
+        "The need map changes when the left pointer shrinks the window"
+      ],
+      "correct_indices": [],
+      "explanation": "The need map is built once from t and never changes. Only the window map is updated as pointers move. Statements A, B, and D describe the window map, not the need map. Statement C describes the need map but is listed here incorrectly as modifiable."
+    },
+    {
+      "id": "mh-p1-q5",
+      "type": "ordering",
+      "prompt": "Order the steps of the sliding window algorithm for Minimum Window Substring.",
+      "concept": "sliding-window-implementation",
+      "difficulty": "medium",
+      "items": [
+        "Shrink from left while window is valid, recording minimum",
+        "Build the need map from t",
+        "Expand right pointer and update window counts",
+        "Check if formed equals required",
+        "Return the minimum window found"
+      ],
+      "correct_order": [
+        "Build the need map from t",
+        "Expand right pointer and update window counts",
+        "Check if formed equals required",
+        "Shrink from left while window is valid, recording minimum",
+        "Return the minimum window found"
+      ],
+      "explanation": "First build the need map, then iterate with the right pointer expanding and checking validity, shrink when valid, and return the result."
+    },
+    {
+      "id": "mh-p1-q6",
+      "type": "written",
+      "prompt": "Explain why the sliding window approach is optimal for Minimum Window Substring and why brute force would be too slow.",
+      "concept": "sliding-window-complexity",
+      "difficulty": "hard",
+      "actual_answer": "Brute force checks all O(n^2) substrings and verifies each in O(n) or O(alphabet), giving O(n^2 * alphabet) total. For n = 100,000, this is too slow. Sliding window achieves O(n) because each character enters and leaves the window at most once. The amortized cost per character is O(1) since the left pointer advances at most n times total across all iterations. The space is O(alphabet) for the two frequency maps.",
+      "rubric": "Must mention: (1) brute force is O(n^2) or worse, (2) sliding window visits each character at most twice, (3) amortized O(1) per step because left only moves forward, (4) space is bounded by alphabet size."
+    },
+    {
+      "id": "mh-p1-q7",
+      "type": "pattern_recognition",
+      "prompt": "You are given an array of integers and need to find the longest subarray where the absolute difference between any two elements is at most k. Which algorithmic patterns could solve this?",
+      "concept": "pattern-recognition",
+      "difficulty": "hard",
+      "choices": [
+        "Sliding window",
+        "Binary search on the answer",
+        "Backtracking",
+        "Heap / multiset",
+        "Dynamic programming",
+        "Monotonic deque"
+      ],
+      "primary_indices": [
+        0
+      ],
+      "secondary_indices": [
+        3,
+        5
+      ],
+      "explanation": "This is a sliding window problem: longest contiguous subarray satisfying a condition. A monotonic deque or sorted container can track the window min/max efficiently. Binary search on the answer does not apply here because the answer is a length, not a value to search. Backtracking and DP are overkill for a contiguous-range problem."
+    }
+  ]
+}

@@ -1,0 +1,109 @@
+{
+  "activityId": 136,
+  "lessonId": 23,
+  "op": "part_practice",
+  "questions": [
+    {
+      "id": "dp2-so-1",
+      "type": "select_all",
+      "prompt": "Select all that are true about the rolling 1D 0/1 knapsack.",
+      "concept": "dynamic-programming",
+      "difficulty": "easy",
+      "choices": [
+        "You sweep the capacity from high to low so dp[w - wt] still holds the previous item's value, keeping each item used at most once.",
+        "The transition dp[w] = max(dp[w], dp[w - wt] + val) is a skip-versus-take choice.",
+        "The 2D table collapses to one row because the transition reads only the previous item's row.",
+        "Sweeping the capacity ascending instead solves the unbounded, reuse-allowed variant."
+      ],
+      "correct_indices": [
+        0,
+        1,
+        2,
+        3
+      ],
+      "explanation": "The rolling array doubles as previous and current row, so a descending sweep protects dp[w - wt] for use-once, the transition is skip-versus-take, the collapse works because it reads only the prior row, and ascending sweeping gives the unbounded variant."
+    },
+    {
+      "id": "dp2-sa-multi",
+      "type": "select_all",
+      "prompt": "Which statements about the rolling 1D knapsack are true?",
+      "concept": "dynamic-programming",
+      "difficulty": "medium",
+      "choices": [
+        "The transition dp[w] = max(dp[w], dp[w-wt]+val) is skip-vs-take",
+        "The 2D table collapses to 1D because the transition only reads the previous item's row",
+        "Sweeping ascending instead solves the unbounded (reuse-allowed) variant",
+        "Time is O(capacity) regardless of the number of items"
+      ],
+      "correct_indices": [
+        0,
+        1,
+        2
+      ],
+      "explanation": "Time is O(items times capacity), pseudo-polynomial. The other three are the core facts."
+    },
+    {
+      "id": "dp2-sa-none",
+      "type": "select_all",
+      "prompt": "For knapsack([1,3,4,5],[1,4,5,7],7) = 9, which of these describe the optimal pick? (If none, select none.)",
+      "concept": "dynamic-programming",
+      "difficulty": "hard",
+      "choices": [
+        "Take the weight-5 item (value 7) plus the weight-1 item (value 1) for 8",
+        "Take all four items",
+        "Take the weight-1, weight-3, and weight-4 items for value 10"
+      ],
+      "correct_indices": [],
+      "explanation": "None: the optimum is weight-3 + weight-4 = value 9. Option 1 gives 8. All four exceed capacity 7. Weights 1+3+4=8 also exceed 7, so value 10 is unreachable."
+    },
+    {
+      "id": "dp2-order",
+      "type": "ordering",
+      "prompt": "Order the steps to fold ONE item into the rolling knapsack array.",
+      "concept": "dynamic-programming",
+      "difficulty": "medium",
+      "items": [
+        "Read the item's weight wt and value val",
+        "Start w at capacity and sweep DOWN to wt",
+        "dp[w] = max(dp[w], dp[w - wt] + val)",
+        "Move to the next item once the sweep finishes"
+      ],
+      "correct_order": [
+        "Read the item's weight wt and value val",
+        "Start w at capacity and sweep DOWN to wt",
+        "dp[w] = max(dp[w], dp[w - wt] + val)",
+        "Move to the next item once the sweep finishes"
+      ]
+    },
+    {
+      "id": "dp2-pattern",
+      "type": "pattern_recognition",
+      "prompt": "\"Can this array be split into two subsets with equal sum?\" Which pattern(s) apply?",
+      "concept": "pattern-recognition",
+      "difficulty": "medium",
+      "choices": [
+        "Dynamic Programming (0/1 knapsack / subset sum)",
+        "Boolean reachability over a target",
+        "Two Pointer",
+        "Greedy",
+        "Binary Search"
+      ],
+      "primary_indices": [
+        0
+      ],
+      "secondary_indices": [
+        1
+      ],
+      "explanation": "Partition Equal Subset Sum is subset-sum to total/2, a boolean 0/1 knapsack: dp[s] = can we hit sum s, swept descending so each number is used once."
+    },
+    {
+      "id": "dp2-written",
+      "type": "written",
+      "prompt": "You have a working rolling-array 0/1 knapsack, but a teammate changes the inner loop to sweep capacity ascending and now items appear multiple times. Explain precisely why, and what problem the ascending version actually solves.",
+      "concept": "dynamic-programming",
+      "difficulty": "hard",
+      "actual_answer": "The single dp array plays two roles at once: before you touch a cell it holds the previous item's value, and after you touch it, it holds the current item's value. The transition dp[w] = max(dp[w], dp[w - wt] + val) reads a lower cell, dp[w - wt]. Whether that lower cell has already been updated for the current item depends entirely on sweep direction. Sweeping descending, you compute high w before low w, so when you read dp[w - wt] it has not yet been visited this pass and still holds the previous item's value. The item is added on top of a state that does not include it, so it is used at most once. Sweeping ascending, you compute low w before high w, so dp[w - wt] has already been updated to include the current item, and adding the item again on top of that stacks it a second, third, and further time. That is not a bug in general. It is exactly the unbounded knapsack, where each item may be taken any number of times, and it is the same machine coin change uses. So the ascending version correctly solves unbounded knapsack. It is only wrong when the problem demands each item be used at most once. The fix for 0/1 is to restore the descending sweep.",
+      "rubric": "Full credit: the array doubles as prev/current row. Descending keeps dp[w-wt] pre-item (use once), ascending makes it already-include-item (reuse). Ascending correctly solves unbounded knapsack. Partial: says ascending reuses without explaining the read-order. Low: vague."
+    }
+  ]
+}

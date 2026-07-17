@@ -1,0 +1,171 @@
+{
+  "activityId": 89,
+  "lessonId": 15,
+  "op": "assessment_quiz",
+  "questions": [
+    {
+      "id": "q1",
+      "question": "Select all that are true about the roles of Query, Key, and Value in attention.",
+      "choices": [
+        "The Query represents what a token is looking for in the context.",
+        "The Value vector is what determines the relevance scores between tokens.",
+        "Q, K, and V are each produced by a separate learned linear projection of the same token embedding.",
+        "None of the above"
+      ],
+      "correct_indices": [
+        0,
+        2
+      ],
+      "allow_multiple_correct": true,
+      "explanation": "The Query asks what a token is looking for, and Q, K, and V each come from their own learned weight matrix applied to the token embedding. Relevance scores come from the Query and Key dot product, not from the Value, which only carries the content that gets mixed.",
+      "concept": "attention-qkv",
+      "difficulty": "easy",
+      "learning_scope": "taught",
+      "support_ref": "l15-part-attention-qkv"
+    },
+    {
+      "id": "q2",
+      "question": "Select all that are true about dividing the attention scores by the square root of d_k before softmax.",
+      "choices": [
+        "It keeps large dot products from pushing softmax into a saturated region with near-zero gradients.",
+        "It is the step that makes the attention weights sum to one.",
+        "It rescales the Value vectors before they are mixed into the output.",
+        "It replaces the softmax step entirely.",
+        "None of the above"
+      ],
+      "correct_indices": [
+        0
+      ],
+      "allow_multiple_correct": true,
+      "explanation": "Scaling by the square root of d_k keeps dot products from growing so large that softmax saturates and gradients vanish. Softmax itself is what makes the weights sum to one, and the scaling touches the scores, not the Value vectors, and does not remove softmax.",
+      "concept": "attention-scaling",
+      "difficulty": "medium",
+      "learning_scope": "taught",
+      "support_ref": "l15-part-attention-qkv"
+    },
+    {
+      "id": "q3",
+      "question": "Select all that are true about the residual stream in a transformer block.",
+      "choices": [
+        "Each sublayer output is added to the incoming hidden state rather than replacing it.",
+        "The attention and MLP updates keep the same shape as the hidden state they are added to.",
+        "The incoming token information is preserved and enriched as it flows through the block.",
+        "The residual stream overwrites the token embedding after the first block.",
+        "None of the above"
+      ],
+      "correct_indices": [
+        0,
+        1,
+        2
+      ],
+      "allow_multiple_correct": true,
+      "explanation": "A block computes an update and adds it to the stream, keeping the same L by d_model shape, so the original information is preserved and enriched rather than overwritten.",
+      "concept": "residual-stream",
+      "difficulty": "medium",
+      "learning_scope": "taught",
+      "support_ref": "l15-part-residual-stream"
+    },
+    {
+      "id": "q4",
+      "question": "Select all that are true about the shape and structure of the MLP sublayer.",
+      "choices": [
+        "It expands each token vector to a wider dimension, roughly four times d_model.",
+        "It applies a GELU activation between the expansion and the compression.",
+        "It compresses the wide vector back to d_model so the update can be added to the residual stream.",
+        "None of the above"
+      ],
+      "correct_indices": [
+        0,
+        1,
+        2
+      ],
+      "allow_multiple_correct": true,
+      "explanation": "The MLP expands a token row to about four times d_model, applies a GELU gate, then compresses it back to d_model. All three listed steps are real parts of the sublayer.",
+      "concept": "mlp-mechanism",
+      "difficulty": "medium",
+      "learning_scope": "taught",
+      "support_ref": "l15-part-mlp-gelu"
+    },
+    {
+      "id": "q5",
+      "question": "Select all that are true about how the MLP sublayer handles token positions.",
+      "choices": [
+        "The MLP mixes information across different token positions.",
+        "The MLP reads neighboring token vectors to compute each token's update.",
+        "The MLP changes the sequence length inside the block.",
+        "None of the above"
+      ],
+      "correct_indices": [
+        3
+      ],
+      "allow_multiple_correct": true,
+      "explanation": "The MLP processes each token row in isolation, so it does not mix across positions, does not read neighboring tokens, and does not change sequence length. Cross-token mixing is attention's job, so none of the listed statements is true.",
+      "concept": "mlp-mechanism",
+      "difficulty": "hard",
+      "learning_scope": "taught",
+      "support_ref": "l15-part-mlp-gelu"
+    },
+    {
+      "id": "q6",
+      "question": "Select all that are true about LayerNorm in the Pre-LN transformer block.",
+      "choices": [
+        "It normalizes each token's vector to zero mean and unit variance, then applies a learned scale and shift.",
+        "It runs before each sublayer on the residual stream input.",
+        "It replaces the residual connection in modern transformers.",
+        "It mixes information across token positions the way attention does.",
+        "None of the above"
+      ],
+      "correct_indices": [
+        0,
+        1
+      ],
+      "allow_multiple_correct": true,
+      "explanation": "LayerNorm normalizes each token row and applies a learned scale and shift, and in Pre-LN it runs before each sublayer. It coexists with the residual connection rather than replacing it, and it never mixes across token positions.",
+      "concept": "layernorm",
+      "difficulty": "medium",
+      "learning_scope": "taught",
+      "support_ref": "l15-part-residual-stream"
+    },
+    {
+      "id": "q7",
+      "question": "Select all that are NOT true about the division of labor between attention and the MLP.",
+      "choices": [
+        "Attention mixes information across token positions.",
+        "The MLP processes each token independently without cross-token mixing.",
+        "The MLP is the sublayer that lets tokens exchange information with each other.",
+        "Attention is where the model's factual world knowledge is thought to be stored.",
+        "None of the above"
+      ],
+      "correct_indices": [
+        2,
+        3
+      ],
+      "allow_multiple_correct": true,
+      "explanation": "Attention handles cross-token mixing and the MLP is per-token, so the first two statements are true. The claim that the MLP exchanges information between tokens and the claim that attention stores factual knowledge are both false, so they are the NOT-true selections. Factual storage is associated with the MLP, not attention.",
+      "concept": "division-of-labor",
+      "difficulty": "hard",
+      "learning_scope": "taught",
+      "support_ref": "l15-part-mlp-gelu"
+    },
+    {
+      "id": "q8",
+      "question": "Select all that are true about the KV cache.",
+      "choices": [
+        "It stores the Key and Value vectors from previous positions so they do not have to be recomputed during generation.",
+        "It enriches the embedding space during the attention step.",
+        "It is what adds the attention output into the residual stream.",
+        "It replaces the softmax in the attention formula.",
+        "None of the above"
+      ],
+      "correct_indices": [
+        0
+      ],
+      "allow_multiple_correct": true,
+      "explanation": "The KV cache is purely a caching optimization that reuses precomputed Key and Value matrices from earlier tokens to speed up generation. It does not enrich embeddings, the residual connection does that, and it neither adds the attention output nor replaces softmax.",
+      "concept": "kv-cache",
+      "difficulty": "hard",
+      "learning_scope": "taught",
+      "support_ref": "l15-assessment-kv-cache"
+    }
+  ]
+}

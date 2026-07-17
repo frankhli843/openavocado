@@ -16,6 +16,7 @@ import {
   hasUnresolvedRetries,
   serializeQuizState,
   deserializeQuizState,
+  isSessionCompatibleWithQuestions,
   type QuizSessionState,
   type QueueItem,
   type RetryQuestion,
@@ -803,5 +804,38 @@ describe("validateMultipleChoiceQuizContent (schema)", () => {
     const result = validateMultipleChoiceQuizContent({ questions: [q] });
     expect(result.valid).toBe(false);
     expect(result.errors.join(" ")).toMatch(/only correct choice/);
+  });
+});
+
+// ─── isSessionCompatibleWithQuestions (graceful degradation) ──────────────────
+
+describe("isSessionCompatibleWithQuestions", () => {
+  it("accepts a session whose queue ids all exist in the current questions", () => {
+    const qs = makeQuestions(6);
+    const session = initQuizSession(qs, THRESHOLD);
+    expect(isSessionCompatibleWithQuestions(session, qs)).toBe(true);
+  });
+
+  it("rejects a session referencing an original question id that no longer exists", () => {
+    // Simulate a quiz that was re-authored (single-answer converted to select-all),
+    // so the saved queue references old ids that are gone.
+    const oldQuestions = makeQuestions(6);
+    const session = initQuizSession(oldQuestions, THRESHOLD);
+    const reauthored: MultipleChoiceQuestion[] = oldQuestions.map((q, i) => ({
+      ...q,
+      id: `sa-${i + 1}`,
+      correct_index: undefined,
+      correct_indices: [0],
+      allow_multiple_correct: true,
+      choices: [...q.choices, "None of the above"],
+    }));
+    expect(isSessionCompatibleWithQuestions(session, reauthored)).toBe(false);
+  });
+
+  it("ignores retry items (they resolve from retry_questions, not the question list)", () => {
+    const qs = makeQuestions(6);
+    const session = initQuizSession(qs, THRESHOLD);
+    session.queue.push({ kind: "retry", retry_id: "retry-q1-1", origin_question_id: "q1" });
+    expect(isSessionCompatibleWithQuestions(session, qs)).toBe(true);
   });
 });

@@ -1,0 +1,104 @@
+{
+  "activityId": 198,
+  "lessonId": 30,
+  "op": "part_practice",
+  "questions": [
+    {
+      "id": "ae2-so-1",
+      "type": "select_all",
+      "prompt": "Select all that are true about the Gemma 4 launch tool-call pass rate of about ten percent.",
+      "concept": "capability-vs-protocol",
+      "difficulty": "easy",
+      "choices": [
+        "It was a chat-template formatting problem, not a limitation of the weights.",
+        "A hand-tuned template later lifted the pass rate without changing the weights.",
+        "The model genuinely could not call tools at all.",
+        "The tools themselves were broken."
+      ],
+      "correct_indices": [
+        0,
+        1
+      ],
+      "explanation": "The weights were capable. The template emitted the wrong format so calls could not be parsed, and a hand-tuned template restored the score without retraining."
+    },
+    {
+      "id": "ae2-sa-some",
+      "type": "select_all",
+      "prompt": "Which statements about the capability versus protocol split are true?",
+      "concept": "capability-vs-protocol",
+      "difficulty": "medium",
+      "choices": [
+        "Capability lives in the weights",
+        "Protocol lives in the template and control tokens",
+        "A protocol bug can hide a capable model behind a failing score",
+        "A protocol bug means the weights need retraining"
+      ],
+      "correct_indices": [
+        0,
+        1,
+        2
+      ],
+      "explanation": "The first three describe the split correctly. A protocol bug is fixed in the template, not by retraining the weights, so the last is false."
+    },
+    {
+      "id": "ae2-sa-none",
+      "type": "select_all",
+      "prompt": "The template already emits the correct control tokens and a valid tool call format. Which of these does that correct template still force you to change? Select any that apply.",
+      "concept": "chat-template",
+      "difficulty": "hard",
+      "choices": [
+        "The model weights",
+        "The tool schema definition",
+        "The learner's diagnosis that capability was the problem"
+      ],
+      "correct_indices": [],
+      "explanation": "A correct template changes none of these. It just serializes the conversation properly, which is what lets the capable model score correctly."
+    },
+    {
+      "id": "ae2-sa-all",
+      "type": "select_all",
+      "prompt": "Which are genuinely part of the runtime contract that a chat template serializes?",
+      "concept": "control-tokens",
+      "difficulty": "medium",
+      "choices": [
+        "Role markers for who is speaking",
+        "Turn delimiters between messages",
+        "Special tool tokens and tool responses"
+      ],
+      "correct_indices": [
+        0,
+        1,
+        2
+      ],
+      "explanation": "Roles, turn delimiters, and the special tool tokens plus tool responses are all part of the exact token sequence the template must produce."
+    },
+    {
+      "id": "ae2-order",
+      "type": "ordering",
+      "prompt": "Order how a template bug turns a capable model into a failing score.",
+      "concept": "tool-call-format",
+      "difficulty": "medium",
+      "items": [
+        "The model produces a correct tool call in intent",
+        "The template wraps it in the wrong control tokens",
+        "The runtime cannot parse a valid tool call",
+        "The attempt scores as a failure"
+      ],
+      "correct_order": [
+        "The model produces a correct tool call in intent",
+        "The template wraps it in the wrong control tokens",
+        "The runtime cannot parse a valid tool call",
+        "The attempt scores as a failure"
+      ]
+    },
+    {
+      "id": "ae2-written",
+      "type": "written",
+      "prompt": "Explain why an observed low tool call pass rate must be diagnosed rather than assumed to be a model weakness, and how the agentic benchmark helped.",
+      "concept": "observed-vs-true",
+      "difficulty": "hard",
+      "actual_answer": "The observed pass rate only counts attempts that were both parsed into a valid tool call and correct, so it blends two very different things, the capability in the weights and the protocol in the chat template. When the template emits the wrong control tokens, a perfectly capable call cannot be parsed and scores as a failure, which drives the observed rate down even though true capability is high. That is exactly what happened at the Gemma 4 launch, where about ten percent looked like a weak model but was a formatting bug that a hand tuned template later fixed. So a low pass rate has to be diagnosed to separate a protocol bug from a real weakness. The agentic benchmark helped because it exercised the full tool call round trip, emit, parse, execute, and read the tool response back, which is where the wrong control tokens actually surface. Single turn academic evals never ran that loop, so they missed the nuance, and the benchmark evidence justified the template rollout.",
+      "rubric": "Full credit: explains that the observed pass rate blends capability and protocol so a template bug can sink a capable model's score, AND that the agentic benchmark exercised the full tool call round trip which surfaced the serialization bug that single turn evals missed. Partial: mentions the capability versus protocol split OR the benchmark's round trip advantage but not both. Low: vague or claims the weights were actually weak."
+    }
+  ]
+}

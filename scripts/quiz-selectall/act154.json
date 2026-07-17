@@ -1,0 +1,109 @@
+{
+  "activityId": 154,
+  "lessonId": 26,
+  "op": "part_practice",
+  "questions": [
+    {
+      "id": "bs2-so-1",
+      "type": "select_all",
+      "prompt": "Select all that are true about why the upper binary search computes mid as (lo + hi + 1) // 2.",
+      "concept": "binary-search-on-answer",
+      "difficulty": "medium",
+      "choices": [
+        "Rounding up prevents an infinite loop when lo and hi differ by one.",
+        "When lo and hi differ by one, rounding down makes mid equal lo, so setting lo = mid leaves the range unchanged.",
+        "Rounding up makes mid equal hi in that tie case, which forces the range to shrink."
+      ],
+      "correct_indices": [
+        0,
+        1,
+        2
+      ],
+      "explanation": "All three describe the same off-by-one danger. Rounding down stalls when lo = hi - 1 because mid stays at lo, so the upper template rounds up to make mid reach hi and guarantee progress."
+    },
+    {
+      "id": "bs2-sa-1",
+      "type": "select_all",
+      "prompt": "Which of these problems can be solved with binary search on the answer?",
+      "concept": "binary-search-on-answer",
+      "difficulty": "medium",
+      "choices": [
+        "Koko Eating Bananas: minimize eating speed",
+        "Two Sum: find two numbers that sum to a target",
+        "Capacity to Ship Packages: minimize ship capacity",
+        "Magnetic Force: maximize minimum distance"
+      ],
+      "correct_indices": [
+        0,
+        2,
+        3
+      ],
+      "explanation": "Two Sum is not a binary-search-on-the-answer problem because the answer is a pair of indices, not a single number in a monotonic feasibility range."
+    },
+    {
+      "id": "bs2-pr-1",
+      "type": "pattern_recognition",
+      "prompt": "Given n baskets on a line, place m balls in baskets to maximize the minimum distance between any two balls. Which pattern(s) apply?",
+      "concept": "binary-search-on-answer",
+      "difficulty": "hard",
+      "choices": [
+        "binary search on the answer",
+        "greedy",
+        "dynamic programming",
+        "sliding window",
+        "two pointer",
+        "divide and conquer"
+      ],
+      "primary_indices": [
+        0
+      ],
+      "secondary_indices": [
+        1
+      ],
+      "explanation": "Binary search on the answer with an upper search template. The feasibility check is a greedy placement."
+    },
+    {
+      "id": "bs2-sa-none",
+      "type": "select_all",
+      "prompt": "Which of these changes to the upper binary search template would still produce a correct answer? (If none, select none.)",
+      "concept": "binary-search-on-answer",
+      "difficulty": "hard",
+      "choices": [
+        "Using mid = (lo + hi) // 2 instead of (lo + hi + 1) // 2",
+        "Setting hi = mid instead of hi = mid - 1 when infeasible",
+        "Placing balls at the latest valid position instead of the earliest"
+      ],
+      "correct_indices": [],
+      "explanation": "None: rounding down mid causes infinite loops, setting hi=mid instead of hi=mid-1 also causes infinite loops, and placing balls at the latest valid position is not optimal (greedy earliest is proven correct by the exchange argument)."
+    },
+    {
+      "id": "bs2-order-1",
+      "type": "ordering",
+      "prompt": "Order the steps of the greedy feasibility check for Magnetic Force.",
+      "concept": "binary-search-on-answer",
+      "difficulty": "medium",
+      "items": [
+        "Sort the positions",
+        "Place the first ball at position[0]",
+        "Walk through positions: place a ball when gap from last placed ball >= candidate distance",
+        "Count placed balls. If count >= m, the candidate distance is feasible"
+      ],
+      "correct_order": [
+        "Sort the positions",
+        "Place the first ball at position[0]",
+        "Walk through positions: place a ball when gap from last placed ball >= candidate distance",
+        "Count placed balls. If count >= m, the candidate distance is feasible"
+      ],
+      "explanation": "The greedy check sorts positions, starts at the leftmost, then greedily places balls at the earliest valid positions, and checks if enough balls were placed."
+    },
+    {
+      "id": "bs2-written-1",
+      "type": "written",
+      "prompt": "Explain the exchange argument for why greedy placement (always take the earliest valid position) is optimal for the Magnetic Force feasibility check. Why can sliding a ball leftward to the greedy position never make things worse?",
+      "concept": "binary-search-on-answer",
+      "difficulty": "hard",
+      "actual_answer": "Suppose an optimal placement puts a ball at position X, but the greedy algorithm would place it at position Y where Y < X (earlier). Sliding the ball from X to Y does not shrink the gap from the previous ball, because Y already satisfies the minimum distance (greedy only places when the gap is sufficient). And the gap to the NEXT ball can only increase, because the ball moved further away from it. So greedy is at least as good as any alternative, which means if greedy cannot place all m balls, nothing else can either.",
+      "rubric": "Full credit: explains that sliding a ball left to the greedy position keeps the gap from the previous ball valid (still >= candidate) and increases the gap to the next ball. Therefore greedy never does worse. If greedy fails, all alternatives fail. Partial: says greedy places early without the exchange mechanics."
+    }
+  ]
+}

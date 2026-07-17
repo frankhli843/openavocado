@@ -1,0 +1,104 @@
+{
+  "activityId": 167,
+  "lessonId": 28,
+  "op": "part_practice",
+  "questions": [
+    {
+      "id": "gm3-so-1",
+      "type": "select_all",
+      "prompt": "Select all that are true about the Gemma 4 tool-call failure at launch, as the meeting described it.",
+      "concept": "evals",
+      "difficulty": "easy",
+      "choices": [
+        "The roughly ten percent pass rate was caused by the chat template, not the weights.",
+        "Later template updates fixed it without retraining the model.",
+        "Single-turn academic evals stayed high and hid the problem."
+      ],
+      "correct_indices": [
+        0,
+        1,
+        2
+      ],
+      "explanation": "It was all template formatting. Later template updates fixed it with the weights unchanged, and high single-turn academic evals masked the regression."
+    },
+    {
+      "id": "gm3-sa-some",
+      "type": "select_all",
+      "prompt": "Which statements about evals are true, per the meeting?",
+      "concept": "evals",
+      "difficulty": "medium",
+      "choices": [
+        "Academic single-turn evals can miss tool-calling failures",
+        "The team had no multi-turn benchmark",
+        "Agentic benchmarks caught nuances the standard evals missed",
+        "A template fix required retraining the model"
+      ],
+      "correct_indices": [
+        0,
+        1,
+        2
+      ],
+      "explanation": "Single-turn evals hide tool-call failures. The team lacked a multi-turn benchmark. Agentic benchmarks caught it, and no retraining was needed for the template fix."
+    },
+    {
+      "id": "gm3-sa-none",
+      "type": "select_all",
+      "prompt": "Fixing the chat template required which of these? (If none, select none.)",
+      "concept": "evals",
+      "difficulty": "hard",
+      "choices": [
+        "Retraining the weights",
+        "A new architecture",
+        "More pre-training data"
+      ],
+      "correct_indices": [],
+      "explanation": "None, the weights were unchanged. Only the prompt formatting (template) changed."
+    },
+    {
+      "id": "gm3-order",
+      "type": "ordering",
+      "prompt": "Order how the tool-call regression was found and fixed.",
+      "concept": "evals",
+      "difficulty": "medium",
+      "items": [
+        "Gemma 4 launches with ~10% tool-call pass",
+        "An agentic multi-turn eval surfaces the failure",
+        "Diagnose it as a chat-template problem, not a capability gap",
+        "Roll out the template fix. Pass rate jumps"
+      ],
+      "correct_order": [
+        "Gemma 4 launches with ~10% tool-call pass",
+        "An agentic multi-turn eval surfaces the failure",
+        "Diagnose it as a chat-template problem, not a capability gap",
+        "Roll out the template fix. Pass rate jumps"
+      ]
+    },
+    {
+      "id": "gm3-pattern",
+      "type": "pattern_recognition",
+      "prompt": "\"Our single-turn benchmark scores are great, but users report the assistant keeps botching tool calls in real conversations.\" What kind of eval is missing?",
+      "concept": "evals",
+      "difficulty": "medium",
+      "choices": [
+        "Multi-turn / tool-calling agentic eval",
+        "Another single-turn academic benchmark",
+        "A faster tokenizer",
+        "A larger model"
+      ],
+      "primary_indices": [
+        0
+      ],
+      "secondary_indices": [],
+      "explanation": "The blind spot is exactly the agentic multi-turn/tool-calling regime that single-turn benchmarks miss."
+    },
+    {
+      "id": "gm3-written",
+      "type": "written",
+      "prompt": "Explain what Sara meant by \"a lot of model building is Evals, the data and the tests,\" using the tool-call example.",
+      "concept": "evals",
+      "difficulty": "hard",
+      "actual_answer": "She meant that in model building the evaluation data and the tests are not an afterthought applied at the end, they are the core of the work, because they define what 'better' means and are the only way to know whether a change helped. The tool-call example makes it concrete: Gemma 4's weights were fine, but with the wrong chat template it passed tool calls only about ten percent of the time, and the academic single-turn evals never caught it. Only an agentic, multi-turn, tool-calling eval revealed the failure, and fixing the template, not the model, lifted the pass rate dramatically. So the quality that users experience was decided by the tests you run and the data you format around the weights, which is why building the right evals is the real model-building work.",
+      "rubric": "Full credit: evals/data/tests define 'better' and are the only signal that a change worked (not an afterthought), illustrated by the template bug where the right eval, not a weight change, decided perceived quality. Partial: restates the quote or the example without connecting them. Low: vague."
+    }
+  ]
+}

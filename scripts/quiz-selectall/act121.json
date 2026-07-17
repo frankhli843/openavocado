@@ -1,0 +1,173 @@
+{
+  "activityId": 121,
+  "lessonId": 20,
+  "op": "assessment_quiz",
+  "questions": [
+    {
+      "id": "q1",
+      "question": "Select all that are true about the two fields a single trie node holds.",
+      "choices": [
+        "One field is a map from a single character to a child node.",
+        "One field is a boolean end-of-word flag marking that a complete stored word ends here.",
+        "A node stores a full copy of every word that passes through it.",
+        "A node stores a parent pointer and its subtree size.",
+        "None of the above"
+      ],
+      "correct_indices": [
+        0,
+        1
+      ],
+      "allow_multiple_correct": true,
+      "explanation": "A node holds exactly a per-character child map and a boolean end-of-word flag. It does not copy whole words or keep parent pointers or subtree sizes.",
+      "concept": "trie",
+      "difficulty": "easy",
+      "learning_scope": "taught",
+      "support_ref": "trie-part-1-structure"
+    },
+    {
+      "id": "q2",
+      "question": "Select all that are true about search(\"car\") when ONLY \"card\" has been inserted.",
+      "choices": [
+        "It returns false because the c-a-r node's end-of-word flag is not set.",
+        "It returns true because the characters c, a, r all exist on a path.",
+        "It returns true because any prefix of a stored word counts as stored.",
+        "It errors because the query is too short.",
+        "None of the above"
+      ],
+      "correct_indices": [
+        0
+      ],
+      "allow_multiple_correct": true,
+      "explanation": "The c-a-r path exists only on the way to card, but car was never flagged, so search returns false. A path existing is not the same as a word being stored.",
+      "concept": "trie",
+      "difficulty": "medium",
+      "learning_scope": "taught",
+      "support_ref": "trie-part-1-structure"
+    },
+    {
+      "id": "q3",
+      "question": "Select all that are true about how startsWith differs from search in a trie.",
+      "choices": [
+        "Both walk the query string character by character from the root.",
+        "search additionally requires the end-of-word flag on the final node, but startsWith does not.",
+        "startsWith creates any missing child nodes as it walks.",
+        "startsWith is O(N) in the number of stored words while search is O(L).",
+        "None of the above"
+      ],
+      "correct_indices": [
+        0,
+        1
+      ],
+      "allow_multiple_correct": true,
+      "explanation": "Both walk the string the same way and only search checks the end-of-word flag at the end. Neither creates nodes, and both are O(length of the string), not O(N).",
+      "concept": "trie",
+      "difficulty": "medium",
+      "learning_scope": "taught",
+      "support_ref": "trie-part-1-structure"
+    },
+    {
+      "id": "q4",
+      "question": "Select all that are true about the cost of insert, search, and startsWith on a trie.",
+      "choices": [
+        "Each is O(L) in the length of the query string.",
+        "Each does one constant-time child lookup per character step.",
+        "The cost is independent of how many words the trie holds.",
+        "None of the above"
+      ],
+      "correct_indices": [
+        0,
+        1,
+        2
+      ],
+      "allow_multiple_correct": true,
+      "explanation": "Every operation walks a single character path with one constant-time lookup per step, so each is O(L) and independent of N, the number of stored words.",
+      "concept": "complexity",
+      "difficulty": "easy",
+      "learning_scope": "taught",
+      "support_ref": "trie-part-1-structure"
+    },
+    {
+      "id": "q5",
+      "question": "Select all that are true about the two phases of trie autocomplete.",
+      "choices": [
+        "Phase one walks the prefix from the root and returns empty if any character has no child.",
+        "Phase two is a DFS of the prefix node's subtree that records each end-of-word node's string.",
+        "Phase two records every node it passes through, flagged or not.",
+        "Phase one re-scans the whole dictionary to find matches.",
+        "None of the above"
+      ],
+      "correct_indices": [
+        0,
+        1
+      ],
+      "allow_multiple_correct": true,
+      "explanation": "Phase one is startsWith, returning empty on a missing child. Phase two DFS records only flagged nodes. It never re-scans the dictionary or emits passed-through nodes.",
+      "concept": "trie",
+      "difficulty": "medium",
+      "learning_scope": "taught",
+      "support_ref": "trie-part-2-autocomplete"
+    },
+    {
+      "id": "q6",
+      "question": "Select all that are true about which words the DFS visits for prefix \"car\" over {car, card, cart, cat, cap, dog}.",
+      "choices": [
+        "It records car, card, and cart.",
+        "It never visits cat or cap, which live under the ca node but not under car.",
+        "It never visits dog, which fails at the first character.",
+        "It records ca, the node passed through on the way to car.",
+        "None of the above"
+      ],
+      "correct_indices": [
+        0,
+        1,
+        2
+      ],
+      "allow_multiple_correct": true,
+      "explanation": "The car subtree holds car, card, and cart. Cat and cap branch off at ca, and dog fails immediately, so none is visited. Ca is passed through but not flagged, so it is never recorded.",
+      "concept": "trie",
+      "difficulty": "hard",
+      "learning_scope": "taught",
+      "support_ref": "trie-part-2-autocomplete"
+    },
+    {
+      "id": "q7",
+      "question": "Select all that are NOT true about recording words during the autocomplete DFS.",
+      "choices": [
+        "You record a word only when a node's end-of-word flag is set.",
+        "You should emit every node you visit, flagged or not.",
+        "Recording the passed-through ca node would invent a word nobody stored.",
+        "The prefix itself is recorded as a completion when its node is end-of-word.",
+        "None of the above"
+      ],
+      "correct_indices": [
+        1
+      ],
+      "allow_multiple_correct": true,
+      "explanation": "Emitting every visited node is the classic bug and is false, so it is the NOT-true selection. The other three statements are all true.",
+      "concept": "trie",
+      "difficulty": "hard",
+      "learning_scope": "taught",
+      "support_ref": "trie-part-2-autocomplete"
+    },
+    {
+      "id": "q8",
+      "question": "Select all that are true about inserting a word of length L into a trie.",
+      "choices": [
+        "Insertion re-sorts all stored words afterward.",
+        "Insertion is O(N log N) in the number of stored words.",
+        "Insertion checks the end-of-word flag before creating any node.",
+        "Insertion cannot store more than 26 words.",
+        "None of the above"
+      ],
+      "correct_indices": [
+        4
+      ],
+      "allow_multiple_correct": true,
+      "explanation": "Insertion walks the string, creating a missing child per character and setting the flag on the final node. It does not sort, is O(L), does not pre-check the flag, and has no 26-word cap, so none of the listed claims is true.",
+      "concept": "trie",
+      "difficulty": "medium",
+      "learning_scope": "taught",
+      "support_ref": "trie-part-1-structure"
+    }
+  ]
+}

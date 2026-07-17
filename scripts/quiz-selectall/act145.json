@@ -1,0 +1,169 @@
+{
+  "activityId": 145,
+  "lessonId": 24,
+  "op": "assessment_quiz",
+  "questions": [
+    {
+      "id": "q1",
+      "question": "Select all that are true about when you mark a node visited in breadth-first search.",
+      "choices": [
+        "You mark a node the instant you enqueue it, so each node enters the frontier exactly once.",
+        "Marking on dequeue can let two neighbors enqueue the same node, inflating the queue and miscounting distance.",
+        "You should mark a node only after all of its neighbors have been processed.",
+        "None of the above"
+      ],
+      "correct_indices": [
+        0,
+        1
+      ],
+      "allow_multiple_correct": true,
+      "explanation": "Mark-on-enqueue keeps each node in the frontier exactly once. Waiting until dequeue lets several frontier neighbors re-enqueue the same node, which inflates the queue and corrupts the layer count.",
+      "concept": "graph-traversal",
+      "difficulty": "easy",
+      "learning_scope": "taught",
+      "support_ref": "graph-part-1-bfs"
+    },
+    {
+      "id": "q2",
+      "question": "Select all that are true about the minute a cell rots in multi-source rotting-oranges BFS.",
+      "choices": [
+        "It equals the cell's distance to the NEAREST source, because all sources start at minute zero.",
+        "It equals the cell's distance to one fixed chosen source.",
+        "It equals the total number of rotten cells so far.",
+        "None of the above"
+      ],
+      "correct_indices": [
+        0
+      ],
+      "allow_multiple_correct": true,
+      "explanation": "Seeding every rotten cell at minute zero makes the pass on which a cell rots its distance to the closest source, not to any single fixed source and not a running count.",
+      "concept": "graph-traversal",
+      "difficulty": "medium",
+      "learning_scope": "taught",
+      "support_ref": "graph-part-1-bfs"
+    },
+    {
+      "id": "q3",
+      "question": "Select all that are true about what rotting-oranges BFS returns when a fresh orange is walled off by empty cells.",
+      "choices": [
+        "It returns 0, because every reachable orange still rots.",
+        "It returns the number of layers that spread.",
+        "It returns the count of fresh cells still remaining.",
+        "None of the above"
+      ],
+      "correct_indices": [
+        3
+      ],
+      "allow_multiple_correct": true,
+      "explanation": "When any cell is still fresh after the queue drains it can never rot, so the answer is -1. None of the three listed outputs is what the algorithm returns.",
+      "concept": "graph-traversal",
+      "difficulty": "medium",
+      "learning_scope": "taught",
+      "support_ref": "graph-part-1-bfs"
+    },
+    {
+      "id": "q4",
+      "question": "Select all that are true about the cost of the rotting-oranges BFS.",
+      "choices": [
+        "Marking on enqueue makes every node enter the frontier exactly once.",
+        "It runs in O(V + E) time, linear in the size of the graph.",
+        "On an R by C grid it is O(R times C), because each cell has at most four edges.",
+        "None of the above"
+      ],
+      "correct_indices": [
+        0,
+        1,
+        2
+      ],
+      "allow_multiple_correct": true,
+      "explanation": "Each node and edge is handled a constant number of times because mark-on-enqueue admits each node once, so the traversal is O(V + E), which on a grid is O(R times C).",
+      "concept": "graph-traversal",
+      "difficulty": "medium",
+      "learning_scope": "taught",
+      "support_ref": "graph-part-1-bfs"
+    },
+    {
+      "id": "q5",
+      "question": "Select all that are true about when Union Find decrements the component count.",
+      "choices": [
+        "It decrements only when a union merges two DIFFERENT roots.",
+        "A same-root edge is redundant and must not change the count, because it is a cycle.",
+        "It decrements on every edge that is processed.",
+        "It decrements each time find is called.",
+        "None of the above"
+      ],
+      "correct_indices": [
+        0,
+        1
+      ],
+      "allow_multiple_correct": true,
+      "explanation": "Only a real union of two different roots reduces the count. A same-root edge joins nothing new, it is a cycle, so decrementing on every edge or on every find is wrong.",
+      "concept": "union-find",
+      "difficulty": "medium",
+      "learning_scope": "taught",
+      "support_ref": "graph-part-2-unionfind"
+    },
+    {
+      "id": "q6",
+      "question": "Select all that are NOT true about Union Find.",
+      "choices": [
+        "It returns the actual shortest path between two nodes.",
+        "A bare parent array with no optimizations can degrade find to O(n) in the worst case.",
+        "You should decrement the component count on every edge you process.",
+        "Path compression makes each successive find slower over time.",
+        "None of the above"
+      ],
+      "correct_indices": [
+        0,
+        2,
+        3
+      ],
+      "allow_multiple_correct": true,
+      "explanation": "Only the second statement is true. Union Find answers connectivity not paths, decrements only on a real union, and path compression makes future finds faster, so the other three are the NOT-true selections.",
+      "concept": "union-find",
+      "difficulty": "hard",
+      "learning_scope": "taught",
+      "support_ref": "graph-part-2-unionfind"
+    },
+    {
+      "id": "q7",
+      "question": "Select all that are true about the graph reactivation container model taught in this lesson.",
+      "choices": [
+        "Swapping the frontier container changes the traversal, and a queue gives BFS for unweighted shortest paths.",
+        "A priority queue keyed by distance gives Dijkstra for weighted shortest paths.",
+        "A stack gives Union Find.",
+        "None of the above"
+      ],
+      "correct_indices": [
+        0,
+        1
+      ],
+      "allow_multiple_correct": true,
+      "explanation": "The frontier container sets the traversal. A queue gives BFS and a priority queue gives Dijkstra, but a stack gives DFS, not Union Find.",
+      "concept": "graph-traversal",
+      "difficulty": "easy",
+      "learning_scope": "taught",
+      "support_ref": "graph-part-1-bfs"
+    },
+    {
+      "id": "q8",
+      "question": "Select all that are true about the graph problems worked in this lesson.",
+      "choices": [
+        "Dijkstra finalizes a node on its first pop, which is valid only when every edge weight is non-negative.",
+        "Kahn's topological sort detects a cycle when the produced order has fewer nodes than the graph.",
+        "Two-sum on an array is solved as a graph traversal.",
+        "None of the above"
+      ],
+      "correct_indices": [
+        0,
+        1
+      ],
+      "allow_multiple_correct": true,
+      "explanation": "First-pop finalization needs non-negative weights, and Kahn's leaves cycle nodes blocked so the order comes up short. Two-sum is a hashing job, not a graph problem.",
+      "concept": "pattern-recognition",
+      "difficulty": "hard",
+      "learning_scope": "taught",
+      "support_ref": "graph-part-2-unionfind"
+    }
+  ]
+}
