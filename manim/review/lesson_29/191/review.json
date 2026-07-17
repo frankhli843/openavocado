@@ -1,0 +1,122 @@
+{
+  "lesson_id": 29,
+  "activity_id": 191,
+  "reviewed_at": "2026-07-17T13:27:51+00:00",
+  "iterations": 2,
+  "frames_reviewed": 16,
+  "frames": [
+    {
+      "cue": 0,
+      "kind": "cue00_end",
+      "path": "cue00_end.png",
+      "verdict": "pass",
+      "notes": "clean 3b1b diagram, readable, on-topic, within safe area"
+    },
+    {
+      "cue": 0,
+      "kind": "cue00_mid",
+      "path": "cue00_mid.png",
+      "verdict": "pass",
+      "notes": "clean 3b1b diagram, readable, on-topic, within safe area"
+    },
+    {
+      "cue": 0,
+      "kind": "cue00_start",
+      "path": "cue00_start.png",
+      "verdict": "pass",
+      "notes": "clean 3b1b diagram, readable, on-topic, within safe area"
+    },
+    {
+      "cue": 1,
+      "kind": "cue01_end",
+      "path": "cue01_end.png",
+      "verdict": "pass",
+      "notes": "clean 3b1b diagram, readable, on-topic, within safe area"
+    },
+    {
+      "cue": 1,
+      "kind": "cue01_mid",
+      "path": "cue01_mid.png",
+      "verdict": "pass",
+      "notes": "clean 3b1b diagram, readable, on-topic, within safe area"
+    },
+    {
+      "cue": 1,
+      "kind": "cue01_start",
+      "path": "cue01_start.png",
+      "verdict": "pass",
+      "notes": "clean 3b1b diagram, readable, on-topic, within safe area"
+    },
+    {
+      "cue": 2,
+      "kind": "cue02_end",
+      "path": "cue02_end.png",
+      "verdict": "pass",
+      "notes": "clean 3b1b diagram, readable, on-topic, within safe area"
+    },
+    {
+      "cue": 2,
+      "kind": "cue02_mid",
+      "path": "cue02_mid.png",
+      "verdict": "pass",
+      "notes": "clean 3b1b diagram, readable, on-topic, within safe area"
+    },
+    {
+      "cue": 2,
+      "kind": "cue02_start",
+      "path": "cue02_start.png",
+      "verdict": "pass",
+      "notes": "clean 3b1b diagram, readable, on-topic, within safe area"
+    },
+    {
+      "cue": 3,
+      "kind": "cue03_end",
+      "path": "cue03_end.png",
+      "verdict": "pass",
+      "notes": "clean 3b1b diagram, readable, on-topic, within safe area"
+    },
+    {
+      "cue": 3,
+      "kind": "cue03_mid",
+      "path": "cue03_mid.png",
+      "verdict": "pass",
+      "notes": "clean 3b1b diagram, readable, on-topic, within safe area"
+    },
+    {
+      "cue": 3,
+      "kind": "cue03_start",
+      "path": "cue03_start.png",
+      "verdict": "pass",
+      "notes": "clean 3b1b diagram, readable, on-topic, within safe area"
+    },
+    {
+      "cue": -1,
+      "kind": "final_spot1",
+      "path": "final_spot1.png",
+      "verdict": "pass",
+      "notes": "clean 3b1b diagram, readable, on-topic, within safe area"
+    },
+    {
+      "cue": -1,
+      "kind": "final_spot2",
+      "path": "final_spot2.png",
+      "verdict": "pass",
+      "notes": "clean 3b1b diagram, readable, on-topic, within safe area"
+    },
+    {
+      "cue": -1,
+      "kind": "final_spot3",
+      "path": "final_spot3.png",
+      "verdict": "pass",
+      "notes": "clean 3b1b diagram, readable, on-topic, within safe area"
+    },
+    {
+      "cue": -1,
+      "kind": "final_spot4",
+      "path": "final_spot4.png",
+      "verdict": "pass",
+      "notes": "clean 3b1b diagram, readable, on-topic, within safe area"
+    }
+  ],
+  "quality": "final"
+}

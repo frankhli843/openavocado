@@ -1,0 +1,62 @@
+{
+  "lesson_id": 29,
+  "activity_id": 193,
+  "activity_type": "lesson_part",
+  "title": "Part 3: One-shot reproducible runs, Terraform to Docker to Cloud Run",
+  "audio": {
+    "file_path": "runtime_artifacts/audio/lesson_29_activity_193_audio.mp3",
+    "duration_sec": 104.88
+  },
+  "audio_source": "artifact",
+  "cue_source": "audio.synced_visual.cues",
+  "cues": [
+    {
+      "index": 0,
+      "start": 0,
+      "end": 22.08,
+      "duration": 22.08,
+      "label": "The brittle doc",
+      "headline": "Fifteen pages of manual steps",
+      "narration": "Today the eval setup is a fifteen page manual document, and that tribal knowledge breaks."
+    },
+    {
+      "index": 1,
+      "start": 22.08,
+      "end": 44.16,
+      "duration": 22.08,
+      "label": "Provision and pin",
+      "headline": "Terraform provisions, Docker pins",
+      "narration": "Terraform provisions the resources from a config, and a Docker image pins the code and the benchmark commit."
+    },
+    {
+      "index": 2,
+      "start": 44.16,
+      "end": 66.24,
+      "duration": 22.08,
+      "label": "Run one job",
+      "headline": "Cloud Run runs exactly once",
+      "narration": "Cloud Run executes exactly one job against one model build, then the job exits."
+    },
+    {
+      "index": 3,
+      "start": 66.24,
+      "end": 88.32,
+      "duration": 22.08,
+      "label": "Emit and tear down",
+      "headline": "Results out, resources gone",
+      "narration": "Results are emitted to durable storage, then everything tears down so nothing lingers or costs money."
+    },
+    {
+      "index": 4,
+      "start": 88.32,
+      "end": 104.88,
+      "duration": 16.56,
+      "label": "The three wins",
+      "headline": "Identical, reviewable, reversible",
+      "narration": "Every run gets an identical environment, a plan diff you read before apply, and automatic rollback on failure."
+    }
+  ],
+  "cue_span_sec": 104.88,
+  "formulas": [],
+  "exported_at": "2026-07-17T13:11:34.464Z"
+}

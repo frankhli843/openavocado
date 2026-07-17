@@ -1,0 +1,64 @@
+{
+  "lesson_id": 30,
+  "activity_id": 198,
+  "activity_type": "lesson_part",
+  "title": "Part 2: The template trap, tool-call correctness vs chat-template formatting",
+  "audio": {
+    "file_path": "runtime_artifacts/audio/lesson_30_activity_198_audio.mp3",
+    "duration_sec": 97.46
+  },
+  "audio_source": "artifact",
+  "cue_source": "audio.synced_visual.cues",
+  "cues": [
+    {
+      "index": 0,
+      "start": 0,
+      "end": 20.518,
+      "duration": 20.518,
+      "label": "Ten percent",
+      "headline": "Blame fell on the model",
+      "narration": "The launch tool call pass rate was about ten percent, and the room assumed the weights were weak."
+    },
+    {
+      "index": 1,
+      "start": 20.518,
+      "end": 41.036,
+      "duration": 20.518,
+      "label": "The template",
+      "headline": "Serialize the conversation",
+      "narration": "The chat template lays out roles, turn delimiters, and special tool tokens into the exact sequence the model was trained on."
+    },
+    {
+      "index": 2,
+      "start": 41.036,
+      "end": 61.554,
+      "duration": 20.518,
+      "label": "Wrong tokens",
+      "headline": "Unparseable tool call",
+      "narration": "When the template emits the wrong control tokens, the output cannot be parsed as a valid tool call and scores as a failure."
+    },
+    {
+      "index": 3,
+      "start": 61.554,
+      "end": 82.072,
+      "duration": 20.518,
+      "label": "Two layers",
+      "headline": "Capability versus protocol",
+      "narration": "Capability lives in the weights and protocol lives in the template, so a protocol bug hides a capable model."
+    },
+    {
+      "index": 4,
+      "start": 82.072,
+      "end": 97.46,
+      "duration": 15.388,
+      "label": "The fix",
+      "headline": "Diagnose, do not assume",
+      "narration": "A hand tuned template lifted the pass rate, and the agentic benchmark caught the nuance single turn evals missed."
+    }
+  ],
+  "cue_span_sec": 97.46,
+  "formulas": [
+    "\\text{observed pass rate} = \\frac{\\text{parsed and correct}}{\\text{total attempts}}"
+  ],
+  "exported_at": "2026-07-17T13:11:34.878Z"
+}

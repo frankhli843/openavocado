@@ -1,0 +1,62 @@
+{
+  "lesson_id": 30,
+  "activity_id": 197,
+  "activity_type": "lesson_part",
+  "title": "Part 1: Single-turn vs multi-turn, the eval that passes but ships a broken agent",
+  "audio": {
+    "file_path": "runtime_artifacts/audio/lesson_30_activity_197_audio.mp3",
+    "duration_sec": 95.28
+  },
+  "audio_source": "artifact",
+  "cue_source": "audio.synced_visual.cues",
+  "cues": [
+    {
+      "index": 0,
+      "start": 0,
+      "end": 19.056,
+      "duration": 19.056,
+      "label": "The puzzle",
+      "headline": "Green score, broken agent",
+      "narration": "The model aces every single-turn question, then falls over the moment it runs as an agent."
+    },
+    {
+      "index": 1,
+      "start": 19.056,
+      "end": 38.112,
+      "duration": 19.056,
+      "label": "What single-turn measures",
+      "headline": "One prompt, one graded response",
+      "narration": "A single-turn eval grades one response in isolation, with everything the model needs already present."
+    },
+    {
+      "index": 2,
+      "start": 38.112,
+      "end": 57.168,
+      "duration": 19.056,
+      "label": "The turn chain",
+      "headline": "A tool call spans turns",
+      "narration": "The agent requests a tool on one turn, gets the result on the next, and must reuse it on a later turn."
+    },
+    {
+      "index": 3,
+      "start": 57.168,
+      "end": 76.224,
+      "duration": 19.056,
+      "label": "The research grounding",
+      "headline": "BFCL V3 checks state across turns",
+      "narration": "The Berkeley leaderboard added multi-turn categories, while the FunctionGemma docs admit multi-turn workflows are not supported."
+    },
+    {
+      "index": 4,
+      "start": 76.224,
+      "end": 95.28,
+      "duration": 19.056,
+      "label": "The org root cause",
+      "headline": "No one owned the eval",
+      "narration": "Two teams disagreed over whether multi-turn was in scope, so the multi-turn eval had no owner and the gap shipped."
+    }
+  ],
+  "cue_span_sec": 95.28,
+  "formulas": [],
+  "exported_at": "2026-07-17T13:11:34.878Z"
+}

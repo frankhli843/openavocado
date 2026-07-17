@@ -1,0 +1,89 @@
+{
+  "lesson_id": 30,
+  "activity_id": 196,
+  "activity_type": "audio",
+  "title": "Video: Agentic evals that matter",
+  "audio": {
+    "file_path": "runtime_artifacts/audio/lesson_30_audio.mp3",
+    "duration_sec": 890.42
+  },
+  "audio_source": "artifact",
+  "cue_source": "orientation_visual.cues",
+  "cues": [
+    {
+      "index": 0,
+      "start": 0,
+      "end": 120.829,
+      "duration": 120.829,
+      "label": "Which evals to build",
+      "headline": "Good plumbing cannot save a wrong test",
+      "narration": "Even with perfect reproducible plumbing, the team found their existing evals were quietly missing the failures that mattered most."
+    },
+    {
+      "index": 1,
+      "start": 120.829,
+      "end": 250.953,
+      "duration": 130.124,
+      "label": "Single-turn versus multi-turn",
+      "headline": "One shape is blind to the other",
+      "narration": "Single-turn grades one answer in isolation, while a multi-turn agentic task carries state across turns and a tool call can span turns."
+    },
+    {
+      "index": 2,
+      "start": 250.953,
+      "end": 381.077,
+      "duration": 130.124,
+      "label": "The benchmarks that expose it",
+      "headline": "Grade the world, match the use",
+      "narration": "The Berkeley Function Calling Leaderboard version three adds multi-turn and state checks, while FunctionGemma docs promise only single and parallel calls."
+    },
+    {
+      "index": 3,
+      "start": 381.077,
+      "end": 520.496,
+      "duration": 139.419,
+      "label": "The template trap",
+      "headline": "Ten percent was a formatting bug",
+      "narration": "At the Gemma 4 launch tool calls passed around ten percent, but the weights were fine and a hand-tuned chat template lifted the rate dramatically."
+    },
+    {
+      "index": 4,
+      "start": 520.496,
+      "end": 650.62,
+      "duration": 130.124,
+      "label": "What caught the nuance",
+      "headline": "The right eval turned guess into proof",
+      "narration": "Academic single-turn evals only reported a low number, while Frank's agentic benchmark showed the failures were formatting and justified the rollout."
+    },
+    {
+      "index": 5,
+      "start": 650.62,
+      "end": 762.155,
+      "duration": 111.535,
+      "label": "Why the teams disagreed",
+      "headline": "What counts as a real eval is a decision",
+      "narration": "The post-training team said multi-turn was out of scope while the evals team saw users depend on it, so the blind spot was a position somebody held."
+    },
+    {
+      "index": 6,
+      "start": 762.155,
+      "end": 836.511,
+      "duration": 74.356,
+      "label": "Keeping the score honest",
+      "headline": "Seeded state and held-out discipline",
+      "narration": "A seeded environment grades on final state, and holding eval data out of training defeats contamination that would inflate the number into a lie."
+    },
+    {
+      "index": 7,
+      "start": 836.511,
+      "end": 890.42,
+      "duration": 53.909,
+      "label": "An eval worth building",
+      "headline": "Disclosure by audience",
+      "narration": "A context-disclosure privacy eval would score whether an agent reveals the right amount to a wife, a friend, a colleague, or a stranger, worth exploring later."
+    }
+  ],
+  "cue_span_sec": 890.42,
+  "formulas": [],
+  "exported_at": "2026-07-17T13:11:34.877Z"
+}

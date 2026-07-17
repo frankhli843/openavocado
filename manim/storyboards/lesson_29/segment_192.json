@@ -1,0 +1,53 @@
+{
+  "lesson_id": 29,
+  "activity_id": 192,
+  "activity_type": "lesson_part",
+  "title": "Part 2: Ditto on Borg and the Borg to GCP crossover",
+  "audio": {
+    "file_path": "runtime_artifacts/audio/lesson_29_activity_192_audio.mp3",
+    "duration_sec": 110.78
+  },
+  "audio_source": "artifact",
+  "cue_source": "audio.synced_visual.cues",
+  "cues": [
+    {
+      "index": 0,
+      "start": 0,
+      "end": 27.987,
+      "duration": 27.987,
+      "label": "Two locations",
+      "headline": "Job here, model there",
+      "narration": "The eval runs in one place and the model lives in another, so an eval is really a round trip between two systems."
+    },
+    {
+      "index": 1,
+      "start": 27.987,
+      "end": 55.973,
+      "duration": 27.986,
+      "label": "Ditto on Borg",
+      "headline": "The runner runs on Borg",
+      "narration": "Ditto is the eval runner and it executes as a job on Borg, Google's cluster scheduler, while the model it grades is hosted on GCP."
+    },
+    {
+      "index": 2,
+      "start": 55.973,
+      "end": 83.96,
+      "duration": 27.987,
+      "label": "The crossover",
+      "headline": "Bridge the two worlds",
+      "narration": "Auth, networking, and routing between Borg and GCP are the crossover, and that bridge is what Sindhu is stuck on, which blocks the eval runs."
+    },
+    {
+      "index": 3,
+      "start": 83.96,
+      "end": 110.78,
+      "duration": 26.82,
+      "label": "Serving surfaces",
+      "headline": "Aim at the right runtime",
+      "narration": "The same weights run on two serving surfaces, vLLM and Hugging Face, so an eval must target the correct one or the number can drift."
+    }
+  ],
+  "cue_span_sec": 110.78,
+  "formulas": [],
+  "exported_at": "2026-07-17T13:11:34.464Z"
+}

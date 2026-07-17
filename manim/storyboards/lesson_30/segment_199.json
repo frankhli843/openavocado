@@ -1,0 +1,62 @@
+{
+  "lesson_id": 30,
+  "activity_id": 199,
+  "activity_type": "lesson_part",
+  "title": "Part 3: Designing an agentic eval that means something",
+  "audio": {
+    "file_path": "runtime_artifacts/audio/lesson_30_activity_199_audio.mp3",
+    "duration_sec": 103.46
+  },
+  "audio_source": "artifact",
+  "cue_source": "audio.synced_visual.cues",
+  "cues": [
+    {
+      "index": 0,
+      "start": 0,
+      "end": 21.781,
+      "duration": 21.781,
+      "label": "Seed and check",
+      "headline": "Score the world, not the words",
+      "narration": "Seed a fake environment with a known start state, trigger the agent, then check the final state against the expected end state."
+    },
+    {
+      "index": 1,
+      "start": 21.781,
+      "end": 43.562,
+      "duration": 21.781,
+      "label": "The state check",
+      "headline": "Pass and fail become unambiguous",
+      "narration": "The state check compares the actual end state to the expected end state, so a pass has a single correct answer, just like Gbench."
+    },
+    {
+      "index": 2,
+      "start": 43.562,
+      "end": 65.343,
+      "duration": 21.781,
+      "label": "Contamination trap",
+      "headline": "Leaked answers inflate the score",
+      "narration": "If the eval leaks into training data the model memorizes it, and that inflated score is worthless."
+    },
+    {
+      "index": 3,
+      "start": 65.343,
+      "end": 87.124,
+      "duration": 21.781,
+      "label": "Hold it out",
+      "headline": "Measure generalization",
+      "narration": "Hold out a test set the model never trained on, so the score measures generalization rather than memorization."
+    },
+    {
+      "index": 4,
+      "start": 87.124,
+      "end": 103.46,
+      "duration": 16.336,
+      "label": "Privacy eval",
+      "headline": "Respect the disclosure boundary",
+      "narration": "The context disclosure eval asks the agent to answer each audience and scores whether it stayed within the disclosure boundary."
+    }
+  ],
+  "cue_span_sec": 103.46,
+  "formulas": [],
+  "exported_at": "2026-07-17T13:11:34.878Z"
+}

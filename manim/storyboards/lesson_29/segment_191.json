@@ -1,0 +1,55 @@
+{
+  "lesson_id": 29,
+  "activity_id": 191,
+  "activity_type": "lesson_part",
+  "title": "Part 1: Gbench, a seeded environment that scores what the model does",
+  "audio": {
+    "file_path": "runtime_artifacts/audio/lesson_29_activity_191_audio.mp3",
+    "duration_sec": 92.5
+  },
+  "audio_source": "artifact",
+  "cue_source": "audio.synced_visual.cues",
+  "cues": [
+    {
+      "index": 0,
+      "start": 0,
+      "end": 24.667,
+      "duration": 24.667,
+      "label": "Seed the world",
+      "headline": "Build a seeded fake environment",
+      "narration": "Before the model runs, Gbench creates fake files, fake tools, and a known starting backend state."
+    },
+    {
+      "index": 1,
+      "start": 24.667,
+      "end": 49.333,
+      "duration": 24.666,
+      "label": "Trigger the agent",
+      "headline": "Run the model and let it act",
+      "narration": "Gbench triggers the model as an agent, and it calls tools in whatever order it chooses."
+    },
+    {
+      "index": 2,
+      "start": 49.333,
+      "end": 74,
+      "duration": 24.667,
+      "label": "Inspect the end state",
+      "headline": "Compare end state to expected",
+      "narration": "When the agent stops, the harness reads the resulting backend state and compares it to the expected end state."
+    },
+    {
+      "index": 3,
+      "start": 74,
+      "end": 92.5,
+      "duration": 18.5,
+      "label": "Harness anatomy",
+      "headline": "Environment plus trigger plus grader",
+      "narration": "An agentic eval grades what the model did to the world, unlike a single-turn eval that only string matches an answer."
+    }
+  ],
+  "cue_span_sec": 92.5,
+  "formulas": [
+    "\\text{pass} = \\big( \\text{apply}(\\text{seed}, \\text{actions}) = \\text{expected} \\big)"
+  ],
+  "exported_at": "2026-07-17T13:11:34.464Z"
+}

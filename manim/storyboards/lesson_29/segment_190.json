@@ -1,0 +1,80 @@
+{
+  "lesson_id": 29,
+  "activity_id": 190,
+  "activity_type": "audio",
+  "title": "Video: Evals as infrastructure",
+  "audio": {
+    "file_path": "runtime_artifacts/audio/lesson_29_audio.mp3",
+    "duration_sec": 879.96
+  },
+  "audio_source": "artifact",
+  "cue_source": "orientation_visual.cues",
+  "cues": [
+    {
+      "index": 0,
+      "start": 0,
+      "end": 128.999,
+      "duration": 128.999,
+      "label": "Evals are the bottleneck",
+      "headline": "A compliant model, but nothing to trust",
+      "narration": "The model is coming together, yet nothing ships until it can be evaluated, and today the eval setup is a brittle fifteen page document."
+    },
+    {
+      "index": 1,
+      "start": 128.999,
+      "end": 267.213,
+      "duration": 138.214,
+      "label": "Gbench and agentic tasks",
+      "headline": "A harness that stands up a fake world",
+      "narration": "Gbench runs academic evals and agentic tasks, seeding fake files and tools, triggering the model as an agent, then inspecting the resulting state."
+    },
+    {
+      "index": 2,
+      "start": 267.213,
+      "end": 396.212,
+      "duration": 128.999,
+      "label": "Grade the world, not the words",
+      "headline": "The action is the truth",
+      "narration": "Following the Berkeley Function Calling Leaderboard and tau-bench, you grade what the model did to a backend, because the sentence can lie and the state cannot."
+    },
+    {
+      "index": 3,
+      "start": 396.212,
+      "end": 534.426,
+      "duration": 138.214,
+      "label": "Ditto, Borg, and GCP",
+      "headline": "The crossover that gates everything",
+      "narration": "Ditto runs internal-format evals on Borg and pings a model hosted on GCP, and that Borg to GCP hosting link is exactly where Sindhu is stuck."
+    },
+    {
+      "index": 4,
+      "start": 534.426,
+      "end": 663.425,
+      "duration": 128.999,
+      "label": "Two serving runtimes",
+      "headline": "Same weights, different behavior",
+      "narration": "The model is exercised through vLLM and the Hugging Face implementation, and the eval must hit the runtime you actually intend to certify."
+    },
+    {
+      "index": 5,
+      "start": 663.425,
+      "end": 792.425,
+      "duration": 129,
+      "label": "One-shot reproducible runs",
+      "headline": "Infrastructure as code replaces the document",
+      "narration": "Terraform provisions, Docker pins the code and a benchmark commit, Cloud Run executes one job, results land in durable storage, then everything tears down."
+    },
+    {
+      "index": 6,
+      "start": 792.425,
+      "end": 879.96,
+      "duration": 87.535,
+      "label": "The highest-leverage on-ramp",
+      "headline": "Fix the plumbing, speed up everyone",
+      "narration": "Making evals reproducible and the hosting solid unblocks every future model change, which is how an infrastructure engineer plugs into model building."
+    }
+  ],
+  "cue_span_sec": 879.96,
+  "formulas": [],
+  "exported_at": "2026-07-17T13:11:34.463Z"
+}
