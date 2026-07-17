@@ -11,6 +11,7 @@
  */
 import type Database from "better-sqlite3";
 import type { SubjectMastery, SignalType } from "@/types";
+import { computeConceptEvidence, type ConceptEvidenceSummary } from "@/lib/concept-evidence";
 
 const EMPTY_COUNTS = {
   strength: 0,
@@ -76,22 +77,65 @@ export function computeSubjectMastery(
     delta = 0;
   }
 
+  // Resolution-aware review evidence: gap notes should reflect current reality,
+  // not every weakness ever flagged. A concept that was weak but has since been
+  // answered correctly at equal-or-higher difficulty no longer counts as a gap.
+  const evidence = computeConceptEvidence(db, subjectId, learnerId);
+
   return {
     score,
     source,
     trend,
     delta,
     history,
-    explanation: buildExplanation(score, source, trend, signal_counts),
+    explanation: buildExplanation(score, source, trend, history, evidence.summary),
     signal_counts,
   };
+}
+
+/**
+ * Describe the recent run of progress points beyond the last-two-point delta.
+ * Uses the same +/-1 noise band the trend field already uses (no new numeric
+ * thresholds) and walks back over the trailing run of same-direction steps, so
+ * "rising", "falling", or "plateaued" reflects a window, not a single step.
+ */
+export function summarizeRecentTrend(
+  history: number[]
+): { direction: "rising" | "falling" | "plateaued" | "mixed" | "unknown"; windowLength: number } {
+  if (history.length < 2) return { direction: "unknown", windowLength: history.length };
+
+  const dir = (step: number): "up" | "down" | "flat" => (step > 1 ? "up" : step < -1 ? "down" : "flat");
+  const steps: Array<"up" | "down" | "flat"> = [];
+  for (let i = history.length - 1; i > 0; i--) steps.push(dir(history[i] - history[i - 1]));
+
+  // Trailing run of a consistent direction (flat steps extend a run of any dir).
+  let runDir: "up" | "down" | "flat" | null = null;
+  let run = 0;
+  for (const s of steps) {
+    if (runDir === null) {
+      runDir = s;
+      run = 1;
+    } else if (s === runDir || s === "flat" || runDir === "flat") {
+      if (runDir === "flat" && s !== "flat") runDir = s;
+      run++;
+    } else {
+      break;
+    }
+  }
+
+  const windowLength = run + 1; // points involved in the trailing run
+  if (runDir === "up") return { direction: "rising", windowLength };
+  if (runDir === "down") return { direction: "falling", windowLength };
+  if (runDir === "flat") return { direction: "plateaued", windowLength };
+  return { direction: "mixed", windowLength: history.length };
 }
 
 function buildExplanation(
   score: number | null,
   source: SubjectMastery["source"],
   trend: SubjectMastery["trend"],
-  counts: typeof EMPTY_COUNTS
+  history: number[],
+  evidence: ConceptEvidenceSummary
 ): string {
   if (score === null) {
     return "No mastery data yet. Complete a lesson and its assessment to start tracking mastery for this subject.";
@@ -105,17 +149,34 @@ function buildExplanation(
       ? "based on your recorded progress over time"
       : "estimated from your mastery signals so far";
 
-  const move =
-    trend === "up"
-      ? " It has been trending up recently."
-      : trend === "down"
-      ? " It has dipped recently — a review lesson would help."
-      : trend === "flat"
-      ? " It has held steady recently."
-      : "";
+  // Prefer a windowed description over the single last-two-point delta.
+  const recent = summarizeRecentTrend(history);
+  let move = "";
+  if (recent.direction === "rising") {
+    move = ` It has been rising across your last ${recent.windowLength} recorded points.`;
+  } else if (recent.direction === "falling") {
+    move = ` It has been falling across your last ${recent.windowLength} recorded points, so a review lesson would help.`;
+  } else if (recent.direction === "plateaued") {
+    move = ` It has plateaued across your last ${recent.windowLength} recorded points.`;
+  } else if (recent.direction === "mixed") {
+    move =
+      trend === "up"
+        ? " Its recent points have moved both ways but ticked up most recently."
+        : trend === "down"
+        ? " Its recent points have moved both ways and dipped most recently."
+        : " Its recent points have moved both ways.";
+  }
 
-  const gaps = counts.weak_spot + counts.misconception + counts.review_needed;
-  const gapNote = gaps > 0 ? ` There ${gaps === 1 ? "is" : "are"} ${gaps} flagged gap${gaps === 1 ? "" : "s"} to revisit.` : "";
+  // Only UNRESOLVED gaps are worth revisiting; resolved weaknesses are excluded.
+  const gaps = evidence.unresolved_gap_count;
+  let gapNote = "";
+  if (gaps > 0) {
+    const parts: string[] = [];
+    if (evidence.fresh_misconception > 0) parts.push(`${evidence.fresh_misconception} fresh misconception${evidence.fresh_misconception === 1 ? "" : "s"}`);
+    if (evidence.stale_weak_spot > 0) parts.push(`${evidence.stale_weak_spot} stale weak spot${evidence.stale_weak_spot === 1 ? "" : "s"}`);
+    const breakdown = parts.length > 0 ? ` (${parts.join(", ")})` : "";
+    gapNote = ` There ${gaps === 1 ? "is" : "are"} ${gaps} unresolved gap${gaps === 1 ? "" : "s"} to revisit${breakdown}.`;
+  }
 
   return `A ${score}% score reflects ${band}, ${basis}.${move}${gapNote}`;
 }
