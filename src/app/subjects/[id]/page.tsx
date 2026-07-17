@@ -15,6 +15,8 @@ import { SubjectForm } from "@/components/SubjectForm";
 import { SubjectAgentNotes } from "@/components/SubjectAgentNotes";
 import { SubjectJournal } from "@/components/SubjectJournal";
 import { SubjectJobProgress } from "@/components/SubjectJobProgress";
+import { ReviewDuePanel } from "@/components/ReviewDuePanel";
+import type { ConceptReviewEvidence } from "@/lib/concept-evidence";
 
 interface SubjectData {
   subject: Subject;
@@ -22,6 +24,7 @@ interface SubjectData {
   mastery_signals: MasterySignal[];
   progress_points: ProgressPoint[];
   mastery?: SubjectMastery;
+  concept_review_evidence?: ConceptReviewEvidence;
   level_progression?: LevelProgression;
   tags: Array<{ id: number; name: string; tag_type: string }>;
   tag_evidence?: TagEvidenceRow[];
@@ -288,6 +291,7 @@ function SubjectContent({ params }: { params: Promise<{ id: string }> }) {
             <div className="space-y-5">
               <LevelProgressionPanel progression={data.level_progression} currentLevel={subject.current_level} />
               <MasterySummary mastery={data.mastery} />
+              <ReviewDuePanel evidence={data.concept_review_evidence} />
               <ProgressChart points={progress_points} />
               <TagEvidencePanel evidence={data.tag_evidence ?? []} />
               <MasteryPanel signals={mastery_signals} />
