@@ -254,6 +254,23 @@ export const doraTaskAdapter: CompletionHookAdapter = {
       ? event.next_lesson_diagnostics.map((d) => `  - Q: ${d.prompt}\n    A: ${d.answer}`).join("\n")
       : "  (no diagnostics answered)";
 
+    const review = event.concept_review_evidence;
+    const fmtReviewEvidence = review.review_candidates.length
+      ? review.review_candidates
+          .map((c) => {
+            const since =
+              c.lessons_since_tested === null
+                ? "not yet tested"
+                : `${c.lessons_since_tested} lesson${c.lessons_since_tested === 1 ? "" : "s"} since tested`;
+            return `  - ${c.concept} [${c.review_priority}, ${since}]: ${c.reason}`;
+          })
+          .join("\n")
+      : "  (no concepts flagged for review yet)";
+    const fmtReviewSummary =
+      `  Totals: ${review.summary.unresolved_gap_count} unresolved gap(s) ` +
+      `(${review.summary.fresh_misconception} fresh misconception(s), ${review.summary.stale_weak_spot} stale weak spot(s)), ` +
+      `${review.summary.untested_recently} untested-recently, ${review.summary.healthy} healthy of ${review.summary.total_concepts} tracked.`;
+
     const acceptance = [
       `Read ${AVOCADOCORE_LESSON_AUTHORING_SKILL} before doing any lesson work.`,
       "",
@@ -297,6 +314,11 @@ export const doraTaskAdapter: CompletionHookAdapter = {
       `Concepts to review: ${event.concepts_to_review.join(", ") || "none"}`,
       `Concepts ready to advance: ${event.concepts_ready_to_advance.join(", ") || "none"}`,
       `Recent misconceptions: ${event.recent_misconceptions.join(", ") || "none"}`,
+      "",
+      "=== PER-CONCEPT REVIEW EVIDENCE (use this for SPACED REINFORCEMENT) ===",
+      "This is the resolution-applied review rollup: ranked review-due concepts (weakness resolved by a later correct answer at equal-or-higher difficulty is already excluded) plus staleness. Open this lesson's practice or quiz with brief retrieval of the concepts below, most in need first. Tag each review item with the original concept so the evidence updates the old concept. Do not re-derive review targets by re-reading raw signal rows; use this ranking directly, and in the comprehensive plan resequencing state which of these are resurfaced now, which are deferred, and what evidence would retire each from review.",
+      fmtReviewEvidence,
+      fmtReviewSummary,
       "",
       "=== CURRICULUM CONTEXT ===",
       `Completed lessons: ${event.completed_lessons.map((l) => l.title).join("; ") || "none"}`,
