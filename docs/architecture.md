@@ -99,6 +99,14 @@ Multiple-choice answers, written diagnostics, and code submissions are recorded 
 
 Per-subject mastery is computed from recent progress points and mastery signals. The UI shows both the current score and evidence context so the learner can see why the system thinks something is a strength, weak spot, misconception, or ready-to-advance signal.
 
+## Per-Concept Review Evidence
+
+Raw `mastery_signals` and `assessment_results` rows accumulate append-only, so a weakness flagged long ago looks the same as one flagged yesterday, and a concept that has since been re-tested and passed still looks like a gap. The `src/lib/concept-evidence.ts` rollup turns those rows into a queryable, per-concept picture: for each concept it reports when it was last tested, how many lessons have passed since, the recent outcome mix, standing signal counts by type, and a review priority bucket (fresh misconception, stale weak spot, untested recently, or healthy).
+
+Resolution is derived, not stored. A weakness signal is treated as resolved when a later assessment answered the same concept correctly at equal or higher difficulty, so gap counts reflect current reality without a schema change. Ordering is by evidence recency and outcome mix rather than fixed day or lesson thresholds.
+
+The rollup is included in the `lesson.completed` event as `concept_review_evidence` (ranked review candidates plus summary counts), so every dispatched authoring task can drive spaced reinforcement directly instead of re-deriving review targets from raw rows. The subject page renders a plain-language version of the same rollup so the learner can see what to review next and why. `computeSubjectMastery` uses the rollup so its gap note counts only unresolved gaps.
+
 ## Security Model
 
 The app treats generator output as untrusted. Runtime routes should validate paths, content types, artifact metadata, and sandbox boundaries. Visual artifacts should be approved before being shown to learners.

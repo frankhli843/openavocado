@@ -130,6 +130,10 @@ A useful assessment answer tells the generator something about the next lesson:
 
 The learner can pass a quiz and still need a targeted repair lesson if the evidence shows a fragile foundation.
 
+## Per-Concept Review Evidence (spaced reinforcement)
+
+The completion event carries a `concept_review_evidence` rollup: ranked review-due concepts with a plain-language reason and how many lessons since each was last tested, plus summary counts. Resolution is already applied, so a weakness the learner has since answered correctly at equal or higher difficulty is not resurfaced. Use this ranking directly for the spaced reinforcement requirement. Open the new lesson's practice or quiz with brief retrieval of the top review candidates, most in need first, and tag each review item with the original concept so the evidence updates the old concept rather than only the new lesson. In the comprehensive plan resequencing, state which of these concepts are being resurfaced now, which are deferred to a later lesson, and what evidence would retire each from review. Do not re-derive review targets by re-reading raw signal rows; the rollup is the queryable source of truth and keeps review selection consistent between runs.
+
 ## One-Off Lessons
 
 A one-off lesson should cover the important material in one complete package. It should not begin with a separate assessment lesson unless the user explicitly asks for that.
