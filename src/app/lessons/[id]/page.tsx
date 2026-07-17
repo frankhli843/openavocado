@@ -8,6 +8,7 @@ import { ReadingSection } from "@/components/lesson/ReadingSection";
 import { MediaSection } from "@/components/lesson/MediaSection";
 import { InteractiveSection } from "@/components/lesson/InteractiveSection";
 import { LessonPartSection } from "@/components/lesson/LessonPartSection";
+import { OnTheGoLessonMode } from "@/components/lesson/OnTheGoLessonMode";
 import { CollapsibleLessonSection } from "@/components/lesson/CollapsibleLessonSection";
 import { PythonSection } from "@/components/lesson/PythonSection";
 import { CodeDrillSection } from "@/components/lesson/CodeDrillSection";
@@ -63,7 +64,7 @@ export default function LessonPage({ params }: { params: Promise<{ id: string }>
   // Quiz session state: serialized JSON blob stored in assessment_answers under key "__quiz__".
   // Stored separately from freeform answers so both can coexist in the same autosave row.
   const [quizStateSerialized, setQuizStateSerialized] = useState<string | null>(null);
-  // True when the MC quiz has been passed — gates the "Mark Complete" button.
+  // True when the MC quiz has been passed. Gates the "Mark Complete" button.
   const [quizPassed, setQuizPassed] = useState(false);
   // True when the lesson's assessment activity includes a MC quiz.
   const [hasQuiz, setHasQuiz] = useState(false);
@@ -74,6 +75,7 @@ export default function LessonPage({ params }: { params: Promise<{ id: string }>
   const [testResults, setTestResults] = useState<Record<string, string>>({});
   const [chatMaximized, setChatMaximized] = useState(false);
   const [chatDefaultApplied, setChatDefaultApplied] = useState(false);
+  const [onTheGoMode, setOnTheGoMode] = useState(false);
   const [activeSectionId, setActiveSectionId] = useState<string | null>(null);
   const [openSections, setOpenSections] = useState<Set<string>>(() => new Set());
   // Widget state is keyed per interactive activity id so a lesson with several
@@ -122,7 +124,12 @@ export default function LessonPage({ params }: { params: Promise<{ id: string }>
     const syncFromLocation = () => {
       const next = new Set(parseOpenSectionQuery(new URLSearchParams(window.location.search).get("open")));
       const hashId = window.location.hash.replace(/^#/, "");
-      if (/^section-[A-Za-z0-9_-]+$/.test(hashId)) next.add(hashId);
+      if (hashId === "section-diagnostics" || /^section-\d+$/.test(hashId)) {
+        next.add(hashId);
+      } else {
+        const partHash = /^(section-\d+)-[a-z][a-z0-9_-]{0,31}$/.exec(hashId);
+        if (partHash) next.add(partHash[1]);
+      }
       setOpenSections(next);
     };
     syncFromLocation();
@@ -144,6 +151,14 @@ export default function LessonPage({ params }: { params: Promise<{ id: string }>
       setChatMaximized(true);
     }
   }, [chatDefaultApplied]);
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const syncMode = () => setOnTheGoMode(new URLSearchParams(window.location.search).get("mode") === "go");
+    syncMode();
+    window.addEventListener("popstate", syncMode);
+    return () => window.removeEventListener("popstate", syncMode);
+  }, []);
 
   useEffect(() => {
     async function load() {
@@ -257,7 +272,7 @@ export default function LessonPage({ params }: { params: Promise<{ id: string }>
     load();
   }, [id]);
 
-  // Autosave — debounced, fires on any content change
+  // Autosave: debounced, fires on any content change
   const [debouncedSave] = debounce(
     async (payload: Parameters<typeof postAutosave>[0]) => {
       await postAutosave(payload);
@@ -390,6 +405,15 @@ export default function LessonPage({ params }: { params: Promise<{ id: string }>
     });
   }
 
+  function setLessonMode(nextOnTheGo: boolean) {
+    setOnTheGoMode(nextOnTheGo);
+    if (typeof window === "undefined") return;
+    const url = new URL(window.location.href);
+    if (nextOnTheGo) url.searchParams.set("mode", "go");
+    else url.searchParams.delete("mode");
+    window.history.replaceState(null, "", `${url.pathname}${url.search}${url.hash}`);
+  }
+
   async function handleComplete() {
     if (!data || learnerId == null) return;
     setCompleting(true);
@@ -461,7 +485,7 @@ export default function LessonPage({ params }: { params: Promise<{ id: string }>
   const activeLearnerId = learnerId;
   const { lesson, activities, artifacts, tags: lessonTags, subjectTags } = data;
 
-  // Parse authored knowledge graph orientation (optional — falls back to tag-derived view)
+  // Parse authored knowledge graph orientation (optional, falls back to tag-derived view)
   const knowledgeGraphData: KnowledgeGraphData | null = (() => {
     if (!lesson.knowledge_graph_data) return null;
     try { return JSON.parse(lesson.knowledge_graph_data) as KnowledgeGraphData; }
@@ -493,6 +517,28 @@ export default function LessonPage({ params }: { params: Promise<{ id: string }>
 
   // Context for recording per-question assessment evidence (tags + signals).
   const assessContext = { learnerId: activeLearnerId, subjectId: lesson.subject_id, lessonId: lesson.id };
+
+  if (onTheGoMode) {
+    return (
+      <OnTheGoLessonMode
+        lesson={lesson}
+        activities={sorted}
+        artifacts={artifacts}
+        sectionDone={sectionDone}
+        partQuizStates={partQuizStates}
+        assessContext={assessContext}
+        completionBlocked={completionBlocked}
+        completing={completing}
+        assessmentQuizState={quizStateSerialized}
+        onAssessmentQuizStateChange={triggerQuizAutosave}
+        onAssessmentQuizPassedChange={setQuizPassed}
+        onBackToNormal={() => setLessonMode(false)}
+        onSectionDoneChange={triggerSectionDoneAutosave}
+        onPartQuizStateChange={triggerPartQuizAutosave}
+        onCompleteLesson={handleComplete}
+      />
+    );
+  }
 
   const tocItems = [
     ...sorted.map((activity) => ({
@@ -544,6 +590,7 @@ export default function LessonPage({ params }: { params: Promise<{ id: string }>
       const partArtifact = artifacts.find((a) => a.artifact_type === "audio" && a.activity_id === activity.id);
       return (
         <LessonPartSection
+          sectionId={activitySectionId(activity)}
           activity={activity}
           artifact={partArtifact}
           initialWidgetState={widgetStates[activity.id]}
@@ -630,7 +677,16 @@ export default function LessonPage({ params }: { params: Promise<{ id: string }>
         <div className="bg-white rounded-xl border border-gray-200 p-6">
           <div className="flex items-start justify-between gap-4 mb-3">
             <h1 className="text-xl font-bold text-gray-900">{lesson.title}</h1>
-            <StatusBadge status={completed ? "completed" : lesson.status} />
+            <div className="flex shrink-0 items-center gap-2">
+              <button
+                type="button"
+                onClick={() => setLessonMode(true)}
+                className="rounded-lg border border-blue-200 bg-blue-50 px-3 py-2 text-sm font-semibold text-blue-700 hover:bg-blue-100 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-300"
+              >
+                On the go
+              </button>
+              <StatusBadge status={completed ? "completed" : lesson.status} />
+            </div>
           </div>
           {lesson.description && (
             <p className="text-sm text-gray-500 leading-relaxed mb-3">{lesson.description}</p>
@@ -736,7 +792,7 @@ export default function LessonPage({ params }: { params: Promise<{ id: string }>
           );
         })}
 
-        {/* End-of-lesson next-lesson diagnostics — autosave only, never completes */}
+        {/* End-of-lesson next-lesson diagnostics: autosave only, never completes */}
         {diagnostics.length > 0 && !discarded && (
           <CollapsibleLessonSection
             id="section-diagnostics"

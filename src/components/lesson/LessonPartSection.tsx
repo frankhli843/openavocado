@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import type { GeneratedArtifact, LessonActivity, ReadingBlock } from "@/types";
 import type {
   AudioSyncedVisualContent,
@@ -24,10 +24,16 @@ import {
   type QuizAssessContext,
 } from "./MultipleChoiceAssessmentSection";
 import { BespokeArtifactRenderer } from "./widgets/BespokeArtifactRenderer";
+import { parsePartOpenQuery, serializePartOpenQuery } from "@/lib/lesson-resume";
 
 type NormalizedAudioCue = AudioSyncedVisualCue & { end: number };
+type LessonPartBlockId = "audio" | "text" | "interactive" | "code" | "practice";
+
+const DEFAULT_OPEN_PART_BLOCKS = new Set<LessonPartBlockId>(["audio", "interactive", "practice"]);
+const PART_BLOCK_IDS = new Set<string>(["audio", "text", "interactive", "code", "practice"] satisfies LessonPartBlockId[]);
 
 interface LessonPartSectionProps {
+  sectionId?: string;
   activity: LessonActivity;
   artifact?: GeneratedArtifact;
   initialWidgetState?: Record<string, number>;
@@ -42,6 +48,7 @@ interface LessonPartSectionProps {
 }
 
 export function LessonPartSection({
+  sectionId,
   activity,
   artifact,
   initialWidgetState,
@@ -70,12 +77,80 @@ export function LessonPartSection({
   const [audioDuration, setAudioDuration] = useState(0);
   const [audioPlaying, setAudioPlaying] = useState(false);
   const [videoFailed, setVideoFailed] = useState(false);
+  const resolvedSectionId = sectionId ?? `section-${activity.id}`;
+  const [openPartBlocks, setOpenPartBlocks] = useState<Set<LessonPartBlockId>>(() => new Set(DEFAULT_OPEN_PART_BLOCKS));
   const syncedVisual = part?.audio.synced_visual ?? null;
   // Preferred per-segment Manim video (audio muxed in). Falls back to the legacy
   // <audio> + cue-swapped artifact if absent or if the <video> errors at runtime.
   const segmentVideo = part?.audio.video ?? null;
   const showVideo = Boolean(segmentVideo) && !videoFailed;
   const resumeKey = audioResumeKey(activity.id, artifact?.file_path);
+
+  const readOpenPartBlocksFromLocation = useCallback(() => {
+    const next = new Set<LessonPartBlockId>(DEFAULT_OPEN_PART_BLOCKS);
+    if (typeof window === "undefined") return next;
+    const partOpenBySection = parsePartOpenQuery(new URLSearchParams(window.location.search).get("partOpen"));
+    if (Object.prototype.hasOwnProperty.call(partOpenBySection, resolvedSectionId)) {
+      next.clear();
+      for (const blockId of partOpenBySection[resolvedSectionId]) {
+        if (PART_BLOCK_IDS.has(blockId)) next.add(blockId as LessonPartBlockId);
+      }
+    }
+    const hashId = window.location.hash.replace(/^#/, "");
+    const hashPrefix = `${resolvedSectionId}-`;
+    if (hashId.startsWith(hashPrefix)) {
+      const blockId = hashId.slice(hashPrefix.length);
+      if (PART_BLOCK_IDS.has(blockId)) next.add(blockId as LessonPartBlockId);
+    }
+    return next;
+  }, [resolvedSectionId]);
+
+  const syncPartBlocksToUrl = useCallback((nextOpenBlocks: Set<LessonPartBlockId>, hashTarget?: string | null) => {
+    if (typeof window === "undefined") return;
+    const url = new URL(window.location.href);
+    const partOpenBySection = parsePartOpenQuery(url.searchParams.get("partOpen"));
+    partOpenBySection[resolvedSectionId] = [...nextOpenBlocks];
+    const partOpen = serializePartOpenQuery(partOpenBySection);
+    if (partOpen) url.searchParams.set("partOpen", partOpen);
+    else url.searchParams.delete("partOpen");
+    if (hashTarget !== undefined) {
+      url.hash = hashTarget ? `#${hashTarget}` : "";
+    }
+    window.history.replaceState(null, "", `${url.pathname}${url.search}${url.hash}`);
+    window.dispatchEvent(new Event("avocadocore:lesson-url-state-change"));
+  }, [resolvedSectionId]);
+
+  const handlePartBlockOpenChange = useCallback((blockId: LessonPartBlockId, nextOpen: boolean) => {
+    setOpenPartBlocks((previous) => {
+      const next = new Set(previous);
+      if (nextOpen) next.add(blockId);
+      else next.delete(blockId);
+      const hashId = `${resolvedSectionId}-${blockId}`;
+      const hashMatchesClosedBlock = typeof window !== "undefined" && window.location.hash === `#${hashId}` && !nextOpen;
+      syncPartBlocksToUrl(next, nextOpen ? hashId : hashMatchesClosedBlock ? resolvedSectionId : undefined);
+      return next;
+    });
+    if (nextOpen && typeof window !== "undefined") {
+      const hashId = `${resolvedSectionId}-${blockId}`;
+      window.requestAnimationFrame(() => {
+        document.getElementById(hashId)?.scrollIntoView({ block: "start" });
+      });
+    }
+  }, [resolvedSectionId, syncPartBlocksToUrl]);
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const syncFromLocation = () => setOpenPartBlocks(readOpenPartBlocksFromLocation());
+    syncFromLocation();
+    const timer = window.setTimeout(syncFromLocation, 0);
+    window.addEventListener("popstate", syncFromLocation);
+    window.addEventListener("hashchange", syncFromLocation);
+    return () => {
+      window.clearTimeout(timer);
+      window.removeEventListener("popstate", syncFromLocation);
+      window.removeEventListener("hashchange", syncFromLocation);
+    };
+  }, [readOpenPartBlocksFromLocation]);
 
   const seekAudio = (time: number) => {
     if (!audioRef.current) return;
@@ -101,7 +176,12 @@ export function LessonPartSection({
         </div>
       ) : (
         <>
-          <PartBlock title="Audio">
+          <PartBlock
+            id={`${resolvedSectionId}-audio`}
+            title="Audio"
+            open={openPartBlocks.has("audio")}
+            onOpenChange={(nextOpen) => handlePartBlockOpenChange("audio", nextOpen)}
+          >
             <div className="min-w-0 space-y-5">
               <div className="min-w-0 space-y-3">
                 {showVideo && segmentVideo ? (
@@ -177,7 +257,12 @@ export function LessonPartSection({
             </div>
           </PartBlock>
 
-          <PartBlock title="Written explanation">
+          <PartBlock
+            id={`${resolvedSectionId}-text`}
+            title="Written explanation"
+            open={openPartBlocks.has("text")}
+            onOpenChange={(nextOpen) => handlePartBlockOpenChange("text", nextOpen)}
+          >
             <article className="space-y-4">
               {part.reading.intro && (
                 <p className="text-[15px] text-gray-700 leading-7">{part.reading.intro}</p>
@@ -199,7 +284,12 @@ export function LessonPartSection({
             </article>
           </PartBlock>
 
-          <PartBlock title="Interactive">
+          <PartBlock
+            id={`${resolvedSectionId}-interactive`}
+            title="Interactive"
+            open={openPartBlocks.has("interactive")}
+            onOpenChange={(nextOpen) => handlePartBlockOpenChange("interactive", nextOpen)}
+          >
             <p className="text-sm text-gray-600 leading-relaxed">
               {(part.interactive as { instructions?: string }).instructions}
             </p>
@@ -211,7 +301,12 @@ export function LessonPartSection({
           </PartBlock>
 
           {part.code && (
-            <PartBlock title="Code practice">
+            <PartBlock
+              id={`${resolvedSectionId}-code`}
+              title="Code practice"
+              open={openPartBlocks.has("code")}
+              onOpenChange={(nextOpen) => handlePartBlockOpenChange("code", nextOpen)}
+            >
               <PythonSection
                 activity={{
                   ...activity,
@@ -232,7 +327,12 @@ export function LessonPartSection({
           )}
 
           {part.practice ? (
-            <PartBlock title="Practice">
+            <PartBlock
+              id={`${resolvedSectionId}-practice`}
+              title="Practice"
+              open={openPartBlocks.has("practice")}
+              onOpenChange={(nextOpen) => handlePartBlockOpenChange("practice", nextOpen)}
+            >
               <LessonPartPracticeSection
                 activity={activity}
                 lesson={{ title: lessonTitle ?? "Untitled lesson", description: lessonDescription ?? null }}
@@ -255,12 +355,37 @@ export function LessonPartSection({
   );
 }
 
-function PartBlock({ title, children }: { title: string; children: ReactNode }) {
+function PartBlock({
+  id,
+  title,
+  open,
+  onOpenChange,
+  children,
+}: {
+  id: string;
+  title: string;
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  children: ReactNode;
+}) {
   return (
-    <div className="space-y-3">
-      <div className="text-xs font-semibold text-gray-400 uppercase tracking-wider">{title}</div>
-      {children}
-    </div>
+    <section id={id} className="scroll-mt-24 space-y-3 border-t border-gray-100 pt-3 first:border-t-0 first:pt-0">
+      <button
+        type="button"
+        aria-expanded={open}
+        aria-controls={`${id}-body`}
+        onClick={() => onOpenChange(!open)}
+        className="flex w-full items-center justify-between gap-3 rounded-md px-1 py-1 text-left hover:bg-gray-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-300"
+      >
+        <span className="text-xs font-semibold uppercase tracking-wider text-gray-400">{title}</span>
+        <span className="shrink-0 text-sm font-semibold text-gray-400" aria-hidden="true">
+          {open ? "-" : "+"}
+        </span>
+      </button>
+      <div id={`${id}-body`} hidden={!open}>
+        {children}
+      </div>
+    </section>
   );
 }
 

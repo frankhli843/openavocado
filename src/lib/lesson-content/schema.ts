@@ -1556,6 +1556,7 @@ export function validateLessonPartPracticeContent(content: unknown): { valid: bo
   };
   let hasNoneSelectAll = false;
   let hasSomeSelectAll = false;
+  let hasAllSelectAll = false;
 
   for (const [i, raw] of c.questions.entries()) {
     if (!raw || typeof raw !== "object") {
@@ -1623,12 +1624,15 @@ export function validateLessonPartPracticeContent(content: unknown): { valid: bo
           errors.push(`questions[${i}] correct_indices must not contain duplicates`);
         }
         if (indices.length === 0) hasNoneSelectAll = true;
-        if (indices.length > 1) hasSomeSelectAll = true;
-        // Lesson-part select_all must NOT carry an authored "none" choice: the
-        // practice UI supplies a virtual none option for the true no-correct
-        // case (correct_indices: []), so an authored none is a duplicate that
-        // renders twice. This is the opposite of the top-level assessment quiz,
-        // which requires a real "None of the above" choice.
+        if (Array.isArray(choices) && indices.length === choices.length) hasAllSelectAll = true;
+        if (indices.length > 1 && (!Array.isArray(choices) || indices.length < choices.length)) {
+          hasSomeSelectAll = true;
+        }
+        // Lesson-part select_all must NOT carry authored "none" or "all"
+        // choices. The practice UI supplies virtual none/all options for the
+        // true no-correct and all-correct cases, so authored versions render
+        // twice. This is the opposite of the top-level assessment quiz, which
+        // requires a real "None of the above" choice.
         if (Array.isArray(choices)) {
           const authoredNone = choices.findIndex(
             (choice) =>
@@ -1638,6 +1642,16 @@ export function validateLessonPartPracticeContent(content: unknown): { valid: bo
           if (authoredNone >= 0) {
             errors.push(
               `questions[${i}] select_all must not include an authored "none" choice (choices[${authoredNone}]); the UI supplies a virtual none for correct_indices: []`
+            );
+          }
+          const authoredAll = choices.findIndex(
+            (choice) =>
+              typeof choice === "string" &&
+              /^\s*all of (the above|these|the below|them)\s*\.?\s*$/i.test(choice)
+          );
+          if (authoredAll >= 0) {
+            errors.push(
+              `questions[${i}] select_all must not include an authored "all" choice (choices[${authoredAll}]); the UI supplies a virtual all when every choice is correct`
             );
           }
         }
@@ -1742,9 +1756,10 @@ export function validateLessonPartPracticeContent(content: unknown): { valid: bo
     }
   }
 
-  if (typeCounts.select_all < 2) errors.push("questions must include at least two select_all prompts");
+  if (typeCounts.select_all < 3) errors.push("questions must include at least three select_all prompts");
   if (!hasNoneSelectAll) errors.push("select_all prompts must include one case where none are correct");
-  if (!hasSomeSelectAll) errors.push("select_all prompts must include one case where multiple answers are correct");
+  if (!hasSomeSelectAll) errors.push("select_all prompts must include one case where some but not all answers are correct");
+  if (!hasAllSelectAll) errors.push("select_all prompts must include one case where all answers are correct");
   if (typeCounts.ordering < 1) errors.push("questions must include at least one ordering prompt");
   if (typeCounts.written < 1) errors.push("questions must include at least one written prompt with LLM grading");
 

@@ -586,7 +586,8 @@ Generate a high-quality adaptive lesson for this learner. The lesson must:
 - Include 8-12 substantive reading blocks that teach the concept clearly with definitions, worked examples, mechanism traces, and explicit preview/deeper-later language when needed
 - Include 2-3 open-ended assessment questions that check understanding
 - Include mixed practice beyond plain multiple choice: select-one, select-all
-  with some correct, select-all with none correct, ordering, and written
+  with some but not all correct, select-all with none correct, select-all with
+  all correct, ordering, and written
   responses with an expected answer and rubric for immediate LLM grading
 - Include a small executable code exercise for each lesson sub-part plus one
   final integrator code exercise. Every code exercise must include full

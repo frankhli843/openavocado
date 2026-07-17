@@ -682,6 +682,16 @@ function validLessonPartContent() {
         },
         {
           id: "p4",
+          type: "select_all",
+          prompt: "Select all statements that are true for a complete lesson part.",
+          concept: "part-concept",
+          difficulty: "medium",
+          choices: ["It names the object", "It shows the transformation", "It checks understanding"],
+          correct_indices: [0, 1, 2],
+          explanation: "All are true because a complete part teaches, visualizes, and checks the mechanism.",
+        },
+        {
+          id: "p5",
           type: "ordering",
           prompt: "Order the section flow.",
           concept: "part-concept",
@@ -691,7 +701,7 @@ function validLessonPartContent() {
           explanation: "A section should show receive, transform, and pass forward.",
         },
         {
-          id: "p5",
+          id: "p6",
           type: "written",
           prompt: "Explain why the visual must stay beside the text.",
           concept: "part-concept",
@@ -700,7 +710,7 @@ function validLessonPartContent() {
           rubric: "Look for text-to-visual mapping, named objects, operations, and reduced cognitive load.",
         },
         {
-          id: "p6",
+          id: "p7",
           type: "select_one",
           prompt: "What should the code practice target?",
           concept: "part-concept",
@@ -895,6 +905,19 @@ Leo: What would the variable names be? What would a small input look like?`;
     const r = validateLessonPartContent(content, ["declarative"], validateWidgetSpec);
     expect(r.valid).toBe(false);
     expect(r.errors.join(" ")).toMatch(/must not include an authored "none" choice/);
+  });
+
+  it("rejects an authored all choice in a lesson-part select_all (UI supplies a virtual all)", () => {
+    const content = validLessonPartContent();
+    const q = content.practice.questions.find((x) => x.id === "p4") as {
+      choices: string[];
+      correct_indices: number[];
+    };
+    q.choices = [...q.choices, "All of the above"];
+    q.correct_indices = [0, 1, 2, 3];
+    const r = validateLessonPartContent(content, ["declarative"], validateWidgetSpec);
+    expect(r.valid).toBe(false);
+    expect(r.errors.join(" ")).toMatch(/must not include an authored "all" choice/);
   });
 
   it("rejects legacy char-offset audio cues that cannot sync to playback time", () => {

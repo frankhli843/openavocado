@@ -4,9 +4,11 @@ import {
   buildLessonDeepLink,
   isSafeLessonDeepLink,
   parseOpenSectionQuery,
+  parsePartOpenQuery,
   parseLessonResumeState,
   readLessonResumeState,
   serializeOpenSectionQuery,
+  serializePartOpenQuery,
   writeLessonResumeState,
 } from "../lib/lesson-resume";
 
@@ -24,11 +26,14 @@ describe("lesson resume deep links", () => {
     expect(isSafeLessonDeepLink("/lessons/7")).toBe(true);
     expect(isSafeLessonDeepLink("/lessons/7#section-40")).toBe(true);
     expect(isSafeLessonDeepLink("/lessons/7?open=section-10%2Csection-40#section-40")).toBe(true);
+    expect(isSafeLessonDeepLink("/lessons/7?mode=go&partOpen=section-40%3Aaudio%2Cpractice#section-40-practice")).toBe(true);
     expect(isSafeLessonDeepLink("/subjects/5?tab=lessons")).toBe(false);
     expect(isSafeLessonDeepLink("https://example.com/lessons/7")).toBe(false);
     expect(isSafeLessonDeepLink("//example.com/lessons/7")).toBe(false);
     expect(isSafeLessonDeepLink("/lessons/7?next=https://example.com")).toBe(false);
+    expect(isSafeLessonDeepLink("/lessons/7?mode=edit")).toBe(false);
     expect(isSafeLessonDeepLink("/lessons/7?open=section-10,bad section")).toBe(false);
+    expect(isSafeLessonDeepLink("/lessons/7?partOpen=section-10:bad block")).toBe(false);
     expect(isSafeLessonDeepLink("/lessons/7#bad section")).toBe(false);
   });
 
@@ -40,6 +45,18 @@ describe("lesson resume deep links", () => {
     expect(serializeOpenSectionQuery(["section-40", "bad section", "section-10"])).toBe(
       "section-40,section-10"
     );
+  });
+
+  it("parses and serializes open lesson-part block query state", () => {
+    expect(parsePartOpenQuery("section-10:audio,text,bad block,audio;bad section:code;section-40:practice")).toEqual({
+      "section-10": ["audio", "text"],
+      "section-40": ["practice"],
+    });
+    expect(serializePartOpenQuery({
+      "section-40": ["practice", "bad block"],
+      "bad section": ["audio"],
+      "section-10": ["audio", "text"],
+    })).toBe("section-40:practice;section-10:audio,text");
   });
 
   it("parses current JSON state and legacy plain-link state", () => {

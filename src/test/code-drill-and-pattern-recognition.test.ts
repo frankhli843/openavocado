@@ -287,7 +287,7 @@ describe("gradePatternRecognition", () => {
 
 /**
  * A full lesson-part practice payload that satisfies the base requirements
- * (2 select_all incl. a none + a multi case, an ordering, a written) plus one
+ * (3 select_all incl. none, some, and all true cases, an ordering, a written) plus one
  * pattern_recognition question, so we can assert the new type validates in situ.
  */
 function practiceWith(prQuestion: Record<string, unknown>) {
@@ -319,6 +319,15 @@ function practiceWith(prQuestion: Record<string, unknown>) {
         difficulty: "easy",
         choices: ["X", "Y"],
         correct_indices: [],
+      },
+      {
+        id: "sa3",
+        type: "select_all",
+        prompt: "Which apply (all)?",
+        concept: "c",
+        difficulty: "easy",
+        choices: ["L", "M", "N"],
+        correct_indices: [0, 1, 2],
       },
       {
         id: "ord1",

@@ -1,10 +1,10 @@
 "use client";
 
 /**
- * SegmentVideoPlayer — plays a per-segment 3Blue1Brown-style ManimCE video (with
+ * SegmentVideoPlayer plays a per-segment 3Blue1Brown-style ManimCE video (with
  * its audio muxed in) as the PREFERRED representation of an audio segment. The
  * cue-to-visual highlight sync is baked into the video, so there is no runtime
- * sync machinery here — just a <video> with a poster and caption track.
+ * sync machinery here, just a <video> with a poster and caption track.
  *
  * Resume position is reused from the same localStorage logic as the <audio>
  * player, keyed on the video file_path so audio↔video switches don't collide.
@@ -27,11 +27,14 @@ export function SegmentVideoPlayer({
   activityId,
   video,
   onError,
+  onEnded,
 }: {
   activityId: number;
   video: LessonSegmentVideo;
   /** Called when the <video> fails to load/play so the parent can fall back. */
   onError?: () => void;
+  /** Called after playback finishes (resume position already cleared). */
+  onEnded?: () => void;
 }) {
   const videoRef = useRef<HTMLVideoElement | null>(null);
   const lastSavedRef = useRef(0);
@@ -82,11 +85,14 @@ export function SegmentVideoPlayer({
       onEnded={() => {
         if (typeof window !== "undefined") clearAudioResumeTime(window.localStorage, resumeKey);
         lastSavedRef.current = 0;
+        onEnded?.();
       }}
       onError={() => onError?.()}
     >
       <source src={src} type="video/mp4" />
-      {captions && <track kind="captions" src={captions} srcLang="en" label="English" default />}
+      {/* Captions stay opt-in (no `default`): the narration is already in the
+          audio track, and browser cue overlays cover the animated stage. */}
+      {captions && <track kind="captions" src={captions} srcLang="en" label="English" />}
       Your browser does not support video playback.
     </video>
   );

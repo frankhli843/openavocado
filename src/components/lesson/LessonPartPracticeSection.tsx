@@ -10,7 +10,22 @@ import {
 import type { QuizAssessContext } from "./MultipleChoiceAssessmentSection";
 
 type AnswerState = Record<string, string | string[]>;
-type FeedbackState = Record<string, { correct: boolean | null; text: string; loading?: boolean }>;
+type FeedbackState = Record<
+  string,
+  {
+    correct: boolean | null;
+    text: string;
+    loading?: boolean;
+    semanticFeedback?: string;
+    semanticLoading?: boolean;
+    semanticError?: string;
+  }
+>;
+
+type AnswerJudgment = {
+  verdict: "correct" | "partially_correct" | "incorrect" | "unclear";
+  feedback: string;
+};
 
 interface LessonPartPracticeSectionProps {
   activity: LessonActivity;
@@ -78,47 +93,78 @@ export function LessonPartPracticeSection({
     if (q.type === "written") {
       const answerText = String(answer ?? "").trim();
       try {
-        const res = await fetch("/api/answer-judge", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            lesson_title: lesson?.title ?? "Untitled lesson",
-            lesson_description: lesson?.description ?? null,
-            question_type: "free_text",
-            question_text: q.prompt,
-            question_hint: q.hint ?? null,
-            learner_answer: answerText,
-            actual_answer: q.actual_answer,
-            rubric: q.rubric ?? null,
-            accepted_answers: q.accepted_answers ?? [],
-          }),
+        const judgment = await requestAnswerJudgment({
+          lesson,
+          question: q,
+          answerText,
+          questionType: "free_text",
+          actualAnswer: q.actual_answer ?? "",
         });
-        const json = (await res.json()) as {
-          enabled?: boolean;
-          judgment?: { verdict: string; feedback: string } | null;
-        };
-        const judgment = json.judgment ?? fallbackWrittenJudgment(q, answerText);
         const verdict = judgment.verdict;
         const correct = verdict === "correct" || verdict === "partially_correct";
         const feedbackText = formatWrittenFeedback(judgment);
         setFeedback((prev) => ({ ...prev, [q.id]: { correct, text: feedbackText } }));
         recordEvidence(q, correct, answerText, feedbackText);
-      } catch {
-        const judgment = fallbackWrittenJudgment(q, answerText);
-        const correct = judgment.verdict === "correct" || judgment.verdict === "partially_correct";
-        const feedbackText = formatWrittenFeedback(judgment);
+      } catch (err) {
+        const feedbackText = formatJudgeError(err);
         setFeedback((prev) => ({
           ...prev,
-          [q.id]: { correct, text: feedbackText },
+          [q.id]: { correct: null, text: feedbackText },
         }));
-        recordEvidence(q, correct, answerText, feedbackText);
+        recordEvidence(q, null, answerText, feedbackText);
       }
       return;
     }
 
     const result = gradeDeterministic(q, answer);
-    setFeedback((prev) => ({ ...prev, [q.id]: result }));
+    setFeedback((prev) => ({ ...prev, [q.id]: { ...result, semanticLoading: true } }));
     recordEvidence(q, result.correct, formatAnswer(q, answer), result.text);
+    void enrichWithSemanticFeedback(q, answer, result.text);
+  }
+
+  async function enrichWithSemanticFeedback(
+    q: LessonPartPracticeQuestion,
+    answer: string | string[] | undefined,
+    deterministicFeedback: string
+  ) {
+    const answerText = formatAnswer(q, answer);
+    try {
+      const judgment = await requestAnswerJudgment({
+        lesson,
+        question: q,
+        answerText,
+        questionType: q.type,
+        actualAnswer: expectedAnswerText(q),
+      });
+      const feedbackText = formatWrittenFeedback(judgment);
+      setFeedback((prev) => {
+        const current = prev[q.id];
+        if (!current) return prev;
+        return {
+          ...prev,
+          [q.id]: {
+            ...current,
+            semanticLoading: false,
+            semanticFeedback: feedbackText,
+            semanticError: undefined,
+          },
+        };
+      });
+      recordEvidence(q, null, answerText, `${deterministicFeedback}\n${feedbackText}`);
+    } catch (err) {
+      setFeedback((prev) => {
+        const current = prev[q.id];
+        if (!current) return prev;
+        return {
+          ...prev,
+          [q.id]: {
+            ...current,
+            semanticLoading: false,
+            semanticError: formatJudgeError(err),
+          },
+        };
+      });
+    }
   }
 
   return (
@@ -161,18 +207,49 @@ function PracticeQuestionCard({
   onAnswer: (value: string | string[]) => void;
   onGrade: () => void;
 }) {
+  const [speaking, setSpeaking] = useState(false);
+
+  function readQuestionAloud() {
+    if (typeof window === "undefined" || !("speechSynthesis" in window)) return;
+    const synth = window.speechSynthesis;
+    if (speaking) {
+      synth.cancel();
+      setSpeaking(false);
+      return;
+    }
+    const utterance = new SpeechSynthesisUtterance(questionReadText(question));
+    utterance.rate = 0.92;
+    utterance.onend = () => setSpeaking(false);
+    utterance.onerror = () => setSpeaking(false);
+    setSpeaking(true);
+    synth.cancel();
+    synth.speak(utterance);
+  }
+
   return (
-    <div className="rounded-xl border border-gray-100 bg-gray-50/40 p-3">
-      <div className="mb-2 flex flex-col gap-1 sm:flex-row sm:items-start sm:justify-between">
-        <div>
+    <div className="rounded-lg border border-gray-100 bg-gray-50/40 p-2 sm:p-3">
+      <div className="mb-2 flex items-start justify-between gap-2">
+        <div className="min-w-0 flex-1">
           <div className="text-[11px] font-semibold uppercase tracking-wider text-gray-400">
             {index + 1}. {question.type.replace("_", " ")} · {question.difficulty}
           </div>
-          <div className="mt-1 text-sm font-medium leading-6 text-gray-800">{question.prompt}</div>
+          <div className="mt-1 break-words text-sm font-medium leading-5 text-gray-800 sm:leading-6">{question.prompt}</div>
+          <span className="mt-1 inline-flex rounded-full bg-white px-2 py-0.5 text-[11px] font-medium text-gray-500 sm:hidden">
+            {question.concept}
+          </span>
         </div>
-        <span className="rounded-full bg-white px-2 py-1 text-[11px] font-medium text-gray-500">
+        <div className="flex shrink-0 flex-col items-end gap-1">
+        <button
+          type="button"
+          onClick={readQuestionAloud}
+          className="rounded-full border border-gray-200 bg-white px-2 py-1 text-[11px] font-semibold text-gray-600 hover:bg-gray-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-300"
+        >
+          {speaking ? "Stop" : "Read"}
+        </button>
+        <span className="hidden rounded-full bg-white px-2 py-1 text-[11px] font-medium text-gray-500 sm:inline-flex">
           {question.concept}
         </span>
+        </div>
       </div>
       <PracticeInput question={question} answer={answer} feedback={feedback} onAnswer={onAnswer} />
       {question.hint && <p className="mt-2 text-xs leading-5 text-gray-500">Hint: {question.hint}</p>}
@@ -195,7 +272,20 @@ function PracticeQuestionCard({
                 : "border-gray-100 bg-white text-gray-600"
             }`}
           >
-            {feedback.text}
+            <p>{feedback.text}</p>
+            {feedback.semanticLoading && (
+              <p className="mt-2 border-t border-current/10 pt-2 text-xs opacity-80">
+                Semantic feedback is still checking this answer.
+              </p>
+            )}
+            {feedback.semanticFeedback && (
+              <p className="mt-2 border-t border-current/10 pt-2">{feedback.semanticFeedback}</p>
+            )}
+            {feedback.semanticError && (
+              <p className="mt-2 border-t border-current/10 pt-2 text-xs opacity-80">
+                {feedback.semanticError}
+              </p>
+            )}
           </div>
         )}
       </div>
@@ -262,6 +352,14 @@ function PracticeInput({
   const correctChoices = getCorrectChoices(question);
   const noneSelected = question.type === "select_all" && Array.isArray(answer) && answer.length === 0;
   const noneCorrect = question.type === "select_all" && (question.correct_indices ?? []).length === 0;
+  const allSelected =
+    question.type === "select_all" &&
+    choices.length > 0 &&
+    choices.every((choice) => selected.includes(choice));
+  const allCorrect =
+    question.type === "select_all" &&
+    choices.length > 0 &&
+    (question.correct_indices ?? []).length === choices.length;
   const isMulti = question.type === "select_all" || question.type === "pattern_recognition";
   return (
     <div className="mt-3 space-y-2">
@@ -279,6 +377,17 @@ function PracticeInput({
           showResults={showResults}
           multi
           onClick={() => onAnswer([])}
+        />
+      )}
+      {question.type === "select_all" && (
+        <ChoiceButton
+          label="All of these"
+          checked={allSelected}
+          selected={allSelected}
+          correct={allCorrect}
+          showResults={showResults}
+          multi
+          onClick={() => onAnswer(choices)}
         />
       )}
       {choices.map((choice) => {
@@ -360,19 +469,36 @@ function ChoiceButton({
     <button
       type="button"
       onClick={onClick}
-      className={`flex w-full items-start gap-3 rounded-lg border px-3 py-2 text-left text-sm transition-colors ${buttonClass}`}
+      className={`flex w-full items-start gap-2 rounded-lg border px-2 py-2 text-left text-sm transition-colors sm:gap-3 sm:px-3 ${buttonClass}`}
     >
       <span className={`mt-0.5 h-5 w-5 shrink-0 border text-center text-xs font-bold ${multi ? "rounded" : "rounded-full"} ${markClass}`}>
         {checked ? "✓" : missedCorrect ? "!" : ""}
       </span>
-      <span className="min-w-0 flex-1 leading-6">{label}</span>
+      <span className="min-w-0 flex-1 break-words leading-5 sm:leading-6">{label}</span>
       {badge ? (
-        <span className="shrink-0 rounded-full bg-white/80 px-2 py-0.5 text-[11px] font-semibold">
+        <span className="hidden shrink-0 rounded-full bg-white/80 px-2 py-0.5 text-[11px] font-semibold sm:inline-flex">
           {badge}
         </span>
       ) : null}
     </button>
   );
+}
+
+function questionReadText(question: LessonPartPracticeQuestion): string {
+  const parts = [`Question. ${question.prompt}`];
+  if (question.type === "select_all") {
+    parts.push("Answers. None of these. All of these.");
+  } else if (question.type === "ordering") {
+    parts.push("Items to order.");
+  } else if (question.type === "pattern_recognition") {
+    parts.push("Select every pattern that applies. Answers.");
+  } else if (question.type === "select_one") {
+    parts.push("Answers.");
+  }
+  const choices = question.type === "ordering" ? question.items ?? [] : question.choices ?? [];
+  choices.forEach((choice, index) => parts.push(`${index + 1}. ${choice}.`));
+  if (question.hint) parts.push(`Hint. ${question.hint}`);
+  return parts.join(" ");
 }
 
 function getCorrectChoices(question: LessonPartPracticeQuestion): Set<string> {
@@ -460,40 +586,97 @@ function move(items: string[], index: number, delta: number): string[] {
   return next;
 }
 
-function fallbackWrittenJudgment(question: LessonPartPracticeQuestion, answerText: string): {
-  verdict: "correct" | "partially_correct" | "incorrect" | "unclear";
-  feedback: string;
-} {
-  const answer = normalizeWords(answerText);
-  const prompt = `${question.prompt} ${question.actual_answer ?? ""} ${question.rubric ?? ""}`.toLowerCase();
-  const groups = conceptKeywordGroups(prompt);
-  const hits = groups.filter((group) => group.some((word) => answer.has(word)));
-  const hasEnough = answer.size >= 5;
-  const verdict =
-    hits.length >= Math.max(2, Math.ceil(groups.length * 0.65))
-      ? "correct"
-      : hits.length >= 1 && hasEnough
-        ? "partially_correct"
-        : hasEnough
-          ? "incorrect"
-          : "unclear";
-  const missing = groups
-    .filter((group) => !group.some((word) => answer.has(word)))
-    .map((group) => group[0])
-    .slice(0, 2);
-  const missingText = missing.length ? ` Add ${missing.join(" and ")} to make the explanation complete.` : "";
-  const base =
-    verdict === "correct"
-      ? "Your answer captures the key idea."
-      : verdict === "partially_correct"
-        ? "You have part of the idea, but the explanation is missing an important link."
-        : verdict === "incorrect"
-          ? "This does not yet explain the mechanism the question is asking for."
-          : "This is too short or vague to judge confidently.";
-  return {
-    verdict,
-    feedback: `${base}${missingText}`.trim(),
-  };
+async function requestAnswerJudgment({
+  lesson,
+  question,
+  answerText,
+  questionType,
+  actualAnswer,
+}: {
+  lesson?: Pick<Lesson, "title" | "description"> | null;
+  question: LessonPartPracticeQuestion;
+  answerText: string;
+  questionType: string;
+  actualAnswer: string;
+}): Promise<AnswerJudgment> {
+  if (!actualAnswer.trim()) {
+    throw new Error("This question does not include a reference answer for semantic judging.");
+  }
+
+  const res = await fetch("/api/answer-judge", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      lesson_title: lesson?.title ?? "Untitled lesson",
+      lesson_description: lesson?.description ?? null,
+      question_type: questionType,
+      question_text: question.prompt,
+      question_hint: question.hint ?? null,
+      learner_answer: answerText,
+      actual_answer: actualAnswer,
+      rubric: question.rubric ?? question.explanation ?? null,
+      accepted_answers: question.accepted_answers ?? [],
+    }),
+  });
+
+  const json = (await res.json().catch(() => null)) as {
+    enabled?: boolean;
+    judgment?: { verdict?: string; feedback?: string } | null;
+    error?: string;
+  } | null;
+
+  if (!res.ok) {
+    throw new Error(json?.error ?? `Judge request failed with status ${res.status}.`);
+  }
+  if (json?.enabled === false) {
+    throw new Error("Semantic judging is disabled.");
+  }
+  const verdict = json?.judgment?.verdict;
+  const feedback = json?.judgment?.feedback;
+  if (
+    verdict !== "correct" &&
+    verdict !== "partially_correct" &&
+    verdict !== "incorrect" &&
+    verdict !== "unclear"
+  ) {
+    throw new Error(json?.error ?? "Semantic judge did not return a verdict.");
+  }
+  if (typeof feedback !== "string" || !feedback.trim()) {
+    throw new Error("Semantic judge did not return feedback.");
+  }
+  return { verdict, feedback };
+}
+
+function expectedAnswerText(question: LessonPartPracticeQuestion): string {
+  if (question.actual_answer?.trim()) return question.actual_answer.trim();
+  if (question.type === "select_one") {
+    const choices = question.choices ?? [];
+    const correct = choices[question.correct_index ?? -1];
+    return [correct, question.explanation].filter(Boolean).join(". ");
+  }
+  if (question.type === "select_all") {
+    const choices = question.choices ?? [];
+    const correctChoices = (question.correct_indices ?? []).map((idx) => choices[idx]).filter(Boolean);
+    const selectionText = correctChoices.length ? correctChoices.join(", ") : "None of these.";
+    return [selectionText, question.explanation].filter(Boolean).join(". ");
+  }
+  if (question.type === "pattern_recognition") {
+    const { primary, secondary } = patternRecognitionCorrectChoices(question);
+    const primaryChoices = Array.from(primary);
+    const secondaryChoices = Array.from(secondary);
+    const secondaryText = secondaryChoices.length ? `Secondary acceptable patterns: ${secondaryChoices.join(", ")}.` : "";
+    return [
+      primaryChoices.length ? `Required patterns: ${primaryChoices.join(", ")}.` : "",
+      secondaryText,
+      question.explanation,
+    ].filter(Boolean).join(" ");
+  }
+  return [question.correct_order?.join(" -> "), question.explanation].filter(Boolean).join(". ");
+}
+
+function formatJudgeError(err: unknown) {
+  const detail = err instanceof Error && err.message ? ` ${err.message}` : "";
+  return `Semantic feedback is unavailable right now.${detail}`;
 }
 
 function formatWrittenFeedback(judgment: { verdict: string; feedback: string }) {
@@ -506,44 +689,4 @@ function formatWrittenFeedback(judgment: { verdict: string; feedback: string }) 
           ? "Incorrect"
           : "Needs more detail";
   return `${label}: ${judgment.feedback}`;
-}
-
-function normalizeWords(text: string): Set<string> {
-  const aliases: Record<string, string> = {
-    aligned: "alignment",
-    align: "alignment",
-    similar: "similarity",
-    relevant: "relevance",
-    attend: "attention",
-    attends: "attention",
-    attending: "attention",
-    output: "output",
-    token: "token",
-    feature: "feature",
-  };
-  return new Set(
-    text
-      .toLowerCase()
-      .replace(/[^a-z0-9_]+/g, " ")
-      .split(/\s+/)
-      .filter(Boolean)
-      .map((word) => aliases[word] ?? word)
-  );
-}
-
-function conceptKeywordGroups(context: string): string[][] {
-  if (/\bdot product\b|\bq_i\b|\bk_j\b|\battention\b/.test(context)) {
-    return [
-      ["alignment", "similarity", "match", "compatibility"],
-      ["attention", "attend", "weight", "score"],
-      ["relevance", "relevant", "useful"],
-      ["token", "row", "position"],
-      ["output", "content", "value"],
-    ];
-  }
-  return [
-    ["mechanism", "operation", "process"],
-    ["input", "object", "data"],
-    ["output", "result", "effect"],
-  ];
 }
