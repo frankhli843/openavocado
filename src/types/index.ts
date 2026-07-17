@@ -1,5 +1,9 @@
 // ─── Core domain types for AvocadoCore ───────────────────────────────────────
 
+// Per-concept review evidence lives in src/lib/concept-evidence; imported
+// type-only (erased at build, so no runtime cycle) for the completion event.
+import type { ConceptReviewEvidence } from "@/lib/concept-evidence";
+
 // Interactive widget schema types live in src/lib/widgets and are re-exported
 // here so the generator contract and consumers have a single import surface.
 export type {
@@ -640,6 +644,14 @@ export interface LessonCompletedEvent {
   }>;
   /** Recent misconception concepts flagged across the subject. */
   recent_misconceptions: string[];
+  /**
+   * Per-concept review evidence rollup: the queryable spaced-reinforcement
+   * artifact. Ranked review-due concepts (with a plain-language reason and how
+   * many lessons since each was tested) plus summary counts, resolution already
+   * applied so resolved weaknesses are not resurfaced. See
+   * {@link ConceptReviewEvidence} in src/lib/concept-evidence.ts.
+   */
+  concept_review_evidence: ConceptReviewEvidence;
   /** Completed lesson titles for curriculum context (most recent first). */
   completed_lessons: Array<{ title: string; completed_at: string }>;
   /** Discarded lesson titles + reasons — what the learner rejected. */

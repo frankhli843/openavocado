@@ -7,6 +7,7 @@ import Database from "better-sqlite3";
 import { readFileSync } from "fs";
 import path from "path";
 import type { LevelProgression } from "@/types";
+import { emptyConceptReviewEvidence } from "@/lib/concept-evidence";
 
 const TEST_LEVEL_PROGRESSION: LevelProgression = {
   previous_level: "familiarity",
@@ -262,6 +263,7 @@ describe("Completion adapter contract", () => {
       quiz_result: null,
       tag_difficulty_performance: [],
       recent_misconceptions: [],
+      concept_review_evidence: emptyConceptReviewEvidence(),
       completed_lessons: [],
       discarded_lessons: [],
       workpad_summary: null,
@@ -296,6 +298,7 @@ describe("Completion adapter contract", () => {
       quiz_result: null,
       tag_difficulty_performance: [],
       recent_misconceptions: [],
+      concept_review_evidence: emptyConceptReviewEvidence(),
       completed_lessons: [],
       discarded_lessons: [],
       workpad_summary: null,

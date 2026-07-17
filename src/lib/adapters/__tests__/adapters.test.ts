@@ -2,6 +2,7 @@ import { describe, it, expect, afterEach, beforeEach, vi } from "vitest";
 import Database from "better-sqlite3";
 import { readFileSync } from "fs";
 import path from "path";
+import { emptyConceptReviewEvidence } from "@/lib/concept-evidence";
 import { parseJobProgressEvents, summarizeJobProgress } from "../../lesson-jobs/status";
 import { summarizeAiStudioConfig, validateGoogleAiStudioKeyShape } from "../../providers/google-ai-studio";
 import {
@@ -691,6 +692,7 @@ describe("dora-task prompts embed the lesson quality bar", () => {
       quiz_result: null,
       tag_difficulty_performance: [],
       recent_misconceptions: [],
+      concept_review_evidence: emptyConceptReviewEvidence(),
       completed_lessons: [],
       discarded_lessons: [],
       workpad_summary: null,
@@ -1160,6 +1162,7 @@ describe("agentHarnessAdapter dispatch error paths", () => {
       quiz_result: null,
       tag_difficulty_performance: [],
       recent_misconceptions: [],
+      concept_review_evidence: emptyConceptReviewEvidence(),
       completed_lessons: [],
       discarded_lessons: [],
       workpad_summary: null,
@@ -1196,6 +1199,7 @@ describe("agentHarnessAdapter dispatch error paths", () => {
       quiz_result: null,
       tag_difficulty_performance: [],
       recent_misconceptions: [],
+      concept_review_evidence: emptyConceptReviewEvidence(),
       completed_lessons: [],
       discarded_lessons: [],
       workpad_summary: null,
@@ -1232,6 +1236,7 @@ describe("agentHarnessAdapter dispatch error paths", () => {
       quiz_result: null,
       tag_difficulty_performance: [],
       recent_misconceptions: [],
+      concept_review_evidence: emptyConceptReviewEvidence(),
       completed_lessons: [],
       discarded_lessons: [],
       workpad_summary: null,
@@ -1268,6 +1273,7 @@ describe("agentHarnessAdapter dispatch error paths", () => {
       quiz_result: null,
       tag_difficulty_performance: [],
       recent_misconceptions: [],
+      concept_review_evidence: emptyConceptReviewEvidence(),
       completed_lessons: [],
       discarded_lessons: [],
       workpad_summary: null,
@@ -1304,6 +1310,7 @@ describe("agentHarnessAdapter dispatch error paths", () => {
       quiz_result: null,
       tag_difficulty_performance: [],
       recent_misconceptions: [],
+      concept_review_evidence: emptyConceptReviewEvidence(),
       completed_lessons: [],
       discarded_lessons: [],
       workpad_summary: null,
@@ -1344,6 +1351,7 @@ describe("agentHarnessAdapter dispatch error paths", () => {
       quiz_result: null,
       tag_difficulty_performance: [],
       recent_misconceptions: [],
+      concept_review_evidence: emptyConceptReviewEvidence(),
       completed_lessons: [],
       discarded_lessons: [],
       workpad_summary: null,

@@ -6,6 +6,7 @@ import { loadReusableTags, persistAssessment } from "@/lib/assessment-store";
 import { deserializeQuizState } from "@/lib/quiz-state";
 import { createSubjectJournalEntry } from "@/lib/subject-journal";
 import { evaluateSubjectLevelProgressionWithAi } from "@/lib/level-progression";
+import { computeConceptReviewEvidence } from "@/lib/concept-evidence";
 import type { Difficulty, LessonCompletedEvent, SignalType } from "@/types";
 
 /**
@@ -316,6 +317,10 @@ export async function POST(request: Request) {
       completedLessonId: lesson_id,
     });
 
+    // Per-concept review evidence (resolution applied). Computed after all
+    // assessment evidence for this lesson has been persisted above.
+    const concept_review_evidence = computeConceptReviewEvidence(db, lesson.subject_id, learner_id);
+
     const goals: string[] = lesson.goals ? JSON.parse(lesson.goals) : [];
     const event: LessonCompletedEvent = {
       event: "lesson.completed",
@@ -339,6 +344,7 @@ export async function POST(request: Request) {
       quiz_result,
       tag_difficulty_performance: tagPerfRows,
       recent_misconceptions,
+      concept_review_evidence,
       completed_lessons,
       discarded_lessons,
       workpad_summary,

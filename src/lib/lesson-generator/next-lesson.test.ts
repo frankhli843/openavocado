@@ -3,6 +3,7 @@ import Database from "better-sqlite3";
 import { readFileSync } from "fs";
 import path from "path";
 
+import { emptyConceptReviewEvidence } from "@/lib/concept-evidence";
 import { generateInitialAssessment } from "./initial-assessment";
 import { generateNextLesson } from "./next-lesson";
 import type { LessonCompletedEvent, LevelProgression, SubjectCreatedEvent } from "@/types";
@@ -107,6 +108,7 @@ function lessonCompletedEvent(learnerId: number, subjectId: number, lessonId: nu
     quiz_result: { passed: true, correct_count: 1, pass_threshold: 1 },
     tag_difficulty_performance: [],
     recent_misconceptions: [],
+    concept_review_evidence: emptyConceptReviewEvidence(),
     completed_lessons: [],
     discarded_lessons: [],
     workpad_summary: null,
